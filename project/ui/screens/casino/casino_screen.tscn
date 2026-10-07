@@ -1,0 +1,328 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/screens/casino/casino_screen.gd" id="1_screen"]
+[ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="3_hud"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
+[ext_resource type="Script" path="res://ui/components/talking_portrait.gd" id="5_portrait"]
+[ext_resource type="Script" path="res://ui/components/typewriter.gd" id="6_typewriter"]
+
+[node name="CasinoScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[node name="Background" type="TextureRect" parent="."]
+unique_name_in_owner = true
+self_modulate = Color(0.55, 0.53, 0.58, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Vignette" parent="." instance=ExtResource("2_vignette")]
+layout_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 40
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="HudBar" parent="Margin/Layout" instance=ExtResource("3_hud")]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="PortraitFrame" type="PanelContainer" parent="Margin/Layout/Header"]
+clip_children = 1
+custom_minimum_size = Vector2(132, 168)
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"IconFrame"
+
+[node name="Portrait" type="Control" parent="Margin/Layout/Header/PortraitFrame"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("5_portrait")
+cover = true
+
+[node name="Text" type="VBoxContainer" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="VenueLabel" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+
+[node name="HostLabel" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+
+[node name="Speech" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
+script = ExtResource("6_typewriter")
+
+[node name="Tabs" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SicBoTab" type="Button" parent="Margin/Layout/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"TabButton"
+toggle_mode = true
+text = "Sic Bo"
+script = ExtResource("4_button")
+
+[node name="BlackjackTab" type="Button" parent="Margin/Layout/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"TabButton"
+toggle_mode = true
+text = "Blackjack"
+script = ExtResource("4_button")
+
+[node name="SlotsTab" type="Button" parent="Margin/Layout/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"TabButton"
+toggle_mode = true
+text = "Slots"
+script = ExtResource("4_button")
+
+[node name="Table" type="PanelContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"Card"
+
+[node name="TableLayout" type="VBoxContainer" parent="Margin/Layout/Table"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="RulesLabel" type="Label" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="DealerLabel" type="Label" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+horizontal_alignment = 1
+
+[node name="DealerHand" type="HBoxContainer" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 136)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Dice" type="HBoxContainer" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="Reels" type="HBoxContainer" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="Paytable" type="HBoxContainer" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="PlayerHand" type="HBoxContainer" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 136)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="PlayerLabel" type="Label" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+horizontal_alignment = 1
+
+[node name="ResultLabel" type="Label" parent="Margin/Layout/Table/TableLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="BetRow" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LessButton" type="Button" parent="Margin/Layout/BetRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 64)
+layout_mode = 2
+theme_type_variation = &"SmallButton"
+text = "-"
+script = ExtResource("4_button")
+
+[node name="BetText" type="VBoxContainer" parent="Margin/Layout/BetRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 0
+
+[node name="BetLabel" type="Label" parent="Margin/Layout/BetRow/BetText"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+horizontal_alignment = 1
+
+[node name="BetHint" type="Label" parent="Margin/Layout/BetRow/BetText"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+horizontal_alignment = 1
+
+[node name="MoreButton" type="Button" parent="Margin/Layout/BetRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 64)
+layout_mode = 2
+theme_type_variation = &"SmallButton"
+text = "+"
+script = ExtResource("4_button")
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SmallButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Small"
+script = ExtResource("4_button")
+
+[node name="BigButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Big"
+script = ExtResource("4_button")
+
+[node name="DealButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Deal"
+script = ExtResource("4_button")
+
+[node name="HitButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Hit"
+script = ExtResource("4_button")
+
+[node name="StandButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SecondaryButton"
+text = "Stand"
+script = ExtResource("4_button")
+
+[node name="DoubleButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SecondaryButton"
+text = "Double"
+script = ExtResource("4_button")
+
+[node name="SpinButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Spin"
+script = ExtResource("4_button")
+
+[node name="BackButton" type="Button" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_type_variation = &"GhostButton"
+text = "Leave"
+script = ExtResource("4_button")

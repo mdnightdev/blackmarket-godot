@@ -1,9 +1,15 @@
-[gd_resource type="Resource" script_class="VenueDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="CasinoDef" load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/defs/venue_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/defs/casino_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/venues/casino_floor.jpg" id="2_background"]
 
 [resource]
 script = ExtResource("1_def")
 id = &"casino"
-display_name = "Casino"
-tagline = "Gamble and clean your cash"
+display_name = "Golden Dragon"
+tagline = "Dice, cards and slots. Bets $50 to $1,000"
+available = true
+host = &"meiling"
+background = ExtResource("2_background")
+min_bet = 50
+max_bet = 1000

@@ -15,6 +15,14 @@ http://creativecommons.org/publicdomain/zero/1.0/
   shutter.ogg        Impact Sounds     impactMetal_medium_000.ogg
   raid_hit.ogg       Impact Sounds     impactWood_heavy_002.ogg
   caught.ogg         Impact Sounds     impactPunch_heavy_001.ogg
+  dice_shake.ogg     Casino Audio      dice-shake-1.ogg
+  dice_throw.ogg     Casino Audio      dice-throw-2.ogg
+  card_deal.ogg      Casino Audio      card-slide-3.ogg
+  card_shuffle.ogg   Casino Audio      card-shuffle.ogg
+  chips_bet.ogg      Casino Audio      chips-stack-2.ogg
+  chips_win.ogg      Casino Audio      chips-handle-3.ogg
+  reel_stop.ogg      Casino Audio      chip-lay-1.ogg
+  reel_spin.ogg      Casino Audio      card-fan-1.ogg
 
 Original
 

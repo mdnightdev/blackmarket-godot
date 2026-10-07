@@ -1,9 +1,16 @@
-[gd_resource type="Resource" script_class="VenueDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="CasinoDef" load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/defs/venue_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/defs/casino_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/venues/vip_lounge.jpg" id="2_background"]
 
 [resource]
 script = ExtResource("1_def")
 id = &"vip_casino"
-display_name = "VIP Lounge"
-tagline = "High stakes, higher company"
+display_name = "The Orlov Room"
+tagline = "VIP tables. Carry $20,000 to get in"
+available = true
+host = &"viktor"
+background = ExtResource("2_background")
+min_bet = 1000
+max_bet = 20000
+entry_cash = 20000

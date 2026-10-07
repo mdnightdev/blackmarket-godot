@@ -1,7 +1,7 @@
 extends SceneTree
 
 const OUTPUT_DIR := "/tmp/blackmarket_shots"
-const WATCHDOG_SECONDS := 240.0
+const WATCHDOG_SECONDS := 330.0
 
 var _game_state: Node
 var _router: Node
@@ -72,6 +72,7 @@ func _run() -> void:
 	await _capture_phase_four(dealer)
 	await _capture_roster()
 	await _capture_bar()
+	await _capture_casino()
 
 	_router.go_to(_router.TITLE_SCREEN)
 	await _wait(0.18)
@@ -152,6 +153,45 @@ func _capture_bar() -> void:
 	await _capture("33_order_missed")
 	overlay.end_talk()
 	await _wait(0.4)
+
+
+func _capture_casino() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	_game_state.casino_rng().seed = 7
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+
+	run.district_id = &"downtown"
+	_game_state.visiting_venue = &"casino"
+	await _open(_router.CASINO_SCREEN, "34_casino_sic_bo", 2.6)
+	current_scene.get_node("%BigButton").pressed.emit()
+	await _wait(1.6)
+	await _capture("35_casino_dice")
+	current_scene.get_node("%BlackjackTab").pressed.emit()
+	current_scene.get_node("%DealButton").pressed.emit()
+	await _wait(2.4)
+	await _capture("36_casino_blackjack")
+	if current_scene.get_node("%StandButton").visible:
+		current_scene.get_node("%StandButton").pressed.emit()
+		await _wait(2.6)
+	await _capture("37_casino_blackjack_result")
+	current_scene.get_node("%SlotsTab").pressed.emit()
+	current_scene.get_node("%SpinButton").pressed.emit()
+	await _wait(2.4)
+	await _capture("38_casino_slots")
+
+	run.district_id = &"north_port"
+	await _open(_router.DISTRICT_SCREEN, "39_north_port")
+	current_scene._on_venue_selected(_content.venue(&"vip_casino"))
+	await _wait(2.6)
+	await _capture("40_vip_refused")
+	overlay.end_talk()
+	await _wait(0.4)
+
+	run.cash = 25_000
+	_game_state.visiting_venue = &"vip_casino"
+	await _open(_router.CASINO_SCREEN, "41_vip_lounge", 2.6)
 
 
 func _capture_phase_four(dealer: Resource) -> void:

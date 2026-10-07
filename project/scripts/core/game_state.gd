@@ -175,6 +175,25 @@ func buy_rumor(venue_id: StringName) -> Dictionary:
 	return rumor
 
 
+func place_bet(casino: CasinoDef, amount: int) -> bool:
+	if not Casino.place_bet(run, casino, amount):
+		return false
+	_commit(false)
+	return true
+
+
+func collect_winnings(amount: int) -> void:
+	if amount <= 0:
+		return
+	Casino.pay_out(run, amount)
+	_commit(false)
+
+
+## Shared by the casino tables. Unseeded on purpose: bets are paid before the result, so reloading cannot fish for a win.
+func casino_rng() -> RandomNumberGenerator:
+	return _rng
+
+
 ## Saves without emitting run_changed, so screens can call it while refreshing.
 func remember_prices(dealer: DealerDef) -> void:
 	if PriceIntel.record(run, dealer, Content.items(ItemDef.Kind.TRADE_GOOD)):

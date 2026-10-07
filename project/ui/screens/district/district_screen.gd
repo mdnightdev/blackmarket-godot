@@ -154,11 +154,23 @@ func _on_venue_selected(venue: VenueDef) -> void:
 			StreetTalk.talk_to(Content.character(Loan.LENDER))
 		_:
 			var host := Content.character(venue.host)
-			if host != null and host.role == CharacterDef.Role.BARTENDER:
+			if venue is CasinoDef and host != null:
+				_enter_casino(venue, host)
+			elif host != null and host.role == CharacterDef.Role.BARTENDER:
 				GameState.visiting_venue = venue.id
 				SceneRouter.go_to(SceneRouter.BAR_SCREEN)
 			else:
 				_venue_sheet.show_venue(venue)
+
+
+func _enter_casino(casino: CasinoDef, host: CharacterDef) -> void:
+	if Casino.can_enter(GameState.run, casino):
+		GameState.visiting_venue = casino.id
+		SceneRouter.go_to(SceneRouter.CASINO_SCREEN)
+		return
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"leave", "Leave", true, true)]
+	var line := "These tables are for players with real money. Come back with %s in your pocket." % Format.money(casino.entry_cash)
+	GameOverlay.talk(host, line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk(), "You are carrying %s." % Format.money(GameState.run.cash))
 
 
 func _on_run_changed() -> void:
