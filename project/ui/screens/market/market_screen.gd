@@ -14,6 +14,11 @@ const CLOSING_LINES: Array[String] = [
 ]
 const VEX_TURF_LINE := "Vex runs these corners. I pay her cut first, so I can't pay you full price."
 const PLAYER_TURF_LINE := "Your people run this block now. You get the best price in town."
+const FAMILY_LINES := {
+	Families.Tier.HOSTILE: "You made enemies of my family. I have nothing to sell you.",
+	Families.Tier.TRUSTED: "The family speaks well of you. I can do better on price.",
+	Families.Tier.FAMILY: "For family, the family price.",
+}
 const HANDSHAKE_MIN_TOTAL := 1000
 
 @onready var _background: TextureRect = %Background
@@ -21,6 +26,7 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _header: Control = %Header
 @onready var _portrait: TalkingPortrait = %Portrait
 @onready var _dealer_label: Label = %DealerLabel
+@onready var _family_label: Label = %FamilyLabel
 @onready var _speech: Typewriter = %Speech
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _mood_label: Label = %MoodLabel
@@ -102,6 +108,10 @@ func _choose_dealer(district_id: StringName) -> DealerDef:
 func _greet() -> void:
 	if not is_inside_tree() or not _dealer_is_here():
 		return
+	var family := Families.family_of(_dealer)
+	if family != null and FAMILY_LINES.has(Families.tier(GameState.run, family.id)):
+		_dealer_says(FAMILY_LINES[Families.tier(GameState.run, family.id)])
+		return
 	match Turf.holder(GameState.run, GameState.run.district_id):
 		Turf.Holder.VEX:
 			_dealer_says(VEX_TURF_LINE)
@@ -140,6 +150,10 @@ func _refresh() -> void:
 	_mood_label.text = Haggle.mood_label(mood).to_upper()
 	_news_line.show_for(run.district_id)
 	_bag_button.text = "Bag %d/%d" % [Inventory.used(run), Inventory.capacity(run)]
+	var family := Families.family_of(_dealer)
+	_family_label.visible = family != null
+	if family != null:
+		_family_label.text = "%s · %s" % [family.full_name(), Families.tier_name(Families.tier(run, family.id))]
 
 	for list in [_list, _order_list]:
 		for child: Node in list.get_children():
@@ -150,6 +164,10 @@ func _refresh() -> void:
 	if not _dealer_is_here():
 		_trade_sheet.close()
 		_show_notice("%s has packed up and moved on." % _dealer.display_name)
+		return
+	if Families.refuses(run, _dealer):
+		_trade_sheet.close()
+		_show_notice("%s works for the %s. The family will not deal with you." % [_dealer.display_name, family.english_name])
 		return
 	if not Market.is_open(run, _dealer):
 		_show_notice("%s will not deal with you until next phase." % _dealer.display_name)

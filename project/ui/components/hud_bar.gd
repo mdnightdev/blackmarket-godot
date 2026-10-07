@@ -4,63 +4,83 @@ extends PanelContainer
 const CASH_COUNT_SECONDS := 0.45
 const HEAT_MEDIUM := 30
 const HEAT_HIGH := 70
+const PHASE_ICONS: Array[Texture2D] = [
+	preload("res://assets/icons/hud/sunrise.svg"),
+	preload("res://assets/icons/hud/sun.svg"),
+	preload("res://assets/icons/hud/sunset.svg"),
+	preload("res://assets/icons/hud/moon.svg"),
+]
+const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 
-@onready var _day_label: Label = %DayLabel
-@onready var _phase_label: Label = %PhaseLabel
-@onready var _clock_label: Label = %ClockLabel
-@onready var _next_phase_button: Button = %NextPhaseButton
 @onready var _cash_value: Label = %CashValue
 @onready var _debt_box: Control = %Debt
 @onready var _debt_value: Label = %DebtValue
-@onready var _heat_value: Label = %HeatValue
-@onready var _bag_value: Label = %BagValue
+@onready var _heat_icon: TextureRect = %HeatIcon
+@onready var _heat_bar: ProgressBar = %HeatBar
+@onready var _day_button: Button = %DayButton
+@onready var _day_content: Control = %DayContent
+@onready var _phase_icon: TextureRect = %PhaseIcon
+@onready var _day_label: Label = %DayLabel
 
 var _shown_cash := 0
 var _cash_tween: Tween
+var _heat_fill: StyleBoxFlat
+var _day_text := ""
 
 
 func _ready() -> void:
+	_heat_fill = _heat_bar.get_theme_stylebox("fill").duplicate()
+	_heat_bar.add_theme_stylebox_override("fill", _heat_fill)
+	_heat_bar.max_value = Heat.MAX
+	_day_content.minimum_size_changed.connect(_fit_day_button)
 	GameState.run_changed.connect(refresh)
-	Settings.changed.connect(_update_clock_visibility)
-	_next_phase_button.pressed.connect(GameState.advance_phase)
+	Settings.changed.connect(_update_clock)
+	_day_button.pressed.connect(GameState.advance_phase)
 	_debt_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	_debt_box.gui_input.connect(_on_debt_input)
 	if GameState.run != null:
 		_shown_cash = GameState.run.cash
 	refresh()
-	_update_clock_visibility()
+	_fit_day_button()
 
 
 func _process(_delta: float) -> void:
-	if not _clock_label.visible or GameState.run == null:
-		return
-	var seconds := ceili(GameState.run.phase_seconds_left)
-	_clock_label.text = "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
+	_update_clock()
 
 
 func refresh() -> void:
 	var run := GameState.run
 	if run == null:
 		return
-	_day_label.text = "DAY %d" % run.day if run.endless else "DAY %d / %d" % [run.day, run.campaign_days]
-	_phase_label.text = RunState.phase_name(run.phase).to_upper()
-	_debt_value.text = Format.money(run.debt)
-	_heat_value.text = "%d%%" % run.heat
-	_heat_value.add_theme_color_override("font_color", _heat_color(run.heat))
-	var used := Inventory.used(run)
-	var capacity := Inventory.capacity(run)
-	_bag_value.text = "%d/%d" % [used, capacity]
-	_bag_value.add_theme_color_override("font_color", Palette.PEACH_BRIGHT if used >= capacity else Palette.TEXT_CREAM)
+	_day_text = "%d %s" % [run.day, PHASE_LETTERS[run.phase]]
+	_phase_icon.texture = PHASE_ICONS[run.phase]
+	_debt_value.text = Format.money_short(run.debt)
+	var heat_color := _heat_color(run.heat)
+	_heat_bar.value = run.heat
+	_heat_fill.bg_color = heat_color
+	_heat_icon.modulate = heat_color
 	_count_cash_to(run.cash)
+	_update_clock()
+
+
+func _update_clock() -> void:
+	if GameState.run == null:
+		return
+	var text := _day_text
+	if Settings.real_time_phases:
+		var seconds := ceili(GameState.run.phase_seconds_left)
+		text += " %d:%02d" % [floori(seconds / 60.0), seconds % 60]
+	if _day_label.text != text:
+		_day_label.text = text
+
+
+func _fit_day_button() -> void:
+	_day_button.custom_minimum_size.x = _day_content.get_combined_minimum_size().x
 
 
 func _on_debt_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 		GameOverlay.open_loan()
-
-
-func _update_clock_visibility() -> void:
-	_clock_label.visible = Settings.real_time_phases
 
 
 func _count_cash_to(target: int) -> void:
@@ -75,7 +95,7 @@ func _count_cash_to(target: int) -> void:
 
 func _show_cash(value: int) -> void:
 	_shown_cash = value
-	_cash_value.text = Format.money(value)
+	_cash_value.text = Format.money_short(value)
 
 
 func _heat_color(heat: int) -> Color:

@@ -4,13 +4,12 @@ const MAP_PIN := preload("res://ui/components/map_pin.tscn")
 const ROUTE_SECONDS := 1.1
 const ROUTE_SAMPLES := 32
 const ROUTE_BEND := 0.22
+const CAMERA_GLIDE_SECONDS := 0.4
 
-@onready var _map_image: TextureRect = %MapImage
+@onready var _city_view: CityView = %CityView
 @onready var _route: Line2D = %Route
-@onready var _pin_layer: Control = %PinLayer
 @onready var _traveller: Control = %Traveller
 @onready var _margin: MarginContainer = %Margin
-@onready var _back_button: Button = %BackButton
 @onready var _input_blocker: Control = %InputBlocker
 @onready var _district_sheet: DistrictSheet = %DistrictSheet
 
@@ -28,14 +27,13 @@ func _ready() -> void:
 		pin.district = district
 		pin.is_current = district.id == GameState.run.district_id
 		pin.holder = Turf.holder(GameState.run, district.id)
-		pin.district_selected.connect(_on_district_selected)
-		_pin_layer.add_child(pin)
+		_city_view.add_pin(pin)
 		_pins.append(pin)
-	resized.connect(_layout_pins)
-	_layout_pins()
+	_city_view.focus_on(GameState.current_district().map_position, CityView.START_ZOOM)
+	_city_view.district_tapped.connect(_on_district_selected)
 
-	_back_button.pressed.connect(_return_to_district)
 	_district_sheet.travel_requested.connect(_on_travel_requested)
+	_district_sheet.enter_requested.connect(_return_to_district)
 	GameState.clock_active = true
 	_play_entrance()
 
@@ -58,32 +56,19 @@ func handle_back() -> bool:
 	return true
 
 
-# The map texture is drawn with cover cropping, so pin coordinates must go through the same crop.
-func _map_to_screen(normalized: Vector2) -> Vector2:
-	var texture_size := _map_image.texture.get_size()
-	var cover_scale := maxf(size.x / texture_size.x, size.y / texture_size.y)
-	var drawn_size := texture_size * cover_scale
-	return (size - drawn_size) / 2.0 + normalized * drawn_size
-
-
-func _layout_pins() -> void:
-	for pin in _pins:
-		pin.place_at(_map_to_screen(pin.district.map_position))
-
-
 func _on_district_selected(district: DistrictDef) -> void:
 	_district_sheet.show_district(district, Travel.check(GameState.run, district))
 
 
 func _on_travel_requested(destination: DistrictDef) -> void:
-	var from := _map_to_screen(GameState.current_district().map_position)
-	var to := _map_to_screen(destination.map_position)
+	var origin := GameState.current_district().map_position
 	if GameState.travel_to(destination) != Travel.Check.OK:
 		return
 	GameState.clock_active = false
 	_input_blocker.show()
 	_district_sheet.close()
-	await _animate_route(from, to)
+	await _city_view.glide_to((origin + destination.map_position) / 2.0, CityView.MIN_ZOOM, CAMERA_GLIDE_SECONDS).finished
+	await _animate_route(_city_view.map_to_view(origin), _city_view.map_to_view(destination.map_position))
 	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 
 
@@ -111,10 +96,10 @@ func _return_to_district() -> void:
 
 
 func _play_entrance() -> void:
-	_map_image.modulate.a = 0.0
+	_city_view.modulate.a = 0.0
 	for pin in _pins:
 		pin.modulate.a = 0.0
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_map_image, "modulate:a", 1.0, 0.5)
+	tween.tween_property(_city_view, "modulate:a", 1.0, 0.5)
 	for index in _pins.size():
 		tween.tween_property(_pins[index], "modulate:a", 1.0, 0.3).set_delay(0.3 + index * 0.06)

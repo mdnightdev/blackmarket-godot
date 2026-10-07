@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/lin_xiaoyu.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/lin_xiaoyu_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lin_xiaoyu"
+display_name = "Lin Xiaoyu"
+role = 9
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "The Azure Dragon pays for loyalty, not for talk. I have work, if you can keep a schedule."
+blurb = "Azure Dragon lieutenant. Hands out favours downtown."
+district_id = &"downtown"
+family = &"azure_dragon"

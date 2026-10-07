@@ -18,13 +18,14 @@ static func asking_price_at(run: RunState, dealer: DealerDef, item: ItemDef, pha
 
 
 static func buy_price(run: RunState, dealer: DealerDef, item: ItemDef) -> int:
-	return asking_price_at(run, dealer, item, Calendar.stamp(run))
+	var asking := asking_price_at(run, dealer, item, Calendar.stamp(run))
+	return maxi(1, roundi(asking * Families.buy_factor(run, dealer)))
 
 
 static func sell_price(run: RunState, dealer: DealerDef, item: ItemDef) -> int:
 	var stamp := Calendar.stamp(run)
-	var factor := SELL_SPREAD * Turf.sell_factor(run, trading_district(run, dealer, stamp))
-	return maxi(1, floori(buy_price(run, dealer, item) * factor))
+	var factor := SELL_SPREAD * Turf.sell_factor(run, trading_district(run, dealer, stamp)) * Families.sell_factor(run, dealer)
+	return maxi(1, floori(asking_price_at(run, dealer, item, stamp) * factor))
 
 
 ## Where the dealer trades in that phase. Falls back to home while a travelling dealer is off duty.
@@ -42,8 +43,20 @@ static func price_change(run: RunState, dealer: DealerDef, item: ItemDef) -> flo
 	return float(asking_price_at(run, dealer, item, current_stamp) - previous) / previous
 
 
+## The trade good the dealer pays the most for, measured against its base price.
+static func best_sale(run: RunState, dealer: DealerDef) -> ItemDef:
+	var best: ItemDef = null
+	var best_ratio := 0.0
+	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+		var ratio := float(sell_price(run, dealer, item)) / item.base_price
+		if best == null or ratio > best_ratio:
+			best = item
+			best_ratio = ratio
+	return best
+
+
 static func is_open(run: RunState, dealer: DealerDef) -> bool:
-	return int(run.walked_out.get(dealer.id, -1)) != Calendar.stamp(run)
+	return int(run.walked_out.get(dealer.id, -1)) != Calendar.stamp(run) and not Families.refuses(run, dealer)
 
 
 static func roll(run: RunState, parts: Array, low: float, high: float) -> float:

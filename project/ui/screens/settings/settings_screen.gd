@@ -30,4 +30,5 @@ func handle_back() -> bool:
 
 func _leave() -> void:
 	Settings.save()
-	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+	var opened_from := SceneRouter.previous_scene
+	SceneRouter.go_to(SceneRouter.TITLE_SCREEN if opened_from.is_empty() or opened_from == SceneRouter.SETTINGS_SCREEN else opened_from)

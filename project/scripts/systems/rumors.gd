@@ -27,13 +27,7 @@ static func find(run: RunState, venue_id: StringName) -> Dictionary:
 	candidates.sort_custom(func(a: DealerDef, b: DealerDef) -> bool: return String(a.id) < String(b.id))
 	var pick := floori(Market.roll(run, [&"rumor", venue_id, stamp], 0.0, 1.0) * candidates.size())
 	var dealer := candidates[mini(pick, candidates.size() - 1)]
-	var best_item: ItemDef = null
-	var best_ratio := 0.0
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
-		var ratio := float(Market.sell_price(run, dealer, item)) / item.base_price
-		if best_item == null or ratio > best_ratio:
-			best_item = item
-			best_ratio = ratio
+	var best_item := Market.best_sale(run, dealer)
 	return {
 		"dealer": dealer,
 		"item": best_item,

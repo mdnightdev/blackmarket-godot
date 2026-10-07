@@ -49,6 +49,8 @@ var crate: Dictionary = {}
 var taken_crates: Array[String] = []
 ## Day on which Voronin stopped giving the player work. 0 means never.
 var smuggling_ban_day: int = 0
+## Phase stamp of the last police stop.
+var stop_stamp: int = -1
 ## Phase stamp of the last hijack attempt.
 var hijacked_stamp: int = -1
 ## District id to the player's turf share. Missing districts use the Turf defaults.
@@ -59,6 +61,14 @@ var muscle_stamp: int = -1
 var vex_gone := false
 ## Phase stamp in which the Fixer last cleaned up the player's heat.
 var cleanup_stamp: int = -1
+## Family id to the player's standing. See Families.
+var family_standing: Dictionary = {}
+## Accepted family deliveries. See Favours for the entry layout.
+var favours: Array[Dictionary] = []
+## Ids of today's favour offers the player already took.
+var taken_favours: Array[String] = []
+## Phase stamp in which Hana last sold a price hack.
+var hack_stamp: int = -1
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
 
@@ -106,11 +116,16 @@ func to_dict() -> Dictionary:
 		"crate": crate,
 		"taken_crates": taken_crates,
 		"smuggling_ban_day": smuggling_ban_day,
+		"stop_stamp": stop_stamp,
 		"hijacked_stamp": hijacked_stamp,
 		"turf": _string_keys(turf),
 		"muscle_stamp": muscle_stamp,
 		"vex_gone": vex_gone,
 		"cleanup_stamp": cleanup_stamp,
+		"family_standing": _string_keys(family_standing),
+		"favours": favours,
+		"taken_favours": taken_favours,
+		"hack_stamp": hack_stamp,
 		"pending_encounter": pending_encounter,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -178,11 +193,25 @@ static func from_dict(data: Dictionary) -> RunState:
 		for id: Variant in saved_taken_crates:
 			state.taken_crates.append(str(id))
 	state.smuggling_ban_day = maxi(0, int(data.get("smuggling_ban_day", 0)))
+	state.stop_stamp = int(data.get("stop_stamp", -1))
 	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
 	state.turf = Turf.sanitize(data.get("turf", {}))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
 	state.vex_gone = bool(data.get("vex_gone", false))
 	state.cleanup_stamp = int(data.get("cleanup_stamp", -1))
+	state.family_standing = Families.sanitize(data.get("family_standing", {}))
+	var saved_favours: Variant = data.get("favours", [])
+	if saved_favours is Array:
+		for favour: Variant in saved_favours:
+			if favour is Dictionary:
+				var clean := Favours.sanitize(favour)
+				if not clean.is_empty() and Favours.active_for(state, StringName(clean.family)).is_empty():
+					state.favours.append(clean)
+	var saved_taken_favours: Variant = data.get("taken_favours", [])
+	if saved_taken_favours is Array:
+		for id: Variant in saved_taken_favours:
+			state.taken_favours.append(str(id))
+	state.hack_stamp = int(data.get("hack_stamp", -1))
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter

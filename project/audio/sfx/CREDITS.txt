@@ -35,6 +35,10 @@ http://creativecommons.org/publicdomain/zero/1.0/
   stash_move.ogg     RPG Audio         dropLeather.ogg
   stash_upgrade.ogg  RPG Audio         metalClick.ogg
   lie_low.ogg        RPG Audio         doorClose_4.ogg
+  shakedown.ogg      Impact Sounds     impactPunch_heavy_003.ogg
+  favour_taken.ogg   RPG Audio         bookPlace2.ogg
+  favour_done.ogg    Interface Sounds  confirmation_003.ogg
+  price_hack.ogg     Interface Sounds  glitch_002.ogg
 
 Original
 

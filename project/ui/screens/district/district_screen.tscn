@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/district/district_screen.gd" id="1_screen"]
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
@@ -6,9 +6,12 @@
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
 [ext_resource type="PackedScene" path="res://ui/components/venue_sheet.tscn" id="5_venue_sheet"]
 [ext_resource type="PackedScene" path="res://ui/components/day_card.tscn" id="6_day_card"]
-[ext_resource type="PackedScene" path="res://ui/components/inventory_sheet.tscn" id="7_inventory_sheet"]
+[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="7_nav_bar"]
 [ext_resource type="Script" path="res://ui/components/news_line.gd" id="8_news_line"]
 [ext_resource type="PackedScene" path="res://ui/components/turf_bar.tscn" id="9_turf_bar"]
+[ext_resource type="PackedScene" path="res://ui/components/fab_button.tscn" id="10_fab"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/map.svg" id="11_map_icon"]
+[ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="12_confirm"]
 [node name="DistrictScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -58,7 +61,7 @@ mouse_filter = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 40
+theme_override_constants/margin_bottom = 120
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
@@ -134,58 +137,38 @@ layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 script = ExtResource("4_button")
 
-[node name="PlacesLabel" type="Label" parent="Margin/Layout"]
-layout_mode = 2
-theme_type_variation = &"SectionLabel"
-text = "PLACES"
-
-[node name="VenueList" type="VBoxContainer" parent="Margin/Layout"]
-unique_name_in_owner = true
+[node name="PlacesRow" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 0
 
-[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 16
-
-[node name="MenuButton" type="Button" parent="Margin/Layout/Actions"]
+[node name="VenueFabs" type="HBoxContainer" parent="Margin/Layout/PlacesRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 72)
-layout_mode = 2
-theme_type_variation = &"GhostButton"
-text = "Menu"
-script = ExtResource("4_button")
-
-[node name="BagButton" type="Button" parent="Margin/Layout/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 72)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Bag"
-script = ExtResource("4_button")
-
-[node name="MapButton" type="Button" parent="Margin/Layout/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"PrimaryButton"
-text = "City Map"
-script = ExtResource("4_button")
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="MapFab" parent="Margin/Layout/PlacesRow" instance=ExtResource("10_fab")]
+unique_name_in_owner = true
+layout_mode = 2
+icon_texture = ExtResource("11_map_icon")
+caption = "City"
+
+[node name="NavBar" parent="." instance=ExtResource("7_nav_bar")]
+layout_mode = 1
 
 [node name="VenueSheet" parent="." instance=ExtResource("5_venue_sheet")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
 
-[node name="InventorySheet" parent="." instance=ExtResource("7_inventory_sheet")]
+[node name="DayCard" parent="." instance=ExtResource("6_day_card")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
 
-[node name="DayCard" parent="." instance=ExtResource("6_day_card")]
+[node name="LogoutDialog" parent="." instance=ExtResource("12_confirm")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1

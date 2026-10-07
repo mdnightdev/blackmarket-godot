@@ -108,6 +108,39 @@ func test_clash_only_where_vex_is_and_does_not_already_hold() -> void:
 	assert_false(Turf.clash_due(_run, 0.0))
 
 
+func test_clashes_are_rarer_on_held_turf() -> void:
+	_move_to_vex()
+	_run.turf[_run.district_id] = Turf.HOLD_SHARE
+	var held_chance := Turf.CLASH_CHANCE * Turf.HELD_CLASH_FACTOR
+	assert_true(Turf.clash_due(_run, held_chance - 0.01))
+	assert_false(Turf.clash_due(_run, held_chance + 0.01))
+
+
+func test_fight_odds_grow_with_the_share() -> void:
+	_run.turf[&"docks"] = 50
+	var contested := Turf.fight_chance(_run, &"docks")
+	_run.turf[&"docks"] = Turf.HOLD_SHARE
+	assert_gt(Turf.fight_chance(_run, &"docks"), contested)
+	assert_almost_eq(Turf.fight_chance(_run, &"docks"), 0.7, 0.0001)
+	_run.turf[&"docks"] = 100
+	assert_eq(Turf.fight_chance(_run, &"docks"), Turf.MAX_FIGHT_CHANCE)
+
+
+func test_held_districts_pay_a_daily_cut() -> void:
+	assert_eq(Turf.collect_daily_cut(_run), 0)
+	_run.turf[&"docks"] = Turf.HOLD_SHARE
+	_run.turf[&"old_market"] = 80
+	assert_eq(Turf.collect_daily_cut(_run), 2 * Turf.DAILY_CUT)
+	assert_eq(_run.cash, 10000 + 2 * Turf.DAILY_CUT)
+
+
+func test_no_muggings_on_held_turf() -> void:
+	var mugging: EventDef = Content.events().filter(func(event: EventDef) -> bool: return event.effect == EventDef.Effect.MUGGING)[0]
+	assert_false(StreetEvents.prepare(_run, mugging, RandomNumberGenerator.new()).is_empty())
+	_run.turf[&"old_market"] = Turf.HOLD_SHARE
+	assert_true(StreetEvents.prepare(_run, mugging, RandomNumberGenerator.new()).is_empty())
+
+
 func test_clash_offers_tribute_fight_and_back_off() -> void:
 	_run.pending_encounter = Turf.clash(_run)
 	var ids := Encounters.choices(_run, _run.pending_encounter).map(func(choice: Encounters.Choice) -> StringName: return choice.id)

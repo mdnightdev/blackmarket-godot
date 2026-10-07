@@ -9,6 +9,8 @@ signal run_ended(outcome: RunState.Outcome)
 signal orders_missed(orders: Array[Dictionary])
 ## A smuggling crate whose deadline passed during the last move of time.
 signal crate_lost(crate: Dictionary)
+## Family deliveries whose deadline passed during the last move of time.
+signal favours_missed(favours: Array[Dictionary])
 
 const SAVE_PATH := "user://run.json"
 
@@ -162,6 +164,14 @@ func clean_up_heat() -> int:
 	return removed
 
 
+## Returns the dealers whose prices were recorded, empty when the player cannot pay.
+func buy_price_hack(district_id: StringName) -> Array[DealerDef]:
+	var dealers := Hacker.hack(run, district_id)
+	if not dealers.is_empty():
+		_commit(false)
+	return dealers
+
+
 ## Police character to district for next phase, empty when the player cannot pay.
 func buy_police_tip() -> Dictionary:
 	var patrols := Informant.buy_tip(run)
@@ -190,6 +200,23 @@ func deliver_order(order: Dictionary) -> bool:
 func drop_order(order: Dictionary) -> void:
 	Orders.drop(run, order)
 	_commit(false)
+
+
+func accept_favour(offer: Dictionary) -> Favours.Result:
+	var result := Favours.accept(run, offer)
+	if result == Favours.Result.OK:
+		_commit(false)
+	return result
+
+
+func deliver_favour(favour: Dictionary) -> bool:
+	var item := Content.item(StringName(favour.item))
+	if not Favours.deliver(run, favour):
+		return false
+	Heat.add(run, Heat.for_trade(run, item, int(favour.quantity)))
+	Encounters.check_raid(run)
+	_commit(false)
+	return true
 
 
 ## Returns the rumour, or an empty dictionary when nothing was sold.
@@ -283,11 +310,14 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 
 func _pass_time(new_day_started: bool, travelled: bool) -> void:
 	var missed := Orders.expire(run)
+	var missed_favours := Favours.expire(run)
 	var lost_crate := Smuggling.expire(run)
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
 	_commit(new_day_started)
 	if not missed.is_empty():
 		orders_missed.emit(missed)
+	if not missed_favours.is_empty():
+		favours_missed.emit(missed_favours)
 	if not lost_crate.is_empty():
 		crate_lost.emit(lost_crate)
 

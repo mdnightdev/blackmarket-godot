@@ -1,12 +1,24 @@
 extends Control
 
-const VENUE_CARD := preload("res://ui/components/venue_card.tscn")
+const FAB_BUTTON := preload("res://ui/components/fab_button.tscn")
 const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
 const ROLE_COLORS := {
 	CharacterDef.Role.LENDER: Palette.PEACH_TITLE,
 	CharacterDef.Role.POLICE: Palette.RISK_HIGH,
 	CharacterDef.Role.INFORMANT: Palette.PRICE,
 	CharacterDef.Role.RIVAL: Palette.PEACH_BRIGHT,
+	CharacterDef.Role.LIEUTENANT: Palette.PEACH_BORDER,
+	CharacterDef.Role.HACKER: Palette.PRICE,
+}
+const VENUE_ICONS := {
+	&"tran_bar": preload("res://assets/icons/hud/beer.svg"),
+	&"la_paloma": preload("res://assets/icons/hud/wine.svg"),
+	&"casino": preload("res://assets/icons/hud/dices.svg"),
+	&"vip_casino": preload("res://assets/icons/hud/dices.svg"),
+	&"docks": preload("res://assets/icons/hud/anchor.svg"),
+	&"supply": preload("res://assets/icons/hud/wrench.svg"),
+	&"safehouse": preload("res://assets/icons/hud/house.svg"),
+	&"loan_shark": preload("res://assets/icons/hud/hand-coins.svg"),
 }
 const REST_SCALE := Vector2(1.08, 1.08)
 const DRIFT_SCALE := Vector2(1.13, 1.13)
@@ -30,15 +42,13 @@ const PHASE_TINTS := {
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _around_block: Control = %AroundBlock
 @onready var _people_list: HBoxContainer = %PeopleList
-@onready var _venue_list: VBoxContainer = %VenueList
+@onready var _venue_fabs: HBoxContainer = %VenueFabs
+@onready var _map_fab: FabButton = %MapFab
 @onready var _crate_button: Button = %CrateButton
 @onready var _turf_bar: TurfBar = %TurfBar
-@onready var _menu_button: Button = %MenuButton
-@onready var _map_button: Button = %MapButton
-@onready var _bag_button: Button = %BagButton
 @onready var _venue_sheet: VenueSheet = %VenueSheet
-@onready var _inventory_sheet: InventorySheet = %InventorySheet
 @onready var _day_card: DayCard = %DayCard
+@onready var _logout_dialog: ConfirmDialog = %LogoutDialog
 
 var _tilt_offset := 0.0
 var _tint_tween: Tween
@@ -59,15 +69,14 @@ func _ready() -> void:
 	_tagline_label.text = district.tagline
 	_news_line.show_for(district.id)
 	_build_people_strip()
-	_build_venue_cards(district)
+	_build_venue_fabs(district)
 	_refresh_crate_button()
 	_refresh_turf_bar()
 
 	_crate_button.pressed.connect(_deliver_crate)
+	_map_fab.pressed.connect(SceneRouter.go_to.bind(SceneRouter.MAP_SCREEN))
+	_logout_dialog.confirmed.connect(_log_out)
 	_turf_bar.pressed.connect(StreetTalk.talk_about_turf)
-	_map_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.MAP_SCREEN))
-	_menu_button.pressed.connect(_return_to_title)
-	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
 	GameState.run_changed.connect(_on_run_changed)
 	GameState.day_started.connect(_on_day_started)
 	resized.connect(_center_background_pivot)
@@ -91,7 +100,7 @@ func _process(delta: float) -> void:
 
 
 func can_present_encounter() -> bool:
-	return not _day_card.visible
+	return not _day_card.visible and not _logout_dialog.visible
 
 
 func handle_back() -> bool:
@@ -99,11 +108,10 @@ func handle_back() -> bool:
 		return true
 	if _venue_sheet.visible:
 		_venue_sheet.close()
-		return true
-	if _inventory_sheet.visible:
-		_inventory_sheet.close()
-		return true
-	_return_to_title()
+	elif _logout_dialog.visible:
+		_logout_dialog.close()
+	else:
+		_logout_dialog.open("Log out?", "Your run is saved. Continue from the title screen.", "Yes")
 	return true
 
 
@@ -137,16 +145,20 @@ func _trade_with(dealer: DealerDef) -> void:
 	SceneRouter.go_to(SceneRouter.MARKET_SCREEN)
 
 
-func _build_venue_cards(district: DistrictDef) -> void:
+## The market is left out because the nav bar already opens it.
+func _build_venue_fabs(district: DistrictDef) -> void:
 	for venue_id in district.venues:
+		if venue_id == &"market":
+			continue
 		var venue := Content.venue(venue_id)
 		if venue == null:
 			push_error("District %s lists unknown venue %s" % [district.id, venue_id])
 			continue
-		var card: VenueCard = VENUE_CARD.instantiate()
-		card.venue = venue
-		card.venue_selected.connect(_on_venue_selected)
-		_venue_list.add_child(card)
+		var fab: FabButton = FAB_BUTTON.instantiate()
+		fab.icon_texture = VENUE_ICONS.get(venue_id)
+		fab.caption = venue.display_name
+		fab.pressed.connect(_on_venue_selected.bind(venue))
+		_venue_fabs.add_child(fab)
 
 
 func _on_venue_selected(venue: VenueDef) -> void:
@@ -154,8 +166,6 @@ func _on_venue_selected(venue: VenueDef) -> void:
 		_venue_sheet.show_venue(venue)
 		return
 	match venue.id:
-		&"market":
-			SceneRouter.go_to(SceneRouter.MARKET_SCREEN)
 		Loan.VENUE:
 			StreetTalk.talk_to(Content.character(Loan.LENDER))
 		Safehouse.VENUE:
@@ -203,13 +213,19 @@ func _deliver_crate() -> void:
 
 
 func _enter_casino(casino: CasinoDef, host: CharacterDef) -> void:
-	if Casino.can_enter(GameState.run, casino):
+	var run := GameState.run
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"leave", "Leave", true, true)]
+	var close := func(_choice: StringName) -> void: GameOverlay.end_talk()
+	if Families.refuses(run, host):
+		var family := Families.family_of(host)
+		GameOverlay.talk(host, "The %s owns these tables, and the family wants nothing from you. Walk away." % family.english_name, choices, close, family.full_name())
+		return
+	if Casino.can_enter(run, casino):
 		GameState.visiting_venue = casino.id
 		SceneRouter.go_to(SceneRouter.CASINO_SCREEN)
 		return
-	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"leave", "Leave", true, true)]
 	var line := "These tables are for players with real money. Come back with %s in your pocket." % Format.money(casino.entry_cash)
-	GameOverlay.talk(host, line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk(), "You are carrying %s." % Format.money(GameState.run.cash))
+	GameOverlay.talk(host, line, choices, close, "You are carrying %s." % Format.money(run.cash))
 
 
 func _on_run_changed() -> void:
@@ -229,12 +245,9 @@ func _on_day_started(_day: int) -> void:
 
 func _show_day_card() -> void:
 	GameState.has_unseen_new_day = false
-	_day_card.play(GameState.run.day, GameState.run.campaign_days, GameState.run.endless)
-
-
-func _return_to_title() -> void:
-	GameState.save_run()
-	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+	var run := GameState.run
+	var turf_cut := Turf.daily_cut(run) if run.day > 1 else 0
+	_day_card.play(run.day, run.campaign_days, run.endless, turf_cut)
 
 
 func _center_background_pivot() -> void:
@@ -248,12 +261,18 @@ func _start_background_drift() -> void:
 	tween.tween_property(_background, "scale", REST_SCALE, DRIFT_SECONDS)
 
 
+func _log_out() -> void:
+	GameState.save_run()
+	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+
+
 func _play_entrance() -> void:
-	var cards := _venue_list.get_children()
+	var fabs: Array[Node] = _venue_fabs.get_children()
+	fabs.append(_map_fab)
 	_title_block.modulate.a = 0.0
-	for card: Control in cards:
-		card.modulate.a = 0.0
+	for fab: Control in fabs:
+		fab.modulate.a = 0.0
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_title_block, "modulate:a", 1.0, 0.6).set_delay(0.15)
-	for index in cards.size():
-		tween.tween_property(cards[index], "modulate:a", 1.0, 0.35).set_delay(0.35 + index * 0.08)
+	for index in fabs.size():
+		tween.tween_property(fabs[index], "modulate:a", 1.0, 0.35).set_delay(0.35 + index * 0.08)

@@ -44,6 +44,7 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	Turf.vex_pushes(run)
 
 	if new_day_started:
+		Turf.collect_daily_cut(run)
 		Loan.accrue_interest(run)
 		if Campaign.update_outcome(run):
 			return
@@ -63,6 +64,8 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 		run.pending_encounter = police_stop(run)
 	elif Roster.rival_in(run, run.district_id, Calendar.stamp(run)) and Turf.clash_due(run, rng.randf()):
 		run.pending_encounter = Turf.clash(run)
+	elif Families.hostile_family_in(run, run.district_id) != null and rng.randf() < Families.SHAKEDOWN_CHANCE:
+		run.pending_encounter = Families.shakedown(run)
 	elif rng.randf() < StreetEvents.EVENT_CHANCE:
 		run.pending_encounter = StreetEvents.roll_event(run, events, rng)
 		if int(run.pending_encounter.get("effect", -1)) == EventDef.Effect.PRICE_SHIFT:
@@ -78,6 +81,7 @@ static func check_raid(run: RunState) -> void:
 ## The patrol working the district makes the stop, otherwise the beat officer.
 static func police_stop(run: RunState) -> Dictionary:
 	var patrol := Roster.strongest_patrol(run, run.district_id, Calendar.stamp(run))
+	run.stop_stamp = Calendar.stamp(run)
 	return {
 		"type": POLICE,
 		"speaker": String(patrol.id if patrol != null else BEAT_OFFICER),
@@ -133,13 +137,18 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 		Turf.CLASH:
 			var tribute := int(encounter.tribute)
 			list.append(Choice.new(Turf.TRIBUTE, "Pay %s tribute" % Format.money(tribute), run.cash >= tribute))
-			list.append(Choice.new(Turf.FIGHT, "Fight (%d%%)" % roundi(Turf.FIGHT_CHANCE * 100.0)))
+			var district_id := StringName(str(encounter.get("district", run.district_id)))
+			list.append(Choice.new(Turf.FIGHT, "Fight (%d%%)" % roundi(Turf.fight_chance(run, district_id) * 100.0)))
 			list.append(Choice.new(Turf.BACK_OFF, "Back off"))
+		Families.SHAKEDOWN:
+			var demand := int(encounter.demand)
+			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
+			list.append(Choice.new(Families.REFUSE, "Refuse"))
 		EVENT:
 			match int(encounter.effect):
 				EventDef.Effect.MUGGING:
 					list.append(Choice.new(PAY, "Hand over %s" % Format.money(int(encounter.amount))))
-					list.append(Choice.new(FIGHT, "Fight back"))
+					list.append(Choice.new(FIGHT, "Fight back (%d%%)" % roundi(StreetEvents.FIGHT_CHANCE * 100.0)))
 				EventDef.Effect.LUCKY_FIND:
 					list.append(Choice.new(TAKE, "Take it"))
 					list.append(Choice.new(LEAVE, "Leave it"))
@@ -158,8 +167,11 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 	if allowed.is_empty():
 		return ""
 	run.pending_encounter = {}
-	if encounter.get("type") == Turf.CLASH:
-		return Turf.resolve_clash(run, encounter, choice, roll)
+	match encounter.get("type"):
+		Turf.CLASH:
+			return Turf.resolve_clash(run, encounter, choice, roll)
+		Families.SHAKEDOWN:
+			return Families.resolve_shakedown(run, encounter, choice)
 	match choice:
 		BRIBE:
 			Police.pay_bribe(run, int(encounter.bribe))
@@ -182,7 +194,7 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		FIGHT:
 			if roll < StreetEvents.FIGHT_CHANCE:
 				return "You fight them off and keep your cash."
-			var lost := mini(int(encounter.amount) * StreetEvents.FIGHT_LOSS_MULTIPLIER, maxi(0, run.cash))
+			var lost := mini(roundi(int(encounter.amount) * StreetEvents.FIGHT_LOSS_MULTIPLIER), maxi(0, run.cash))
 			run.cash -= lost
 			return "They beat you down and take %s." % Format.money(lost)
 		TAKE:

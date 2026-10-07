@@ -27,6 +27,8 @@ var _shutter: ColorRect
 var _is_transitioning := false
 ## A run can end mid-transition (for example while travelling), so that one route waits its turn.
 var _queued_scene := ""
+## The screen shown before the current one, so menus like settings can return to it.
+var previous_scene := ""
 
 
 func _ready() -> void:
@@ -76,6 +78,8 @@ func go_to(scene_path: String, queue_if_busy := false) -> void:
 	await _slide_shutter(0.0, CLOSE_SECONDS, Tween.EASE_IN).finished
 	AudioService.play_sfx(Sfx.SHUTTER, 0.08, SHUTTER_DB)
 
+	var leaving := get_tree().current_scene
+	previous_scene = leaving.scene_file_path if leaving != null else ""
 	var error := get_tree().change_scene_to_file(scene_path)
 	if error != OK:
 		push_error("Scene change to %s failed: %s" % [scene_path, error_string(error)])

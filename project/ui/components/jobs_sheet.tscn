@@ -1,0 +1,114 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://ui/components/jobs_sheet.gd" id="1_sheet"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/arrow-left.svg" id="3_back"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
+bg_color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_plain"]
+
+[node name="JobsSheet" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sheet")
+
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0314, 0.0353, 0.0471, 0.6)
+
+[node name="Sheet" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page")
+
+[node name="Page" type="VBoxContainer" parent="Sheet"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Margin" type="MarginContainer" parent="Sheet/Page"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 8
+
+[node name="Header" type="HBoxContainer" parent="Sheet/Page/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BackButton" type="Button" parent="Sheet/Page/Margin/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_plain")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_plain")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_plain")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_plain")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_plain")
+script = ExtResource("2_button")
+
+[node name="Arrow" type="TextureRect" parent="Sheet/Page/Margin/Header/BackButton"]
+modulate = Color(0.8706, 0.8392, 0.8078, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -18.0
+offset_top = -18.0
+offset_right = 18.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_back")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Sheet/Page/Margin/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"HeaderLabel"
+text = "Jobs"
+
+[node name="EmptyLabel" type="Label" parent="Sheet/Page"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "No jobs right now. Bars post delivery orders, Pier 9 has crates, and the families hand out favours."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+scroll_deadzone = 12
+
+[node name="List" type="VBoxContainer" parent="Sheet/Page/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0

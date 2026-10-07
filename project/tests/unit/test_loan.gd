@@ -55,9 +55,10 @@ func test_borrowing_is_capped() -> void:
 
 
 func test_missed_payment_sends_enforcers() -> void:
+	var cash_after_cut := RunState.STARTING_CASH + Turf.daily_cut(_run)
 	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
 	assert_eq(_run.pending_encounter.type, Encounters.ENFORCERS)
-	assert_eq(_run.cash, RunState.STARTING_CASH - 500)
+	assert_eq(_run.cash, cash_after_cut - roundi(cash_after_cut * Loan.ENFORCER_CASH_FRACTION))
 	assert_eq(_run.debt, 5150 + 515)
 	assert_eq(_run.next_due_day, Loan.PAYMENT_PERIOD_DAYS * 2 + 1)
 	assert_eq(_run.paid_this_period, 0)

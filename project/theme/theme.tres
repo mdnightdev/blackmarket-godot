@@ -1,11 +1,13 @@
-[gd_resource type="Theme" load_steps=32 format=3]
+[gd_resource type="Theme" load_steps=36 format=3]
 
 [ext_resource type="FontFile" path="res://theme/fonts/Barlow-Regular.woff2" id="1_barlow_regular"]
 [ext_resource type="FontFile" path="res://theme/fonts/Barlow-SemiBold.woff2" id="2_barlow_semibold"]
 [ext_resource type="FontFile" path="res://theme/fonts/Oswald-Bold.woff2" id="3_oswald"]
 [ext_resource type="FontFile" path="res://theme/fonts/RubikDirt-Regular.woff2" id="4_rubik_dirt"]
+[ext_resource type="FontFile" path="res://theme/fonts/NotoSansSC-Subset.otf" id="5_noto_sc"]
 
 [sub_resource type="FontVariation" id="FontVariation_ui"]
+fallbacks = Array[Font]([ExtResource("5_noto_sc")])
 base_font = ExtResource("3_oswald")
 variation_opentype = {
 2003265652: 700
@@ -13,8 +15,17 @@ variation_opentype = {
 spacing_glyph = 1
 
 [sub_resource type="FontVariation" id="FontVariation_display"]
+fallbacks = Array[Font]([ExtResource("5_noto_sc")])
 base_font = ExtResource("4_rubik_dirt")
 spacing_glyph = 2
+
+[sub_resource type="FontVariation" id="FontVariation_body"]
+fallbacks = Array[Font]([ExtResource("5_noto_sc")])
+base_font = ExtResource("1_barlow_regular")
+
+[sub_resource type="FontVariation" id="FontVariation_semibold"]
+fallbacks = Array[Font]([ExtResource("5_noto_sc")])
+base_font = ExtResource("2_barlow_semibold")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_none"]
 
@@ -229,6 +240,22 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_strip"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.0471, 0.0549, 0.0706, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1333, 0.149, 0.1804, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sheet"]
 content_margin_left = 32.0
 content_margin_top = 28.0
@@ -354,7 +381,7 @@ corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
 [resource]
-default_font = ExtResource("1_barlow_regular")
+default_font = SubResource("FontVariation_body")
 default_font_size = 23
 Button/colors/font_color = Color(0.8471, 0.851, 0.8627, 1)
 Button/colors/font_disabled_color = Color(0.3608, 0.3725, 0.4118, 1)
@@ -379,7 +406,7 @@ CheckButton/colors/font_color = Color(0.8471, 0.851, 0.8627, 1)
 CheckButton/colors/font_hover_color = Color(0.8471, 0.851, 0.8627, 1)
 CheckButton/colors/font_pressed_color = Color(0.8471, 0.851, 0.8627, 1)
 CheckButton/colors/font_hover_pressed_color = Color(0.8471, 0.851, 0.8627, 1)
-CheckButton/fonts/font = ExtResource("2_barlow_semibold")
+CheckButton/fonts/font = SubResource("FontVariation_semibold")
 CheckButton/styles/focus = SubResource("StyleBoxEmpty_none")
 CheckButton/styles/hover = SubResource("StyleBoxEmpty_none")
 CheckButton/styles/hover_pressed = SubResource("StyleBoxEmpty_none")
@@ -432,7 +459,7 @@ SectionLabel/fonts/font = SubResource("FontVariation_ui")
 StatValueLabel/base_type = &"Label"
 StatValueLabel/colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 StatValueLabel/font_sizes/font_size = 30
-StatValueLabel/fonts/font = ExtResource("2_barlow_semibold")
+StatValueLabel/fonts/font = SubResource("FontVariation_semibold")
 TitleLabel/base_type = &"Label"
 TitleLabel/colors/font_color = Color(0.8157, 0.6039, 0.6275, 1)
 TitleLabel/colors/font_shadow_color = Color(0, 0, 0, 0.65)
@@ -453,10 +480,16 @@ HudCaptionLabel/font_sizes/font_size = 14
 HudCaptionLabel/fonts/font = SubResource("FontVariation_ui")
 HudCard/base_type = &"PanelContainer"
 HudCard/styles/panel = SubResource("StyleBoxFlat_hud")
+HudStrip/base_type = &"PanelContainer"
+HudStrip/styles/panel = SubResource("StyleBoxFlat_hud_strip")
+HudStripValue/base_type = &"Label"
+HudStripValue/colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+HudStripValue/font_sizes/font_size = 19
+HudStripValue/fonts/font = SubResource("FontVariation_semibold")
 HudValueLabel/base_type = &"Label"
 HudValueLabel/colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 HudValueLabel/font_sizes/font_size = 25
-HudValueLabel/fonts/font = ExtResource("2_barlow_semibold")
+HudValueLabel/fonts/font = SubResource("FontVariation_semibold")
 MapPinButton/base_type = &"Button"
 MapPinButton/styles/focus = SubResource("StyleBoxEmpty_none")
 MapPinButton/styles/hover = SubResource("StyleBoxEmpty_none")

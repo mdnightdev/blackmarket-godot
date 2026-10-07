@@ -1,7 +1,7 @@
 extends SceneTree
 
 const OUTPUT_DIR := "/tmp/blackmarket_shots"
-const WATCHDOG_SECONDS := 580.0
+const WATCHDOG_SECONDS := 720.0
 
 var _game_state: Node
 var _router: Node
@@ -24,9 +24,11 @@ func _run() -> void:
 	_game_state.start_new_run()
 	_game_state.has_unseen_new_day = false
 	await _open(_router.DISTRICT_SCREEN, "02_district")
-	current_scene.get_node("%BagButton").pressed.emit()
+	root.get_node("GameOverlay").open_bag()
 	await _wait(0.8)
 	await _capture("03_bag_empty")
+	root.get_node("GameOverlay").get("_inventory_sheet").close()
+	await _wait(0.4)
 
 	await _open(_router.MARKET_SCREEN, "04_market_buy")
 	var phones: Resource = _content.item(&"burner_phones")
@@ -73,6 +75,8 @@ func _run() -> void:
 	await _capture_docks()
 	await _capture_turf()
 	await _capture_fixer_and_safehouse()
+	await _capture_families()
+	await _capture_new_dealers()
 
 	_router.go_to(_router.TITLE_SCREEN)
 	await _wait(0.18)
@@ -97,7 +101,7 @@ func _capture_roster() -> void:
 	await _open(_router.DISTRICT_SCREEN, "20_district_crowd")
 
 	var overlay: Node = root.get_node("GameOverlay")
-	var dialogue: Node = overlay.get_child(1)
+	var dialogue: Node = overlay.get("_dialogue")
 	StreetTalk.talk_to(_content.character(&"rival"))
 	await _wait(2.4)
 	await _capture("21_street_talk")
@@ -126,7 +130,7 @@ func _capture_bar() -> void:
 	_game_state.has_unseen_new_day = false
 	var run: RunState = _game_state.run
 	var overlay: Node = root.get_node("GameOverlay")
-	var dialogue: Node = overlay.get_child(1)
+	var dialogue: Node = overlay.get("_dialogue")
 
 	_game_state.visiting_venue = &"tran_bar"
 	await _open(_router.BAR_SCREEN, "29_bar", 2.6)
@@ -200,7 +204,7 @@ func _capture_docks() -> void:
 	_game_state.casino_rng().seed = 3
 	var run: RunState = _game_state.run
 	var overlay: Node = root.get_node("GameOverlay")
-	var dialogue: Node = overlay.get_child(1)
+	var dialogue: Node = overlay.get("_dialogue")
 
 	run.district_id = &"docks"
 	_game_state.visiting_venue = &"docks"
@@ -242,7 +246,7 @@ func _capture_fixer_and_safehouse() -> void:
 	_game_state.has_unseen_new_day = false
 	var run: RunState = _game_state.run
 	var overlay: Node = root.get_node("GameOverlay")
-	var dialogue: Node = overlay.get_child(1)
+	var dialogue: Node = overlay.get("_dialogue")
 	run.cash = 9000
 	run.heat = 48
 
@@ -302,7 +306,7 @@ func _capture_turf() -> void:
 	_game_state.has_unseen_new_day = false
 	var run: RunState = _game_state.run
 	var overlay: Node = root.get_node("GameOverlay")
-	var dialogue: Node = overlay.get_child(1)
+	var dialogue: Node = overlay.get("_dialogue")
 	run.cash = 8000
 	run.turf[&"old_market"] = 56
 	run.turf[&"docks"] = 72
@@ -328,6 +332,9 @@ func _capture_turf() -> void:
 	await _wait(0.6)
 
 	await _open(_router.MAP_SCREEN, "55_turf_map", 2.0)
+	current_scene.get_node("%CityView").focus_on(Vector2(0.5, 0.5), 1.0)
+	await _wait(0.4)
+	await _capture("55b_city_overview")
 
 	run.district_id = &"slums"
 	await _open(_router.MARKET_SCREEN, "56_market_vex_turf", 2.4)
@@ -344,10 +351,122 @@ func _capture_turf() -> void:
 	await _wait(0.6)
 
 
+func _capture_families() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+	var dialogue: Node = overlay.get("_dialogue")
+	var dragon: FamilyDef = _content.family(&"azure_dragon")
+	run.cash = 12000
+
+	run.district_id = &"downtown"
+	await _open(_router.DISTRICT_SCREEN, "80_district_lieutenant")
+	var lieutenant: CharacterDef = _content.character(dragon.lieutenant)
+	FamilyTalk.talk_to(lieutenant)
+	await _wait(2.8)
+	await _capture("81_favour_board")
+	var board := Favours.board(run, dragon)
+	var pick := 0
+	for index in board.size():
+		if int(board[index].kind) == Favours.Kind.DELIVERY:
+			pick = index
+			break
+	dialogue.get_node("%ChoiceList").get_child(pick).pressed.emit()
+	await _wait(2.6)
+	await _capture("82_favour_taken")
+	overlay.end_talk()
+	await _wait(0.4)
+
+	var favour := Favours.active_for(run, dragon.id)
+	if not favour.is_empty():
+		Inventory.add_units(run, StringName(favour.item), int(favour.quantity))
+		FamilyTalk.talk_to(lieutenant)
+		await _wait(2.4)
+		await _capture("83_favour_due")
+		dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+		await _wait(3.0)
+		await _capture("84_favour_done")
+		overlay.end_talk()
+		await _wait(0.4)
+
+	var tiger_offer := Favours.board(run, _content.family(&"white_tiger"))[0].duplicate()
+	tiger_offer.merge({ "kind": Favours.Kind.DELIVERY, "item": "chip_kits", "quantity": 3, "price": 260 }, true)
+	_game_state.accept_favour(tiger_offer)
+	overlay.open_families()
+	await _wait(0.8)
+	await _capture("85_families")
+	overlay.get("_families_sheet").close()
+	await _wait(0.4)
+
+	run.family_standing[&"white_tiger"] = 45
+	run.district_id = &"docks"
+	_game_state.trading_with = &"wei"
+	await _open(_router.MARKET_SCREEN, "86_market_family", 2.6)
+
+	run.family_standing[&"white_tiger"] = -50
+	_game_state.trading_with = &"wei"
+	await _open(_router.MARKET_SCREEN, "87_market_hostile", 2.6)
+
+	await _open(_router.DISTRICT_SCREEN, "88_district_hostile")
+	run.pending_encounter = Families.shakedown(run)
+	_game_state.run_changed.emit()
+	await _wait(2.8)
+	await _capture("89_shakedown")
+	dialogue.get_node("%ChoiceList").get_child(1).pressed.emit()
+	await _wait(1.6)
+	await _capture("90_shakedown_result")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(0.6)
+
+	if not run.favours.is_empty():
+		var missed: Array[Dictionary] = [run.favours[0]]
+		_game_state.favours_missed.emit(missed)
+		await _wait(2.8)
+		await _capture("91_favour_missed")
+		overlay.end_talk()
+		await _wait(0.4)
+
+	run.family_standing[&"azure_dragon"] = -60
+	run.district_id = &"downtown"
+	await _open(_router.DISTRICT_SCREEN, "92_downtown_hostile")
+	current_scene._on_venue_selected(_content.venue(&"casino"))
+	await _wait(2.8)
+	await _capture("93_casino_refused")
+	overlay.end_talk()
+	await _wait(0.4)
+
+	StreetTalk.talk_to(_content.character(&"hana"))
+	await _wait(2.8)
+	await _capture("94_hana_offer")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(3.4)
+	await _capture("95_hana_hack")
+	overlay.end_talk()
+	await _wait(0.4)
+
+
+func _capture_new_dealers() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	var run: RunState = _game_state.run
+	for dealer_id: StringName in [&"lucia", &"anya", &"amara"]:
+		var dealer: DealerDef = _content.dealer(dealer_id)
+		for stamp in 40:
+			var location := Roster.dealer_location(run, dealer, stamp)
+			if not location.is_empty():
+				run.day = stamp / RunState.Phase.size() + 1
+				run.phase = (stamp % RunState.Phase.size()) as RunState.Phase
+				run.district_id = location
+				break
+		_game_state.trading_with = dealer_id
+		await _open(_router.MARKET_SCREEN, "96_market_%s" % dealer_id, 2.6)
+
+
 func _capture_phase_four(dealer: Resource) -> void:
 	var run: RunState = _game_state.run
 	var overlay: Node = root.get_node("GameOverlay")
-	var dialogue: Node = overlay.get_child(1)
+	var dialogue: Node = overlay.get("_dialogue")
 
 	run.walked_out.clear()
 	await _open(_router.DISTRICT_SCREEN, "11_district_heat")
@@ -381,7 +500,7 @@ func _capture_phase_four(dealer: Resource) -> void:
 	overlay.open_loan()
 	await _wait(0.8)
 	await _capture("17_loan_sheet")
-	overlay.get_child(0).close()
+	overlay.get("_loan_sheet").close()
 	await _wait(0.4)
 	StreetTalk.talk_to(_content.character(&"shark"))
 	await _wait(2.4)

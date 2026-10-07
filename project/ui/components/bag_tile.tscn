@@ -1,0 +1,68 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/components/bag_tile.gd" id="1_tile"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile"]
+bg_color = Color(0.0824, 0.0902, 0.1176, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1804, 0.1961, 0.2314, 1)
+
+[node name="BagTile" type="Button"]
+custom_minimum_size = Vector2(0, 156)
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_tile")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tile")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tile")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_tile")
+theme_override_styles/focus = SubResource("StyleBoxFlat_tile")
+clip_contents = true
+script = ExtResource("1_tile")
+
+[node name="Icon" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="CountLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -34.0
+offset_right = -8.0
+offset_bottom = -4.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"HudStripValue"
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Frame" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_frame")

@@ -1,8 +1,6 @@
 class_name MapPin
 extends GameButton
 
-signal district_selected(district: DistrictDef)
-
 const MARKER_CENTER := Vector2(100, 34)
 const PULSE_SECONDS := 1.4
 const HOLDER_COLORS := {
@@ -24,7 +22,6 @@ func _ready() -> void:
 	super()
 	_name_label.text = district.display_name
 	_tint_marker(HOLDER_COLORS[holder])
-	pressed.connect(func() -> void: district_selected.emit(district))
 	_ring.visible = is_current
 	if is_current:
 		_pulse_ring()
@@ -32,6 +29,14 @@ func _ready() -> void:
 
 func place_at(map_point: Vector2) -> void:
 	position = map_point - MARKER_CENTER
+
+
+## Pins never take touches themselves, so a drag that starts on one still pans the city.
+func tap() -> void:
+	_on_pressed()
+	var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", PRESSED_SCALE, 0.06)
+	tween.tween_property(self, "scale", Vector2.ONE, 0.16)
 
 
 func _tint_marker(color: Color) -> void:

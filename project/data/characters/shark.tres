@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_def")
 id = &"shark"
+family = &"azure_dragon"
 display_name = "The Shark"
 role = 0
 portrait = ExtResource("2_portrait")

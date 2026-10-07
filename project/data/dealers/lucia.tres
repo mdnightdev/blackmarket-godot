@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="DealerDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/dealer_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/lucia.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/lucia_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lucia"
+display_name = "Lucía Navarro"
+district_id = &"docks"
+greeting = "I don't haggle twice. Make the first offer count."
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+stock_categories = Array[StringName]([&"tech", &"luxury"])
+price_bias = {
+&"tech": 0.82,
+&"luxury": 0.85,
+&"comms": 1.05,
+&"papers": 1.1,
+&"meds": 1.15,
+&"arms": 1.25
+}
+haggle_tolerance = 0.08
+route = Array[StringName]([&"docks", &"north_port", &"slums"])
+working_phases = Array[int]([1, 2, 3])

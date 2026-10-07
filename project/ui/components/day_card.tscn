@@ -55,3 +55,11 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
 horizontal_alignment = 1
+
+[node name="IncomeLabel" type="Label" parent="Center/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+theme_override_colors/font_color = Color(0.4431, 0.5451, 0.4784, 1)
+horizontal_alignment = 1

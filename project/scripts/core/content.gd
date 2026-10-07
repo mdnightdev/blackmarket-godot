@@ -7,6 +7,7 @@ const DEALERS_FOLDER := "res://data/dealers"
 const EVENTS_FOLDER := "res://data/events"
 const CHARACTERS_FOLDER := "res://data/characters"
 const PLAYERS_FOLDER := "res://data/players"
+const FAMILIES_FOLDER := "res://data/families"
 
 var _districts: Dictionary = {}
 var _venues: Dictionary = {}
@@ -15,6 +16,7 @@ var _dealers: Dictionary = {}
 var _residents_by_district: Dictionary = {}
 var _characters: Dictionary = {}
 var _players: Dictionary = {}
+var _families: Dictionary = {}
 var _events: Array[EventDef] = []
 
 
@@ -28,6 +30,7 @@ func _ready() -> void:
 			_residents_by_district[dealer.district_id] = dealer
 	_characters = Catalog.index_by_id(Catalog.load_folder(CHARACTERS_FOLDER))
 	_players = Catalog.index_by_id(Catalog.load_folder(PLAYERS_FOLDER))
+	_families = Catalog.index_by_id(Catalog.load_folder(FAMILIES_FOLDER))
 	_events.assign(Catalog.load_folder(EVENTS_FOLDER))
 
 
@@ -110,3 +113,13 @@ func speaker(id: StringName) -> SpeakerDef:
 
 func events() -> Array[EventDef]:
 	return _events
+
+
+func family(id: StringName) -> FamilyDef:
+	return _families.get(id)
+
+
+func families() -> Array[FamilyDef]:
+	var list: Array[FamilyDef] = []
+	list.assign(_families.values())
+	return list

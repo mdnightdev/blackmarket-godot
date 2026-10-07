@@ -1,127 +1,158 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://ui/components/hud_bar.gd" id="1_hud"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/banknote.svg" id="3_cash"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="4_heat"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/sunrise.svg" id="5_phase"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_track"]
+bg_color = Color(0.1333, 0.149, 0.1804, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_fill"]
+bg_color = Color(0.4431, 0.5451, 0.4784, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_day"]
 
 [node name="HudBar" type="PanelContainer"]
-theme_type_variation = &"HudCard"
+custom_minimum_size = Vector2(0, 60)
+theme_type_variation = &"HudStrip"
 script = ExtResource("1_hud")
 
-[node name="Rows" type="VBoxContainer" parent="."]
+[node name="Row" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="TimeRow" type="HBoxContainer" parent="Rows"]
+[node name="Cash" type="HBoxContainer" parent="Row"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 8
 
-[node name="DayLabel" type="Label" parent="Rows/TimeRow"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 4
-theme_type_variation = &"SectionLabel"
-theme_override_font_sizes/font_size = 19
-text = "DAY 1 / 30"
-
-[node name="PhaseLabel" type="Label" parent="Rows/TimeRow"]
-unique_name_in_owner = true
+[node name="Icon" type="TextureRect" parent="Row/Cash"]
+modulate = Color(0.4431, 0.5451, 0.4784, 1)
+custom_minimum_size = Vector2(22, 22)
 layout_mode = 2
 size_flags_vertical = 4
-theme_type_variation = &"HudCaptionLabel"
-theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_font_sizes/font_size = 19
-text = "MORNING"
+mouse_filter = 2
+texture = ExtResource("3_cash")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="ClockLabel" type="Label" parent="Rows/TimeRow"]
+[node name="CashValue" type="Label" parent="Row/Cash"]
 unique_name_in_owner = true
-visible = false
+layout_mode = 2
+theme_type_variation = &"HudStripValue"
+text = "$0"
+
+[node name="CashDivider" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 28)
 layout_mode = 2
 size_flags_vertical = 4
-theme_type_variation = &"CaptionLabel"
-text = "5:00"
+mouse_filter = 2
+color = Color(0.1804, 0.1961, 0.2314, 1)
 
-[node name="Spacer" type="Control" parent="Rows/TimeRow"]
+[node name="Heat" type="HBoxContainer" parent="Row"]
 layout_mode = 2
 size_flags_horizontal = 3
-mouse_filter = 2
+theme_override_constants/separation = 8
 
-[node name="NextPhaseButton" type="Button" parent="Rows/TimeRow"]
+[node name="HeatIcon" type="TextureRect" parent="Row/Heat"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
-theme_type_variation = &"SmallButton"
-text = "Next phase"
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("4_heat")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HeatBar" type="ProgressBar" parent="Row/Heat"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_heat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_heat_fill")
+show_percentage = false
+
+[node name="HeatDivider" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 28)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+color = Color(0.1804, 0.1961, 0.2314, 1)
+
+[node name="Debt" type="HBoxContainer" parent="Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Caption" type="Label" parent="Row/Debt"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "Debt"
+
+[node name="DebtValue" type="Label" parent="Row/Debt"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "$0"
+
+[node name="DebtDivider" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 28)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+color = Color(0.1804, 0.1961, 0.2314, 1)
+
+[node name="DayButton" type="Button" parent="Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_day")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_day")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_day")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_day")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_day")
 script = ExtResource("2_button")
 
-[node name="Separator" type="HSeparator" parent="Rows"]
-layout_mode = 2
+[node name="DayContent" type="HBoxContainer" parent="Row/DayButton"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
 
-[node name="StatsRow" type="HBoxContainer" parent="Rows"]
+[node name="PhaseIcon" type="TextureRect" parent="Row/DayButton/DayContent"]
+unique_name_in_owner = true
+modulate = Color(0.6627, 0.6784, 0.7255, 1)
+custom_minimum_size = Vector2(22, 22)
 layout_mode = 2
-theme_override_constants/separation = 12
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("5_phase")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Cash" type="VBoxContainer" parent="Rows/StatsRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 2
-
-[node name="Caption" type="Label" parent="Rows/StatsRow/Cash"]
+[node name="DayLabel" type="Label" parent="Row/DayButton/DayContent"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
-text = "CASH"
-
-[node name="CashValue" type="Label" parent="Rows/StatsRow/Cash"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"HudValueLabel"
-text = "$0"
-
-[node name="Debt" type="VBoxContainer" parent="Rows/StatsRow"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 2
-
-[node name="Caption" type="Label" parent="Rows/StatsRow/Debt"]
-layout_mode = 2
-theme_type_variation = &"HudCaptionLabel"
-text = "DEBT"
-
-[node name="DebtValue" type="Label" parent="Rows/StatsRow/Debt"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"HudValueLabel"
-theme_override_colors/font_color = Color(0.7216, 0.3647, 0.4078, 1)
-text = "$0"
-
-[node name="Heat" type="VBoxContainer" parent="Rows/StatsRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 2
-
-[node name="Caption" type="Label" parent="Rows/StatsRow/Heat"]
-layout_mode = 2
-theme_type_variation = &"HudCaptionLabel"
-text = "HEAT"
-
-[node name="HeatValue" type="Label" parent="Rows/StatsRow/Heat"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"HudValueLabel"
-text = "0%"
-
-[node name="Bag" type="VBoxContainer" parent="Rows/StatsRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 2
-
-[node name="Caption" type="Label" parent="Rows/StatsRow/Bag"]
-layout_mode = 2
-theme_type_variation = &"HudCaptionLabel"
-text = "BAG"
-
-[node name="BagValue" type="Label" parent="Rows/StatsRow/Bag"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"HudValueLabel"
-text = "0/20"
+theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+theme_override_font_sizes/font_size = 16
+text = "Day 1 Morning"

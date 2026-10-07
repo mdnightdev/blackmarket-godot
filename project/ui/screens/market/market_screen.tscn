@@ -116,6 +116,13 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HeaderLabel"
 
+[node name="FamilyLabel" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
 [node name="Speech" type="Label" parent="Margin/Layout/Header/Text"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 84)

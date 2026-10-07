@@ -2,8 +2,8 @@ class_name StreetEvents
 
 const EVENT_CHANCE := 0.18
 const MIN_MUGGING_CASH := 100
-const FIGHT_CHANCE := 0.45
-const FIGHT_LOSS_MULTIPLIER := 2
+const FIGHT_CHANCE := 0.6
+const FIGHT_LOSS_MULTIPLIER := 1.5
 const LUCKY_FIND_MAX_PRICE := 500
 
 
@@ -146,8 +146,9 @@ static func _carried_categories(run: RunState, dealer: DealerDef) -> Array[Strin
 	return categories
 
 
+## Nobody mugs the player on corners their own crew runs.
 static func _prepare_mugging(run: RunState, event: EventDef) -> Dictionary:
-	if run.cash < MIN_MUGGING_CASH:
+	if run.cash < MIN_MUGGING_CASH or Turf.holder(run, run.district_id) == Turf.Holder.PLAYER:
 		return {}
 	var amount := maxi(1, roundi(run.cash * event.cash_fraction))
 	return { "amount": amount, "text": { "amount": Format.money(amount) } }

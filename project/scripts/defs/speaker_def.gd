@@ -6,6 +6,8 @@ extends Resource
 @export var portrait: Texture2D
 ## Same portrait with the mouth open. Optional; without it the portrait only moves while talking.
 @export var talk_portrait: Texture2D
+## FamilyDef id of the triad family this speaker belongs to. Empty means independent.
+@export var family: StringName
 
 
 ## Short label shown next to the name in dialogue.

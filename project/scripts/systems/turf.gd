@@ -12,6 +12,10 @@ const VEX_HOLD_SHARE := 40
 
 const HELD_SELL_FACTOR := 1.1
 const VEX_SELL_FACTOR := 0.9
+## Lookouts on the player's own corners keep the police away.
+const HELD_STOP_FACTOR := 0.7
+## Paid every morning for each district the player holds.
+const DAILY_CUT := 150
 
 const SALE_VALUE_PER_POINT := 600
 const MAX_SALE_GAIN := 4
@@ -25,13 +29,17 @@ const MUSCLE_COST_PER_SHARE := 10
 const CLASH := "clash"
 const VICTORY := "turf_won"
 const CLASH_CHANCE := 0.25
+## The player's crew defends held districts, so Vex starts trouble there less often.
+const HELD_CLASH_FACTOR := 0.5
 const TRIBUTE_BASE := 300
 const TRIBUTE_PER_SHARE := 5
-const FIGHT_CHANCE := 0.5
+const FIGHT_BASE_CHANCE := 0.4
+const FIGHT_CHANCE_PER_SHARE := 0.005
+const MAX_FIGHT_CHANCE := 0.85
 const FIGHT_GAIN := 10
 const FIGHT_LOSS := 10
 ## Share of carried cash lost when Vex's crew wins the fight.
-const BEATING_CASH_FRACTION := 0.15
+const BEATING_CASH_FRACTION := 0.1
 const BACK_OFF_LOSS := 8
 const VICTORY_REWARD := 5000
 
@@ -73,6 +81,26 @@ static func sell_factor(run: RunState, district_id: StringName) -> float:
 		Holder.VEX:
 			return VEX_SELL_FACTOR
 	return 1.0
+
+
+static func stop_factor(run: RunState, district_id: StringName) -> float:
+	return HELD_STOP_FACTOR if holder(run, district_id) == Holder.PLAYER else 1.0
+
+
+static func daily_cut(run: RunState) -> int:
+	return held_count(run) * DAILY_CUT
+
+
+## Pays the morning cut from every held district and returns it.
+static func collect_daily_cut(run: RunState) -> int:
+	var cut := daily_cut(run)
+	run.cash += cut
+	return cut
+
+
+## The more of the district the player runs, the more people stand with them in a fight.
+static func fight_chance(run: RunState, district_id: StringName) -> float:
+	return minf(FIGHT_BASE_CHANCE + share(run, district_id) * FIGHT_CHANCE_PER_SHARE, MAX_FIGHT_CHANCE)
 
 
 ## Moves the player's share and returns the change actually applied.
@@ -123,7 +151,12 @@ static func clash_due(run: RunState, roll: float) -> bool:
 		return false
 	if Roster.rival_location(run, Calendar.stamp(run)) != run.district_id:
 		return false
-	return holder(run, run.district_id) != Holder.VEX and roll < CLASH_CHANCE
+	match holder(run, run.district_id):
+		Holder.VEX:
+			return false
+		Holder.PLAYER:
+			return roll < CLASH_CHANCE * HELD_CLASH_FACTOR
+	return roll < CLASH_CHANCE
 
 
 static func clash(run: RunState) -> Dictionary:
@@ -151,7 +184,7 @@ static func resolve_clash(run: RunState, encounter: Dictionary, choice: StringNa
 			run.cash -= paid
 			return "You hand Vex %s. Her crew leaves your corners alone, for now." % Format.money(paid)
 		FIGHT:
-			if roll < FIGHT_CHANCE:
+			if roll < fight_chance(run, district_id):
 				shift(run, district_id, FIGHT_GAIN)
 				return "Your people hold the street. Vex's crew scatters."
 			var lost := floori(maxi(0, run.cash) * BEATING_CASH_FRACTION)

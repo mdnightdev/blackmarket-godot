@@ -44,8 +44,9 @@ func test_police_stop_offers_three_choices() -> void:
 func test_bribe_pays_and_clears_the_stop() -> void:
 	Inventory.add_units(_run, _phones.id, 5)
 	_run.pending_encounter = Encounters.police_stop(_run)
+	var bribe := Police.bribe_cost(_run)
 	assert_ne(Encounters.resolve(_run, Encounters.BRIBE, 0.5), "")
-	assert_eq(_run.cash, RunState.STARTING_CASH - 125)
+	assert_eq(_run.cash, RunState.STARTING_CASH - bribe)
 	assert_false(Encounters.has_pending(_run))
 	assert_eq(Inventory.count(_run, _phones.id), 5)
 
@@ -72,7 +73,7 @@ func test_mugging_pay_and_fight() -> void:
 
 	_run.pending_encounter = mugging.duplicate()
 	Encounters.resolve(_run, Encounters.FIGHT, 0.99)
-	assert_eq(_run.cash, RunState.STARTING_CASH - 300 - 300 * StreetEvents.FIGHT_LOSS_MULTIPLIER)
+	assert_eq(_run.cash, RunState.STARTING_CASH - 300 - roundi(300 * StreetEvents.FIGHT_LOSS_MULTIPLIER))
 
 
 func test_lucky_find_take_and_leave() -> void:
@@ -120,7 +121,7 @@ func test_pending_encounter_and_shifts_survive_a_save() -> void:
 	assert_eq(restored.pending_encounter.type, Encounters.POLICE)
 	assert_eq(int(restored.pending_encounter.bribe), int(_run.pending_encounter.bribe))
 	assert_eq(restored.market_shifts[0].until, 5)
-	assert_eq(Encounters.resolve(restored, Encounters.COMPLY, 0.5), "They take 5 Burner Phones and let you go.")
+	assert_eq(Encounters.resolve(restored, Encounters.COMPLY, 0.5), "They take 3 Burner Phones and let you go.")
 
 
 func test_police_stop_is_made_by_the_patrol_on_duty() -> void:

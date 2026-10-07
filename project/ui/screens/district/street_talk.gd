@@ -17,6 +17,10 @@ static func talk_to(character: CharacterDef) -> void:
 			_talk_to_informant(character)
 		CharacterDef.Role.RIVAL:
 			_talk_turf(character, character.line)
+		CharacterDef.Role.LIEUTENANT:
+			FamilyTalk.talk_to(character)
+		CharacterDef.Role.HACKER:
+			_talk_to_hacker(character)
 		_:
 			var choices: Array[DialogueChoice] = [_leave()]
 			GameOverlay.talk(character, character.line, choices, _end, character.blurb)
@@ -77,6 +81,40 @@ static func _describe_patrols(patrols: Dictionary) -> String:
 	return "%s You didn't hear it from me." % " ".join(sightings)
 
 
+static func _talk_to_hacker(hacker: CharacterDef) -> void:
+	var run := GameState.run
+	var choices: Array[DialogueChoice] = []
+	var line := hacker.line
+	var targets := Hacker.targets(run)
+	if Hacker.hacked_this_phase(run):
+		line = "One job a phase. The trace has to go cold first."
+	elif targets.is_empty():
+		line = "Nobody is trading anywhere else right now. Nothing to pull."
+	else:
+		for district in targets:
+			choices.append(DialogueChoice.new(district.id, district.display_name, Hacker.can_hack(run)))
+	choices.append(DialogueChoice.new(LEAVE, "Not now", true, true))
+	var hint := "%s for every dealer's prices in one district, this phase only." % Format.money(Hacker.PRICE)
+	GameOverlay.talk(hacker, line, choices, _on_hacker_choice, hint)
+
+
+static func _on_hacker_choice(choice: StringName) -> void:
+	if choice == LEAVE:
+		GameOverlay.end_talk()
+		return
+	var dealers := GameState.buy_price_hack(choice)
+	var reply := "No cash, no hack."
+	if not dealers.is_empty():
+		AudioService.play_sfx(Sfx.PRICE_HACK)
+		var tips: Array[String] = []
+		for dealer in dealers:
+			var item := Market.best_sale(GameState.run, dealer)
+			tips.append("%s pays %s for %s." % [dealer.display_name, Format.money(Market.sell_price(GameState.run, dealer, item)), item.display_name])
+		reply = "%s The rest is on your phone." % " ".join(tips)
+	var done: Array[DialogueChoice] = [_leave()]
+	GameOverlay.say(reply, done, _end)
+
+
 ## The turf summary for the current district, spoken by the player when Vex is not around.
 static func talk_about_turf() -> void:
 	var run := GameState.run
@@ -91,7 +129,7 @@ static func talk_about_turf() -> void:
 static func _talk_turf(speaker: SpeakerDef, line: String) -> void:
 	var run := GameState.run
 	var choices: Array[DialogueChoice] = []
-	var hint := "Selling here gains you ground. Vex takes ground wherever she spends the phase."
+	var hint := "Selling here gains you ground. Held districts pay %s each morning, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
 	if Turf.is_contested(run.district_id) and not run.vex_gone:
 		var cost := Turf.muscle_cost(run)
 		choices.append(DialogueChoice.new(MUSCLE, "Send muscle %s" % Format.money(cost), Turf.can_send_muscle(run)))

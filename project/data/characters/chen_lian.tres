@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/chen_lian.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/chen_lian_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"chen_lian"
+display_name = "Chen Lian"
+role = 9
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "Red Lotus looks after its own. Want to be one of its own? Start small."
+blurb = "Red Lotus lieutenant. Hands out favours in the Slums."
+district_id = &"slums"
+family = &"red_lotus"
