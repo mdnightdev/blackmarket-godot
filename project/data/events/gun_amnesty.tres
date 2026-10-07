@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/event_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"gun_amnesty"
+title = "Gun amnesty"
+body = "Amnesty week in {district}. We're paying cash for guns, so arms prices just jumped."
+speaker = &"officer"
+effect = 0
+weight = 6
+min_day = 3
+scope = 0
+category = &"arms"
+multiplier = 1.5
+duration_phases = 4

@@ -1,0 +1,3 @@
+Theme music: "Game" by PaulYudin (Pixabay Content License)
+Source: https://pixabay.com/music/search/paulyudin/
+File: res://audio/music/theme.mp3

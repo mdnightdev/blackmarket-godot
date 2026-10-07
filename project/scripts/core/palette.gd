@@ -1,0 +1,18 @@
+class_name Palette
+
+const INK := Color("0c0e12")
+const PANEL := Color("101218")
+const PANEL_LIFT := Color("15171e")
+const SURFACE_ACTIVE := Color("1a1d24")
+const LINE := Color("22262e")
+const LINE_MUTED := Color("2e323b")
+const TEXT := Color("d8d9dc")
+const TEXT_MUTED := Color("a9adb9")
+const TEXT_CREAM := Color("ded6ce")
+const PEACH := Color("b7747d")
+const PEACH_TITLE := Color("d09aa0")
+const PEACH_BRIGHT := Color("e08a98")
+const PEACH_BORDER := Color("c47e8a")
+const PRICE := Color("9fb8c8")
+const RISK_LOW := Color("718b7a")
+const RISK_HIGH := Color("b85d68")

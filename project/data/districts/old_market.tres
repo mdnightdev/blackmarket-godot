@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/districts/old_market.jpg" id="2_background"]
+[ext_resource type="PackedScene" path="res://ui/effects/rain.tscn" id="3_effect"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"old_market"
+display_name = "Old Market"
+tagline = "Where every deal starts"
+description = "Covered stalls, wet cobblestones and a hundred quiet conversations. Everyone here is selling something, and most of it fell off a truck."
+background = ExtResource("2_background")
+ambient_effect = ExtResource("3_effect")
+map_position = Vector2(0.47, 0.47)
+travel_cost = 40
+heat_multiplier = 1.0
+venues = Array[StringName]([&"market", &"bar"])

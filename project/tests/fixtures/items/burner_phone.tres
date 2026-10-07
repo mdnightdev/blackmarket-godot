@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"burner_phone"
+display_name = "Burner Phone"
+kind = 1
+category = &"tools"
+base_price = 120
+risk = 5
+slots = 1
+description = "Prepaid, untraceable, disposable."

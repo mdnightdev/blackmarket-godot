@@ -1,0 +1,127 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/components/hud_bar.gd" id="1_hud"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+
+[node name="HudBar" type="PanelContainer"]
+theme_type_variation = &"HudCard"
+script = ExtResource("1_hud")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TimeRow" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="DayLabel" type="Label" parent="Rows/TimeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"SectionLabel"
+theme_override_font_sizes/font_size = 19
+text = "DAY 1 / 30"
+
+[node name="PhaseLabel" type="Label" parent="Rows/TimeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"HudCaptionLabel"
+theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+theme_override_font_sizes/font_size = 19
+text = "MORNING"
+
+[node name="ClockLabel" type="Label" parent="Rows/TimeRow"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"CaptionLabel"
+text = "5:00"
+
+[node name="Spacer" type="Control" parent="Rows/TimeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="NextPhaseButton" type="Button" parent="Rows/TimeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"SmallButton"
+text = "Next phase"
+script = ExtResource("2_button")
+
+[node name="Separator" type="HSeparator" parent="Rows"]
+layout_mode = 2
+
+[node name="StatsRow" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Cash" type="VBoxContainer" parent="Rows/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Rows/StatsRow/Cash"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "CASH"
+
+[node name="CashValue" type="Label" parent="Rows/StatsRow/Cash"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+text = "$0"
+
+[node name="Debt" type="VBoxContainer" parent="Rows/StatsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Rows/StatsRow/Debt"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "DEBT"
+
+[node name="DebtValue" type="Label" parent="Rows/StatsRow/Debt"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+theme_override_colors/font_color = Color(0.7216, 0.3647, 0.4078, 1)
+text = "$0"
+
+[node name="Heat" type="VBoxContainer" parent="Rows/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Rows/StatsRow/Heat"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "HEAT"
+
+[node name="HeatValue" type="Label" parent="Rows/StatsRow/Heat"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+text = "0%"
+
+[node name="Bag" type="VBoxContainer" parent="Rows/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Rows/StatsRow/Bag"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "BAG"
+
+[node name="BagValue" type="Label" parent="Rows/StatsRow/Bag"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+text = "0/20"

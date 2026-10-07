@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="VenueDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/venue_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"docks"
+display_name = "Docks"
+tagline = "Transport runs and hijacks"

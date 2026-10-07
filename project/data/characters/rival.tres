@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/rival.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/rival_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"rival"
+display_name = "Vex"
+role = 4
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "This is my corner now. Sell somewhere else, or sell cheap."
+blurb = "Runs a rival crew. Dealers pay 10% less while she is buying here."
+route = Array[StringName]([&"old_market", &"slums", &"docks", &"north_port"])

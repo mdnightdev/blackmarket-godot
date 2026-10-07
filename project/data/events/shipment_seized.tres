@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/event_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"shipment_seized"
+title = "Shipment seized"
+body = "Cops grabbed a {category} shipment near {district}. Prices over there are climbing."
+speaker = &"informant"
+effect = 0
+weight = 14
+scope = 1
+multiplier = 1.6
+duration_phases = 4

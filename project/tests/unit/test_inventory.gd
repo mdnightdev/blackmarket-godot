@@ -1,0 +1,59 @@
+extends GutTest
+
+var _run: RunState
+var _phones: ItemDef
+
+
+func before_each() -> void:
+	_run = RunState.new()
+	_phones = Content.item(&"burner_phones")
+
+
+func test_bags_add_capacity() -> void:
+	assert_eq(Inventory.capacity(_run), Inventory.BASE_CAPACITY)
+	_run.gear.append(&"messenger_bag")
+	_run.gear.append(&"duffel_bag")
+	assert_eq(Inventory.capacity(_run), Inventory.BASE_CAPACITY + 40)
+
+
+func test_used_space_counts_item_slots() -> void:
+	_run.inventory = {&"burner_phones": 3, &"ghost_pistol": 2}
+	assert_eq(Inventory.used(_run), 7)
+	assert_eq(Inventory.free_space(_run), Inventory.BASE_CAPACITY - 7)
+
+
+func test_stash_needs_lockbox_and_safehouse_district() -> void:
+	_run.district_id = &"slums"
+	assert_false(Inventory.can_use_stash(_run))
+	_run.gear.append(&"safehouse_lockbox")
+	assert_true(Inventory.can_use_stash(_run))
+	_run.district_id = &"old_market"
+	assert_false(Inventory.can_use_stash(_run))
+
+
+func test_moving_goods_between_bag_and_stash() -> void:
+	_run.district_id = &"slums"
+	_run.gear.append(&"safehouse_lockbox")
+	_run.inventory = {&"burner_phones": 5}
+	assert_true(Inventory.move_to_stash(_run, _phones, 3))
+	assert_eq(Inventory.count(_run, _phones.id), 2)
+	assert_eq(Inventory.stashed(_run, _phones.id), 3)
+	assert_true(Inventory.take_from_stash(_run, _phones, 3))
+	assert_eq(Inventory.count(_run, _phones.id), 5)
+	assert_false(_run.stash.has(_phones.id))
+
+
+func test_cannot_move_more_than_held() -> void:
+	_run.district_id = &"slums"
+	_run.gear.append(&"safehouse_lockbox")
+	_run.inventory = {&"burner_phones": 2}
+	assert_false(Inventory.move_to_stash(_run, _phones, 3))
+	assert_eq(Inventory.count(_run, _phones.id), 2)
+
+
+func test_taking_from_stash_respects_bag_space() -> void:
+	_run.district_id = &"slums"
+	_run.gear.append(&"safehouse_lockbox")
+	_run.inventory = {&"burner_phones": Inventory.BASE_CAPACITY - 1}
+	_run.stash = {&"burner_sims": 5}
+	assert_eq(Inventory.max_from_stash(_run, Content.item(&"burner_sims")), 1)

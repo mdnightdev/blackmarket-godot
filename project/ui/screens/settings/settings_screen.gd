@@ -1,0 +1,33 @@
+extends Control
+
+@onready var _music_slider: HSlider = %MusicSlider
+@onready var _sfx_slider: HSlider = %SfxSlider
+@onready var _vibration_toggle: CheckButton = %VibrationToggle
+@onready var _shake_toggle: CheckButton = %ShakeToggle
+@onready var _real_time_toggle: CheckButton = %RealTimeToggle
+@onready var _back_button: Button = %BackButton
+
+
+func _ready() -> void:
+	_music_slider.value = Settings.music_volume
+	_sfx_slider.value = Settings.sfx_volume
+	_vibration_toggle.button_pressed = Settings.vibration
+	_shake_toggle.button_pressed = Settings.screen_shake
+	_real_time_toggle.button_pressed = Settings.real_time_phases
+
+	_music_slider.value_changed.connect(func(value: float) -> void: Settings.music_volume = value)
+	_sfx_slider.value_changed.connect(func(value: float) -> void: Settings.sfx_volume = value)
+	_vibration_toggle.toggled.connect(func(enabled: bool) -> void: Settings.vibration = enabled)
+	_shake_toggle.toggled.connect(func(enabled: bool) -> void: Settings.screen_shake = enabled)
+	_real_time_toggle.toggled.connect(func(enabled: bool) -> void: Settings.real_time_phases = enabled)
+	_back_button.pressed.connect(_leave)
+
+
+func handle_back() -> bool:
+	_leave()
+	return true
+
+
+func _leave() -> void:
+	Settings.save()
+	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)

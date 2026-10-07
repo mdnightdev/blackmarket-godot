@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/detective.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/detective_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"detective"
+display_name = "Detective Moreau"
+role = 2
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "I know what you're carrying. I just can't prove it yet."
+blurb = "Works the big cases. Stops are twice as likely near her."
+route = Array[StringName]([&"old_market", &"docks", &"downtown", &"north_port", &"warehouse_row"])
+stop_multiplier = 2.0

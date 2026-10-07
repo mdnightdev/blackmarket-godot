@@ -1,0 +1,240 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/components/trade_sheet.gd" id="1_sheet"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+
+[node name="TradeSheet" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sheet")
+
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0314, 0.0353, 0.0471, 0.6)
+
+[node name="Sheet" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_type_variation = &"Sheet"
+
+[node name="Content" type="VBoxContainer" parent="Sheet"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Header" type="HBoxContainer" parent="Sheet/Content"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="IconFrame" type="PanelContainer" parent="Sheet/Content/Header"]
+clip_children = 1
+custom_minimum_size = Vector2(132, 132)
+layout_mode = 2
+size_flags_vertical = 0
+theme_type_variation = &"IconFrame"
+
+[node name="Icon" type="TextureRect" parent="Sheet/Content/Header/IconFrame"]
+unique_name_in_owner = true
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Text" type="VBoxContainer" parent="Sheet/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="NameLabel" type="Label" parent="Sheet/Content/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+theme_override_font_sizes/font_size = 30
+autowrap_mode = 3
+
+[node name="CaptionLabel" type="Label" parent="Sheet/Content/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+autowrap_mode = 3
+
+[node name="DescriptionLabel" type="Label" parent="Sheet/Content/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+theme_override_font_sizes/font_size = 19
+autowrap_mode = 3
+
+[node name="Stats" type="HBoxContainer" parent="Sheet/Content"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="PriceBox" type="VBoxContainer" parent="Sheet/Content/Stats"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="PriceCaption" type="Label" parent="Sheet/Content/Stats/PriceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "PRICE"
+
+[node name="PriceValue" type="Label" parent="Sheet/Content/Stats/PriceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
+
+[node name="HeldBox" type="VBoxContainer" parent="Sheet/Content/Stats"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Sheet/Content/Stats/HeldBox"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "YOU HAVE"
+
+[node name="HeldValue" type="Label" parent="Sheet/Content/Stats/HeldBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+
+[node name="PaidBox" type="VBoxContainer" parent="Sheet/Content/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Sheet/Content/Stats/PaidBox"]
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "YOU PAID"
+
+[node name="PaidValue" type="Label" parent="Sheet/Content/Stats/PaidBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+
+[node name="QuantityBox" type="VBoxContainer" parent="Sheet/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Stepper" type="HBoxContainer" parent="Sheet/Content/QuantityBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="MinusButton" type="Button" parent="Sheet/Content/QuantityBox/Stepper"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 64)
+layout_mode = 2
+theme_type_variation = &"SmallButton"
+theme_override_font_sizes/font_size = 28
+text = "-"
+script = ExtResource("2_button")
+
+[node name="QuantityLabel" type="Label" parent="Sheet/Content/QuantityBox/Stepper"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"StatValueLabel"
+text = "1"
+horizontal_alignment = 1
+
+[node name="PlusButton" type="Button" parent="Sheet/Content/QuantityBox/Stepper"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 64)
+layout_mode = 2
+theme_type_variation = &"SmallButton"
+theme_override_font_sizes/font_size = 28
+text = "+"
+script = ExtResource("2_button")
+
+[node name="MaxButton" type="Button" parent="Sheet/Content/QuantityBox/Stepper"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 64)
+layout_mode = 2
+theme_type_variation = &"SmallButton"
+text = "Max"
+script = ExtResource("2_button")
+
+[node name="QuantitySlider" type="HSlider" parent="Sheet/Content/QuantityBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+min_value = 1.0
+value = 1.0
+
+[node name="HaggleBox" type="VBoxContainer" parent="Sheet/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MoodLabel" type="Label" parent="Sheet/Content/HaggleBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+
+[node name="OfferSlider" type="HSlider" parent="Sheet/Content/HaggleBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+
+[node name="OfferLabel" type="Label" parent="Sheet/Content/HaggleBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+
+[node name="OfferButton" type="Button" parent="Sheet/Content/HaggleBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Make offer"
+script = ExtResource("2_button")
+
+[node name="ResultLabel" type="Label" parent="Sheet/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="Sheet/Content"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="HaggleButton" type="Button" parent="Sheet/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 72)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Haggle"
+script = ExtResource("2_button")
+
+[node name="ConfirmButton" type="Button" parent="Sheet/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Buy"
+text_overrun_behavior = 3
+script = ExtResource("2_button")

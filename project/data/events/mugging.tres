@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/event_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"mugging"
+title = "Jumped"
+body = "Nice night for a walk. Hand over {amount} and keep your teeth."
+speaker = &"rival"
+effect = 1
+weight = 8
+min_day = 2
+cash_fraction = 0.15

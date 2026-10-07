@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/items/messenger_bag.jpg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"messenger_bag"
+display_name = "Messenger Bag"
+kind = 1
+category = &"bag"
+base_price = 500
+risk = 0
+slots = 1
+description = "Worn canvas with room for more than it looks."
+icon = ExtResource("2_icon")
+capacity_bonus = 10

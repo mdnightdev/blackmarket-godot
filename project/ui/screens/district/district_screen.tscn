@@ -1,0 +1,177 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://ui/screens/district/district_screen.gd" id="1_screen"]
+[ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="3_hud"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
+[ext_resource type="PackedScene" path="res://ui/components/venue_sheet.tscn" id="5_venue_sheet"]
+[ext_resource type="PackedScene" path="res://ui/components/day_card.tscn" id="6_day_card"]
+[ext_resource type="PackedScene" path="res://ui/components/inventory_sheet.tscn" id="7_inventory_sheet"]
+[ext_resource type="Script" path="res://ui/components/news_line.gd" id="8_news_line"]
+[node name="DistrictScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[node name="Background" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Effects" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Vignette" parent="." instance=ExtResource("2_vignette")]
+layout_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 40
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+
+[node name="HudBar" parent="Margin/Layout" instance=ExtResource("3_hud")]
+layout_mode = 2
+
+[node name="TitleBlock" type="VBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="NameLabel" type="Label" parent="Margin/Layout/TitleBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DistrictTitleLabel"
+
+[node name="TaglineLabel" type="Label" parent="Margin/Layout/TitleBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+
+[node name="NewsLine" type="Label" parent="Margin/Layout/TitleBlock"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+theme_override_colors/font_color = Color(0.8784, 0.5412, 0.5961, 1)
+autowrap_mode = 3
+script = ExtResource("8_news_line")
+
+[node name="Spacer" type="Control" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="AroundBlock" type="VBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="AroundLabel" type="Label" parent="Margin/Layout/AroundBlock"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "AROUND"
+
+[node name="AroundScroll" type="ScrollContainer" parent="Margin/Layout/AroundBlock"]
+custom_minimum_size = Vector2(0, 156)
+layout_mode = 2
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 0
+
+[node name="PeopleList" type="HBoxContainer" parent="Margin/Layout/AroundBlock/AroundScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="PlacesLabel" type="Label" parent="Margin/Layout"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "PLACES"
+
+[node name="VenueList" type="VBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="MenuButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 72)
+layout_mode = 2
+theme_type_variation = &"GhostButton"
+text = "Menu"
+script = ExtResource("4_button")
+
+[node name="BagButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 72)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Bag"
+script = ExtResource("4_button")
+
+[node name="MapButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "City Map"
+script = ExtResource("4_button")
+
+[node name="VenueSheet" parent="." instance=ExtResource("5_venue_sheet")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="InventorySheet" parent="." instance=ExtResource("7_inventory_sheet")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="DayCard" parent="." instance=ExtResource("6_day_card")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

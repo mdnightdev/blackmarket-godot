@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/districts/docks.jpg" id="2_background"]
+[ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"docks"
+display_name = "The Docks"
+tagline = "Cargo moves at night"
+description = "Cranes, containers and harbour fog. Half the city's contraband passes through here before sunrise."
+background = ExtResource("2_background")
+ambient_effect = ExtResource("3_effect")
+map_position = Vector2(0.62, 0.79)
+travel_cost = 60
+heat_multiplier = 1.2
+venues = Array[StringName]([&"docks", &"market"])

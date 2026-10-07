@@ -1,0 +1,17 @@
+AGENTS.md
+DESIGN.md
+Figma/
+/assets/
+/screen.jpg
+/AndroidManifest*.xml
+build/
+*.apk
+*.aab
+*.idsig
+*.pck
+*.zip
+*.keystore
+*.bak
+Godot_*
+.import/
+.godot/

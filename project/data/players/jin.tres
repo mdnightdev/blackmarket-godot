@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PlayerDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/player_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/player_jin.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/player_jin_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"jin"
+display_name = "Jin"
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+tagline = "Ran tech for a crew that got busted. Starting over."
+intro_line = "My last crew went down. I didn't. Now I owe the wrong man money."

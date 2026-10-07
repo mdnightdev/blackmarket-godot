@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/effects/ambient_particles.gd" id="1_ambient"]
+
+[sub_resource type="Gradient" id="Gradient_blob"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_blob"]
+gradient = SubResource("Gradient_blob")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="Gradient" id="Gradient_fade"]
+offsets = PackedFloat32Array(0, 0.3, 0.7, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+
+[node name="Fog" type="CPUParticles2D"]
+amount = 12
+lifetime = 18.0
+preprocess = 18.0
+texture = SubResource("GradientTexture2D_blob")
+emission_shape = 3
+emission_rect_extents = Vector2(430, 320)
+direction = Vector2(1, 0)
+spread = 12.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 8.0
+initial_velocity_max = 20.0
+scale_amount_min = 3.0
+scale_amount_max = 5.0
+color = Color(0.8235, 0.7059, 0.7451, 0.08)
+color_ramp = SubResource("Gradient_fade")
+script = ExtResource("1_ambient")
+screen_anchor = Vector2(0.5, 0.62)

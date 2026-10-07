@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="DealerDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/dealer_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/dao.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/dao_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"dao"
+display_name = "Dao"
+district_id = &"docks"
+greeting = "Boat leaves at dawn. So do I."
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+stock_categories = Array[StringName]([&"arms", &"comms"])
+price_bias = {
+&"arms": 0.75,
+&"comms": 0.9,
+&"meds": 1.1,
+&"tech": 1.15,
+&"luxury": 1.2,
+&"papers": 1.25
+}
+haggle_tolerance = 0.15
+route = Array[StringName]([&"docks", &"slums", &"old_market"])
+working_phases = Array[int]([3, 0])

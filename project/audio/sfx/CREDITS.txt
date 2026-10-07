@@ -1,0 +1,21 @@
+Sound effects
+
+Kenney (www.kenney.nl), Creative Commons Zero (CC0 1.0)
+http://creativecommons.org/publicdomain/zero/1.0/
+
+  click.ogg          UI Audio          click3.ogg
+  typing.ogg         Interface Sounds  tick_002.ogg
+  haggle_fail.ogg    Interface Sounds  error_004.ogg
+  deal_accepted.ogg  Interface Sounds  confirmation_002.ogg
+  event.ogg          Interface Sounds  question_002.ogg
+  coins_in.ogg       RPG Audio         handleCoins.ogg
+  coins_out.ogg      RPG Audio         handleCoins2.ogg
+  handshake.ogg      RPG Audio         cloth2.ogg
+  walk_out.ogg       RPG Audio         doorClose_2.ogg
+  shutter.ogg        Impact Sounds     impactMetal_medium_000.ogg
+  raid_hit.ogg       Impact Sounds     impactWood_heavy_002.ogg
+  caught.ogg         Impact Sounds     impactPunch_heavy_001.ogg
+
+Original
+
+  siren.ogg          Synthesized for this game with tools/make_siren.py

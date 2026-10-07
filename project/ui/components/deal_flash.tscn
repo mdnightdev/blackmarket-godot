@@ -1,0 +1,98 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://ui/components/deal_flash.gd" id="1_flash"]
+[ext_resource type="Texture2D" path="res://assets/scenes/handshake.jpg" id="2_handshake"]
+[ext_resource type="Texture2D" path="res://assets/scenes/cash_bundle.png" id="3_cash"]
+[ext_resource type="Shader" path="res://ui/shaders/soft_edges.gdshader" id="4_soft"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_soft"]
+shader = ExtResource("4_soft")
+shader_parameter/side_fade = 0.06
+shader_parameter/top_fade = 0.1
+shader_parameter/bottom_fade = 0.14
+
+[node name="DealFlash" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_flash")
+
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0314, 0.0353, 0.0471, 0.85)
+
+[node name="Column" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="Handshake" type="TextureRect" parent="Column"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_soft")
+custom_minimum_size = Vector2(0, 380)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("2_handshake")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Lane" type="Control" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Bundle1" type="TextureRect" parent="Column/Lane"]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 149.0
+pivot_offset = Vector2(80, 75)
+mouse_filter = 2
+texture = ExtResource("3_cash")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Bundle2" type="TextureRect" parent="Column/Lane"]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 149.0
+pivot_offset = Vector2(80, 75)
+mouse_filter = 2
+texture = ExtResource("3_cash")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Bundle3" type="TextureRect" parent="Column/Lane"]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 149.0
+pivot_offset = Vector2(80, 75)
+mouse_filter = 2
+texture = ExtResource("3_cash")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1

@@ -1,0 +1,128 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/screens/character_select/character_select_screen.gd" id="1_screen"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/title_city.jpg" id="2_background"]
+[ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="3_vignette"]
+[ext_resource type="Script" path="res://ui/components/talking_portrait.gd" id="4_portrait"]
+[ext_resource type="Script" path="res://ui/components/typewriter.gd" id="5_typewriter"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="6_button"]
+
+[node name="CharacterSelectScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[node name="Background" type="TextureRect" parent="."]
+self_modulate = Color(0.3, 0.3, 0.36, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Vignette" parent="." instance=ExtResource("3_vignette")]
+layout_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 40
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="SectionLabel" type="Label" parent="Margin/Layout"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "WHO ARE YOU"
+
+[node name="Portrait" type="Control" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 420)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+script = ExtResource("4_portrait")
+soft_edges = true
+
+[node name="NameLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DistrictTitleLabel"
+horizontal_alignment = 1
+
+[node name="TaglineLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Speech" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+theme_override_font_sizes/font_size = 23
+horizontal_alignment = 1
+autowrap_mode = 3
+script = ExtResource("5_typewriter")
+
+[node name="PickList" type="HBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="BackButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 72)
+layout_mode = 2
+theme_type_variation = &"GhostButton"
+text = "Back"
+script = ExtResource("6_button")
+
+[node name="StartButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Hit the streets"
+script = ExtResource("6_button")
