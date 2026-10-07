@@ -31,6 +31,7 @@ func _run() -> void:
 	await _open(_router.MARKET_SCREEN, "04_market_buy")
 	var phones: Resource = _content.item(&"burner_phones")
 	var dealer: Resource = _content.dealer_in(&"old_market")
+	PriceIntel.record(_game_state.run, _content.dealer(&"ernesto"), _content.items(0))
 	current_scene.get_node("%TradeSheet").show_trade(0, phones, dealer)
 	await _wait(0.8)
 	await _capture("05_trade_sheet")

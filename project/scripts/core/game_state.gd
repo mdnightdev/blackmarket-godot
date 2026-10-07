@@ -141,6 +141,12 @@ func buy_police_tip() -> Dictionary:
 	return patrols
 
 
+## Saves without emitting run_changed, so screens can call it while refreshing.
+func remember_prices(dealer: DealerDef) -> void:
+	if PriceIntel.record(run, dealer, Content.items(ItemDef.Kind.TRADE_GOOD)):
+		save_run()
+
+
 func dealer_walked_out(dealer: DealerDef) -> void:
 	run.walked_out[dealer.id] = Calendar.stamp(run)
 	_commit(false)

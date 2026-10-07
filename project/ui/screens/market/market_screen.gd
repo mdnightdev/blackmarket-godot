@@ -149,6 +149,7 @@ func _refresh() -> void:
 		_show_notice("%s will not deal with you until next phase." % _dealer.display_name)
 		return
 
+	GameState.remember_prices(_dealer)
 	match _tab:
 		Tab.BUY:
 			_fill_buy_list()

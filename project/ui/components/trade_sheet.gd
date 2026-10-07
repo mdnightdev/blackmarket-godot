@@ -27,6 +27,7 @@ var _haggled := false
 @onready var _held_value: Label = %HeldValue
 @onready var _paid_box: Control = %PaidBox
 @onready var _paid_value: Label = %PaidValue
+@onready var _intel_label: Label = %IntelLabel
 @onready var _quantity_box: Control = %QuantityBox
 @onready var _quantity_label: Label = %QuantityLabel
 @onready var _quantity_slider: HSlider = %QuantitySlider
@@ -85,10 +86,38 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 	var paid := int(GameState.run.cost_basis.get(item.id, 0))
 	_paid_box.visible = mode == Mode.SELL and paid > 0
 	_paid_value.text = Format.money(paid)
+	_show_intel()
 
 	_quantity = 1
 	_refresh_limits()
 	open_sheet()
+
+
+func _show_intel() -> void:
+	_intel_label.visible = _mode != Mode.GEAR
+	if _mode == Mode.GEAR:
+		return
+	var run := GameState.run
+	var sale := PriceIntel.best_sale(run, _item, _dealer)
+	if sale.is_empty():
+		_intel_label.text = "No prices seen at other dealers yet."
+		_intel_label.add_theme_color_override("font_color", Palette.TEXT_MUTED)
+		return
+	var paying_more := int(sale.sell) > _asking
+	var text := "Best seen: %s pays %s, %s." % [_sighting_place(sale), Format.money(int(sale.sell)), PriceIntel.age_text(run, sale)]
+	if _mode == Mode.BUY:
+		var purchase := PriceIntel.best_purchase(run, _item, _dealer)
+		if not purchase.is_empty() and int(purchase.buy) < _asking:
+			text += " Cheaper at %s: %s." % [_sighting_place(purchase), Format.money(int(purchase.buy))]
+	_intel_label.text = text
+	_intel_label.add_theme_color_override("font_color", Palette.RISK_LOW if paying_more else Palette.TEXT_MUTED)
+
+
+func _sighting_place(sighting: Dictionary) -> String:
+	var dealer := Content.dealer(StringName(sighting.dealer))
+	var district := Content.district(StringName(sighting.district))
+	var dealer_name := dealer.display_name if dealer != null else "A dealer"
+	return "%s in %s" % [dealer_name, district.display_name] if district != null else dealer_name
 
 
 func _max_quantity() -> int:

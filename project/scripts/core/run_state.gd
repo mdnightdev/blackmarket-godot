@@ -32,6 +32,8 @@ var gear: Array[StringName] = []
 var walked_out: Dictionary = {}
 ## Temporary price changes from street events. See StreetEvents for the entry layout.
 var market_shifts: Array[Dictionary] = []
+## Prices the player has seen at each dealer. See PriceIntel for the entry layout.
+var price_sightings: Array[Dictionary] = []
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
 
@@ -71,6 +73,7 @@ func to_dict() -> Dictionary:
 		"gear": saved_gear,
 		"walked_out": _string_keys(walked_out),
 		"market_shifts": market_shifts,
+		"price_sightings": price_sightings,
 		"pending_encounter": pending_encounter,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -112,6 +115,11 @@ static func from_dict(data: Dictionary) -> RunState:
 		for shift: Variant in saved_shifts:
 			if shift is Dictionary:
 				state.market_shifts.append(StreetEvents.sanitize_shift(shift))
+	var saved_sightings: Variant = data.get("price_sightings", [])
+	if saved_sightings is Array:
+		for sighting: Variant in saved_sightings:
+			if sighting is Dictionary:
+				state.price_sightings.append(PriceIntel.sanitize_sighting(sighting))
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter
