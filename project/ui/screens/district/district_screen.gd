@@ -31,6 +31,7 @@ const PHASE_TINTS := {
 @onready var _around_block: Control = %AroundBlock
 @onready var _people_list: HBoxContainer = %PeopleList
 @onready var _venue_list: VBoxContainer = %VenueList
+@onready var _crate_button: Button = %CrateButton
 @onready var _menu_button: Button = %MenuButton
 @onready var _map_button: Button = %MapButton
 @onready var _bag_button: Button = %BagButton
@@ -58,7 +59,9 @@ func _ready() -> void:
 	_news_line.show_for(district.id)
 	_build_people_strip()
 	_build_venue_cards(district)
+	_refresh_crate_button()
 
+	_crate_button.pressed.connect(_deliver_crate)
 	_map_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.MAP_SCREEN))
 	_menu_button.pressed.connect(_return_to_title)
 	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
@@ -159,8 +162,29 @@ func _on_venue_selected(venue: VenueDef) -> void:
 			elif host != null and host.role == CharacterDef.Role.BARTENDER:
 				GameState.visiting_venue = venue.id
 				SceneRouter.go_to(SceneRouter.BAR_SCREEN)
+			elif host != null and host.role == CharacterDef.Role.SMUGGLER:
+				GameState.visiting_venue = venue.id
+				SceneRouter.go_to(SceneRouter.DOCKS_SCREEN)
 			else:
 				_venue_sheet.show_venue(venue)
+
+
+func _refresh_crate_button() -> void:
+	var run := GameState.run
+	_crate_button.visible = Smuggling.can_deliver(run)
+	if _crate_button.visible:
+		_crate_button.text = "Deliver Voronin's crate for %s" % Format.money(int(run.crate.pay))
+
+
+func _deliver_crate() -> void:
+	var pay := GameState.deliver_crate()
+	if pay <= 0:
+		return
+	AudioService.play_sfx(Sfx.CRATE_DROP)
+	AudioService.play_sfx(Sfx.COINS_IN)
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"continue", "Continue", true, true)]
+	var line := "Voronin's contact checks the seals, loads the crate into a van and counts out %s." % Format.money(pay)
+	GameOverlay.talk(Content.player(GameState.run.player_id), line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk())
 
 
 func _enter_casino(casino: CasinoDef, host: CharacterDef) -> void:
@@ -180,6 +204,7 @@ func _on_run_changed() -> void:
 	_tint_tween.tween_property(_background, "self_modulate", PHASE_TINTS[GameState.run.phase], TINT_SECONDS)
 	_news_line.show_for(GameState.run.district_id)
 	_build_people_strip()
+	_refresh_crate_button()
 
 
 func _on_day_started(_day: int) -> void:

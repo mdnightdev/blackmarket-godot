@@ -1,0 +1,152 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://ui/screens/docks/docks_screen.gd" id="1_screen"]
+[ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="3_hud"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
+[ext_resource type="PackedScene" path="res://ui/components/inventory_sheet.tscn" id="5_inventory_sheet"]
+[ext_resource type="Script" path="res://ui/components/talking_portrait.gd" id="6_portrait"]
+[ext_resource type="Script" path="res://ui/components/typewriter.gd" id="7_typewriter"]
+
+[node name="DocksScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[node name="Background" type="TextureRect" parent="."]
+unique_name_in_owner = true
+self_modulate = Color(0.62, 0.6, 0.66, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Vignette" parent="." instance=ExtResource("2_vignette")]
+layout_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 40
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 18
+
+[node name="HudBar" parent="Margin/Layout" instance=ExtResource("3_hud")]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="PortraitFrame" type="PanelContainer" parent="Margin/Layout/Header"]
+clip_children = 1
+custom_minimum_size = Vector2(168, 212)
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"IconFrame"
+
+[node name="Portrait" type="Control" parent="Margin/Layout/Header/PortraitFrame"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("6_portrait")
+cover = true
+
+[node name="Text" type="VBoxContainer" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="VenueLabel" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+
+[node name="HostLabel" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+
+[node name="Speech" type="Label" parent="Margin/Layout/Header/Text"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
+script = ExtResource("7_typewriter")
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+scroll_deadzone = 12
+
+[node name="List" type="VBoxContainer" parent="Margin/Layout/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="BagButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 72)
+layout_mode = 2
+theme_type_variation = &"GhostButton"
+text = "Bag"
+script = ExtResource("4_button")
+
+[node name="BackButton" type="Button" parent="Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SecondaryButton"
+text = "Leave"
+script = ExtResource("4_button")
+
+[node name="InventorySheet" parent="." instance=ExtResource("5_inventory_sheet")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

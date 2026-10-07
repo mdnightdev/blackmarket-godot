@@ -33,8 +33,12 @@ func _rebuild() -> void:
 
 	var stash_open := Inventory.can_use_stash(run)
 	_add_section("CARRYING")
-	if run.inventory.is_empty():
+	if run.inventory.is_empty() and not Smuggling.is_carrying(run):
 		_add_note("Your bag is empty.")
+	if Smuggling.is_carrying(run):
+		var row: ItemRow = ITEM_ROW.instantiate()
+		_list.add_child(row)
+		row.show_entry(Smuggling.CRATE_ICON, "Voronin's crate", "%d slots" % Smuggling.slots_used(run), Smuggling.describe(run.crate), "DO NOT OPEN", Palette.PEACH_BRIGHT)
 	for item_id: StringName in run.inventory:
 		var paid := Format.money(int(run.cost_basis.get(item_id, 0)))
 		var row := _add_row(Content.item(item_id), "x%d" % run.inventory[item_id], "Paid %s each" % paid, "TAP TO STASH" if stash_open else "")

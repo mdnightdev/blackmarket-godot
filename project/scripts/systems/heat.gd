@@ -8,7 +8,7 @@ const TRAVEL_RISK_DIVISOR := 100.0
 
 
 static func carried_risk(run: RunState) -> int:
-	var total := 0
+	var total := Smuggling.carried_risk(run)
 	for item_id: StringName in run.inventory:
 		var item := Content.item(item_id)
 		if item != null:

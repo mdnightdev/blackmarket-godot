@@ -25,8 +25,13 @@ func _ready() -> void:
 
 func display(entry: ItemDef, price_text: String, caption: String, detail: String = "", detail_color: Color = Palette.TEXT_MUTED) -> void:
 	item = entry
-	_icon.texture = entry.icon
-	_name_label.text = entry.display_name
+	show_entry(entry.icon, entry.display_name, price_text, caption, detail, detail_color)
+
+
+## For rows that are not catalog items, such as smuggling crates. item_selected then sends null.
+func show_entry(icon: Texture2D, title: String, price_text: String, caption: String, detail: String = "", detail_color: Color = Palette.TEXT_MUTED) -> void:
+	_icon.texture = icon
+	_name_label.text = title
 	_caption_label.text = caption
 	_price_label.text = price_text
 	_detail_label.text = detail

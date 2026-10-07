@@ -35,7 +35,7 @@ static func stop_chance(run: RunState) -> float:
 
 
 static func carried_value(run: RunState) -> int:
-	var total := 0
+	var total := Smuggling.carried_value(run)
 	for item_id: StringName in run.inventory:
 		var item := Content.item(item_id)
 		if item != null:
@@ -81,10 +81,13 @@ static func run_for_it(run: RunState, roll: float) -> bool:
 	return false
 
 
-## Hands over the riskiest stack. Returns the confiscated item and quantity.
+## Hands over a smuggling crate if one is carried, otherwise the riskiest stack.
+## Returns { crate = true }, the confiscated item and quantity, or an empty dictionary.
 static func comply(run: RunState) -> Dictionary:
-	var item := riskiest_item(run)
 	Heat.add(run, -COMPLY_HEAT_DROP)
+	if Smuggling.seize(run):
+		return { "crate": true }
+	var item := riskiest_item(run)
 	if item == null:
 		return {}
 	var quantity := Inventory.count(run, item.id)
@@ -99,5 +102,6 @@ static func raid(run: RunState) -> void:
 
 
 static func seize_bag(run: RunState) -> void:
+	Smuggling.seize(run)
 	for item_id: StringName in run.inventory.keys():
 		Inventory.discard(run, item_id, Inventory.count(run, item_id))

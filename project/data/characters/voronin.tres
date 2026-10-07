@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/voronin.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/voronin_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"voronin"
+display_name = "Dmitri Voronin"
+role = 7
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "You want work? Crates go out, money comes back. Do not open them, and do not lose them."
+blurb = "Runs the Voronin Smugglers on Pier 9. Pays for crate runs and knows which boats are worth hitting."

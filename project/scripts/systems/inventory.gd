@@ -17,7 +17,7 @@ static func capacity(run: RunState) -> int:
 
 
 static func used(run: RunState) -> int:
-	return _slots_used(run.inventory)
+	return _slots_used(run.inventory) + Smuggling.slots_used(run)
 
 
 static func free_space(run: RunState) -> int:

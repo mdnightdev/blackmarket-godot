@@ -159,6 +159,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			var taken := Police.comply(run)
 			if taken.is_empty():
 				return "They find nothing worth taking."
+			if taken.has("crate"):
+				return "They pry open Voronin's crate and keep it. He will hear about this."
 			return "They take %d %s and let you go." % [taken.quantity, taken.item.display_name]
 		PAY:
 			var paid := mini(int(encounter.amount), maxi(0, run.cash))

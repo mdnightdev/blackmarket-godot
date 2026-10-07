@@ -120,6 +120,14 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
+[node name="CrateButton" type="Button" parent="Margin/Layout"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+script = ExtResource("4_button")
+
 [node name="PlacesLabel" type="Label" parent="Margin/Layout"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"

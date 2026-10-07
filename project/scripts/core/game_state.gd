@@ -7,6 +7,8 @@ signal day_started(day: int)
 signal run_ended(outcome: RunState.Outcome)
 ## Bar orders whose deadline passed during the last move of time.
 signal orders_missed(orders: Array[Dictionary])
+## A smuggling crate whose deadline passed during the last move of time.
+signal crate_lost(crate: Dictionary)
 
 const SAVE_PATH := "user://run.json"
 
@@ -175,6 +177,31 @@ func buy_rumor(venue_id: StringName) -> Dictionary:
 	return rumor
 
 
+func accept_crate(offer: Dictionary) -> Smuggling.Result:
+	var result := Smuggling.accept(run, offer)
+	if result == Smuggling.Result.OK:
+		_commit(false)
+	return result
+
+
+## Returns the pay, 0 when the crate cannot be delivered here.
+func deliver_crate() -> int:
+	var pay := Smuggling.deliver(run)
+	if pay > 0:
+		_commit(false)
+	return pay
+
+
+## Returns the units taken, 0 when the job failed or could not start.
+func hijack(shipment: Dictionary, approach: Hijacks.Approach) -> int:
+	if not Hijacks.can_attempt(run, shipment):
+		return 0
+	var taken := Hijacks.attempt(run, shipment, approach, _rng.randf())
+	Encounters.check_raid(run)
+	_commit(false)
+	return taken
+
+
 func place_bet(casino: CasinoDef, amount: int) -> bool:
 	if not Casino.place_bet(run, casino, amount):
 		return false
@@ -225,10 +252,13 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 
 func _pass_time(new_day_started: bool, travelled: bool) -> void:
 	var missed := Orders.expire(run)
+	var lost_crate := Smuggling.expire(run)
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
 	_commit(new_day_started)
 	if not missed.is_empty():
 		orders_missed.emit(missed)
+	if not lost_crate.is_empty():
+		crate_lost.emit(lost_crate)
 
 
 func _commit(new_day_started: bool) -> void:

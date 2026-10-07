@@ -21,6 +21,7 @@ var _settled_for := 0.0
 var _shake_pixels := 0.0
 ## Shown one at a time after any pending encounter. Kept in memory only, since missing an order is already saved.
 var _missed_orders: Array[Dictionary] = []
+var _lost_crates: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -33,7 +34,11 @@ func _ready() -> void:
 	_dialogue.add_backdrop_layer(_lights)
 	SceneRouter.transition_started.connect(_loan_sheet.close)
 	GameState.orders_missed.connect(func(orders: Array[Dictionary]) -> void: _missed_orders.append_array(orders))
-	GameState.run_started.connect(func() -> void: _missed_orders.clear())
+	GameState.crate_lost.connect(func(crate: Dictionary) -> void: _lost_crates.append(crate))
+	GameState.run_started.connect(func() -> void:
+		_missed_orders.clear()
+		_lost_crates.clear()
+	)
 
 
 ## Screens opt in by defining can_present_encounter(), so encounters never interrupt animations or other modals.
@@ -49,8 +54,10 @@ func _process(delta: float) -> void:
 		_settled_for = 0.0
 		if Encounters.has_pending(GameState.run):
 			_present_encounter(GameState.run.pending_encounter)
-		else:
+		elif not _missed_orders.is_empty():
 			_present_missed_order(_missed_orders.pop_front())
+		else:
+			_present_lost_crate(_lost_crates.pop_front())
 
 
 func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
@@ -86,7 +93,7 @@ func handle_back() -> bool:
 func _can_present() -> bool:
 	if GameState.run == null:
 		return false
-	if not Encounters.has_pending(GameState.run) and _missed_orders.is_empty():
+	if not Encounters.has_pending(GameState.run) and _missed_orders.is_empty() and _lost_crates.is_empty():
 		return false
 	if _dialogue.visible or _loan_sheet.visible or SceneRouter.is_transitioning():
 		return false
@@ -116,6 +123,20 @@ func _present_missed_order(order: Dictionary) -> void:
 	var hint := "Order missed. %s will not trade with you this phase." % dealer.display_name
 	var choices: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
 	_dialogue.open(dealer, line, choices, func(_id: StringName) -> void: _dialogue.close(), hint)
+	AudioService.play_sfx(Sfx.HAGGLE_FAIL)
+
+
+func _present_lost_crate(crate: Dictionary) -> void:
+	var pier := Content.venue(Smuggling.VENUE)
+	var voronin := Content.character(pier.host) if pier != null else null
+	if voronin == null:
+		return
+	var destination := Smuggling.destination(crate)
+	var place := destination.display_name if destination != null else "the drop"
+	var line := "My crate never reached %s. I do not pay for late, and I do not forget." % place
+	var hint := "Crate lost. Voronin has no work for you for the rest of the day."
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
+	_dialogue.open(voronin, line, choices, func(_id: StringName) -> void: _dialogue.close(), hint)
 	AudioService.play_sfx(Sfx.HAGGLE_FAIL)
 
 

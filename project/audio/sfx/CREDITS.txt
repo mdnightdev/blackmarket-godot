@@ -23,7 +23,12 @@ http://creativecommons.org/publicdomain/zero/1.0/
   chips_win.ogg      Casino Audio      chips-handle-3.ogg
   reel_stop.ogg      Casino Audio      chip-lay-1.ogg
   reel_spin.ogg      Casino Audio      card-fan-1.ogg
+  crate_lift.ogg     Impact Sounds     impactWood_heavy_000.ogg
+  crate_drop.ogg     Impact Sounds     impactPlank_medium_001.ogg
+  hijack_quiet.ogg   RPG Audio         metalLatch.ogg
+  hijack_loud.ogg    Impact Sounds     impactMetal_heavy_003.ogg
 
 Original
 
   siren.ogg          Synthesized for this game with tools/make_siren.py
+  ship_horn.ogg      Synthesized for this game with tools/make_horn.py

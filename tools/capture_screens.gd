@@ -1,7 +1,7 @@
 extends SceneTree
 
 const OUTPUT_DIR := "/tmp/blackmarket_shots"
-const WATCHDOG_SECONDS := 330.0
+const WATCHDOG_SECONDS := 420.0
 
 var _game_state: Node
 var _router: Node
@@ -73,6 +73,7 @@ func _run() -> void:
 	await _capture_roster()
 	await _capture_bar()
 	await _capture_casino()
+	await _capture_docks()
 
 	_router.go_to(_router.TITLE_SCREEN)
 	await _wait(0.18)
@@ -192,6 +193,49 @@ func _capture_casino() -> void:
 	run.cash = 25_000
 	_game_state.visiting_venue = &"vip_casino"
 	await _open(_router.CASINO_SCREEN, "41_vip_lounge", 2.6)
+
+
+func _capture_docks() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	_game_state.casino_rng().seed = 3
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+	var dialogue: Node = overlay.get_child(1)
+
+	run.district_id = &"docks"
+	_game_state.visiting_venue = &"docks"
+	await _open(_router.DOCKS_SCREEN, "42_docks", 2.6)
+	current_scene.get_node("%List").get_child(5).pressed.emit()
+	await _wait(2.6)
+	await _capture("43_crate_offer")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(1.2)
+	overlay.end_talk()
+	await _wait(0.4)
+
+	current_scene.get_node("%List").get_child(1).pressed.emit()
+	await _wait(2.6)
+	await _capture("44_hijack_plan")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(1.6)
+	await _capture("45_hijack_result")
+	overlay.end_talk()
+	run.pending_encounter = {}
+	await _wait(0.4)
+	current_scene.get_node("%BagButton").pressed.emit()
+	await _wait(0.8)
+	await _capture("46_bag_crate")
+
+	run.district_id = StringName(run.crate.destination)
+	await _open(_router.DISTRICT_SCREEN, "47_crate_deliver")
+
+	var lost: Dictionary = run.crate.duplicate()
+	_game_state.crate_lost.emit(lost)
+	await _wait(2.6)
+	await _capture("48_crate_lost")
+	overlay.end_talk()
+	await _wait(0.4)
 
 
 func _capture_phase_four(dealer: Resource) -> void:

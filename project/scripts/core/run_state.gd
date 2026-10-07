@@ -40,6 +40,14 @@ var orders: Array[Dictionary] = []
 var taken_orders: Array[String] = []
 ## Venue id to the phase stamp its rumour was bought in.
 var rumors_heard: Dictionary = {}
+## The smuggling crate being carried, empty when none. See Smuggling for the layout.
+var crate: Dictionary = {}
+## Ids of today's crates the player already took.
+var taken_crates: Array[String] = []
+## Day on which Voronin stopped giving the player work. 0 means never.
+var smuggling_ban_day: int = 0
+## Phase stamp of the last hijack attempt.
+var hijacked_stamp: int = -1
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
 
@@ -83,6 +91,10 @@ func to_dict() -> Dictionary:
 		"orders": orders,
 		"taken_orders": taken_orders,
 		"rumors_heard": _string_keys(rumors_heard),
+		"crate": crate,
+		"taken_crates": taken_crates,
+		"smuggling_ban_day": smuggling_ban_day,
+		"hijacked_stamp": hijacked_stamp,
 		"pending_encounter": pending_encounter,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -139,6 +151,15 @@ static func from_dict(data: Dictionary) -> RunState:
 		for id: Variant in saved_taken:
 			state.taken_orders.append(str(id))
 	state.rumors_heard = _positive_counts(data.get("rumors_heard"), 0)
+	var saved_crate: Variant = data.get("crate", {})
+	if saved_crate is Dictionary:
+		state.crate = Smuggling.sanitize(saved_crate)
+	var saved_taken_crates: Variant = data.get("taken_crates", [])
+	if saved_taken_crates is Array:
+		for id: Variant in saved_taken_crates:
+			state.taken_crates.append(str(id))
+	state.smuggling_ban_day = maxi(0, int(data.get("smuggling_ban_day", 0)))
+	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter
