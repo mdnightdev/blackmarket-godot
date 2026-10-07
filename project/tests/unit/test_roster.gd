@@ -104,17 +104,20 @@ func test_patrols_raise_stop_odds() -> void:
 	assert_almost_eq(Police.stop_chance(_run), minf(calm_chance * multiplier, Police.MAX_STOP_CHANCE), 0.0001)
 
 
-func test_rival_lowers_what_dealers_pay() -> void:
+func test_rival_presence_alone_does_not_change_prices() -> void:
 	var dealer := Content.dealer_in(&"old_market")
 	var phones := Content.item(&"burner_phones")
 	var with_rival := _find_stamp(func(at: int) -> bool: return Roster.rival_in(_run, &"old_market", at))
 	_set_stamp(with_rival)
-	var expected := floori(Market.buy_price(_run, dealer, phones) * Market.SELL_SPREAD * Market.RIVAL_SELL_FACTOR)
-	assert_eq(Market.sell_price(_run, dealer, phones), maxi(1, expected))
-
-	var without_rival := _find_stamp(func(at: int) -> bool: return not Roster.rival_in(_run, &"old_market", at))
-	_set_stamp(without_rival)
+	assert_eq(Turf.holder(_run, &"old_market"), Turf.Holder.NOBODY)
 	assert_eq(Market.sell_price(_run, dealer, phones), maxi(1, floori(Market.buy_price(_run, dealer, phones) * Market.SELL_SPREAD)))
+
+
+func test_rival_leaves_the_roster_once_driven_out() -> void:
+	var with_rival := _find_stamp(func(at: int) -> bool: return Roster.rival_in(_run, &"old_market", at))
+	_run.vex_gone = true
+	assert_eq(Roster.rival_location(_run, with_rival), &"")
+	assert_false(Roster.rival_in(_run, &"old_market", with_rival))
 
 
 func _residents() -> Array[DealerDef]:

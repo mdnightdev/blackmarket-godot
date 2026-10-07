@@ -27,6 +27,9 @@ http://creativecommons.org/publicdomain/zero/1.0/
   crate_drop.ogg     Impact Sounds     impactPlank_medium_001.ogg
   hijack_quiet.ogg   RPG Audio         metalLatch.ogg
   hijack_loud.ogg    Impact Sounds     impactMetal_heavy_003.ogg
+  turf_clash.ogg     RPG Audio         drawKnife1.ogg
+  turf_muscle.ogg    Impact Sounds     impactPunch_medium_002.ogg
+  turf_won.ogg       Interface Sounds  confirmation_004.ogg
 
 Original
 

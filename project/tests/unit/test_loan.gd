@@ -6,6 +6,8 @@ var _no_events: Array[EventDef] = []
 
 func before_each() -> void:
 	_run = RunState.new()
+	# Turf clashes roll on the same unseeded rng and would make the quiet-day checks flaky.
+	_run.vex_gone = true
 
 
 func _start_day(day: int) -> void:

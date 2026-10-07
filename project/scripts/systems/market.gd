@@ -6,9 +6,6 @@ const DAY_SWING_MIN := 0.7
 const DAY_SWING_MAX := 1.3
 const PHASE_SWING_MIN := 0.94
 const PHASE_SWING_MAX := 1.06
-## Dealers pay less while the rival crew is buying in the same district.
-const RIVAL_SELL_FACTOR := 0.9
-
 
 ## Prices are derived from the run seed instead of stored, so every phase is reproducible after a reload.
 static func asking_price_at(run: RunState, dealer: DealerDef, item: ItemDef, phase_stamp: int) -> int:
@@ -26,9 +23,7 @@ static func buy_price(run: RunState, dealer: DealerDef, item: ItemDef) -> int:
 
 static func sell_price(run: RunState, dealer: DealerDef, item: ItemDef) -> int:
 	var stamp := Calendar.stamp(run)
-	var factor := SELL_SPREAD
-	if Roster.rival_in(run, trading_district(run, dealer, stamp), stamp):
-		factor *= RIVAL_SELL_FACTOR
+	var factor := SELL_SPREAD * Turf.sell_factor(run, trading_district(run, dealer, stamp))
 	return maxi(1, floori(buy_price(run, dealer, item) * factor))
 
 

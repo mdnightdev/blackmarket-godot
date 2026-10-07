@@ -27,6 +27,7 @@ func _ready() -> void:
 		var pin: MapPin = MAP_PIN.instantiate()
 		pin.district = district
 		pin.is_current = district.id == GameState.run.district_id
+		pin.holder = Turf.holder(GameState.run, district.id)
 		pin.district_selected.connect(_on_district_selected)
 		_pin_layer.add_child(pin)
 		_pins.append(pin)

@@ -48,6 +48,12 @@ var taken_crates: Array[String] = []
 var smuggling_ban_day: int = 0
 ## Phase stamp of the last hijack attempt.
 var hijacked_stamp: int = -1
+## District id to the player's turf share. Missing districts use the Turf defaults.
+var turf: Dictionary = {}
+## Phase stamp in which muscle was last sent.
+var muscle_stamp: int = -1
+## True once Vex has been driven out of the city.
+var vex_gone := false
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
 
@@ -95,6 +101,9 @@ func to_dict() -> Dictionary:
 		"taken_crates": taken_crates,
 		"smuggling_ban_day": smuggling_ban_day,
 		"hijacked_stamp": hijacked_stamp,
+		"turf": _string_keys(turf),
+		"muscle_stamp": muscle_stamp,
+		"vex_gone": vex_gone,
 		"pending_encounter": pending_encounter,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -160,6 +169,9 @@ static func from_dict(data: Dictionary) -> RunState:
 			state.taken_crates.append(str(id))
 	state.smuggling_ban_day = maxi(0, int(data.get("smuggling_ban_day", 0)))
 	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
+	state.turf = Turf.sanitize(data.get("turf", {}))
+	state.muscle_stamp = int(data.get("muscle_stamp", -1))
+	state.vex_gone = bool(data.get("vex_gone", false))
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter

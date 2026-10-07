@@ -154,6 +154,11 @@ func _raise_alarm(type: String) -> void:
 		Encounters.ENFORCERS:
 			AudioService.play_sfx(Sfx.CAUGHT)
 			_shake(HIT_SHAKE_PIXELS, POLICE_VIBRATE_MS)
+		Turf.CLASH:
+			AudioService.play_sfx(Sfx.TURF_CLASH)
+			_shake(POLICE_SHAKE_PIXELS, POLICE_VIBRATE_MS)
+		Turf.VICTORY:
+			AudioService.play_sfx(Sfx.TURF_WON)
 		_:
 			AudioService.play_sfx(Sfx.EVENT)
 
@@ -178,7 +183,7 @@ func _resolve_encounter(choice: StringName) -> void:
 
 
 func _play_outcome(choice: StringName, lost_something: bool) -> void:
-	if choice == Encounters.BRIBE or choice == Encounters.PAY:
+	if choice == Encounters.BRIBE or choice == Encounters.PAY or choice == Turf.TRIBUTE:
 		AudioService.play_sfx(Sfx.COINS_OUT)
 	elif lost_something:
 		AudioService.play_sfx(Sfx.CAUGHT)

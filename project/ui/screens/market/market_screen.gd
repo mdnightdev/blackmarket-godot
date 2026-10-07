@@ -12,7 +12,8 @@ const CLOSING_LINES: Array[String] = [
 	"Smart move. Come back soon.",
 	"We never met.",
 ]
-const RIVAL_LINE := "Vex's crew is buying around here. I can't pay full price today."
+const VEX_TURF_LINE := "Vex runs these corners. I pay her cut first, so I can't pay you full price."
+const PLAYER_TURF_LINE := "Your people run this block now. You get the best price in town."
 const HANDSHAKE_MIN_TOTAL := 1000
 
 @onready var _background: TextureRect = %Background
@@ -103,9 +104,13 @@ func _choose_dealer(district_id: StringName) -> DealerDef:
 func _greet() -> void:
 	if not is_inside_tree() or not _dealer_is_here():
 		return
-	var run := GameState.run
-	var rival_here := Roster.rival_in(run, run.district_id, Calendar.stamp(run))
-	_dealer_says(RIVAL_LINE if rival_here else _dealer.greeting)
+	match Turf.holder(GameState.run, GameState.run.district_id):
+		Turf.Holder.VEX:
+			_dealer_says(VEX_TURF_LINE)
+		Turf.Holder.PLAYER:
+			_dealer_says(PLAYER_TURF_LINE)
+		_:
+			_dealer_says(_dealer.greeting)
 
 
 func _dealer_says(line: String) -> void:

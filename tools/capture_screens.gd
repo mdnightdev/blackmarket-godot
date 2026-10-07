@@ -1,7 +1,7 @@
 extends SceneTree
 
 const OUTPUT_DIR := "/tmp/blackmarket_shots"
-const WATCHDOG_SECONDS := 420.0
+const WATCHDOG_SECONDS := 500.0
 
 var _game_state: Node
 var _router: Node
@@ -74,6 +74,7 @@ func _run() -> void:
 	await _capture_bar()
 	await _capture_casino()
 	await _capture_docks()
+	await _capture_turf()
 
 	_router.go_to(_router.TITLE_SCREEN)
 	await _wait(0.18)
@@ -236,6 +237,53 @@ func _capture_docks() -> void:
 	await _capture("48_crate_lost")
 	overlay.end_talk()
 	await _wait(0.4)
+
+
+func _capture_turf() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+	var dialogue: Node = overlay.get_child(1)
+	run.cash = 8000
+	run.turf[&"old_market"] = 56
+	run.turf[&"docks"] = 72
+
+	await _open(_router.DISTRICT_SCREEN, "50_turf_district")
+	current_scene.get_node("%TurfBar").pressed.emit()
+	await _wait(2.4)
+	await _capture("51_turf_talk")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(1.6)
+	await _capture("52_turf_muscle")
+	overlay.end_talk()
+	await _wait(0.4)
+
+	run.pending_encounter = Turf.clash(run)
+	_game_state.run_changed.emit()
+	await _wait(2.6)
+	await _capture("53_turf_clash")
+	dialogue.get_node("%ChoiceList").get_child(1).pressed.emit()
+	await _wait(1.4)
+	await _capture("54_turf_clash_result")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(0.6)
+
+	await _open(_router.MAP_SCREEN, "55_turf_map", 2.0)
+
+	run.district_id = &"slums"
+	await _open(_router.MARKET_SCREEN, "56_market_vex_turf", 2.4)
+
+	run.district_id = &"old_market"
+	await _open(_router.DISTRICT_SCREEN, "57_district_before_win")
+	for district_id in Turf.CONTESTED:
+		run.turf[district_id] = Turf.HOLD_SHARE
+	Turf.check_victory(run)
+	_game_state.run_changed.emit()
+	await _wait(4.0)
+	await _capture("58_turf_victory")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(0.6)
 
 
 func _capture_phase_four(dealer: Resource) -> void:

@@ -32,6 +32,7 @@ const PHASE_TINTS := {
 @onready var _people_list: HBoxContainer = %PeopleList
 @onready var _venue_list: VBoxContainer = %VenueList
 @onready var _crate_button: Button = %CrateButton
+@onready var _turf_bar: TurfBar = %TurfBar
 @onready var _menu_button: Button = %MenuButton
 @onready var _map_button: Button = %MapButton
 @onready var _bag_button: Button = %BagButton
@@ -60,8 +61,10 @@ func _ready() -> void:
 	_build_people_strip()
 	_build_venue_cards(district)
 	_refresh_crate_button()
+	_refresh_turf_bar()
 
 	_crate_button.pressed.connect(_deliver_crate)
+	_turf_bar.pressed.connect(StreetTalk.talk_about_turf)
 	_map_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.MAP_SCREEN))
 	_menu_button.pressed.connect(_return_to_title)
 	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
@@ -169,6 +172,13 @@ func _on_venue_selected(venue: VenueDef) -> void:
 				_venue_sheet.show_venue(venue)
 
 
+func _refresh_turf_bar() -> void:
+	var run := GameState.run
+	_turf_bar.visible = Turf.is_contested(run.district_id)
+	if _turf_bar.visible:
+		_turf_bar.show_district(run, run.district_id)
+
+
 func _refresh_crate_button() -> void:
 	var run := GameState.run
 	_crate_button.visible = Smuggling.can_deliver(run)
@@ -205,6 +215,7 @@ func _on_run_changed() -> void:
 	_news_line.show_for(GameState.run.district_id)
 	_build_people_strip()
 	_refresh_crate_button()
+	_refresh_turf_bar()
 
 
 func _on_day_started(_day: int) -> void:

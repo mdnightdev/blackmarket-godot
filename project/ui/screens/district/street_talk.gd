@@ -5,6 +5,7 @@ class_name StreetTalk
 const REPAY: StringName = &"repay"
 const BORROW: StringName = &"borrow"
 const PAY: StringName = &"pay"
+const MUSCLE: StringName = &"muscle"
 const LEAVE: StringName = &"leave"
 
 
@@ -14,6 +15,8 @@ static func talk_to(character: CharacterDef) -> void:
 			_talk_to_lender(character)
 		CharacterDef.Role.INFORMANT:
 			_talk_to_informant(character)
+		CharacterDef.Role.RIVAL:
+			_talk_turf(character, character.line)
 		_:
 			var choices: Array[DialogueChoice] = [_leave()]
 			GameOverlay.talk(character, character.line, choices, _end, character.blurb)
@@ -72,6 +75,44 @@ static func _describe_patrols(patrols: Dictionary) -> String:
 		var district := Content.district(patrols[officer])
 		sightings.append("%s will be in %s." % [officer.display_name, district.display_name if district != null else "town"])
 	return "%s You didn't hear it from me." % " ".join(sightings)
+
+
+## The turf summary for the current district, spoken by the player when Vex is not around.
+static func talk_about_turf() -> void:
+	var run := GameState.run
+	var district := Content.district(run.district_id)
+	var share := Turf.share(run, run.district_id)
+	var line := "I run %d%% of the corners in %s. Vex has the rest. I hold %d of %d districts." % [
+		share, district.display_name if district != null else "town", Turf.held_count(run), Turf.CONTESTED.size(),
+	]
+	_talk_turf(Content.player(run.player_id), line)
+
+
+static func _talk_turf(speaker: SpeakerDef, line: String) -> void:
+	var run := GameState.run
+	var choices: Array[DialogueChoice] = []
+	var hint := "Selling here gains you ground. Vex takes ground wherever she spends the phase."
+	if Turf.is_contested(run.district_id) and not run.vex_gone:
+		var cost := Turf.muscle_cost(run)
+		choices.append(DialogueChoice.new(MUSCLE, "Send muscle %s" % Format.money(cost), Turf.can_send_muscle(run)))
+		hint = "Muscle adds %d%% here and %d heat. Once per phase. %s" % [Turf.MUSCLE_GAIN, Turf.MUSCLE_HEAT, hint]
+		if run.muscle_stamp == Calendar.stamp(run):
+			hint = "Your crew already went out this phase."
+	choices.append(_leave())
+	GameOverlay.talk(speaker, line, choices, _on_turf_choice, hint)
+
+
+static func _on_turf_choice(choice: StringName) -> void:
+	if choice != MUSCLE:
+		GameOverlay.end_talk()
+		return
+	var reply := "Not enough cash to pay the crew."
+	if GameState.send_muscle():
+		AudioService.play_sfx(Sfx.TURF_MUSCLE)
+		var run := GameState.run
+		reply = "Your crew leans on the corners. You now run %d%% of them." % Turf.share(run, run.district_id)
+	var done: Array[DialogueChoice] = [_leave()]
+	GameOverlay.say(reply, done, _end, false)
 
 
 static func _leave() -> DialogueChoice:

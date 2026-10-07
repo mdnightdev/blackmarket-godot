@@ -5,17 +5,25 @@ signal district_selected(district: DistrictDef)
 
 const MARKER_CENTER := Vector2(100, 34)
 const PULSE_SECONDS := 1.4
+const HOLDER_COLORS := {
+	Turf.Holder.NOBODY: Palette.TEXT_MUTED,
+	Turf.Holder.PLAYER: TurfBar.PLAYER_COLOR,
+	Turf.Holder.VEX: TurfBar.VEX_COLOR,
+}
 
 var district: DistrictDef
 var is_current := false
+var holder := Turf.Holder.NOBODY
 
 @onready var _ring: Panel = %Ring
+@onready var _marker: Panel = %Marker
 @onready var _name_label: Label = %NameLabel
 
 
 func _ready() -> void:
 	super()
 	_name_label.text = district.display_name
+	_tint_marker(HOLDER_COLORS[holder])
 	pressed.connect(func() -> void: district_selected.emit(district))
 	_ring.visible = is_current
 	if is_current:
@@ -24,6 +32,12 @@ func _ready() -> void:
 
 func place_at(map_point: Vector2) -> void:
 	position = map_point - MARKER_CENTER
+
+
+func _tint_marker(color: Color) -> void:
+	var style: StyleBoxFlat = _marker.get_theme_stylebox("panel").duplicate()
+	style.bg_color = color
+	_marker.add_theme_stylebox_override("panel", style)
 
 
 func _pulse_ring() -> void:

@@ -202,6 +202,14 @@ func hijack(shipment: Dictionary, approach: Hijacks.Approach) -> int:
 	return taken
 
 
+func send_muscle() -> bool:
+	if not Turf.send_muscle(run):
+		return false
+	Encounters.check_raid(run)
+	_commit(false)
+	return true
+
+
 func place_bet(casino: CasinoDef, amount: int) -> bool:
 	if not Casino.place_bet(run, casino, amount):
 		return false

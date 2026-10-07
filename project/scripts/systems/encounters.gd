@@ -41,6 +41,7 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	var raid_due := Heat.is_maxed(run)
 	Heat.cool_down(run, new_day_started)
 	StreetEvents.prune(run)
+	Turf.vex_pushes(run)
 
 	if new_day_started:
 		Loan.accrue_interest(run)
@@ -53,10 +54,15 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 
 	if has_pending(run):
 		return
+	Turf.check_victory(run)
+	if has_pending(run):
+		return
 	if raid_due:
 		run.pending_encounter = raid(run)
 	elif rng.randf() < Police.stop_chance(run):
 		run.pending_encounter = police_stop(run)
+	elif Roster.rival_in(run, run.district_id, Calendar.stamp(run)) and Turf.clash_due(run, rng.randf()):
+		run.pending_encounter = Turf.clash(run)
 	elif rng.randf() < StreetEvents.EVENT_CHANCE:
 		run.pending_encounter = StreetEvents.roll_event(run, events, rng)
 		if int(run.pending_encounter.get("effect", -1)) == EventDef.Effect.PRICE_SHIFT:
@@ -124,6 +130,11 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			list.append(Choice.new(BRIBE, "Bribe %s" % Format.money(bribe), run.cash >= bribe))
 			list.append(Choice.new(RUN, "Run for it (%d%%)" % roundi(Police.escape_chance(run) * 100.0)))
 			list.append(Choice.new(COMPLY, "Comply"))
+		Turf.CLASH:
+			var tribute := int(encounter.tribute)
+			list.append(Choice.new(Turf.TRIBUTE, "Pay %s tribute" % Format.money(tribute), run.cash >= tribute))
+			list.append(Choice.new(Turf.FIGHT, "Fight (%d%%)" % roundi(Turf.FIGHT_CHANCE * 100.0)))
+			list.append(Choice.new(Turf.BACK_OFF, "Back off"))
 		EVENT:
 			match int(encounter.effect):
 				EventDef.Effect.MUGGING:
@@ -147,6 +158,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 	if allowed.is_empty():
 		return ""
 	run.pending_encounter = {}
+	if encounter.get("type") == Turf.CLASH:
+		return Turf.resolve_clash(run, encounter, choice, roll)
 	match choice:
 		BRIBE:
 			Police.pay_bribe(run, int(encounter.bribe))
