@@ -88,7 +88,7 @@ func _refresh() -> void:
 	_add_label("YOUR CRATE", &"SectionLabel")
 	if Smuggling.is_carrying(run):
 		var row := _add_row()
-		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(int(run.crate.pay)), Smuggling.describe(run.crate), "%d SLOTS" % Smuggling.slots_used(run), Palette.PEACH_BRIGHT)
+		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(int(run.crate.pay)), Smuggling.describe(run.crate), "%d SLOTS" % Smuggling.slots_used(run), Palette.PRICE)
 	else:
 		_add_label("You are not carrying a crate.", &"MutedLabel")
 
@@ -99,7 +99,7 @@ func _refresh() -> void:
 	var offers := Smuggling.board(run)
 	for offer in offers:
 		var row := _add_row()
-		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(int(offer.pay)), Smuggling.describe(offer), "%d SLOTS" % int(offer.slots), Palette.PEACH_BRIGHT)
+		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(int(offer.pay)), Smuggling.describe(offer), "%d SLOTS" % int(offer.slots), Palette.PRICE)
 		row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_crate(offer))
 	if offers.is_empty():
 		_add_label("Every crate has gone out. New runs tomorrow.", &"MutedLabel")
@@ -111,7 +111,7 @@ func _add_shipment_row(shipment: Dictionary) -> void:
 	var run := GameState.run
 	var item: ItemDef = shipment.item
 	var detail := "TAP TO PLAN"
-	var detail_color := Palette.PEACH_BRIGHT
+	var detail_color := Palette.TEXT_CREAM
 	if Hijacks.attempted(run):
 		detail = "ALREADY HIT THIS PHASE"
 		detail_color = Palette.TEXT_MUTED

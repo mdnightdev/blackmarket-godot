@@ -126,7 +126,7 @@ func _add_order_row(order: Dictionary, taken: bool) -> void:
 	var quantity := int(order.quantity)
 	var caption := "%d for %s, %s" % [quantity, dealer.display_name, _district_name(dealer)]
 	var detail := "BY %s" % Calendar.describe(int(order.due)).to_upper()
-	var detail_color := Palette.PEACH_BRIGHT
+	var detail_color := Palette.TEXT_CREAM
 	if taken:
 		var held := Inventory.count(GameState.run, item.id)
 		detail = "HAVE %d/%d" % [mini(held, quantity), quantity]

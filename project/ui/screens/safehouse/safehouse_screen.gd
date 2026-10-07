@@ -34,7 +34,7 @@ func _refresh() -> void:
 				continue
 			var can_take := Inventory.max_from_stash(run, item) > 0
 			var row := _add_row()
-			row.display(item, "x%d" % Inventory.stashed(run, item_id), "Stored, safe from raids", "TAP TO TAKE" if can_take else "BAG FULL", Palette.PEACH_BRIGHT if can_take else Palette.TEXT_MUTED)
+			row.display(item, "x%d" % Inventory.stashed(run, item_id), "Stored, safe from raids", "TAP TO TAKE" if can_take else "BAG FULL", Palette.TEXT_CREAM if can_take else Palette.TEXT_MUTED)
 			row.item_selected.connect(_ask_amount.bind(false))
 	else:
 		_add_label("STASH", &"SectionLabel")
@@ -51,7 +51,7 @@ func _refresh() -> void:
 		if capacity > 0:
 			detail = "TAP TO STASH" if Inventory.max_to_stash(run, item) > 0 else "STASH FULL"
 		var row := _add_row()
-		row.display(item, "x%d" % Inventory.count(run, item_id), "Paid %s each" % Format.money(int(run.cost_basis.get(item_id, 0))), detail, Palette.PEACH_BRIGHT if detail == "TAP TO STASH" else Palette.TEXT_MUTED)
+		row.display(item, "x%d" % Inventory.count(run, item_id), "Paid %s each" % Format.money(int(run.cost_basis.get(item_id, 0))), detail, Palette.TEXT_CREAM if detail == "TAP TO STASH" else Palette.TEXT_MUTED)
 		if capacity > 0:
 			row.item_selected.connect(_ask_amount.bind(true))
 
@@ -59,7 +59,7 @@ func _refresh() -> void:
 	_add_upgrade_row()
 	_add_label("REST", &"SectionLabel")
 	var lie_low := _add_row()
-	lie_low.show_entry(Safehouse.LIE_LOW_ICON, "Lie low", "1 phase", "Skip a phase, lose %d extra heat" % Safehouse.LIE_LOW_HEAT, "TAP TO REST", Palette.PEACH_BRIGHT)
+	lie_low.show_entry(Safehouse.LIE_LOW_ICON, "Lie low", "1 phase", "Skip a phase, lose %d extra heat" % Safehouse.LIE_LOW_HEAT, "TAP TO REST", Palette.TEXT_CREAM)
 	lie_low.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_lying_low())
 
 
@@ -72,7 +72,7 @@ func _add_upgrade_row() -> void:
 	var affordable := Safehouse.can_upgrade(run)
 	var caption := "Room for %d slots, safe from raids" % int(upgrade.capacity)
 	var row := _add_row()
-	row.show_entry(Safehouse.UPGRADE_ICON, str(upgrade.name), Format.money(int(upgrade.price)), caption, "TAP TO BUILD" if affordable else "NOT ENOUGH CASH", Palette.PEACH_BRIGHT if affordable else Palette.TEXT_MUTED)
+	row.show_entry(Safehouse.UPGRADE_ICON, str(upgrade.name), Format.money(int(upgrade.price)), caption, "TAP TO BUILD" if affordable else "NOT ENOUGH CASH", Palette.TEXT_CREAM if affordable else Palette.TEXT_MUTED)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_upgrade())
 
 

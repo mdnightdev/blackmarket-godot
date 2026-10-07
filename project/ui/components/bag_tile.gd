@@ -37,7 +37,7 @@ func show_entry(entry_icon: Texture2D, count_text: String, entry_title: String, 
 
 func set_selected(selected: bool) -> void:
 	var style: StyleBoxFlat = _frame.get_theme_stylebox("panel").duplicate()
-	style.border_color = Palette.PEACH_BORDER if selected else Palette.LINE_MUTED
+	style.border_color = Palette.TEXT_CREAM if selected else Palette.LINE_MUTED
 	style.set_border_width_all(3 if selected else 1)
 	_frame.add_theme_stylebox_override("panel", style)
 

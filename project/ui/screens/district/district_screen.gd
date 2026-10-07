@@ -3,11 +3,11 @@ extends Control
 const FAB_BUTTON := preload("res://ui/components/fab_button.tscn")
 const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
 const ROLE_COLORS := {
-	CharacterDef.Role.LENDER: Palette.PEACH_TITLE,
+	CharacterDef.Role.LENDER: Palette.TEXT_CREAM,
 	CharacterDef.Role.POLICE: Palette.RISK_HIGH,
 	CharacterDef.Role.INFORMANT: Palette.PRICE,
 	CharacterDef.Role.RIVAL: Palette.PEACH_BRIGHT,
-	CharacterDef.Role.LIEUTENANT: Palette.PEACH_BORDER,
+	CharacterDef.Role.LIEUTENANT: Palette.TEXT_CREAM,
 	CharacterDef.Role.HACKER: Palette.PRICE,
 }
 const VENUE_ICONS := {

@@ -46,7 +46,7 @@ func _refresh() -> void:
 			row.display(item, "Owned", Gear.describe(item))
 		else:
 			var affordable := run.cash >= item.base_price
-			row.display(item, Format.money(item.base_price), Gear.describe(item), "TAP TO BUY" if affordable else "NOT ENOUGH CASH", Palette.PEACH_BRIGHT if affordable else Palette.TEXT_MUTED)
+			row.display(item, Format.money(item.base_price), Gear.describe(item), "TAP TO BUY" if affordable else "NOT ENOUGH CASH", Palette.TEXT_CREAM if affordable else Palette.TEXT_MUTED)
 		row.item_selected.connect(func(selected: ItemDef) -> void: _trade_sheet.show_trade(TradeSheet.Mode.GEAR, selected, null))
 
 
@@ -61,7 +61,7 @@ func _add_clean_up_row() -> void:
 		detail = "NOT ENOUGH CASH"
 	var caption := "Drops your heat by up to %d. Once per phase." % Fixer.CLEAN_UP_HEAT
 	var row := _add_row()
-	row.show_entry(Fixer.CLEAN_UP_ICON, "Make the heat go away", Format.money(Fixer.clean_up_cost(run)), caption, detail, Palette.PEACH_BRIGHT if Fixer.can_clean_up(run) else Palette.TEXT_MUTED)
+	row.show_entry(Fixer.CLEAN_UP_ICON, "Make the heat go away", Format.money(Fixer.clean_up_cost(run)), caption, detail, Palette.TEXT_CREAM if Fixer.can_clean_up(run) else Palette.TEXT_MUTED)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_clean_up())
 
 

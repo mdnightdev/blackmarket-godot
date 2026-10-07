@@ -35,12 +35,12 @@ border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.8784, 0.5412, 0.5961, 1)
+border_color = Color(0.8706, 0.8392, 0.8078, 1)
 corner_radius_top_left = 999
 corner_radius_top_right = 999
 corner_radius_bottom_right = 999
 corner_radius_bottom_left = 999
-shadow_color = Color(0.8784, 0.5412, 0.5961, 0.5)
+shadow_color = Color(0.8706, 0.8392, 0.8078, 0.5)
 shadow_size = 10
 
 [node name="MapScreen" type="Control"]
@@ -92,7 +92,7 @@ expand_mode = 1
 [node name="Route" type="Line2D" parent="."]
 unique_name_in_owner = true
 width = 6.0
-default_color = Color(0.8784, 0.5412, 0.5961, 0.9)
+default_color = Color(0.8706, 0.8392, 0.8078, 0.9)
 joint_mode = 2
 begin_cap_mode = 2
 end_cap_mode = 2
