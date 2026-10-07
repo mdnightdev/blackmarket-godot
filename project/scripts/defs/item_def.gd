@@ -17,7 +17,6 @@ enum Kind { TRADE_GOOD, EQUIPMENT }
 @export_range(0, 500) var capacity_bonus: int = 0
 @export_range(0.0, 1.0, 0.01) var fare_discount: float = 0.0
 @export_range(0.0, 1.0, 0.01) var haggle_bonus: float = 0.0
-@export_range(0, 1000) var stash_capacity: int = 0
 
 
 func is_equipment() -> bool:

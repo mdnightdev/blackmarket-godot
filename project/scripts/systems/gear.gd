@@ -24,13 +24,6 @@ static func capacity_bonus(run: RunState) -> int:
 	return total
 
 
-static func stash_capacity(run: RunState) -> int:
-	var total := 0
-	for item in owned_items(run):
-		total += item.stash_capacity
-	return total
-
-
 static func fare_discount(run: RunState) -> float:
 	var total := 0.0
 	for item in owned_items(run):
@@ -53,6 +46,4 @@ static func describe(item: ItemDef) -> String:
 		effects.append("Fares -%d%%" % roundi(item.fare_discount * 100.0))
 	if item.haggle_bonus > 0.0:
 		effects.append("Haggle +%d%%" % roundi(item.haggle_bonus * 100.0))
-	if item.stash_capacity > 0:
-		effects.append("%d slot stash" % item.stash_capacity)
 	return ", ".join(effects)

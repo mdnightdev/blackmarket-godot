@@ -158,6 +158,8 @@ func _on_venue_selected(venue: VenueDef) -> void:
 			SceneRouter.go_to(SceneRouter.MARKET_SCREEN)
 		Loan.VENUE:
 			StreetTalk.talk_to(Content.character(Loan.LENDER))
+		Safehouse.VENUE:
+			SceneRouter.go_to(SceneRouter.SAFEHOUSE_SCREEN)
 		_:
 			var host := Content.character(venue.host)
 			if venue is CasinoDef and host != null:
@@ -168,6 +170,9 @@ func _on_venue_selected(venue: VenueDef) -> void:
 			elif host != null and host.role == CharacterDef.Role.SMUGGLER:
 				GameState.visiting_venue = venue.id
 				SceneRouter.go_to(SceneRouter.DOCKS_SCREEN)
+			elif host != null and host.role == CharacterDef.Role.FIXER:
+				GameState.visiting_venue = venue.id
+				SceneRouter.go_to(SceneRouter.FIXER_SCREEN)
 			else:
 				_venue_sheet.show_venue(venue)
 

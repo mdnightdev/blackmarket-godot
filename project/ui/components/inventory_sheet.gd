@@ -31,7 +31,6 @@ func _rebuild() -> void:
 		child.queue_free()
 	_capacity_label.text = "%d / %d slots" % [Inventory.used(run), Inventory.capacity(run)]
 
-	var stash_open := Inventory.can_use_stash(run)
 	_add_section("CARRYING")
 	if run.inventory.is_empty() and not Smuggling.is_carrying(run):
 		_add_note("Your bag is empty.")
@@ -41,20 +40,13 @@ func _rebuild() -> void:
 		row.show_entry(Smuggling.CRATE_ICON, "Voronin's crate", "%d slots" % Smuggling.slots_used(run), Smuggling.describe(run.crate), "DO NOT OPEN", Palette.PEACH_BRIGHT)
 	for item_id: StringName in run.inventory:
 		var paid := Format.money(int(run.cost_basis.get(item_id, 0)))
-		var row := _add_row(Content.item(item_id), "x%d" % run.inventory[item_id], "Paid %s each" % paid, "TAP TO STASH" if stash_open else "")
-		if stash_open:
-			row.item_selected.connect(_stash_all)
+		_add_row(Content.item(item_id), "x%d" % run.inventory[item_id], "Paid %s each" % paid)
 
-	if Gear.stash_capacity(run) > 0:
-		_add_section("STASH  %d / %d" % [Inventory.stash_used(run), Gear.stash_capacity(run)])
-		if not stash_open:
-			_add_note("Open your stash at the Slums safehouse.")
-		elif run.stash.is_empty():
-			_add_note("Nothing stored.")
+	if Safehouse.stash_capacity(run) > 0:
+		_add_section("STASH  %d / %d" % [Inventory.stash_used(run), Safehouse.stash_capacity(run)])
+		_add_note("Move goods in and out at the Slums safehouse.")
 		for item_id: StringName in run.stash:
-			var row := _add_row(Content.item(item_id), "x%d" % run.stash[item_id], "Stored", "TAP TO TAKE" if stash_open else "")
-			if stash_open:
-				row.item_selected.connect(_take_all)
+			_add_row(Content.item(item_id), "x%d" % run.stash[item_id], "Stored")
 
 	var owned_gear := Gear.owned_items(run)
 	if not owned_gear.is_empty():
@@ -82,11 +74,3 @@ func _add_row(item: ItemDef, price_text: String, caption: String, action_hint: S
 	_list.add_child(row)
 	row.display(item, price_text, caption, action_hint, Palette.PEACH_BRIGHT)
 	return row
-
-
-func _stash_all(item: ItemDef) -> void:
-	GameState.move_to_stash(item, Inventory.max_to_stash(GameState.run, item))
-
-
-func _take_all(item: ItemDef) -> void:
-	GameState.take_from_stash(item, Inventory.max_from_stash(GameState.run, item))

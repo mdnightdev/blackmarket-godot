@@ -3,7 +3,7 @@ extends GutTest
 
 func test_goods_and_gear_load() -> void:
 	assert_eq(Content.items(ItemDef.Kind.TRADE_GOOD).size(), 14)
-	assert_eq(Content.items(ItemDef.Kind.EQUIPMENT).size(), 7)
+	assert_eq(Content.items(ItemDef.Kind.EQUIPMENT).size(), 6)
 
 
 func test_items_are_sorted_cheapest_first() -> void:

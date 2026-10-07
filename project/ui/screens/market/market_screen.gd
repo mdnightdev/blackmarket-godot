@@ -1,6 +1,6 @@
 extends Control
 
-enum Tab { BUY, SELL, GEAR }
+enum Tab { BUY, SELL }
 
 const ITEM_ROW := preload("res://ui/components/item_row.tscn")
 const STEADY_CHANGE := 0.005
@@ -27,7 +27,6 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _order_list: VBoxContainer = %OrderList
 @onready var _buy_tab: Button = %BuyTab
 @onready var _sell_tab: Button = %SellTab
-@onready var _gear_tab: Button = %GearTab
 @onready var _notice_label: Label = %NoticeLabel
 @onready var _scroll: ScrollContainer = %Scroll
 @onready var _list: VBoxContainer = %List
@@ -57,12 +56,11 @@ func _ready() -> void:
 	_speech.finished.connect(_portrait.set_talking.bind(false))
 
 	var tabs := ButtonGroup.new()
-	for tab_button: Button in [_buy_tab, _sell_tab, _gear_tab]:
+	for tab_button: Button in [_buy_tab, _sell_tab]:
 		tab_button.button_group = tabs
 	_buy_tab.button_pressed = true
 	_buy_tab.pressed.connect(_select_tab.bind(Tab.BUY))
 	_sell_tab.pressed.connect(_select_tab.bind(Tab.SELL))
-	_gear_tab.pressed.connect(_select_tab.bind(Tab.GEAR))
 	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
 	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
 	_trade_sheet.completed.connect(_on_trade_completed)
@@ -131,7 +129,7 @@ func _dealer_is_here() -> bool:
 
 func _select_tab(tab: Tab) -> void:
 	_tab = tab
-	[_buy_tab, _sell_tab, _gear_tab][tab].button_pressed = true
+	[_buy_tab, _sell_tab][tab].button_pressed = true
 	_scroll.scroll_vertical = 0
 	_refresh()
 
@@ -164,8 +162,6 @@ func _refresh() -> void:
 			_fill_buy_list()
 		Tab.SELL:
 			_fill_sell_list()
-		Tab.GEAR:
-			_fill_gear_list()
 
 
 func _show_notice(text: String) -> void:
@@ -230,14 +226,6 @@ func _fill_sell_list() -> void:
 	_show_notice("" if _list.get_child_count() > 0 else "Nothing in your bag to sell.")
 
 
-func _fill_gear_list() -> void:
-	var run := GameState.run
-	for item in Content.items(ItemDef.Kind.EQUIPMENT):
-		var owned := Gear.owns(run, item.id)
-		_add_row(item, "Owned" if owned else Format.money(item.base_price), Gear.describe(item))
-	_show_notice("")
-
-
 func _add_row(item: ItemDef, price_text: String, caption: String, detail: String = "", detail_color: Color = Palette.TEXT_MUTED) -> void:
 	var row: ItemRow = ITEM_ROW.instantiate()
 	_list.add_child(row)
@@ -258,12 +246,7 @@ func _change_color(change: float) -> Color:
 
 
 func _on_item_selected(item: ItemDef) -> void:
-	var mode := TradeSheet.Mode.GEAR
-	match _tab:
-		Tab.BUY:
-			mode = TradeSheet.Mode.BUY
-		Tab.SELL:
-			mode = TradeSheet.Mode.SELL
+	var mode := TradeSheet.Mode.BUY if _tab == Tab.BUY else TradeSheet.Mode.SELL
 	_trade_sheet.show_trade(mode, item, _dealer)
 
 

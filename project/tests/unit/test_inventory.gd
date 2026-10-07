@@ -25,7 +25,7 @@ func test_used_space_counts_item_slots() -> void:
 func test_stash_needs_lockbox_and_safehouse_district() -> void:
 	_run.district_id = &"slums"
 	assert_false(Inventory.can_use_stash(_run))
-	_run.gear.append(&"safehouse_lockbox")
+	_run.stash_level = 1
 	assert_true(Inventory.can_use_stash(_run))
 	_run.district_id = &"old_market"
 	assert_false(Inventory.can_use_stash(_run))
@@ -33,7 +33,7 @@ func test_stash_needs_lockbox_and_safehouse_district() -> void:
 
 func test_moving_goods_between_bag_and_stash() -> void:
 	_run.district_id = &"slums"
-	_run.gear.append(&"safehouse_lockbox")
+	_run.stash_level = 1
 	_run.inventory = {&"burner_phones": 5}
 	assert_true(Inventory.move_to_stash(_run, _phones, 3))
 	assert_eq(Inventory.count(_run, _phones.id), 2)
@@ -45,7 +45,7 @@ func test_moving_goods_between_bag_and_stash() -> void:
 
 func test_cannot_move_more_than_held() -> void:
 	_run.district_id = &"slums"
-	_run.gear.append(&"safehouse_lockbox")
+	_run.stash_level = 1
 	_run.inventory = {&"burner_phones": 2}
 	assert_false(Inventory.move_to_stash(_run, _phones, 3))
 	assert_eq(Inventory.count(_run, _phones.id), 2)
@@ -53,7 +53,7 @@ func test_cannot_move_more_than_held() -> void:
 
 func test_taking_from_stash_respects_bag_space() -> void:
 	_run.district_id = &"slums"
-	_run.gear.append(&"safehouse_lockbox")
+	_run.stash_level = 1
 	_run.inventory = {&"burner_phones": Inventory.BASE_CAPACITY - 1}
 	_run.stash = {&"burner_sims": 5}
 	assert_eq(Inventory.max_from_stash(_run, Content.item(&"burner_sims")), 1)

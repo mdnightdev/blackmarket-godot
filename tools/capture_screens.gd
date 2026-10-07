@@ -1,7 +1,7 @@
 extends SceneTree
 
 const OUTPUT_DIR := "/tmp/blackmarket_shots"
-const WATCHDOG_SECONDS := 500.0
+const WATCHDOG_SECONDS := 580.0
 
 var _game_state: Node
 var _router: Node
@@ -46,9 +46,6 @@ func _run() -> void:
 	current_scene.get_node("%SellTab").pressed.emit()
 	await _wait(0.6)
 	await _capture("07_market_sell")
-	current_scene.get_node("%GearTab").pressed.emit()
-	await _wait(0.6)
-	await _capture("08_market_gear")
 
 	current_scene.get_node("%DealFlash").play(1840, true)
 	await _wait(0.8)
@@ -75,6 +72,7 @@ func _run() -> void:
 	await _capture_casino()
 	await _capture_docks()
 	await _capture_turf()
+	await _capture_fixer_and_safehouse()
 
 	_router.go_to(_router.TITLE_SCREEN)
 	await _wait(0.18)
@@ -237,6 +235,66 @@ func _capture_docks() -> void:
 	await _capture("48_crate_lost")
 	overlay.end_talk()
 	await _wait(0.4)
+
+
+func _capture_fixer_and_safehouse() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+	var dialogue: Node = overlay.get_child(1)
+	run.cash = 9000
+	run.heat = 48
+
+	run.district_id = &"warehouse_row"
+	await _open(_router.DISTRICT_SCREEN, "60_warehouse_row")
+	_game_state.visiting_venue = &"supply"
+	await _open(_router.FIXER_SCREEN, "61_fixer", 2.6)
+	current_scene.call("_talk_about_clean_up")
+	await _wait(2.6)
+	await _capture("62_fixer_clean_up")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(1.4)
+	await _capture("63_fixer_cleaned")
+	overlay.end_talk()
+	await _wait(0.4)
+	current_scene.get_node("%TradeSheet").show_trade(TradeSheet.Mode.GEAR, _content.item(&"duffel_bag"), null)
+	await _wait(0.8)
+	await _capture("64_fixer_gear")
+	current_scene.get_node("%TradeSheet").close()
+	await _wait(0.4)
+
+	run.district_id = &"slums"
+	run.inventory = { &"burner_phones": 12, &"fake_ids": 4 }
+	run.cost_basis = { &"burner_phones": 90, &"fake_ids": 160 }
+	await _open(_router.SAFEHOUSE_SCREEN, "65_safehouse_new", 2.6)
+	run.stash_level = 1
+	run.stash = { &"ghost_pistol": 3 }
+	_game_state.run_changed.emit()
+	await _wait(0.6)
+	await _capture("66_safehouse_stash")
+	current_scene.call("_ask_amount", _content.item(&"burner_phones"), true)
+	await _wait(2.4)
+	await _capture("67_safehouse_amount")
+	dialogue.get_node("%ChoiceList").get_child(1).pressed.emit()
+	await _wait(0.8)
+	await _capture("68_safehouse_moved")
+	current_scene.call("_talk_about_upgrade")
+	await _wait(2.4)
+	await _capture("69_safehouse_upgrade")
+	overlay.end_talk()
+	await _wait(0.4)
+	current_scene.call("_talk_about_lying_low")
+	await _wait(2.4)
+	await _capture("70_safehouse_lie_low")
+	overlay.end_talk()
+	await _wait(0.4)
+	current_scene.get_node("%BagButton").pressed.emit()
+	await _wait(0.8)
+	await _capture("71_bag_stash")
+
+	run.district_id = &"old_market"
+	await _open(_router.MARKET_SCREEN, "72_market_tabs", 2.4)
 
 
 func _capture_turf() -> void:

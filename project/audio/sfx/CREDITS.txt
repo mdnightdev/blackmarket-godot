@@ -30,6 +30,11 @@ http://creativecommons.org/publicdomain/zero/1.0/
   turf_clash.ogg     RPG Audio         drawKnife1.ogg
   turf_muscle.ogg    Impact Sounds     impactPunch_medium_002.ogg
   turf_won.ogg       Interface Sounds  confirmation_004.ogg
+  gear_buy.ogg       RPG Audio         beltHandle1.ogg
+  clean_up.ogg       RPG Audio         bookFlip2.ogg
+  stash_move.ogg     RPG Audio         dropLeather.ogg
+  stash_upgrade.ogg  RPG Audio         metalClick.ogg
+  lie_low.ogg        RPG Audio         doorClose_4.ogg
 
 Original
 

@@ -1,7 +1,6 @@
 class_name Inventory
 
 const BASE_CAPACITY := 20
-const STASH_VENUE: StringName = &"safehouse"
 
 
 static func count(run: RunState, item_id: StringName) -> int:
@@ -29,15 +28,12 @@ static func stash_used(run: RunState) -> int:
 
 
 static func stash_free_space(run: RunState) -> int:
-	return maxi(0, Gear.stash_capacity(run) - stash_used(run))
+	return maxi(0, Safehouse.stash_capacity(run) - stash_used(run))
 
 
 ## The stash lives in the safehouse, so it can only be reached from a district that has one.
 static func can_use_stash(run: RunState) -> bool:
-	if Gear.stash_capacity(run) <= 0:
-		return false
-	var district := Content.district(run.district_id)
-	return district != null and district.venues.has(STASH_VENUE)
+	return Safehouse.stash_capacity(run) > 0 and Safehouse.is_here(run)
 
 
 static func max_to_stash(run: RunState, item: ItemDef) -> int:

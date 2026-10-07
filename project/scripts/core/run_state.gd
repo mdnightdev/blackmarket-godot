@@ -10,6 +10,7 @@ const STARTING_DEBT := 5000
 const CAMPAIGN_DAYS := 30
 const STARTING_DISTRICT: StringName = &"old_market"
 const DEFAULT_PLAYER: StringName = &"kade"
+const LEGACY_LOCKBOX: StringName = &"safehouse_lockbox"
 
 var player_id: StringName = DEFAULT_PLAYER
 var price_seed: int = randi()
@@ -25,6 +26,8 @@ var district_id: StringName = STARTING_DISTRICT
 var inventory: Dictionary = {}
 ## Item id to units stored in the safehouse stash.
 var stash: Dictionary = {}
+## Index into Safehouse.UPGRADES plus one. 0 means the safehouse has no stash yet.
+var stash_level: int = 0
 ## Item id to average price paid per unit, for goods currently held.
 var cost_basis: Dictionary = {}
 var gear: Array[StringName] = []
@@ -54,6 +57,8 @@ var turf: Dictionary = {}
 var muscle_stamp: int = -1
 ## True once Vex has been driven out of the city.
 var vex_gone := false
+## Phase stamp in which the Fixer last cleaned up the player's heat.
+var cleanup_stamp: int = -1
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
 
@@ -89,6 +94,7 @@ func to_dict() -> Dictionary:
 		"district_id": String(district_id),
 		"inventory": _string_keys(inventory),
 		"stash": _string_keys(stash),
+		"stash_level": stash_level,
 		"cost_basis": _string_keys(cost_basis),
 		"gear": saved_gear,
 		"walked_out": _string_keys(walked_out),
@@ -104,6 +110,7 @@ func to_dict() -> Dictionary:
 		"turf": _string_keys(turf),
 		"muscle_stamp": muscle_stamp,
 		"vex_gone": vex_gone,
+		"cleanup_stamp": cleanup_stamp,
 		"pending_encounter": pending_encounter,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -130,6 +137,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.district_id = StringName(str(data.get("district_id", state.district_id)))
 	state.inventory = _positive_counts(data.get("inventory"))
 	state.stash = _positive_counts(data.get("stash"))
+	state.stash_level = clampi(int(data.get("stash_level", 0)), 0, Safehouse.UPGRADES.size())
 	state.cost_basis = _positive_counts(data.get("cost_basis"))
 	state.walked_out = _positive_counts(data.get("walked_out"), 0)
 
@@ -137,7 +145,9 @@ static func from_dict(data: Dictionary) -> RunState:
 	if saved_gear is Array:
 		for item_id: Variant in saved_gear:
 			var gear_id := StringName(str(item_id))
-			if not state.gear.has(gear_id):
+			if gear_id == LEGACY_LOCKBOX:
+				state.stash_level = maxi(state.stash_level, 1)
+			elif not state.gear.has(gear_id):
 				state.gear.append(gear_id)
 
 	var saved_shifts: Variant = data.get("market_shifts", [])
@@ -172,6 +182,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.turf = Turf.sanitize(data.get("turf", {}))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
 	state.vex_gone = bool(data.get("vex_gone", false))
+	state.cleanup_stamp = int(data.get("cleanup_stamp", -1))
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter

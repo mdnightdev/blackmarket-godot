@@ -139,6 +139,29 @@ func take_from_stash(item: ItemDef, quantity: int) -> bool:
 	return moved
 
 
+func buy_stash_upgrade() -> bool:
+	if not Safehouse.buy_upgrade(run):
+		return false
+	_commit(false)
+	return true
+
+
+## Spends the next phase at the safehouse. Normal time passes, with extra cooling.
+func lie_low() -> bool:
+	if Encounters.has_pending(run) or Campaign.is_over(run) or not Safehouse.lie_low(run):
+		return false
+	advance_phase()
+	return true
+
+
+## Returns the heat removed, 0 when the Fixer would not do it.
+func clean_up_heat() -> int:
+	var removed := Fixer.clean_up(run)
+	if removed > 0:
+		_commit(false)
+	return removed
+
+
 ## Police character to district for next phase, empty when the player cannot pay.
 func buy_police_tip() -> Dictionary:
 	var patrols := Informant.buy_tip(run)

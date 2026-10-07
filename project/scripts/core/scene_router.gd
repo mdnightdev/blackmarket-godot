@@ -11,6 +11,8 @@ const MARKET_SCREEN := "res://ui/screens/market/market_screen.tscn"
 const BAR_SCREEN := "res://ui/screens/bar/bar_screen.tscn"
 const CASINO_SCREEN := "res://ui/screens/casino/casino_screen.tscn"
 const DOCKS_SCREEN := "res://ui/screens/docks/docks_screen.tscn"
+const FIXER_SCREEN := "res://ui/screens/fixer/fixer_screen.tscn"
+const SAFEHOUSE_SCREEN := "res://ui/screens/safehouse/safehouse_screen.tscn"
 const END_SCREEN := "res://ui/screens/end/end_screen.tscn"
 
 const SHUTTER_SHADER: Shader = preload("res://ui/shaders/shutter.gdshader")
