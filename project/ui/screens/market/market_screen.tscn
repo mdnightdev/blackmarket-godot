@@ -134,6 +134,12 @@ theme_override_colors/font_color = Color(0.8784, 0.5412, 0.5961, 1)
 autowrap_mode = 3
 script = ExtResource("7_news_line")
 
+[node name="OrderList" type="VBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
 [node name="Tabs" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 theme_override_constants/separation = 10

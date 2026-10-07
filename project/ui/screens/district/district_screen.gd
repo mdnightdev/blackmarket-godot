@@ -153,7 +153,12 @@ func _on_venue_selected(venue: VenueDef) -> void:
 		Loan.VENUE:
 			StreetTalk.talk_to(Content.character(Loan.LENDER))
 		_:
-			_venue_sheet.show_venue(venue)
+			var host := Content.character(venue.host)
+			if host != null and host.role == CharacterDef.Role.BARTENDER:
+				GameState.visiting_venue = venue.id
+				SceneRouter.go_to(SceneRouter.BAR_SCREEN)
+			else:
+				_venue_sheet.show_venue(venue)
 
 
 func _on_run_changed() -> void:

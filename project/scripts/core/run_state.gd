@@ -34,6 +34,12 @@ var walked_out: Dictionary = {}
 var market_shifts: Array[Dictionary] = []
 ## Prices the player has seen at each dealer. See PriceIntel for the entry layout.
 var price_sightings: Array[Dictionary] = []
+## Accepted bar orders. See Orders for the entry layout.
+var orders: Array[Dictionary] = []
+## Ids of today's board offers the player already took, so they leave the board.
+var taken_orders: Array[String] = []
+## Venue id to the phase stamp its rumour was bought in.
+var rumors_heard: Dictionary = {}
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
 
@@ -74,6 +80,9 @@ func to_dict() -> Dictionary:
 		"walked_out": _string_keys(walked_out),
 		"market_shifts": market_shifts,
 		"price_sightings": price_sightings,
+		"orders": orders,
+		"taken_orders": taken_orders,
+		"rumors_heard": _string_keys(rumors_heard),
 		"pending_encounter": pending_encounter,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -120,6 +129,16 @@ static func from_dict(data: Dictionary) -> RunState:
 		for sighting: Variant in saved_sightings:
 			if sighting is Dictionary:
 				state.price_sightings.append(PriceIntel.sanitize_sighting(sighting))
+	var saved_orders: Variant = data.get("orders", [])
+	if saved_orders is Array:
+		for order: Variant in saved_orders:
+			if order is Dictionary and state.orders.size() < Orders.MAX_ACTIVE:
+				state.orders.append(Orders.sanitize(order))
+	var saved_taken: Variant = data.get("taken_orders", [])
+	if saved_taken is Array:
+		for id: Variant in saved_taken:
+			state.taken_orders.append(str(id))
+	state.rumors_heard = _positive_counts(data.get("rumors_heard"), 0)
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter

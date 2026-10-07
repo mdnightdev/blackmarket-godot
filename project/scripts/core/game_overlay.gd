@@ -19,6 +19,8 @@ var _loan_sheet: LoanSheet
 var _lights: PoliceLights
 var _settled_for := 0.0
 var _shake_pixels := 0.0
+## Shown one at a time after any pending encounter. Kept in memory only, since missing an order is already saved.
+var _missed_orders: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -30,6 +32,8 @@ func _ready() -> void:
 	add_child(_dialogue)
 	_dialogue.add_backdrop_layer(_lights)
 	SceneRouter.transition_started.connect(_loan_sheet.close)
+	GameState.orders_missed.connect(func(orders: Array[Dictionary]) -> void: _missed_orders.append_array(orders))
+	GameState.run_started.connect(func() -> void: _missed_orders.clear())
 
 
 ## Screens opt in by defining can_present_encounter(), so encounters never interrupt animations or other modals.
@@ -43,7 +47,10 @@ func _process(delta: float) -> void:
 	_settled_for += delta
 	if _settled_for >= SETTLE_SECONDS:
 		_settled_for = 0.0
-		_present_encounter(GameState.run.pending_encounter)
+		if Encounters.has_pending(GameState.run):
+			_present_encounter(GameState.run.pending_encounter)
+		else:
+			_present_missed_order(_missed_orders.pop_front())
 
 
 func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
@@ -77,7 +84,9 @@ func handle_back() -> bool:
 
 
 func _can_present() -> bool:
-	if GameState.run == null or not Encounters.has_pending(GameState.run):
+	if GameState.run == null:
+		return false
+	if not Encounters.has_pending(GameState.run) and _missed_orders.is_empty():
 		return false
 	if _dialogue.visible or _loan_sheet.visible or SceneRouter.is_transitioning():
 		return false
@@ -96,6 +105,18 @@ func _present_encounter(encounter: Dictionary) -> void:
 	var backdrop := RAID_BACKDROP if type == Encounters.RAID else null
 	_dialogue.open(speaker, str(encounter.get("body", "")), choices, _resolve_encounter, "", backdrop)
 	_raise_alarm(type)
+
+
+func _present_missed_order(order: Dictionary) -> void:
+	var dealer := Content.dealer(StringName(order.dealer))
+	var item := Content.item(StringName(order.item))
+	if dealer == null or item == null:
+		return
+	var line := "You were meant to bring me %d %s. Come back when you can keep a promise." % [int(order.quantity), item.display_name]
+	var hint := "Order missed. %s will not trade with you this phase." % dealer.display_name
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
+	_dialogue.open(dealer, line, choices, func(_id: StringName) -> void: _dialogue.close(), hint)
+	AudioService.play_sfx(Sfx.HAGGLE_FAIL)
 
 
 func _raise_alarm(type: String) -> void:

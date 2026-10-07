@@ -5,6 +5,8 @@ signal run_loaded
 signal run_changed
 signal day_started(day: int)
 signal run_ended(outcome: RunState.Outcome)
+## Bar orders whose deadline passed during the last move of time.
+signal orders_missed(orders: Array[Dictionary])
 
 const SAVE_PATH := "user://run.json"
 
@@ -15,6 +17,8 @@ var clock_active := false
 var has_unseen_new_day := false
 ## Dealer the market screen opens with. Empty means the district's resident dealer.
 var trading_with: StringName = &""
+## Venue the bar screen opens for.
+var visiting_venue: StringName = &""
 
 var _store := SaveStore.new(SAVE_PATH)
 var _rng := RandomNumberGenerator.new()
@@ -141,6 +145,36 @@ func buy_police_tip() -> Dictionary:
 	return patrols
 
 
+func accept_order(offer: Dictionary) -> Orders.Result:
+	var result := Orders.accept(run, offer)
+	if result == Orders.Result.OK:
+		_commit(false)
+	return result
+
+
+func deliver_order(order: Dictionary) -> bool:
+	var item := Content.item(StringName(order.item))
+	if not Orders.deliver(run, order):
+		return false
+	Heat.add(run, Heat.for_trade(run, item, int(order.quantity)))
+	Encounters.check_raid(run)
+	_commit(false)
+	return true
+
+
+func drop_order(order: Dictionary) -> void:
+	Orders.drop(run, order)
+	_commit(false)
+
+
+## Returns the rumour, or an empty dictionary when nothing was sold.
+func buy_rumor(venue_id: StringName) -> Dictionary:
+	var rumor := Rumors.buy(run, venue_id)
+	if not rumor.is_empty():
+		_commit(false)
+	return rumor
+
+
 ## Saves without emitting run_changed, so screens can call it while refreshing.
 func remember_prices(dealer: DealerDef) -> void:
 	if PriceIntel.record(run, dealer, Content.items(ItemDef.Kind.TRADE_GOOD)):
@@ -171,8 +205,11 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 
 
 func _pass_time(new_day_started: bool, travelled: bool) -> void:
+	var missed := Orders.expire(run)
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
 	_commit(new_day_started)
+	if not missed.is_empty():
+		orders_missed.emit(missed)
 
 
 func _commit(new_day_started: bool) -> void:

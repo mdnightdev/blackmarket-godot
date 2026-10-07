@@ -8,6 +8,7 @@ const CHARACTER_SELECT := "res://ui/screens/character_select/character_select_sc
 const DISTRICT_SCREEN := "res://ui/screens/district/district_screen.tscn"
 const MAP_SCREEN := "res://ui/screens/map/map_screen.tscn"
 const MARKET_SCREEN := "res://ui/screens/market/market_screen.tscn"
+const BAR_SCREEN := "res://ui/screens/bar/bar_screen.tscn"
 const END_SCREEN := "res://ui/screens/end/end_screen.tscn"
 
 const SHUTTER_SHADER: Shader = preload("res://ui/shaders/shutter.gdshader")

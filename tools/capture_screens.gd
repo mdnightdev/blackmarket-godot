@@ -71,6 +71,7 @@ func _run() -> void:
 
 	await _capture_phase_four(dealer)
 	await _capture_roster()
+	await _capture_bar()
 
 	_router.go_to(_router.TITLE_SCREEN)
 	await _wait(0.18)
@@ -117,6 +118,40 @@ func _capture_roster() -> void:
 		await _open(_router.MARKET_SCREEN, "22_market_traveller", 2.4)
 
 	await _open(_router.CHARACTER_SELECT, "25_character_select", 2.6)
+
+
+func _capture_bar() -> void:
+	_game_state.start_new_run()
+	_game_state.has_unseen_new_day = false
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+	var dialogue: Node = overlay.get_child(1)
+
+	_game_state.visiting_venue = &"tran_bar"
+	await _open(_router.BAR_SCREEN, "29_bar", 2.6)
+	current_scene.get_node("%List").get_child(1).pressed.emit()
+	await _wait(2.6)
+	await _capture("30_bar_order")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(1.2)
+	overlay.end_talk()
+	await _wait(0.4)
+	current_scene.get_node("%RumorButton").pressed.emit()
+	await _wait(3.4)
+	await _capture("31_bar_rumor")
+
+	var order: Dictionary = run.orders[0]
+	Inventory.add_units(run, StringName(order.item), int(order.quantity))
+	_game_state.trading_with = StringName(order.dealer)
+	run.district_id = _content.dealer(StringName(order.dealer)).district_id
+	await _open(_router.MARKET_SCREEN, "32_market_order", 2.4)
+
+	var missed: Array[Dictionary] = [order]
+	_game_state.orders_missed.emit(missed)
+	await _wait(2.6)
+	await _capture("33_order_missed")
+	overlay.end_talk()
+	await _wait(0.4)
 
 
 func _capture_phase_four(dealer: Resource) -> void:

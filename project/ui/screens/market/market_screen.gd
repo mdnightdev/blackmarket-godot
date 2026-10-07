@@ -23,6 +23,7 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _speech: Typewriter = %Speech
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _mood_label: Label = %MoodLabel
+@onready var _order_list: VBoxContainer = %OrderList
 @onready var _buy_tab: Button = %BuyTab
 @onready var _sell_tab: Button = %SellTab
 @onready var _gear_tab: Button = %GearTab
@@ -137,9 +138,11 @@ func _refresh() -> void:
 	_news_line.show_for(run.district_id)
 	_bag_button.text = "Bag %d/%d" % [Inventory.used(run), Inventory.capacity(run)]
 
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	for list in [_list, _order_list]:
+		for child: Node in list.get_children():
+			list.remove_child(child)
+			child.queue_free()
+	_order_list.hide()
 
 	if not _dealer_is_here():
 		_trade_sheet.close()
@@ -150,6 +153,7 @@ func _refresh() -> void:
 		return
 
 	GameState.remember_prices(_dealer)
+	_fill_order_list()
 	match _tab:
 		Tab.BUY:
 			_fill_buy_list()
@@ -162,6 +166,35 @@ func _refresh() -> void:
 func _show_notice(text: String) -> void:
 	_notice_label.text = text
 	_notice_label.visible = not text.is_empty()
+
+
+func _fill_order_list() -> void:
+	var run := GameState.run
+	for order in Orders.for_dealer(run, _dealer):
+		var item := Content.item(StringName(order.item))
+		if item == null:
+			continue
+		var quantity := int(order.quantity)
+		var deliverable := Orders.can_deliver(run, order)
+		var held := mini(Inventory.count(run, item.id), quantity)
+		var row: ItemRow = ITEM_ROW.instantiate()
+		_order_list.add_child(row)
+		var caption := "Bar order, %d wanted by %s" % [quantity, Calendar.describe(int(order.due)).to_lower()]
+		var detail := "DELIVER" if deliverable else "HAVE %d/%d" % [held, quantity]
+		row.display(item, Format.money(Orders.total(order)), caption, detail, Palette.RISK_LOW if deliverable else Palette.TEXT_MUTED)
+		row.item_selected.connect(func(_item: ItemDef) -> void: _deliver(order))
+	_order_list.visible = _order_list.get_child_count() > 0
+
+
+func _deliver(order: Dictionary) -> void:
+	var item := Content.item(StringName(order.item))
+	var total := Orders.total(order)
+	if not GameState.deliver_order(order):
+		_dealer_says("You're short. I said %d %s, not a handful." % [int(order.quantity), item.display_name])
+		return
+	_deal_flash.play(total, true)
+	_show_toast("Delivered %d %s for %s" % [int(order.quantity), item.display_name, Format.money(total)])
+	_dealer_says("Right on time. That's how you stay in business.")
 
 
 func _fill_buy_list() -> void:
