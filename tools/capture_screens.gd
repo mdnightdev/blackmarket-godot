@@ -64,7 +64,7 @@ func _run() -> void:
 	await _capture("09_bag_full")
 
 	_game_state.dealer_walked_out(dealer)
-	current_scene.get_node("%InventorySheet").close()
+	root.get_node("GameOverlay").get("_inventory_sheet").close()
 	await _wait(0.6)
 	await _capture("10_dealer_walked")
 

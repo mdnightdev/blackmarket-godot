@@ -35,11 +35,11 @@ theme_type_variation = &"Sheet"
 
 [node name="Content" type="VBoxContainer" parent="Sheet"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="Header" type="HBoxContainer" parent="Sheet/Content"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 13
 
 [node name="IconFrame" type="PanelContainer" parent="Sheet/Content/Header"]
 clip_children = 1
@@ -81,7 +81,7 @@ autowrap_mode = 3
 
 [node name="Stats" type="HBoxContainer" parent="Sheet/Content"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 16
 
 [node name="PriceBox" type="VBoxContainer" parent="Sheet/Content/Stats"]
 layout_mode = 2
@@ -211,7 +211,7 @@ theme_type_variation = &"MutedLabel"
 
 [node name="OfferButton" type="Button" parent="Sheet/Content/HaggleBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 text = "Make offer"
@@ -238,7 +238,7 @@ script = ExtResource("2_button")
 
 [node name="ConfirmButton" type="Button" parent="Sheet/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"

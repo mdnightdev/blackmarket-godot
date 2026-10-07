@@ -15,6 +15,7 @@ func _ready() -> void:
 	_jobs_tab.pressed.connect(GameOverlay.open_jobs)
 	_menu_tab.pressed.connect(SceneRouter.go_to.bind(SceneRouter.SETTINGS_SCREEN))
 	GameState.run_changed.connect(_refresh_market)
+	visibility_changed.connect(_refresh_market)
 	_refresh_market()
 
 

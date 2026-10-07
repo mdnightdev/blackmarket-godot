@@ -4,12 +4,6 @@ extends PanelContainer
 const CASH_COUNT_SECONDS := 0.45
 const HEAT_MEDIUM := 30
 const HEAT_HIGH := 70
-const PHASE_ICONS: Array[Texture2D] = [
-	preload("res://assets/icons/hud/sunrise.svg"),
-	preload("res://assets/icons/hud/sun.svg"),
-	preload("res://assets/icons/hud/sunset.svg"),
-	preload("res://assets/icons/hud/moon.svg"),
-]
 const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 
 @onready var _cash_value: Label = %CashValue
@@ -17,9 +11,6 @@ const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 @onready var _debt_value: Label = %DebtValue
 @onready var _heat_icon: TextureRect = %HeatIcon
 @onready var _heat_bar: ProgressBar = %HeatBar
-@onready var _day_button: Button = %DayButton
-@onready var _day_content: Control = %DayContent
-@onready var _phase_icon: TextureRect = %PhaseIcon
 @onready var _day_label: Label = %DayLabel
 
 var _shown_cash := 0
@@ -32,16 +23,22 @@ func _ready() -> void:
 	_heat_fill = _heat_bar.get_theme_stylebox("fill").duplicate()
 	_heat_bar.add_theme_stylebox_override("fill", _heat_fill)
 	_heat_bar.max_value = Heat.MAX
-	_day_content.minimum_size_changed.connect(_fit_day_button)
 	GameState.run_changed.connect(refresh)
-	Settings.changed.connect(_update_clock)
-	_day_button.pressed.connect(GameState.advance_phase)
 	_debt_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	_debt_box.gui_input.connect(_on_debt_input)
+	visibility_changed.connect(_on_visibility_changed)
+	_sync()
+
+
+func _on_visibility_changed() -> void:
+	if is_visible_in_tree():
+		_sync()
+
+
+func _sync() -> void:
 	if GameState.run != null:
 		_shown_cash = GameState.run.cash
 	refresh()
-	_fit_day_button()
 
 
 func _process(_delta: float) -> void:
@@ -53,7 +50,6 @@ func refresh() -> void:
 	if run == null:
 		return
 	_day_text = "%d %s" % [run.day, PHASE_LETTERS[run.phase]]
-	_phase_icon.texture = PHASE_ICONS[run.phase]
 	_debt_value.text = Format.money_short(run.debt)
 	var heat_color := _heat_color(run.heat)
 	_heat_bar.value = run.heat
@@ -66,16 +62,10 @@ func refresh() -> void:
 func _update_clock() -> void:
 	if GameState.run == null:
 		return
-	var text := _day_text
-	if Settings.real_time_phases:
-		var seconds := ceili(GameState.run.phase_seconds_left)
-		text += " %d:%02d" % [floori(seconds / 60.0), seconds % 60]
+	var seconds := maxi(0, ceili(GameState.run.phase_seconds_left))
+	var text := "%s %d:%02d" % [_day_text, floori(seconds / 60.0), seconds % 60]
 	if _day_label.text != text:
 		_day_label.text = text
-
-
-func _fit_day_button() -> void:
-	_day_button.custom_minimum_size.x = _day_content.get_combined_minimum_size().x
 
 
 func _on_debt_input(event: InputEvent) -> void:

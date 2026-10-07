@@ -10,12 +10,10 @@ const TIER_COLORS := {
 }
 
 @onready var _list: VBoxContainer = %List
-@onready var _close_button: Button = %CloseButton
 
 
 func _ready() -> void:
 	super()
-	_close_button.pressed.connect(close)
 	GameState.run_changed.connect(_on_run_changed)
 
 

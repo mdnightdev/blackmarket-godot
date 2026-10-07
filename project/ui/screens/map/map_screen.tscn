@@ -40,8 +40,6 @@ corner_radius_top_left = 999
 corner_radius_top_right = 999
 corner_radius_bottom_right = 999
 corner_radius_bottom_left = 999
-shadow_color = Color(0.8706, 0.8392, 0.8078, 0.5)
-shadow_size = 10
 
 [node name="MapScreen" type="Control"]
 layout_mode = 3
@@ -116,15 +114,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 28
+theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 28
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 40
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="HudBar" parent="Margin/Layout" instance=ExtResource("3_hud")]
 layout_mode = 2

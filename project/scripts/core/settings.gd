@@ -20,11 +20,6 @@ var vibration: bool = true:
 		vibration = value
 		changed.emit()
 
-var real_time_phases: bool = false:
-	set(value):
-		real_time_phases = value
-		changed.emit()
-
 var screen_shake: bool = true:
 	set(value):
 		screen_shake = value
@@ -42,7 +37,6 @@ func load_from_disk() -> void:
 	music_volume = float(config.get_value(SECTION, "music_volume", music_volume))
 	sfx_volume = float(config.get_value(SECTION, "sfx_volume", sfx_volume))
 	vibration = bool(config.get_value(SECTION, "vibration", vibration))
-	real_time_phases = bool(config.get_value(SECTION, "real_time_phases", real_time_phases))
 	screen_shake = bool(config.get_value(SECTION, "screen_shake", screen_shake))
 
 
@@ -51,7 +45,6 @@ func save() -> void:
 	config.set_value(SECTION, "music_volume", music_volume)
 	config.set_value(SECTION, "sfx_volume", sfx_volume)
 	config.set_value(SECTION, "vibration", vibration)
-	config.set_value(SECTION, "real_time_phases", real_time_phases)
 	config.set_value(SECTION, "screen_shake", screen_shake)
 	var error := config.save(FILE_PATH)
 	if error != OK:

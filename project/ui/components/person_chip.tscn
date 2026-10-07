@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://ui/components/person_chip.gd" id="1_chip"]
 
 [node name="PersonChip" type="Button"]
-custom_minimum_size = Vector2(124, 156)
+custom_minimum_size = Vector2(104, 128)
 theme_type_variation = &"VenueButton"
 script = ExtResource("1_chip")
 
@@ -27,7 +27,7 @@ theme_override_constants/separation = 4
 
 [node name="Frame" type="PanelContainer" parent="Margin/Layout"]
 clip_children = 1
-custom_minimum_size = Vector2(96, 96)
+custom_minimum_size = Vector2(76, 76)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2

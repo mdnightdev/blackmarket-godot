@@ -83,7 +83,9 @@ func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
 
 
 func open_bag() -> void:
-	_inventory_sheet.open_inventory()
+	_jobs_sheet.close()
+	if not _inventory_sheet.visible:
+		_inventory_sheet.open_inventory()
 
 
 func open_families() -> void:
@@ -91,7 +93,9 @@ func open_families() -> void:
 
 
 func open_jobs() -> void:
-	_jobs_sheet.open_jobs()
+	_inventory_sheet.close()
+	if not _jobs_sheet.visible:
+		_jobs_sheet.open_jobs()
 
 
 ## Opens a conversation that is not an encounter. See DialoguePanel.open for the callback contract.

@@ -5,15 +5,14 @@ const JOB_ROW := preload("res://ui/components/job_row.tscn")
 const READY_HINT := "IN BAG"
 
 @onready var _margin: MarginContainer = %Margin
-@onready var _back_button: Button = %BackButton
 @onready var _scroll: ScrollContainer = %Scroll
 @onready var _list: VBoxContainer = %List
 @onready var _empty_label: Label = %EmptyLabel
+@onready var _filler: Control = %Filler
 
 
 func _ready() -> void:
 	super()
-	_back_button.pressed.connect(close)
 	GameState.run_changed.connect(_on_run_changed)
 
 
@@ -59,6 +58,7 @@ func _rebuild() -> void:
 
 	_empty_label.visible = _list.get_child_count() == 0
 	_scroll.visible = not _empty_label.visible
+	_filler.visible = _empty_label.visible
 
 
 func _add_row(icon: Texture2D, title: String, pay: String, caption: String, hint: String) -> void:

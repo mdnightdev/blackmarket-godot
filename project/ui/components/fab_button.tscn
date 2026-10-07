@@ -15,11 +15,9 @@ corner_radius_top_left = 999
 corner_radius_top_right = 999
 corner_radius_bottom_right = 999
 corner_radius_bottom_left = 999
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 6
 
 [node name="FabButton" type="Button"]
-custom_minimum_size = Vector2(112, 112)
+custom_minimum_size = Vector2(96, 84)
 theme_override_styles/normal = SubResource("StyleBoxEmpty_fab")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_fab")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_fab")
@@ -36,11 +34,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Circle" type="PanelContainer" parent="Content"]
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(58, 58)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
@@ -49,7 +47,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_circle")
 [node name="Icon" type="TextureRect" parent="Content/Circle"]
 unique_name_in_owner = true
 modulate = Color(0.8706, 0.8392, 0.8078, 1)
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(26, 26)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -64,6 +62,6 @@ theme_type_variation = &"HudCaptionLabel"
 theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
 text_overrun_behavior = 3

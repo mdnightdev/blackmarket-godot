@@ -33,7 +33,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if run == null or not clock_active or not Settings.real_time_phases:
+	if run == null or not clock_active:
 		return
 	if Encounters.has_pending(run) or Campaign.is_over(run):
 		return

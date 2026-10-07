@@ -58,15 +58,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 28
+theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 28
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 120
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 13
 
 [node name="HudBar" parent="Margin/Layout" instance=ExtResource("3_hud")]
 layout_mode = 2
@@ -96,10 +96,33 @@ theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
 autowrap_mode = 3
 script = ExtResource("8_news_line")
 
-[node name="Spacer" type="Control" parent="Margin/Layout"]
+[node name="Middle" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
+
+[node name="Gap" type="Control" parent="Margin/Layout/Middle"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="FabColumn" type="VBoxContainer" parent="Margin/Layout/Middle"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 2
+
+[node name="VenueFabs" type="VBoxContainer" parent="Margin/Layout/Middle/FabColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="MapFab" parent="Margin/Layout/Middle/FabColumn" instance=ExtResource("10_fab")]
+unique_name_in_owner = true
+layout_mode = 2
+icon_texture = ExtResource("11_map_icon")
+caption = "City"
 
 [node name="AroundBlock" type="VBoxContainer" parent="Margin/Layout"]
 unique_name_in_owner = true
@@ -113,7 +136,7 @@ theme_type_variation = &"SectionLabel"
 text = "AROUND"
 
 [node name="AroundScroll" type="ScrollContainer" parent="Margin/Layout/AroundBlock"]
-custom_minimum_size = Vector2(0, 156)
+custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
 horizontal_scroll_mode = 3
 vertical_scroll_mode = 0
@@ -132,28 +155,10 @@ layout_mode = 2
 [node name="CrateButton" type="Button" parent="Margin/Layout"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 script = ExtResource("4_button")
-
-[node name="PlacesRow" type="HBoxContainer" parent="Margin/Layout"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 0
-
-[node name="VenueFabs" type="HBoxContainer" parent="Margin/Layout/PlacesRow"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-theme_override_constants/separation = 0
-
-[node name="MapFab" parent="Margin/Layout/PlacesRow" instance=ExtResource("10_fab")]
-unique_name_in_owner = true
-layout_mode = 2
-icon_texture = ExtResource("11_map_icon")
-caption = "City"
 
 [node name="NavBar" parent="." instance=ExtResource("7_nav_bar")]
 layout_mode = 1

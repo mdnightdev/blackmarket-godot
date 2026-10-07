@@ -1,28 +1,17 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://ui/components/inventory_sheet.gd" id="1_sheet"]
-[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/arrow-left.svg" id="3_back"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
 bg_color = Color(0.0471, 0.0549, 0.0706, 1)
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_plain"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_active"]
-draw_center = false
-border_width_bottom = 3
-border_color = Color(0.8706, 0.8392, 0.8078, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rule"]
-bg_color = Color(0.1333, 0.149, 0.1804, 1)
-content_margin_top = 1.0
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_detail"]
-content_margin_left = 24.0
-content_margin_top = 18.0
-content_margin_right = 24.0
-content_margin_bottom = 24.0
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
 bg_color = Color(0.0627, 0.0706, 0.0941, 1)
 border_width_top = 1
 border_color = Color(0.1333, 0.149, 0.1804, 1)
@@ -63,48 +52,20 @@ theme_override_constants/separation = 0
 [node name="Margin" type="MarginContainer" parent="Sheet/Page"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/margin_left = 12
+theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 0
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
 
 [node name="Top" type="VBoxContainer" parent="Sheet/Page/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
+
+[node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
+layout_mode = 2
 
 [node name="Header" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="BackButton" type="Button" parent="Sheet/Page/Margin/Top/Header"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_plain")
-script = ExtResource("2_button")
-
-[node name="Arrow" type="TextureRect" parent="Sheet/Page/Margin/Top/Header/BackButton"]
-modulate = Color(0.8706, 0.8392, 0.8078, 1)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -18.0
-offset_top = -18.0
-offset_right = 18.0
-offset_bottom = 18.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("3_back")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="Title" type="Label" parent="Sheet/Page/Margin/Top/Header"]
 layout_mode = 2
@@ -118,72 +79,6 @@ layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"HudStripValue"
 
-[node name="Tabs" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="CarryingTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.6627, 0.6784, 0.7255, 1)
-theme_override_colors/font_pressed_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_colors/font_hover_color = Color(0.6627, 0.6784, 0.7255, 1)
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_active")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_tab_active")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_plain")
-toggle_mode = true
-text = "Carrying"
-script = ExtResource("2_button")
-
-[node name="StashTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.6627, 0.6784, 0.7255, 1)
-theme_override_colors/font_pressed_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_colors/font_hover_color = Color(0.6627, 0.6784, 0.7255, 1)
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_active")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_tab_active")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_plain")
-toggle_mode = true
-text = "Stash"
-script = ExtResource("2_button")
-
-[node name="GearTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.6627, 0.6784, 0.7255, 1)
-theme_override_colors/font_pressed_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_colors/font_hover_color = Color(0.6627, 0.6784, 0.7255, 1)
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_active")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_tab_active")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_plain")
-toggle_mode = true
-text = "Gear"
-script = ExtResource("2_button")
-
-[node name="Rule" type="Panel" parent="Sheet/Page"]
-custom_minimum_size = Vector2(0, 1)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_rule")
-
 [node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -194,9 +89,9 @@ scroll_deadzone = 12
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
+theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_bottom = 12
 
 [node name="GridArea" type="VBoxContainer" parent="Sheet/Page/Scroll/GridMargin"]
 layout_mode = 2
@@ -205,13 +100,14 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
+text = "Your bag is empty."
 autowrap_mode = 3
 
 [node name="Grid" type="GridContainer" parent="Sheet/Page/Scroll/GridMargin/GridArea"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
 columns = 4
 
 [node name="Detail" type="PanelContainer" parent="Sheet/Page"]
@@ -221,11 +117,11 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_detail")
 
 [node name="Row" type="HBoxContainer" parent="Sheet/Page/Detail"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 14
 
 [node name="DetailIcon" type="TextureRect" parent="Sheet/Page/Detail/Row"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 120)
+custom_minimum_size = Vector2(88, 88)
 layout_mode = 2
 size_flags_vertical = 0
 expand_mode = 1
@@ -234,25 +130,26 @@ stretch_mode = 6
 [node name="Text" type="VBoxContainer" parent="Sheet/Page/Detail/Row"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 2
 
 [node name="DetailTitle" type="Label" parent="Sheet/Page/Detail/Row/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudStripValue"
-theme_override_font_sizes/font_size = 22
 
 [node name="DetailMeta" type="Label" parent="Sheet/Page/Detail/Row/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
 theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
-theme_override_font_sizes/font_size = 16
 autowrap_mode = 3
 
 [node name="DetailText" type="Label" parent="Sheet/Page/Detail/Row/Text"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
+theme_override_font_sizes/font_size = 16
 autowrap_mode = 3
+
+[node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
+layout_mode = 2

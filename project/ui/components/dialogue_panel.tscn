@@ -46,9 +46,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 28
+theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 28
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 40
 
 [node name="Column" type="VBoxContainer" parent="Margin"]
@@ -94,7 +94,7 @@ theme_type_variation = &"PillLabel"
 
 [node name="Line" type="Label" parent="Margin/Column/Box/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 autowrap_mode = 3

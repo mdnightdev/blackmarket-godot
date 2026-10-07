@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://ui/components/venue_sheet.gd" id="1_sheet"]
-[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
 
 [node name="VenueSheet" type="Control"]
 layout_mode = 3
@@ -59,11 +58,3 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 mouse_filter = 2
-
-[node name="CloseButton" type="Button" parent="Sheet/Content"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Close"
-script = ExtResource("2_button")

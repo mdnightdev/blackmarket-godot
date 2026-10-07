@@ -3,9 +3,9 @@
 [ext_resource type="Script" path="res://ui/components/item_row.gd" id="1_row"]
 
 [node name="ItemRow" type="Button"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 64)
 mouse_filter = 1
-theme_type_variation = &"VenueButton"
+theme_type_variation = &"ListRow"
 script = ExtResource("1_row")
 
 [node name="Margin" type="MarginContainer" parent="."]
@@ -16,19 +16,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 8
 
 [node name="Row" type="HBoxContainer" parent="Margin"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="IconFrame" type="PanelContainer" parent="Margin/Row"]
 clip_children = 1
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -52,13 +52,14 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
+theme_override_font_sizes/font_size = 18
 text_overrun_behavior = 3
 
 [node name="CaptionLabel" type="Label" parent="Margin/Row/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CaptionLabel"
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 14
 text_overrun_behavior = 3
 
 [node name="Numbers" type="VBoxContainer" parent="Margin/Row"]
@@ -71,6 +72,7 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
+theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
 horizontal_alignment = 2
 
@@ -78,5 +80,5 @@ horizontal_alignment = 2
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 13
 horizontal_alignment = 2

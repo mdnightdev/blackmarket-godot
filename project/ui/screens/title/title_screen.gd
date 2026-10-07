@@ -12,10 +12,9 @@ const LOGO_SLIDE := 24.0
 @onready var _menu: VBoxContainer = %Menu
 @onready var _continue_button: Button = %ContinueButton
 @onready var _new_game_button: Button = %NewGameButton
-@onready var _settings_button: Button = %SettingsButton
-@onready var _quit_button: Button = %QuitButton
 @onready var _version_label: Label = %VersionLabel
 @onready var _confirm_dialog: ConfirmDialog = %ConfirmDialog
+@onready var _exit_dialog: ConfirmDialog = %ExitDialog
 
 
 func _ready() -> void:
@@ -24,9 +23,8 @@ func _ready() -> void:
 
 	_continue_button.pressed.connect(_on_continue_pressed)
 	_new_game_button.pressed.connect(_on_new_game_pressed)
-	_settings_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.SETTINGS_SCREEN))
-	_quit_button.pressed.connect(get_tree().quit)
 	_confirm_dialog.confirmed.connect(_start_new_game)
+	_exit_dialog.confirmed.connect(get_tree().quit)
 	resized.connect(_center_background_pivot)
 	_center_background_pivot()
 
@@ -39,8 +37,11 @@ func _ready() -> void:
 func handle_back() -> bool:
 	if _confirm_dialog.visible:
 		_confirm_dialog.close()
-		return true
-	return false
+	elif _exit_dialog.visible:
+		_exit_dialog.close()
+	else:
+		_exit_dialog.open("Exit game?", "Your run is saved." if GameState.has_saved_run() else "", "Yes")
+	return true
 
 
 func _refresh_menu() -> void:

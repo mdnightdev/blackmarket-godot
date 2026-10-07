@@ -1,10 +1,8 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://ui/components/hud_bar.gd" id="1_hud"]
-[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/banknote.svg" id="3_cash"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="4_heat"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/sunrise.svg" id="5_phase"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_track"]
 bg_color = Color(0.1333, 0.149, 0.1804, 1)
@@ -19,8 +17,6 @@ corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_day"]
 
 [node name="HudBar" type="PanelContainer"]
 custom_minimum_size = Vector2(0, 60)
@@ -116,43 +112,10 @@ size_flags_vertical = 4
 mouse_filter = 2
 color = Color(0.1804, 0.1961, 0.2314, 1)
 
-[node name="DayButton" type="Button" parent="Row"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxEmpty_day")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_day")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_day")
-theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_day")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_day")
-script = ExtResource("2_button")
-
-[node name="DayContent" type="HBoxContainer" parent="Row/DayButton"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_constants/separation = 8
-
-[node name="PhaseIcon" type="TextureRect" parent="Row/DayButton/DayContent"]
-unique_name_in_owner = true
-modulate = Color(0.6627, 0.6784, 0.7255, 1)
-custom_minimum_size = Vector2(22, 22)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("5_phase")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="DayLabel" type="Label" parent="Row/DayButton/DayContent"]
+[node name="DayLabel" type="Label" parent="Row"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
 theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 theme_override_font_sizes/font_size = 16
-text = "Day 1 Morning"
+text = "1 M 5:00"

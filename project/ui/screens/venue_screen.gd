@@ -19,7 +19,6 @@ const LEAVE: StringName = &"leave"
 @onready var _list: VBoxContainer = %List
 @onready var _bag_button: Button = %BagButton
 @onready var _back_button: Button = %BackButton
-@onready var _inventory_sheet: InventorySheet = %InventorySheet
 
 
 func setup(background: Texture2D, venue_name: String, speaker: SpeakerDef, greeting: String) -> void:
@@ -30,7 +29,7 @@ func setup(background: Texture2D, venue_name: String, speaker: SpeakerDef, greet
 	_portrait.show_speaker(speaker)
 	_speech.finished.connect(_portrait.set_talking.bind(false))
 
-	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
+	_bag_button.pressed.connect(GameOverlay.open_bag)
 	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
 	GameState.run_changed.connect(_refresh)
 
@@ -45,14 +44,11 @@ func _exit_tree() -> void:
 
 
 func can_present_encounter() -> bool:
-	return not _inventory_sheet.visible
+	return true
 
 
 func handle_back() -> bool:
-	if _inventory_sheet.visible:
-		_inventory_sheet.close()
-	else:
-		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
+	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 	return true
 
 

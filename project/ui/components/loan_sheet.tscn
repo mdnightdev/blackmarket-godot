@@ -35,7 +35,7 @@ theme_type_variation = &"Sheet"
 
 [node name="Content" type="VBoxContainer" parent="Sheet"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="Header" type="VBoxContainer" parent="Sheet/Content"]
 layout_mode = 2
@@ -55,7 +55,7 @@ text = "$0"
 
 [node name="Stats" type="HBoxContainer" parent="Sheet/Content"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 16
 
 [node name="InterestBox" type="VBoxContainer" parent="Sheet/Content/Stats"]
 layout_mode = 2
@@ -173,7 +173,7 @@ value = 1.0
 
 [node name="ConfirmButton" type="Button" parent="Sheet/Content/ActionBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 text = "Repay"

@@ -25,7 +25,7 @@ func _refresh() -> void:
 	var run := GameState.run
 	var capacity := Safehouse.stash_capacity(run)
 	if capacity > 0:
-		_add_label("%s  %d / %d" % [Safehouse.stash_name(run).to_upper(), Inventory.stash_used(run), capacity], &"SectionLabel")
+		_add_label("%s  %d / %d" % [Safehouse.stash_name(run).to_upper(), Inventory.stash_used(run), capacity], &"ListHeading")
 		if run.stash.is_empty():
 			_add_label("Nothing stored. Goods kept here are safe from raids.", &"MutedLabel")
 		for item_id: StringName in run.stash:
@@ -37,10 +37,10 @@ func _refresh() -> void:
 			row.display(item, "x%d" % Inventory.stashed(run, item_id), "Stored, safe from raids", "TAP TO TAKE" if can_take else "BAG FULL", Palette.TEXT_CREAM if can_take else Palette.TEXT_MUTED)
 			row.item_selected.connect(_ask_amount.bind(false))
 	else:
-		_add_label("STASH", &"SectionLabel")
+		_add_label("STASH", &"ListHeading")
 		_add_label("No stash yet. Put in a lockbox below to keep goods off the street and away from raids.", &"MutedLabel")
 
-	_add_label("YOUR BAG", &"SectionLabel")
+	_add_label("YOUR BAG", &"ListHeading")
 	if run.inventory.is_empty():
 		_add_label("Your bag is empty.", &"MutedLabel")
 	for item_id: StringName in run.inventory:
@@ -55,9 +55,9 @@ func _refresh() -> void:
 		if capacity > 0:
 			row.item_selected.connect(_ask_amount.bind(true))
 
-	_add_label("UPGRADES", &"SectionLabel")
+	_add_label("UPGRADES", &"ListHeading")
 	_add_upgrade_row()
-	_add_label("REST", &"SectionLabel")
+	_add_label("REST", &"ListHeading")
 	var lie_low := _add_row()
 	lie_low.show_entry(Safehouse.LIE_LOW_ICON, "Lie low", "1 phase", "Skip a phase, lose %d extra heat" % Safehouse.LIE_LOW_HEAT, "TAP TO REST", Palette.TEXT_CREAM)
 	lie_low.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_lying_low())

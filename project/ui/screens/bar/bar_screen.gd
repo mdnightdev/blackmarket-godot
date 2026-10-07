@@ -18,7 +18,6 @@ const LEAVE: StringName = &"leave"
 @onready var _list: VBoxContainer = %List
 @onready var _bag_button: Button = %BagButton
 @onready var _back_button: Button = %BackButton
-@onready var _inventory_sheet: InventorySheet = %InventorySheet
 
 var _venue: VenueDef
 var _host: CharacterDef
@@ -40,7 +39,7 @@ func _ready() -> void:
 	_speech.finished.connect(_portrait.set_talking.bind(false))
 
 	_rumor_button.pressed.connect(_buy_rumor)
-	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
+	_bag_button.pressed.connect(GameOverlay.open_bag)
 	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
 	GameState.run_changed.connect(_refresh)
 
@@ -55,14 +54,11 @@ func _exit_tree() -> void:
 
 
 func can_present_encounter() -> bool:
-	return not _inventory_sheet.visible
+	return true
 
 
 func handle_back() -> bool:
-	if _inventory_sheet.visible:
-		_inventory_sheet.close()
-	else:
-		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
+	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 	return true
 
 
@@ -82,14 +78,14 @@ func _refresh() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 
-	_add_label("ORDER BOARD", &"SectionLabel")
+	_add_label("ORDER BOARD", &"ListHeading")
 	var offers := Orders.board(run, _venue.id)
 	for offer in offers:
 		_add_order_row(offer, false)
 	if offers.is_empty():
 		_add_label("The board is empty. New work goes up tomorrow.", &"MutedLabel")
 
-	_add_label("YOUR ORDERS %d/%d" % [run.orders.size(), Orders.MAX_ACTIVE], &"SectionLabel")
+	_add_label("YOUR ORDERS %d/%d" % [run.orders.size(), Orders.MAX_ACTIVE], &"ListHeading")
 	for order in run.orders:
 		_add_order_row(order, true)
 	if run.orders.is_empty():

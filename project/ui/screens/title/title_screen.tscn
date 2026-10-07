@@ -129,7 +129,7 @@ alignment = 2
 
 [node name="ContinueButton" type="Button" parent="Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 text = "Continue"
@@ -137,26 +137,10 @@ script = ExtResource("3_button")
 
 [node name="NewGameButton" type="Button" parent="Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 text = "New Game"
-script = ExtResource("3_button")
-
-[node name="SettingsButton" type="Button" parent="Menu"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-theme_type_variation = &"GhostButton"
-text = "Settings"
-script = ExtResource("3_button")
-
-[node name="QuitButton" type="Button" parent="Menu"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-theme_type_variation = &"GhostButton"
-text = "Quit"
 script = ExtResource("3_button")
 
 [node name="VersionLabel" type="Label" parent="."]
@@ -176,6 +160,11 @@ theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 
 [node name="ConfirmDialog" parent="." instance=ExtResource("4_confirm")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="ExitDialog" parent="." instance=ExtResource("4_confirm")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1

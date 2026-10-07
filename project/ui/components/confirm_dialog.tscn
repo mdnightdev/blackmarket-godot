@@ -39,7 +39,7 @@ theme_type_variation = &"Card"
 
 [node name="Content" type="VBoxContainer" parent="Center/Card"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 13
 
 [node name="TitleLabel" type="Label" parent="Center/Card/Content"]
 unique_name_in_owner = true
@@ -55,11 +55,11 @@ autowrap_mode = 3
 
 [node name="Actions" type="HBoxContainer" parent="Center/Card/Content"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="CancelButton" type="Button" parent="Center/Card/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"SecondaryButton"
@@ -68,7 +68,7 @@ script = ExtResource("2_button")
 
 [node name="ConfirmButton" type="Button" parent="Center/Card/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"

@@ -19,7 +19,6 @@ const LEAVE: StringName = &"leave"
 @onready var _list: VBoxContainer = %List
 @onready var _bag_button: Button = %BagButton
 @onready var _back_button: Button = %BackButton
-@onready var _inventory_sheet: InventorySheet = %InventorySheet
 
 var _venue: VenueDef
 var _host: CharacterDef
@@ -40,7 +39,7 @@ func _ready() -> void:
 	_portrait.show_speaker(_host)
 	_speech.finished.connect(_portrait.set_talking.bind(false))
 
-	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
+	_bag_button.pressed.connect(GameOverlay.open_bag)
 	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
 	GameState.run_changed.connect(_refresh)
 
@@ -57,14 +56,11 @@ func _exit_tree() -> void:
 
 
 func can_present_encounter() -> bool:
-	return not _inventory_sheet.visible
+	return true
 
 
 func handle_back() -> bool:
-	if _inventory_sheet.visible:
-		_inventory_sheet.close()
-	else:
-		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
+	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 	return true
 
 
@@ -82,17 +78,17 @@ func _refresh() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 
-	_add_label("THIS PHASE'S SHIPMENT", &"SectionLabel")
+	_add_label("THIS PHASE'S SHIPMENT", &"ListHeading")
 	_add_shipment_row(Hijacks.target(run))
 
-	_add_label("YOUR CRATE", &"SectionLabel")
+	_add_label("YOUR CRATE", &"ListHeading")
 	if Smuggling.is_carrying(run):
 		var row := _add_row()
 		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(int(run.crate.pay)), Smuggling.describe(run.crate), "%d SLOTS" % Smuggling.slots_used(run), Palette.PRICE)
 	else:
 		_add_label("You are not carrying a crate.", &"MutedLabel")
 
-	_add_label("CRATE RUNS", &"SectionLabel")
+	_add_label("CRATE RUNS", &"ListHeading")
 	if Smuggling.is_banned(run):
 		_add_label("Voronin has no work for you today. Come back tomorrow.", &"MutedLabel")
 		return

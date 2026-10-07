@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://ui/components/families_sheet.gd" id="1_sheet"]
-[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
 
 [node name="FamiliesSheet" type="Control"]
 layout_mode = 3
@@ -35,7 +34,7 @@ theme_type_variation = &"Sheet"
 
 [node name="Content" type="VBoxContainer" parent="Sheet"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="Sheet/Content"]
 layout_mode = 2
@@ -52,11 +51,3 @@ autowrap_mode = 3
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 10
-
-[node name="CloseButton" type="Button" parent="Sheet/Content"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Close"
-script = ExtResource("2_button")

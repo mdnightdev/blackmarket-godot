@@ -8,7 +8,6 @@ const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
 @onready var _tagline_label: Label = %TaglineLabel
 @onready var _speech: Typewriter = %Speech
 @onready var _pick_list: HBoxContainer = %PickList
-@onready var _back_button: Button = %BackButton
 @onready var _start_button: Button = %StartButton
 
 var _selected: PlayerDef
@@ -17,7 +16,6 @@ var _selected: PlayerDef
 func _ready() -> void:
 	SafeArea.apply_top_margin(_margin, 40)
 	_speech.finished.connect(_portrait.set_talking.bind(false))
-	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.TITLE_SCREEN))
 	_start_button.pressed.connect(_start_run)
 
 	var group := ButtonGroup.new()

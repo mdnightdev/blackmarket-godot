@@ -36,9 +36,9 @@ func handle_back() -> bool:
 
 func _refresh() -> void:
 	super()
-	_add_label("CLEAN-UP", &"SectionLabel")
+	_add_label("CLEAN-UP", &"ListHeading")
 	_add_clean_up_row()
-	_add_label("GEAR", &"SectionLabel")
+	_add_label("GEAR", &"ListHeading")
 	var run := GameState.run
 	for item in Content.items(ItemDef.Kind.EQUIPMENT):
 		var row := _add_row()

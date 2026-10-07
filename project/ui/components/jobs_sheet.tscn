@@ -1,13 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://ui/components/jobs_sheet.gd" id="1_sheet"]
-[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/arrow-left.svg" id="3_back"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
 bg_color = Color(0.0471, 0.0549, 0.0706, 1)
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_plain"]
 
 [node name="JobsSheet" type="Control"]
 layout_mode = 3
@@ -45,48 +43,20 @@ theme_override_constants/separation = 0
 [node name="Margin" type="MarginContainer" parent="Sheet/Page"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/margin_left = 12
+theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 4
 
-[node name="Header" type="HBoxContainer" parent="Sheet/Page/Margin"]
+[node name="Top" type="VBoxContainer" parent="Sheet/Page/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 12
 
-[node name="BackButton" type="Button" parent="Sheet/Page/Margin/Header"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+[node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
 layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_plain")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_plain")
-script = ExtResource("2_button")
 
-[node name="Arrow" type="TextureRect" parent="Sheet/Page/Margin/Header/BackButton"]
-modulate = Color(0.8706, 0.8392, 0.8078, 1)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -18.0
-offset_top = -18.0
-offset_right = 18.0
-offset_bottom = 18.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("3_back")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Title" type="Label" parent="Sheet/Page/Margin/Header"]
+[node name="Title" type="Label" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2
-size_flags_horizontal = 3
 theme_type_variation = &"HeaderLabel"
 text = "Jobs"
 
@@ -112,3 +82,12 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 0
+
+[node name="Filler" type="Control" parent="Sheet/Page"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
+layout_mode = 2

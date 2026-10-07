@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/settings/settings_screen.gd" id="1_screen"]
-[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
@@ -29,14 +28,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 96
-theme_override_constants/margin_right = 40
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 48
+theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 56
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 28
+theme_override_constants/separation = 18
 
 [node name="Header" type="Label" parent="Margin/Layout"]
 layout_mode = 2
@@ -49,7 +48,7 @@ theme_type_variation = &"Card"
 
 [node name="Rows" type="VBoxContainer" parent="Margin/Layout/Card"]
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 21
 
 [node name="MusicRow" type="VBoxContainer" parent="Margin/Layout/Card/Rows"]
 layout_mode = 2
@@ -88,50 +87,12 @@ layout_mode = 2
 
 [node name="VibrationToggle" type="CheckButton" parent="Margin/Layout/Card/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 text = "Vibration"
 
 [node name="ShakeToggle" type="CheckButton" parent="Margin/Layout/Card/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 text = "Screen shake"
-
-[node name="GameplayHeader" type="Label" parent="Margin/Layout"]
-layout_mode = 2
-theme_type_variation = &"SectionLabel"
-text = "GAMEPLAY"
-
-[node name="GameplayCard" type="PanelContainer" parent="Margin/Layout"]
-layout_mode = 2
-theme_type_variation = &"Card"
-
-[node name="Rows" type="VBoxContainer" parent="Margin/Layout/GameplayCard"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="RealTimeToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-text = "Real-time phases"
-
-[node name="RealTimeNote" type="Label" parent="Margin/Layout/GameplayCard/Rows"]
-layout_mode = 2
-theme_type_variation = &"CaptionLabel"
-text = "Each phase lasts 5 minutes of play time. Off: use Next phase."
-autowrap_mode = 3
-
-[node name="Spacer" type="Control" parent="Margin/Layout"]
-layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 2
-
-[node name="BackButton" type="Button" parent="Margin/Layout"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Back"
-script = ExtResource("2_button")

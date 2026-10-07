@@ -39,7 +39,6 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _back_button: Button = %BackButton
 @onready var _bag_button: Button = %BagButton
 @onready var _trade_sheet: TradeSheet = %TradeSheet
-@onready var _inventory_sheet: InventorySheet = %InventorySheet
 @onready var _toast: Label = %Toast
 @onready var _deal_flash: DealFlash = %DealFlash
 
@@ -68,7 +67,7 @@ func _ready() -> void:
 	_buy_tab.pressed.connect(_select_tab.bind(Tab.BUY))
 	_sell_tab.pressed.connect(_select_tab.bind(Tab.SELL))
 	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
-	_bag_button.pressed.connect(_inventory_sheet.open_inventory)
+	_bag_button.pressed.connect(GameOverlay.open_bag)
 	_trade_sheet.completed.connect(_on_trade_completed)
 	_trade_sheet.dealer_said.connect(_dealer_says)
 	GameState.run_changed.connect(_refresh)
@@ -90,8 +89,6 @@ func can_present_encounter() -> bool:
 func handle_back() -> bool:
 	if _trade_sheet.visible:
 		_trade_sheet.close()
-	elif _inventory_sheet.visible:
-		_inventory_sheet.close()
 	else:
 		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 	return true
