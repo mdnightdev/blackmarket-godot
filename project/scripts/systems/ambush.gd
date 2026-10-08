@@ -1,7 +1,8 @@
 class_name Ambush
 
 ## Trouble waiting at a stop on a hot run. Police make a normal stop; anyone else wants a cut of the crate.
-## Losing a fight or a chase costs part of the cargo, never the whole crate.
+## Losing a fight or a chase costs part of the cargo, never the whole crate, and tolls and losses together stop at
+## Smuggling.MAX_LOSS of the pay.
 
 const TYPE := "ambush"
 const PAY: StringName = &"ambush_pay"
@@ -50,7 +51,7 @@ static func start(run: RunState) -> Dictionary:
 		"title": "Ambush",
 		"body": body,
 		"threat": threat,
-		"toll": maxi(MIN_TOLL, roundi(int(run.crate.get("pay", 0)) * Odds.bell(rng, TOLL_LOW, TOLL_USUAL, TOLL_HIGH))),
+		"toll": _capped_toll(run, roundi(int(run.crate.get("pay", 0)) * Odds.bell(rng, TOLL_LOW, TOLL_USUAL, TOLL_HIGH))),
 		"skim": Odds.bell(rng, SKIM_LOW, SKIM_USUAL, SKIM_HIGH),
 	}
 
@@ -97,6 +98,7 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 		PAY:
 			var paid := mini(int(encounter.toll), maxi(0, run.cash))
 			run.cash -= paid
+			Smuggling.record_toll(run, paid)
 			return "You pay %s and they let the crate through." % Format.money(paid)
 		FIGHT:
 			if roll < fight_chance(run, encounter):
@@ -113,7 +115,7 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 		NAME_VORONIN:
 			if roll < name_chance(run, encounter):
 				return "They trade a look and step aside. Nobody wants trouble with Voronin."
-			run.pending_encounter = _pressed(encounter)
+			run.pending_encounter = _pressed(run, encounter)
 			return "They laugh. Voronin's name buys nothing here."
 		BACK_OFF:
 			if roll < back_off_chance(encounter):
@@ -128,9 +130,13 @@ static func _talk_penalty(encounter: Dictionary) -> float:
 	return float(THREAT_TALK_PENALTY.get(int(encounter.get("threat", Routes.Threat.QUIET)), 0.0))
 
 
-static func _pressed(encounter: Dictionary) -> Dictionary:
+static func _capped_toll(run: RunState, asked: int) -> int:
+	return mini(maxi(MIN_TOLL, asked), Smuggling.toll_room(run.crate))
+
+
+static func _pressed(run: RunState, encounter: Dictionary) -> Dictionary:
 	var pressed := encounter.duplicate()
-	pressed.toll = roundi(int(encounter.toll) * PRESSED_TOLL_FACTOR)
+	pressed.toll = _capped_toll(run, roundi(int(encounter.toll) * PRESSED_TOLL_FACTOR))
 	pressed.pressed = true
 	pressed.body = "The price just went up. Pay, or we take it out of the crate."
 	return pressed

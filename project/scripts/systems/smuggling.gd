@@ -1,11 +1,12 @@
 class_name Smuggling
 
 ## Crate runs posted at Pier 9. A crate is stored as
-## { id, destination, slots, pay, lead, due, route, stop, off_route, invoice, skimmed, fragile } where lead is the phases
+## { id, destination, slots, pay, lead, due, route, stop, off_route, invoice, skimmed, tolls, fragile } where lead is the phases
 ## allowed once taken, due is the last phase stamp to deliver in (-1 until the crate is taken), route lists the
 ## stops the player agreed to take ending at the destination, stop is the index of the next one, off_route is set
 ## once the player strays from it, invoice means the buyer pays later instead of cash on delivery, and skimmed is
-## the share of the cargo lost to ambushes. A fragile crate loses twice as much to each ambush.
+## the share of the cargo lost to ambushes, tolls is the cash paid to ambushes along the way. A fragile crate loses
+## twice as much to each ambush.
 
 enum Result { OK, CARRYING, NO_ROOM, TAKEN, BANNED, NO_ROUTE }
 
@@ -26,8 +27,8 @@ const MAX_LEAD_PHASES := 4
 const OFF_ROUTE_PAY := 0.6
 ## Share of the pay when the buyer comes out to meet the player at a stop short of the destination.
 const HALFWAY_PAY := 0.7
-## Most of the cargo ambushes can take from one crate, however many times the run goes wrong.
-const MAX_SKIM := 0.35
+## Most of a job's pay ambushes can take, skimmed cargo and tolls together, however many times the run goes wrong.
+const MAX_LOSS := 0.35
 const CLIENT := "Voronin's buyer"
 const FRAGILE_SKIM := 2.0
 
@@ -98,6 +99,18 @@ static func record_stop(run: RunState) -> void:
 		run.crate.stop = stop + 1
 	else:
 		run.crate.off_route = true
+
+
+## Swaps the stops still ahead for another road path to the destination, for a detour around a roadblock.
+## A detour agreed this way is not straying from the route.
+static func reroute(run: RunState, stops: Array[StringName]) -> bool:
+	if not is_carrying(run) or not Routes.is_path(run.district_id, stops, StringName(str(run.crate.destination))):
+		return false
+	var route: Array = run.crate.get("route", [])
+	var kept := route.slice(0, int(run.crate.get("stop", 0)))
+	kept.append_array(Array(stops).map(func(stop: StringName) -> String: return String(stop)))
+	run.crate.route = kept
+	return true
 
 
 ## Stops still ahead on the agreed route, ending with the destination.
@@ -219,11 +232,28 @@ static func _hand_over(run: RunState, pay: int) -> int:
 	return pay
 
 
-## An ambush pulled part of the cargo out. The total taken from one crate never passes MAX_SKIM.
+## The share of the pay ambushes can still take from this crate before MAX_LOSS is reached.
+static func loss_room(crate: Dictionary) -> float:
+	var pay := int(crate.get("pay", 0))
+	var tolls := float(crate.get("tolls", 0)) / pay if pay > 0 else 0.0
+	return maxf(0.0, MAX_LOSS - float(crate.get("skimmed", 0.0)) - tolls)
+
+
+## The most an ambush can ask in cash without passing MAX_LOSS.
+static func toll_room(crate: Dictionary) -> int:
+	return floori(loss_room(crate) * int(crate.get("pay", 0)))
+
+
+static func record_toll(run: RunState, paid: int) -> void:
+	if is_carrying(run) and paid > 0:
+		run.crate.tolls = int(run.crate.get("tolls", 0)) + paid
+
+
+## An ambush pulled part of the cargo out, never past MAX_LOSS with the tolls already paid.
 static func skim(run: RunState, share: float) -> void:
 	if is_carrying(run):
 		var taken := share * (FRAGILE_SKIM if bool(run.crate.get("fragile", false)) else 1.0)
-		run.crate.skimmed = minf(MAX_SKIM, float(run.crate.get("skimmed", 0.0)) + taken)
+		run.crate.skimmed = float(run.crate.get("skimmed", 0.0)) + minf(taken, loss_room(run.crate))
 
 
 ## The crate was lost to the police. Voronin gives no more work today.
@@ -273,7 +303,8 @@ static func sanitize(source: Dictionary) -> Dictionary:
 		"stop": clampi(int(source.get("stop", 0)), 0, route.size()),
 		"off_route": bool(source.get("off_route", false)),
 		"invoice": bool(source.get("invoice", false)),
-		"skimmed": clampf(float(source.get("skimmed", 0.0)), 0.0, MAX_SKIM),
+		"skimmed": clampf(float(source.get("skimmed", 0.0)), 0.0, MAX_LOSS),
+		"tolls": clampi(int(source.get("tolls", 0)), 0, maxi(0, int(source.get("pay", 0)))),
 		"fragile": bool(source.get("fragile", false)),
 	}
 

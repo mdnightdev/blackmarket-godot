@@ -206,9 +206,9 @@ func test_skims_never_take_more_than_the_cap() -> void:
 	Smuggling.accept(_run, offer)
 	for attempt in 4:
 		Ambush.resolve(_run, _crew_ambush(), Ambush.RUN, 0.999)
-	assert_almost_eq(float(_run.crate.skimmed), Smuggling.MAX_SKIM, 0.0001)
+	assert_almost_eq(float(_run.crate.skimmed), Smuggling.MAX_LOSS, 0.0001)
 	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
-	assert_almost_eq(float(restored.crate.skimmed), Smuggling.MAX_SKIM, 0.0001)
+	assert_almost_eq(float(restored.crate.skimmed), Smuggling.MAX_LOSS, 0.0001)
 
 
 func test_escaping_an_ambush_keeps_the_crate_but_adds_heat() -> void:
@@ -267,3 +267,25 @@ func test_backing_off_costs_cred_not_cargo_and_failing_costs_cargo() -> void:
 	assert_almost_eq(float(_run.crate.get("skimmed", 0.0)), 0.0, 0.0001)
 	Ambush.resolve(_run, _crew_ambush(), Ambush.BACK_OFF, 0.999)
 	assert_almost_eq(float(_run.crate.skimmed), 0.2, 0.0001)
+
+
+func test_tolls_and_skims_together_stop_at_the_loss_cap() -> void:
+	var offer := _first_offer()
+	Smuggling.accept(_run, offer)
+	var pay := int(offer.pay)
+	Ambush.resolve(_run, { "type": Ambush.TYPE, "threat": Routes.Threat.QUIET, "toll": roundi(pay * 0.25), "skim": 0.2 }, Ambush.PAY, 0.0)
+	Ambush.resolve(_run, _crew_ambush(), Ambush.RUN, 0.999)
+	var lost := float(_run.crate.skimmed) + float(_run.crate.tolls) / pay
+	assert_almost_eq(lost, Smuggling.MAX_LOSS, 0.01)
+	assert_lt(Smuggling.toll_room(_run.crate), Ambush.MIN_TOLL)
+	assert_false(Routes.ambush_due(_run, 0.0), "a stripped crate is left alone")
+
+
+func test_an_ambush_never_asks_past_the_loss_cap() -> void:
+	Smuggling.accept(_run, _first_offer())
+	_run.crate.skimmed = Smuggling.MAX_LOSS - 0.05
+	var encounter := Ambush.start(_run)
+	if encounter.type == Ambush.TYPE:
+		assert_lte(int(encounter.toll), Smuggling.toll_room(_run.crate))
+	else:
+		pass_test("police stop this phase")

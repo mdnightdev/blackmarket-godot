@@ -16,6 +16,8 @@ const MAX_RISK := 0.25
 const MEDIUM_AT := 0.08
 const HIGH_AT := 0.15
 const RECON_COST := 150
+## Street conditions shift every phase by up to this share, so danger reads true without repeating exactly.
+const PHASE_SWING := 0.3
 
 
 ## Every road path between two districts that never doubles back, at most MAX_STOPS stops long.
@@ -75,6 +77,7 @@ static func stop_risk(run: RunState, district_id: StringName, stamp: int) -> flo
 	var district := Content.district(district_id)
 	var risk := STREET_RISK * (district.heat_multiplier if district != null else 1.0)
 	risk += float(THREAT_RISK.get(threat(run, district_id, stamp), 0.0))
+	risk *= 1.0 + _swing(run, district_id, stamp)
 	if Turf.holder(run, district_id) == Turf.Holder.PLAYER:
 		risk *= HELD_FACTOR
 	if has_recon(run):
@@ -103,7 +106,8 @@ static func buy_recon(run: RunState) -> bool:
 	return true
 
 
-## "Slums High" without recon, "Slums High, Vex's crew" with it.
+## "Slums High" without recon, "Slums High, Vex's crew" with it. A roadblock the player knows about is named,
+## and recon adds when it clears.
 static func describe_stop(run: RunState, district_id: StringName) -> String:
 	var district := Content.district(district_id)
 	var place := district.display_name if district != null else String(district_id)
@@ -111,6 +115,8 @@ static func describe_stop(run: RunState, district_id: StringName) -> String:
 	var text := "%s %s" % [place, band(stop_risk(run, district_id, stamp))]
 	if has_recon(run):
 		text += ", %s" % THREAT_NAMES[threat(run, district_id, stamp)]
+	if Roadblocks.blocks(run, district_id) and Roadblocks.is_known(run, district_id):
+		text += ", roadblock until %s" % Roadblocks.clears_at(run, district_id) if has_recon(run) else ", roadblock"
 	return text
 
 
@@ -119,8 +125,17 @@ static func describe_risk(run: RunState, path: Array) -> String:
 
 
 ## Rolled on arriving anywhere with a crate. The roll must be in the range [0, 1).
+## Once a crate has lost all it can, nobody bothers it again.
 static func ambush_due(run: RunState, roll: float) -> bool:
-	return Smuggling.is_carrying(run) and roll < stop_risk(run, run.district_id, Calendar.stamp(run))
+	return Smuggling.is_carrying(run) \
+		and Smuggling.toll_room(run.crate) >= Ambush.MIN_TOLL \
+		and roll < stop_risk(run, run.district_id, Calendar.stamp(run))
+
+
+static func _swing(run: RunState, district_id: StringName, stamp: int) -> float:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([run.price_seed, &"road", district_id, stamp])
+	return rng.randf_range(-PHASE_SWING, PHASE_SWING)
 
 
 static func _walk(visited: Array[StringName], to: StringName, found: Array[Array]) -> void:

@@ -102,8 +102,21 @@ func _start_booked_trip() -> void:
 
 
 func _on_travel_requested(destination: DistrictDef, walking := false) -> void:
+	if Roadblocks.stops_crate(GameState.run, destination):
+		_input_blocker.hide()
+		_district_sheet.close()
+		RoadblockTalk.open(destination, _travel)
+		return
+	_travel(destination, false, walking)
+
+
+func _travel(destination: DistrictDef, through_roadblock: bool, walking := false) -> void:
 	var origin := GameState.current_district().map_position
-	if GameState.travel_to(destination, walking) != Travel.Check.OK:
+	var result := GameState.push_through_roadblock(destination) if through_roadblock \
+		else GameState.travel_to(destination, walking)
+	if result != Travel.Check.OK:
+		_input_blocker.hide()
+		_on_district_selected(destination)
 		return
 	GameState.clock_active = false
 	_input_blocker.show()

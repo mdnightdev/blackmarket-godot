@@ -119,6 +119,26 @@ func travel_to(destination: DistrictDef, walking := false) -> Travel.Check:
 	return result
 
 
+## Drives a crate through a roadblock. Sometimes the police wave the player over on arrival.
+func push_through_roadblock(destination: DistrictDef) -> Travel.Check:
+	var stopped := _rng.randf() < Roadblocks.PUSH_RISK
+	var result := travel_to(destination)
+	if result == Travel.Check.OK and stopped and Smuggling.is_carrying(run) and not Encounters.has_pending(run):
+		run.pending_encounter = Encounters.police_stop(run)
+		_commit(false)
+	return result
+
+
+## Waits a phase at a time until the roadblock lifts, stopping early when trouble comes calling.
+## Returns true when the road is open.
+func wait_out_roadblock(district_id: StringName) -> bool:
+	for phase in RunState.Phase.size():
+		if not Roadblocks.blocks(run, district_id) or Encounters.has_pending(run) or Campaign.is_over(run):
+			break
+		advance_phase()
+	return not Roadblocks.blocks(run, district_id)
+
+
 func buy(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
 	return _commit_trade(Trade.buy(run, item, quantity, unit_price), item, quantity)
 
