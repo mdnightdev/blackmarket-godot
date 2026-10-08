@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://dtg7ipv5wuia5"
-path="res://.godot/imported/Barlow-SemiBold.woff2-20e69c6ba04e843ef6d58339420ad9e3.fontdata"
+uid="uid://cyns70hkdhk2y"
+path="res://.godot/imported/Cinzel-Bold.woff2-09386e0dde71cfcd98bd48cfecab33c1.fontdata"
 
 [deps]
 
-source_file="res://theme/fonts/Barlow-SemiBold.woff2"
-dest_files=["res://.godot/imported/Barlow-SemiBold.woff2-20e69c6ba04e843ef6d58339420ad9e3.fontdata"]
+source_file="res://theme/fonts/Cinzel-Bold.woff2"
+dest_files=["res://.godot/imported/Cinzel-Bold.woff2-09386e0dde71cfcd98bd48cfecab33c1.fontdata"]
 
 [params]
 

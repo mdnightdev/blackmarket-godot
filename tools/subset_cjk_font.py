@@ -14,7 +14,7 @@ from fontTools import subset
 SCANNED_SUFFIXES = {".gd", ".tres", ".tscn", ".cfg"}
 SKIPPED_DIRS = {".godot", "addons", ".import"}
 OUTPUT_NAME = "theme/fonts/NotoSansSC-Subset.otf"
-# Barlow covers Basic Latin and Latin-1, so only characters past them need the fallback.
+# Inter and Cinzel cover Basic Latin and Latin-1, so only characters past them need the fallback.
 FIRST_FALLBACK_CODEPOINT = 0x0100
 
 

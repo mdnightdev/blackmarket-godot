@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://cbm8rxrl6m5d7"
-path="res://.godot/imported/Oswald-Bold.woff2-bf65abe37b6e608d41f2b483b8e50d16.fontdata"
+uid="uid://dxfytwavbo0fv"
+path="res://.godot/imported/Inter-Regular.woff2-dfb58a0556319031205adb2d2e7ddee9.fontdata"
 
 [deps]
 
-source_file="res://theme/fonts/Oswald-Bold.woff2"
-dest_files=["res://.godot/imported/Oswald-Bold.woff2-bf65abe37b6e608d41f2b483b8e50d16.fontdata"]
+source_file="res://theme/fonts/Inter-Regular.woff2"
+dest_files=["res://.godot/imported/Inter-Regular.woff2-dfb58a0556319031205adb2d2e7ddee9.fontdata"]
 
 [params]
 
