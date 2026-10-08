@@ -172,6 +172,8 @@ func _blocked_text(result: Trade.Result, ready_text: String) -> String:
 			return "Not enough cash"
 		Trade.Result.NO_SPACE:
 			return "Bag is full"
+		Trade.Result.OVER_CAPACITY:
+			return "Bag over capacity"
 		Trade.Result.ALREADY_OWNED:
 			return "Owned"
 		Trade.Result.NOT_ENOUGH_UNITS, Trade.Result.INVALID_QUANTITY:

@@ -15,7 +15,7 @@ func test_every_speaker_has_a_name_and_portrait() -> void:
 
 
 func test_players_can_be_picked() -> void:
-	assert_eq(Content.players().size(), 3)
+	assert_eq(Content.players().size(), 6)
 	assert_not_null(Content.player(RunState.DEFAULT_PLAYER))
 	assert_eq(Content.player(&"nobody"), Content.players()[0], "unknown ids fall back to a real player")
 	for player in Content.players():

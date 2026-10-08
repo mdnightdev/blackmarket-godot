@@ -269,33 +269,45 @@ func _capture_fixer_and_safehouse() -> void:
 	await _wait(0.4)
 
 	run.district_id = &"slums"
+	run.turf[&"slums"] = 100
 	run.inventory = { &"burner_phones": 12, &"fake_ids": 4 }
 	run.cost_basis = { &"burner_phones": 90, &"fake_ids": 160 }
-	await _open(_router.SAFEHOUSE_SCREEN, "65_safehouse_new", 2.6)
 	run.stash_level = 1
 	run.stash = { &"ghost_pistol": 3 }
-	_game_state.run_changed.emit()
-	await _wait(0.6)
-	await _capture("66_safehouse_stash")
-	current_scene.call("_ask_amount", _content.item(&"burner_phones"), true)
-	await _wait(2.4)
-	await _capture("67_safehouse_amount")
-	dialogue.get_node("%ChoiceList").get_child(1).pressed.emit()
+	run.stashed_cash = 2500
+	await _open(_router.DISTRICT_SCREEN, "65_slums_held")
+	overlay.open_turf()
 	await _wait(0.8)
-	await _capture("68_safehouse_moved")
-	current_scene.call("_talk_about_upgrade")
+	await _show_safehouse(overlay)
+	await _capture("66_safehouse_turf")
+	_safehouse_section(overlay).call("_talk_about_cash")
 	await _wait(2.4)
-	await _capture("69_safehouse_upgrade")
+	await _capture("67_safehouse_cash")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(0.8)
+	await _show_safehouse(overlay)
+	await _capture("68_safehouse_cash_moved")
+	_safehouse_section(overlay).call("_ask_amount", _content.item(&"burner_phones"), true)
+	await _wait(2.4)
+	await _capture("69_safehouse_amount")
 	overlay.end_talk()
 	await _wait(0.4)
-	current_scene.call("_talk_about_lying_low")
+	_safehouse_section(overlay).call("_talk_about_lying_low")
 	await _wait(2.4)
 	await _capture("70_safehouse_lie_low")
 	overlay.end_talk()
 	await _wait(0.4)
-	current_scene.get_node("%BagButton").pressed.emit()
+	overlay.get("_turf_sheet").close()
+	await _wait(0.4)
+
+	run.district_id = &"warehouse_row"
+	await _open(_router.DISTRICT_SCREEN, "71_district_not_held")
+	overlay.open_turf()
 	await _wait(0.8)
-	await _capture("71_bag_stash")
+	await _show_safehouse(overlay)
+	await _capture("71_safehouse_closed")
+	overlay.get("_turf_sheet").close()
+	await _wait(0.4)
 
 	run.district_id = &"old_market"
 	await _open(_router.MARKET_SCREEN, "72_market_tabs", 2.4)
@@ -321,13 +333,21 @@ func _capture_turf() -> void:
 	overlay.end_talk()
 	await _wait(0.4)
 
-	run.pending_encounter = Turf.clash(run)
+	run.turf[&"old_market"] = 72
+	run.pending_encounter = Vex.gate(run)
 	_game_state.run_changed.emit()
 	await _wait(2.6)
-	await _capture("53_turf_clash")
-	dialogue.get_node("%ChoiceList").get_child(1).pressed.emit()
-	await _wait(1.4)
-	await _capture("54_turf_clash_result")
+	await _capture("53_vex_gate")
+	dialogue.get_node("%ChoiceList").get_child(2).pressed.emit()
+	await _wait(3.2)
+	await _capture("54_vex_gate_ignored")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(0.6)
+	run.vex_anger = Vex.MAX_ANGER
+	run.pending_encounter = Vex.hunt(run)
+	_game_state.run_changed.emit()
+	await _wait(2.6)
+	await _capture("54b_vex_hunt")
 	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
 	await _wait(0.6)
 
@@ -393,10 +413,10 @@ func _capture_families() -> void:
 	var tiger_offer := Favours.board(run, _content.family(&"white_tiger"))[0].duplicate()
 	tiger_offer.merge({ "kind": Favours.Kind.DELIVERY, "item": "chip_kits", "quantity": 3, "price": 260 }, true)
 	_game_state.accept_favour(tiger_offer)
-	overlay.open_families()
+	overlay.open_turf()
 	await _wait(0.8)
-	await _capture("85_families")
-	overlay.get("_families_sheet").close()
+	await _capture("85_turf")
+	overlay.get("_turf_sheet").close()
 	await _wait(0.4)
 
 	run.family_standing[&"white_tiger"] = 45
@@ -509,10 +529,11 @@ func _capture_phase_four(dealer: Resource) -> void:
 	await _wait(0.4)
 
 	run.debt = 0
-	Campaign.update_outcome(run)
-	run.trades = 14
-	run.profit = 6200
-	await _open(_router.END_SCREEN, "18_end_won", 2.2)
+	Campaign.start_career_if_cleared(run)
+	await _open(_router.DISTRICT_SCREEN, "18_career_start", 2.6)
+	_game_state.resolve_encounter(Encounters.CONTINUE)
+	overlay.get("_dialogue").close()
+	await _capture_career()
 
 	_game_state.start_new_run()
 	_game_state.run.day = RunState.CAMPAIGN_DAYS + 1
@@ -520,11 +541,71 @@ func _capture_phase_four(dealer: Resource) -> void:
 	await _open(_router.END_SCREEN, "19_end_lost", 2.2)
 
 
+func _capture_career() -> void:
+	var run: RunState = _game_state.run
+	var overlay: Node = root.get_node("GameOverlay")
+	run.career = true
+	run.cash = 60000
+	run.street_cred = 1300
+	run.stash_level = 2
+	run.district_id = &"old_market"
+	run.turf[&"old_market"] = 75
+	run.turf[&"docks"] = 70
+	run.turf_levels[&"old_market"] = 2
+	_game_state.hire_crew(&"runner")
+	_game_state.hire_crew(&"muscle")
+	_game_state.learn_skill(&"haggler")
+	_game_state.learn_skill(&"muscle")
+	_game_state.buy_business(_content.business(&"corner_shop"), &"old_market")
+	_game_state.buy(_content.item(&"burner_phones"), 10, 90)
+	_game_state.stock_business(run.businesses[0])
+	await _open(_router.DISTRICT_SCREEN, "96_career_district")
+
+	overlay.open_turf()
+	await _wait(0.8)
+	await _capture("97_turf_page")
+	for section: StringName in [&"districts", &"crew", &"businesses", &"skills", &"families"]:
+		overlay.get("_turf_sheet").call("_show_section", section)
+		await _wait(0.6)
+		await _capture("98_turf_%s" % section)
+	overlay.get("_turf_sheet").close()
+	await _wait(0.4)
+
+	overlay.open_jobs()
+	await _wait(0.8)
+	await _capture("99_jobs_heists")
+	overlay.get("_jobs_sheet").close()
+	await _wait(0.4)
+
+	_game_state.visiting_venue = &"tran_bar"
+	await _open(_router.BAR_SCREEN, "99b_bar", 2.6)
+	var bar_scroll: ScrollContainer = current_scene.get_node("%Scroll")
+	bar_scroll.scroll_vertical = 4000
+	await _wait(0.4)
+	await _capture("99c_bar_crew")
+
+	run.district_id = &"warehouse_row"
+	_game_state.visiting_venue = &"supply"
+	await _open(_router.FIXER_SCREEN, "99d_fixer_respec", 2.6)
+
+
 func _event(id: StringName) -> EventDef:
 	for event: EventDef in _content.events():
 		if event.id == id:
 			return event
 	return null
+
+
+func _safehouse_section(overlay: Node) -> Node:
+	for child in overlay.get("_turf_sheet").get_node("%List").get_children():
+		if child is SafehouseSection:
+			return child
+	return null
+
+
+func _show_safehouse(overlay: Node) -> void:
+	overlay.get("_turf_sheet").call("_show_section", &"safehouse")
+	await _wait(0.6)
 
 
 func _open(scene_path: String, shot_name: String, settle_seconds: float = 1.5) -> void:

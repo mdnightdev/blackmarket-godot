@@ -17,7 +17,6 @@ const VENUE_ICONS := {
 	&"vip_casino": preload("res://assets/icons/hud/dices.svg"),
 	&"docks": preload("res://assets/icons/hud/anchor.svg"),
 	&"supply": preload("res://assets/icons/hud/wrench.svg"),
-	&"safehouse": preload("res://assets/icons/hud/house.svg"),
 	&"loan_shark": preload("res://assets/icons/hud/hand-coins.svg"),
 }
 const REST_SCALE := Vector2(1.08, 1.08)
@@ -168,8 +167,6 @@ func _on_venue_selected(venue: VenueDef) -> void:
 	match venue.id:
 		Loan.VENUE:
 			StreetTalk.talk_to(Content.character(Loan.LENDER))
-		Safehouse.VENUE:
-			SceneRouter.go_to(SceneRouter.SAFEHOUSE_SCREEN)
 		_:
 			var host := Content.character(venue.host)
 			if venue is CasinoDef and host != null:
@@ -198,7 +195,7 @@ func _refresh_crate_button() -> void:
 	var run := GameState.run
 	_crate_button.visible = Smuggling.can_deliver(run)
 	if _crate_button.visible:
-		_crate_button.text = "Deliver Voronin's crate for %s" % Format.money(int(run.crate.pay))
+		_crate_button.text = "Deliver Voronin's crate for %s" % Format.money(Smuggling.payout(run, run.crate))
 
 
 func _deliver_crate() -> void:
@@ -247,7 +244,7 @@ func _show_day_card() -> void:
 	GameState.has_unseen_new_day = false
 	var run := GameState.run
 	var turf_cut := Turf.daily_cut(run) if run.day > 1 else 0
-	_day_card.play(run.day, run.campaign_days, run.endless, turf_cut)
+	_day_card.play(run.day, run.campaign_days, run.career, turf_cut)
 
 
 func _center_background_pivot() -> void:

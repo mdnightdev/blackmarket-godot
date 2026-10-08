@@ -11,6 +11,8 @@ signal orders_missed(orders: Array[Dictionary])
 signal crate_lost(crate: Dictionary)
 ## Family deliveries whose deadline passed during the last move of time.
 signal favours_missed(favours: Array[Dictionary])
+## Short reports for the player: { line, hint }. Finished tasks, crew walking out, raided businesses.
+signal notices_posted(notices: Array[Dictionary])
 
 const SAVE_PATH := "user://run.json"
 
@@ -49,6 +51,7 @@ func has_saved_run() -> bool:
 func start_new_run(player_id := RunState.DEFAULT_PLAYER) -> void:
 	run = RunState.new()
 	run.player_id = player_id
+	DailyTasks.deal(run)
 	has_unseen_new_day = true
 	save_run()
 	run_started.emit()
@@ -61,6 +64,7 @@ func load_saved_run() -> bool:
 	run = RunState.from_dict(data)
 	if Content.district(run.district_id) == null:
 		run.district_id = RunState.STARTING_DISTRICT
+	DailyTasks.deal(run)
 	run_loaded.emit()
 	return true
 
@@ -77,13 +81,15 @@ func delete_run() -> void:
 func advance_phase() -> void:
 	if run == null or Encounters.has_pending(run) or Campaign.is_over(run):
 		return
-	_pass_time(Calendar.advance_phase(run), false)
+	var finished := _close_day_if_night()
+	_pass_time(Calendar.advance_phase(run), false, finished)
 
 
 func travel_to(destination: DistrictDef) -> Travel.Check:
 	var result := Travel.check(run, destination)
 	if result == Travel.Check.OK:
-		_pass_time(Travel.travel(run, destination), true)
+		var finished := _close_day_if_night()
+		_pass_time(Travel.travel(run, destination), true, finished)
 	return result
 
 
@@ -92,7 +98,10 @@ func buy(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
 
 
 func sell(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
-	return _commit_trade(Trade.sell(run, item, quantity, unit_price), item, quantity)
+	var result := _commit_trade(Trade.sell(run, item, quantity, unit_price), item, quantity)
+	if result == Trade.Result.OK:
+		_report_tasks(DailyTasks.record_sale(run, run.district_id, quantity * unit_price))
+	return result
 
 
 func buy_gear(item: ItemDef) -> Trade.Result:
@@ -110,7 +119,7 @@ func resolve_encounter(choice: StringName) -> String:
 func repay_debt(amount: int) -> bool:
 	if not Loan.repay(run, amount):
 		return false
-	Campaign.update_outcome(run)
+	Campaign.start_career_if_cleared(run)
 	_commit(false)
 	return true
 
@@ -120,11 +129,6 @@ func borrow(amount: int) -> bool:
 		return false
 	_commit(false)
 	return true
-
-
-func continue_endless() -> void:
-	Campaign.continue_endless(run)
-	_commit(false)
 
 
 func move_to_stash(item: ItemDef, quantity: int) -> bool:
@@ -143,6 +147,20 @@ func take_from_stash(item: ItemDef, quantity: int) -> bool:
 
 func buy_stash_upgrade() -> bool:
 	if not Safehouse.buy_upgrade(run):
+		return false
+	_commit(false)
+	return true
+
+
+func deposit_cash(amount: int) -> bool:
+	if not Safehouse.deposit_cash(run, amount):
+		return false
+	_commit(false)
+	return true
+
+
+func withdraw_cash(amount: int) -> bool:
+	if not Safehouse.withdraw_cash(run, amount):
 		return false
 	_commit(false)
 	return true
@@ -193,7 +211,9 @@ func deliver_order(order: Dictionary) -> bool:
 		return false
 	Heat.add(run, Heat.for_trade(run, item, int(order.quantity)))
 	Encounters.check_raid(run)
+	var finished := DailyTasks.record_delivery(run)
 	_commit(false)
+	_report_tasks(finished)
 	return true
 
 
@@ -215,7 +235,9 @@ func deliver_favour(favour: Dictionary) -> bool:
 		return false
 	Heat.add(run, Heat.for_trade(run, item, int(favour.quantity)))
 	Encounters.check_raid(run)
+	var finished := DailyTasks.record_delivery(run)
 	_commit(false)
+	_report_tasks(finished)
 	return true
 
 
@@ -238,7 +260,9 @@ func accept_crate(offer: Dictionary) -> Smuggling.Result:
 func deliver_crate() -> int:
 	var pay := Smuggling.deliver(run)
 	if pay > 0:
+		var finished := DailyTasks.record_delivery(run)
 		_commit(false)
+		_report_tasks(finished)
 	return pay
 
 
@@ -267,11 +291,101 @@ func place_bet(casino: CasinoDef, amount: int) -> bool:
 	return true
 
 
-func collect_winnings(amount: int) -> void:
+func collect_winnings(amount: int, stake: int) -> void:
 	if amount <= 0:
 		return
 	Casino.pay_out(run, amount)
+	var finished: Array[Dictionary] = []
+	if amount > stake:
+		finished = DailyTasks.record_casino_win(run)
 	_commit(false)
+	_report_tasks(finished)
+
+
+func level_up_turf(district_id: StringName) -> Turf.LevelResult:
+	var result := Turf.level_up(run, district_id)
+	if result == Turf.LevelResult.OK:
+		_commit(false)
+	return result
+
+
+func learn_skill(skill_id: StringName) -> Skills.Result:
+	var result := Skills.upgrade(run, skill_id)
+	if result == Skills.Result.OK:
+		_commit(false)
+	return result
+
+
+func respec_skills() -> Skills.Result:
+	var result := Skills.respec(run)
+	if result == Skills.Result.OK:
+		_commit(false)
+	return result
+
+
+func hire_crew(role_id: StringName) -> Crew.Result:
+	var result := Crew.hire(run, role_id)
+	if result == Crew.Result.OK:
+		_commit(false)
+	return result
+
+
+func fire_crew(role_id: StringName) -> Crew.Result:
+	var result := Crew.fire(run, role_id)
+	if result == Crew.Result.OK:
+		_commit(false)
+	return result
+
+
+func buy_business(business: BusinessDef, district_id: StringName) -> Businesses.Result:
+	var result := Businesses.buy(run, business, district_id)
+	if result == Businesses.Result.OK:
+		_commit(false)
+	return result
+
+
+## Fills the shelves from the bag, most valuable goods first. Returns the units moved.
+func stock_business(entry: Dictionary) -> int:
+	if run.district_id != Businesses.district_of(entry):
+		return 0
+	var moved := 0
+	for item in _carried_by_value():
+		var units := Businesses.max_load(run, entry, item)
+		if units > 0 and Businesses.load_stock(run, entry, item, units) == Businesses.Result.OK:
+			moved += units
+	if moved > 0:
+		_commit(false)
+	return moved
+
+
+## Packs the shelves back into the bag, most valuable goods first. Returns the units moved.
+func unstock_business(entry: Dictionary) -> int:
+	if run.district_id != Businesses.district_of(entry):
+		return 0
+	var moved := 0
+	var items: Array[ItemDef] = []
+	for item_id: String in entry.get("stock", {}):
+		var item := Content.item(StringName(item_id))
+		if item != null:
+			items.append(item)
+	items.sort_custom(_by_value)
+	for item in items:
+		var units := Businesses.max_unload(run, entry, item)
+		if units > 0 and Businesses.unload_stock(run, entry, item, units) == Businesses.Result.OK:
+			moved += units
+	if moved > 0:
+		_commit(false)
+	return moved
+
+
+## Returns { success, payout, lost_role }. Nothing happens when Heists.check() does not pass.
+func pull_heist(heist: HeistDef) -> Dictionary:
+	if Heists.check(run, heist) != Heists.Result.OK:
+		return {}
+	var outcome := Heists.attempt(run, heist, _rng.randf(), _rng.randf())
+	Encounters.check_raid(run)
+	_commit(false)
+	return outcome
 
 
 ## Shared by the casino tables. Unseeded on purpose: bets are paid before the result, so reloading cannot fish for a win.
@@ -308,18 +422,101 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 	return result
 
 
-func _pass_time(new_day_started: bool, travelled: bool) -> void:
+func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Dictionary] = []) -> void:
 	var missed := Orders.expire(run)
 	var missed_favours := Favours.expire(run)
 	var lost_crate := Smuggling.expire(run)
+	var notices := _task_notices(finished_tasks)
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
+	if new_day_started and not Campaign.is_over(run):
+		notices.append_array(_start_morning())
+	Businesses.sell_phase(run)
+	if travelled:
+		finished_tasks = DailyTasks.record_arrival(run, run.district_id)
+		notices.append_array(_task_notices(finished_tasks))
+	notices.append_array(_deadline_notices())
 	_commit(new_day_started)
+	if not notices.is_empty():
+		notices_posted.emit(notices)
 	if not missed.is_empty():
 		orders_missed.emit(missed)
 	if not missed_favours.is_empty():
 		favours_missed.emit(missed_favours)
 	if not lost_crate.is_empty():
 		crate_lost.emit(lost_crate)
+
+
+## Settles the night-only task while the finished day is still current. Returns the tasks it completed.
+func _close_day_if_night() -> Array[Dictionary]:
+	if run.phase != RunState.Phase.NIGHT:
+		var none: Array[Dictionary] = []
+		return none
+	return DailyTasks.close_day(run)
+
+
+func _start_morning() -> Array[Dictionary]:
+	var notices: Array[Dictionary] = []
+	DailyTasks.deal(run)
+	for role in Crew.pay_wages(run):
+		notices.append({
+			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),
+			"hint": "%+d cred" % StreetCred.CREW_WALKED,
+		})
+	var rolls: Array[float] = []
+	for entry in run.businesses:
+		rolls.append(_rng.randf())
+	for business_name: String in Businesses.morning(run, rolls).raided:
+		notices.append({
+			"line": "The police raided your %s overnight and took the stock." % business_name.to_lower(),
+			"hint": "It stays shut until tomorrow.",
+		})
+	return notices
+
+
+func _deadline_notices() -> Array[Dictionary]:
+	var notices: Array[Dictionary] = []
+	for job in Jobs.in_last_phase(run):
+		var place := " in %s" % job.place if not str(job.place).is_empty() else ""
+		notices.append({
+			"line": "Last phase to deliver %s%s." % [job.title, place],
+			"hint": "Due by the end of %s." % Calendar.describe(int(job.due)).to_lower(),
+		})
+	return notices
+
+
+func _task_notices(tasks: Array[Dictionary]) -> Array[Dictionary]:
+	var notices: Array[Dictionary] = []
+	for task in tasks:
+		notices.append({
+			"line": "Task done: %s." % DailyTasks.describe(task),
+			"hint": "+%s and %+d cred" % [Format.money(DailyTasks.reward(run)), StreetCred.TASK_DONE],
+		})
+	return notices
+
+
+func _report_tasks(tasks: Array[Dictionary]) -> void:
+	var notices := _task_notices(tasks)
+	if notices.is_empty():
+		return
+	save_run()
+	run_changed.emit()
+	notices_posted.emit(notices)
+
+
+func _carried_by_value() -> Array[ItemDef]:
+	var items: Array[ItemDef] = []
+	for item_id: StringName in run.inventory:
+		var item := Content.item(item_id)
+		if item != null and item.kind == ItemDef.Kind.TRADE_GOOD:
+			items.append(item)
+	items.sort_custom(_by_value)
+	return items
+
+
+func _by_value(a: ItemDef, b: ItemDef) -> bool:
+	if a.base_price != b.base_price:
+		return a.base_price > b.base_price
+	return String(a.id) < String(b.id)
 
 
 func _commit(new_day_started: bool) -> void:

@@ -28,6 +28,8 @@ var inventory: Dictionary = {}
 var stash: Dictionary = {}
 ## Index into Safehouse.UPGRADES plus one. 0 means the safehouse has no stash yet.
 var stash_level: int = 0
+## Cash kept in the safehouse. Raids, muggings and enforcers only take carried cash.
+var stashed_cash: int = 0
 ## Item id to average price paid per unit, for goods currently held.
 var cost_basis: Dictionary = {}
 var gear: Array[StringName] = []
@@ -59,6 +61,8 @@ var turf: Dictionary = {}
 var muscle_stamp: int = -1
 ## True once Vex has been driven out of the city.
 var vex_gone := false
+## Rises each time the player ignores Vex's crew. At Vex.MAX_ANGER she hunts the player.
+var vex_anger: int = 0
 ## Phase stamp in which the Fixer last cleaned up the player's heat.
 var cleanup_stamp: int = -1
 ## Family id to the player's standing. See Families.
@@ -71,13 +75,34 @@ var taken_favours: Array[String] = []
 var hack_stamp: int = -1
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
+## True once the Shark is paid off. The day limit is gone and crew, businesses and heists open up.
+var career := false
+var street_cred: int = 0
+## Day that trading_cred_today counts for.
+var cred_day: int = 0
+var trading_cred_today: int = 0
+## Skill id to rank bought. See Skills.
+var skills: Dictionary = {}
+## District id to the turf level bought there. Holding a district counts as level 1. See Turf.
+var turf_levels: Dictionary = {}
+## Hired crew. See Crew for the entry layout.
+var crew: Array[Dictionary] = []
+## Owned businesses. See Businesses for the entry layout.
+var businesses: Array[Dictionary] = []
+## Today's tasks. See DailyTasks for the entry layout.
+var daily_tasks: Array[Dictionary] = []
+## Day the daily tasks were dealt for.
+var tasks_day: int = 0
+## Heist id to the first day it can be pulled again.
+var heist_cooldowns: Dictionary = {}
+## Day on which the lookout last turned a raid into a warning.
+var raid_warning_day: int = 0
 
 var next_due_day: int = Loan.PAYMENT_PERIOD_DAYS + 1
 var period_minimum: int = Loan.minimum_payment(STARTING_DEBT)
 var paid_this_period: int = 0
 
 var outcome: Outcome = Outcome.ONGOING
-var endless := false
 var trades: int = 0
 var profit: int = 0
 var busts: int = 0
@@ -105,6 +130,7 @@ func to_dict() -> Dictionary:
 		"inventory": _string_keys(inventory),
 		"stash": _string_keys(stash),
 		"stash_level": stash_level,
+		"stashed_cash": stashed_cash,
 		"cost_basis": _string_keys(cost_basis),
 		"gear": saved_gear,
 		"walked_out": _string_keys(walked_out),
@@ -121,17 +147,29 @@ func to_dict() -> Dictionary:
 		"turf": _string_keys(turf),
 		"muscle_stamp": muscle_stamp,
 		"vex_gone": vex_gone,
+		"vex_anger": vex_anger,
 		"cleanup_stamp": cleanup_stamp,
 		"family_standing": _string_keys(family_standing),
 		"favours": favours,
 		"taken_favours": taken_favours,
 		"hack_stamp": hack_stamp,
 		"pending_encounter": pending_encounter,
+		"career": career,
+		"street_cred": street_cred,
+		"cred_day": cred_day,
+		"trading_cred_today": trading_cred_today,
+		"skills": _string_keys(skills),
+		"turf_levels": _string_keys(turf_levels),
+		"crew": crew,
+		"businesses": businesses,
+		"daily_tasks": daily_tasks,
+		"tasks_day": tasks_day,
+		"heist_cooldowns": _string_keys(heist_cooldowns),
+		"raid_warning_day": raid_warning_day,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
 		"paid_this_period": paid_this_period,
 		"outcome": outcome,
-		"endless": endless,
 		"trades": trades,
 		"profit": profit,
 		"busts": busts,
@@ -153,6 +191,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.inventory = _positive_counts(data.get("inventory"))
 	state.stash = _positive_counts(data.get("stash"))
 	state.stash_level = clampi(int(data.get("stash_level", 0)), 0, Safehouse.UPGRADES.size())
+	state.stashed_cash = maxi(0, int(data.get("stashed_cash", 0)))
 	state.cost_basis = _positive_counts(data.get("cost_basis"))
 	state.walked_out = _positive_counts(data.get("walked_out"), 0)
 
@@ -198,6 +237,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.turf = Turf.sanitize(data.get("turf", {}))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
 	state.vex_gone = bool(data.get("vex_gone", false))
+	state.vex_anger = clampi(int(data.get("vex_anger", 0)), 0, Vex.MAX_ANGER)
 	state.cleanup_stamp = int(data.get("cleanup_stamp", -1))
 	state.family_standing = Families.sanitize(data.get("family_standing", {}))
 	var saved_favours: Variant = data.get("favours", [])
@@ -215,12 +255,35 @@ static func from_dict(data: Dictionary) -> RunState:
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter
+	state.career = bool(data.get("career", false)) or bool(data.get("endless", false))
+	state.street_cred = clampi(int(data.get("street_cred", 0)), 0, StreetCred.MAX)
+	state.cred_day = maxi(0, int(data.get("cred_day", 0)))
+	state.trading_cred_today = clampi(int(data.get("trading_cred_today", 0)), 0, StreetCred.DAILY_TRADING_CAP)
+	state.skills = _positive_counts(data.get("skills"))
+	state.turf_levels = _positive_counts(data.get("turf_levels"))
+	for member in _dictionaries(data.get("crew")):
+		var clean := Crew.sanitize(member)
+		if not clean.is_empty() and state.crew.size() < Crew.cap(state) and not Crew.has(state, StringName(clean.role)):
+			state.crew.append(clean)
+	for entry in _dictionaries(data.get("businesses")):
+		var clean := Businesses.sanitize(entry)
+		if not clean.is_empty():
+			state.businesses.append(clean)
+	for task in _dictionaries(data.get("daily_tasks")):
+		var clean := DailyTasks.sanitize(task)
+		if not clean.is_empty():
+			state.daily_tasks.append(clean)
+	state.tasks_day = maxi(0, int(data.get("tasks_day", 0)))
+	state.heist_cooldowns = _positive_counts(data.get("heist_cooldowns"))
+	state.raid_warning_day = maxi(0, int(data.get("raid_warning_day", 0)))
 
 	state.next_due_day = maxi(2, int(data.get("next_due_day", state.next_due_day)))
 	state.period_minimum = maxi(0, int(data.get("period_minimum", state.period_minimum)))
 	state.paid_this_period = maxi(0, int(data.get("paid_this_period", state.paid_this_period)))
 	state.outcome = clampi(int(data.get("outcome", state.outcome)), 0, Outcome.size() - 1) as Outcome
-	state.endless = bool(data.get("endless", state.endless))
+	if state.outcome == Outcome.WON:
+		state.outcome = Outcome.ONGOING
+		state.career = true
 	state.trades = maxi(0, int(data.get("trades", state.trades)))
 	state.profit = int(data.get("profit", state.profit))
 	state.busts = maxi(0, int(data.get("busts", state.busts)))
@@ -231,6 +294,15 @@ static func _string_keys(source: Dictionary) -> Dictionary:
 	var result := {}
 	for key: StringName in source:
 		result[String(key)] = source[key]
+	return result
+
+
+static func _dictionaries(source: Variant) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if source is Array:
+		for entry: Variant in source:
+			if entry is Dictionary:
+				result.append(entry)
 	return result
 
 

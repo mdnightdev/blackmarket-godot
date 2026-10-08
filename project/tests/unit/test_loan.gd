@@ -6,7 +6,7 @@ var _no_events: Array[EventDef] = []
 
 func before_each() -> void:
 	_run = RunState.new()
-	# Turf clashes roll on the same unseeded rng and would make the quiet-day checks flaky.
+	# Vex's crew rolls on the same unseeded rng and would make the quiet-day checks flaky.
 	_run.vex_gone = true
 
 
@@ -30,13 +30,13 @@ func test_interest_compounds_daily() -> void:
 	assert_eq(_run.debt, 5305)
 
 
-func test_repay_and_borrow_only_at_the_shark() -> void:
-	assert_false(Loan.repay(_run, 500))
-	_run.district_id = &"downtown"
+func test_repay_anywhere_but_borrow_only_at_the_shark() -> void:
 	assert_true(Loan.repay(_run, 500))
 	assert_eq(_run.cash, RunState.STARTING_CASH - 500)
 	assert_eq(_run.debt, RunState.STARTING_DEBT - 500)
 	assert_eq(Loan.amount_due(_run), 500)
+	assert_false(Loan.borrow(_run, 1000))
+	_run.district_id = &"downtown"
 	assert_true(Loan.borrow(_run, 1000))
 	assert_eq(_run.debt, RunState.STARTING_DEBT + 500)
 

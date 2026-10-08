@@ -12,3 +12,7 @@ extends Resource
 @export_range(0, 1_000_000) var travel_cost: int = 0
 @export_range(0.5, 3.0, 0.05) var heat_multiplier: float = 1.0
 @export var venues: Array[StringName] = []
+## Street cred rank needed before the player can travel here.
+@export_range(1, 10) var min_rank: int = 1
+## Power (summed turf levels) needed before the player can travel here.
+@export_range(0, 25) var min_power: int = 0

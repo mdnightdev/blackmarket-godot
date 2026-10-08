@@ -28,8 +28,8 @@ static func _show_board(lieutenant: CharacterDef, family: FamilyDef) -> void:
 	var choices: Array[DialogueChoice] = []
 	for index in offers.size():
 		var offer := offers[index]
-		var affordable := int(offer.kind) != Favours.Kind.TRIBUTE or run.cash >= int(offer.price)
-		choices.append(DialogueChoice.new(StringName(str(index)), _offer_label(offer), affordable))
+		var possible := run.cash >= int(offer.price) if int(offer.kind) == Favours.Kind.TRIBUTE else Orders.fits_in_bag(run, offer)
+		choices.append(DialogueChoice.new(StringName(str(index)), _offer_label(offer), possible))
 	if offers.is_empty():
 		line = "Nothing more for you today. Come back tomorrow."
 	choices.append(_leave())
@@ -55,6 +55,8 @@ static func _on_board_choice(choice: StringName, family: FamilyDef, offers: Arra
 			reply = "Come back when your pockets match your promises."
 		Favours.Result.BUSY:
 			reply = "Finish the job you already owe me first."
+		Favours.Result.TOO_BIG:
+			reply = "You could never carry that much. Get a bigger bag."
 	var done: Array[DialogueChoice] = [_leave()]
 	GameOverlay.say(reply, done, _end)
 

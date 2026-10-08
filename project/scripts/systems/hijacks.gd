@@ -59,4 +59,5 @@ static func attempt(run: RunState, shipment: Dictionary, approach: Approach, rol
 	var paid_before := int(run.cost_basis.get(item.id, 0)) * held
 	Inventory.add_units(run, item.id, quantity)
 	run.cost_basis[item.id] = roundi(float(paid_before) / (held + quantity))
+	StreetCred.add(run, StreetCred.HIJACK_SUCCESS)
 	return quantity

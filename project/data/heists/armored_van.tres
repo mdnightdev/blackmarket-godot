@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HeistDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/heist_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/truck.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"armored_van"
+display_name = "Armored Van"
+icon = ExtResource("2_icon")
+description = "A cash van takes the same route through Old Market every week. Stop it, crack it, vanish."
+district_id = &"old_market"
+min_rank = 4
+required_roles = Array[StringName]([&"driver", &"muscle"])
+base_chance = 0.5
+payout = 6000
+heat = 30
+cred = 25

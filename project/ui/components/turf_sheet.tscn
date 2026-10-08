@@ -1,0 +1,99 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://ui/components/turf_sheet.gd" id="1_sheet"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
+[ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="4_confirm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
+bg_color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[node name="TurfSheet" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sheet")
+
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0314, 0.0353, 0.0471, 0.6)
+
+[node name="Sheet" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page")
+
+[node name="Page" type="VBoxContainer" parent="Sheet"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Margin" type="MarginContainer" parent="Sheet/Page"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 4
+
+[node name="Top" type="VBoxContainer" parent="Sheet/Page/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Sheet/Page/Margin/Top/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"HeaderLabel"
+text = "Turf"
+
+[node name="PowerLabel" type="Label" parent="Sheet/Page/Margin/Top/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"HudValueLabel"
+theme_override_font_sizes/font_size = 18
+
+[node name="ListMargin" type="MarginContainer" parent="Sheet/Page"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_right = 16
+
+[node name="Scroll" type="ScrollContainer" parent="Sheet/Page/ListMargin"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+scroll_deadzone = 12
+
+[node name="List" type="VBoxContainer" parent="Sheet/Page/ListMargin/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
+layout_mode = 2
+
+[node name="ConfirmDialog" parent="." instance=ExtResource("4_confirm")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

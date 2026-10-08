@@ -5,6 +5,7 @@ const ROUTE_SECONDS := 1.1
 const ROUTE_SAMPLES := 32
 const ROUTE_BEND := 0.22
 const CAMERA_GLIDE_SECONDS := 0.4
+const LOCKED_PIN_ALPHA := 0.45
 
 @onready var _city_view: CityView = %CityView
 @onready var _route: Line2D = %Route
@@ -102,4 +103,6 @@ func _play_entrance() -> void:
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_city_view, "modulate:a", 1.0, 0.5)
 	for index in _pins.size():
-		tween.tween_property(_pins[index], "modulate:a", 1.0, 0.3).set_delay(0.3 + index * 0.06)
+		var pin := _pins[index]
+		var alpha := LOCKED_PIN_ALPHA if not pin.is_current and Travel.is_locked(GameState.run, pin.district) else 1.0
+		tween.tween_property(pin, "modulate:a", alpha, 0.3).set_delay(0.3 + index * 0.06)

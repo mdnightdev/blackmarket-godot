@@ -9,6 +9,7 @@ const DISABLED_ALPHA := 0.35
 @onready var _content: Control = %Content
 @onready var _icon: TextureRect = %Icon
 @onready var _caption: Label = %Caption
+@onready var _badge: Control = %Badge
 
 
 func _ready() -> void:
@@ -21,3 +22,7 @@ func _ready() -> void:
 func set_enabled(enabled: bool) -> void:
 	disabled = not enabled
 	_content.modulate.a = 1.0 if enabled else DISABLED_ALPHA
+
+
+func set_badge(shown: bool) -> void:
+	_badge.visible = shown

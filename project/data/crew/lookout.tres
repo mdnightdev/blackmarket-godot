@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CrewRoleDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/crew_role_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/eye.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lookout"
+display_name = "Lookout"
+icon = ExtResource("2_icon")
+description = "Watches the corners. Fewer police stops, and a warning before a raid once a day."
+min_rank = 5
+hire_cost = 2000
+daily_wage = 90
+stop_reduction = 0.2
+warns_of_raids = true

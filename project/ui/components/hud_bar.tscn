@@ -92,7 +92,8 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Caption" type="Label" parent="Row/Debt"]
+[node name="DebtCaption" type="Label" parent="Row/Debt"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
 theme_override_font_sizes/font_size = 16

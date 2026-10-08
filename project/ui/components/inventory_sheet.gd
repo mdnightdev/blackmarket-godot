@@ -40,6 +40,10 @@ func _rebuild() -> void:
 		child.queue_free()
 
 	_capacity_label.text = "%d / %d" % [Inventory.used(run), Inventory.capacity(run)]
+	if Inventory.over_capacity(run) > 0:
+		_capacity_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
+	else:
+		_capacity_label.remove_theme_color_override("font_color")
 	if Smuggling.is_carrying(run):
 		_add_tile(Smuggling.CRATE_ICON, "", "Voronin's crate", "%d slots. Do not open." % Smuggling.slots_used(run), Smuggling.describe(run.crate))
 	for item_id: StringName in run.inventory:

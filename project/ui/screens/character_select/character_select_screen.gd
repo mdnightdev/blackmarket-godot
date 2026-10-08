@@ -7,7 +7,7 @@ const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
 @onready var _name_label: Label = %NameLabel
 @onready var _tagline_label: Label = %TaglineLabel
 @onready var _speech: Typewriter = %Speech
-@onready var _pick_list: HBoxContainer = %PickList
+@onready var _pick_list: GridContainer = %PickList
 @onready var _start_button: Button = %StartButton
 
 var _selected: PlayerDef

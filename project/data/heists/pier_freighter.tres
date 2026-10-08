@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HeistDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/heist_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/ship.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"pier_freighter"
+display_name = "Pier Freighter"
+icon = ExtResource("2_icon")
+description = "A freighter sits at the north quay overnight with a light crew aboard."
+district_id = &"docks"
+min_rank = 6
+required_roles = Array[StringName]([&"driver", &"muscle", &"lookout"])
+base_chance = 0.45
+payout = 15000
+heat = 40
+cred = 40

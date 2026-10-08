@@ -8,6 +8,7 @@ const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 
 @onready var _cash_value: Label = %CashValue
 @onready var _debt_box: Control = %Debt
+@onready var _debt_caption: Label = %DebtCaption
 @onready var _debt_value: Label = %DebtValue
 @onready var _heat_icon: TextureRect = %HeatIcon
 @onready var _heat_bar: ProgressBar = %HeatBar
@@ -50,7 +51,12 @@ func refresh() -> void:
 	if run == null:
 		return
 	_day_text = "%d %s" % [run.day, PHASE_LETTERS[run.phase]]
-	_debt_value.text = Format.money_short(run.debt)
+	if run.debt > 0:
+		_debt_caption.text = "Debt"
+		_debt_value.text = Format.money_short(run.debt)
+	else:
+		_debt_caption.text = "Cred"
+		_debt_value.text = StreetCred.rank_name(StreetCred.rank(run))
 	var heat_color := _heat_color(run.heat)
 	_heat_bar.value = run.heat
 	_heat_fill.bg_color = heat_color

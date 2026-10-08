@@ -35,7 +35,7 @@ func _ready() -> void:
 	GameState.run_changed.connect(_on_run_changed)
 
 
-## Payments and loans only happen at The Shark; anywhere else the sheet is a read-only summary.
+## Repayments work anywhere. Borrowing only happens at The Shark.
 func open_loan(mode := Mode.REPAY) -> void:
 	if GameState.run == null:
 		return
@@ -64,7 +64,7 @@ func _refresh() -> void:
 	_due_value.text = "Day %d" % (run.next_due_day - 1)
 	_owed_value.text = Format.money(Loan.amount_due(run))
 	_note_label.text = _note(run)
-	_action_box.visible = Loan.can_visit(run)
+	_action_box.visible = _mode == Mode.REPAY or Loan.can_visit(run)
 	if _action_box.visible:
 		_refresh_amount()
 
@@ -79,8 +79,8 @@ func _note(run: RunState) -> String:
 		lines.append("This week is covered. The next payment is set on day %d." % (run.next_due_day - 1))
 	if run.debt > 0 and run.outcome == RunState.Outcome.ONGOING:
 		lines.append("Clear the debt by the end of day %d." % run.campaign_days)
-	if not Loan.can_visit(run):
-		lines.append("Pay or borrow at The Shark in Downtown.")
+	if _mode == Mode.BORROW and not Loan.can_visit(run):
+		lines.append("Borrow at The Shark in Downtown.")
 	return "\n".join(lines)
 
 

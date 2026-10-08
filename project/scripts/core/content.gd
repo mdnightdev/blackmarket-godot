@@ -8,6 +8,9 @@ const EVENTS_FOLDER := "res://data/events"
 const CHARACTERS_FOLDER := "res://data/characters"
 const PLAYERS_FOLDER := "res://data/players"
 const FAMILIES_FOLDER := "res://data/families"
+const CREW_FOLDER := "res://data/crew"
+const BUSINESSES_FOLDER := "res://data/businesses"
+const HEISTS_FOLDER := "res://data/heists"
 
 var _districts: Dictionary = {}
 var _venues: Dictionary = {}
@@ -17,6 +20,9 @@ var _residents_by_district: Dictionary = {}
 var _characters: Dictionary = {}
 var _players: Dictionary = {}
 var _families: Dictionary = {}
+var _crew_roles: Dictionary = {}
+var _businesses: Dictionary = {}
+var _heists: Dictionary = {}
 var _events: Array[EventDef] = []
 
 
@@ -31,6 +37,9 @@ func _ready() -> void:
 	_characters = Catalog.index_by_id(Catalog.load_folder(CHARACTERS_FOLDER))
 	_players = Catalog.index_by_id(Catalog.load_folder(PLAYERS_FOLDER))
 	_families = Catalog.index_by_id(Catalog.load_folder(FAMILIES_FOLDER))
+	_crew_roles = Catalog.index_by_id(Catalog.load_folder(CREW_FOLDER))
+	_businesses = Catalog.index_by_id(Catalog.load_folder(BUSINESSES_FOLDER))
+	_heists = Catalog.index_by_id(Catalog.load_folder(HEISTS_FOLDER))
 	_events.assign(Catalog.load_folder(EVENTS_FOLDER))
 
 
@@ -122,4 +131,40 @@ func family(id: StringName) -> FamilyDef:
 func families() -> Array[FamilyDef]:
 	var list: Array[FamilyDef] = []
 	list.assign(_families.values())
+	return list
+
+
+func crew_role(id: StringName) -> CrewRoleDef:
+	return _crew_roles.get(id)
+
+
+## Cheapest to hire first.
+func crew_roles() -> Array[CrewRoleDef]:
+	var list: Array[CrewRoleDef] = []
+	list.assign(_crew_roles.values())
+	list.sort_custom(func(a: CrewRoleDef, b: CrewRoleDef) -> bool: return a.hire_cost < b.hire_cost)
+	return list
+
+
+func business(id: StringName) -> BusinessDef:
+	return _businesses.get(id)
+
+
+## Cheapest first.
+func businesses() -> Array[BusinessDef]:
+	var list: Array[BusinessDef] = []
+	list.assign(_businesses.values())
+	list.sort_custom(func(a: BusinessDef, b: BusinessDef) -> bool: return a.price < b.price)
+	return list
+
+
+func heist(id: StringName) -> HeistDef:
+	return _heists.get(id)
+
+
+## Lowest rank first.
+func heists() -> Array[HeistDef]:
+	var list: Array[HeistDef] = []
+	list.assign(_heists.values())
+	list.sort_custom(func(a: HeistDef, b: HeistDef) -> bool: return a.min_rank < b.min_rank)
 	return list

@@ -96,7 +96,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	GameState.clock_active = false
 	if _pending_payout > 0:
-		GameState.collect_winnings(_pending_payout)
+		GameState.collect_winnings(_pending_payout, _stake)
 		_pending_payout = 0
 
 
@@ -398,7 +398,7 @@ func _update_hand_labels() -> void:
 func _settle(lead: String) -> void:
 	var payout := _pending_payout
 	_pending_payout = 0
-	GameState.collect_winnings(payout)
+	GameState.collect_winnings(payout, _stake)
 	if payout > _stake:
 		AudioService.play_sfx(Sfx.CHIPS_WIN)
 		_result_label.text = lead + "Won %s" % Format.money(payout - _stake)

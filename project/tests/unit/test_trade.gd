@@ -37,6 +37,15 @@ func test_buy_fails_without_space() -> void:
 	assert_eq(Inventory.free_space(_run), 0)
 
 
+func test_buy_blocked_while_over_capacity() -> void:
+	_run.inventory = {&"burner_phones": Inventory.BASE_CAPACITY + 2}
+	assert_eq(Trade.check_buy(_run, _phones, 1, 100), Trade.Result.OVER_CAPACITY)
+	assert_eq(Trade.buy(_run, _phones, 1, 100), Trade.Result.OVER_CAPACITY)
+	assert_eq(Trade.max_buyable(_run, _phones, 100), 0)
+	assert_eq(_run.cash, RunState.STARTING_CASH)
+	assert_eq(Inventory.count(_run, _phones.id), Inventory.BASE_CAPACITY + 2)
+
+
 func test_max_buyable_respects_cash_and_slots() -> void:
 	assert_eq(Trade.max_buyable(_run, _phones, 300), 6)
 	_run.cash = 100_000

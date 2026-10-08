@@ -9,19 +9,21 @@ extends PanelContainer
 
 
 func _ready() -> void:
-	_turf_tab.set_enabled(false)
+	_turf_tab.pressed.connect(GameOverlay.open_turf)
 	_market_tab.pressed.connect(_open_market)
 	_bag_tab.pressed.connect(GameOverlay.open_bag)
 	_jobs_tab.pressed.connect(GameOverlay.open_jobs)
 	_menu_tab.pressed.connect(SceneRouter.go_to.bind(SceneRouter.SETTINGS_SCREEN))
-	GameState.run_changed.connect(_refresh_market)
-	visibility_changed.connect(_refresh_market)
-	_refresh_market()
+	GameState.run_changed.connect(_refresh_tabs)
+	visibility_changed.connect(_refresh_tabs)
+	_refresh_tabs()
 
 
-func _refresh_market() -> void:
+func _refresh_tabs() -> void:
 	var run := GameState.run
+	_turf_tab.set_enabled(run != null)
 	_market_tab.set_enabled(run != null and Content.dealer_in(run.district_id) != null)
+	_jobs_tab.set_badge(run != null and not Jobs.due_soon(run).is_empty())
 
 
 func _open_market() -> void:

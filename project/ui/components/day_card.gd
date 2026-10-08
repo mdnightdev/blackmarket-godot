@@ -18,9 +18,9 @@ func _ready() -> void:
 
 
 ## turf_cut is the money the player's corners paid this morning. 0 hides the line.
-func play(day: int, campaign_days: int, endless := false, turf_cut := 0) -> void:
+func play(day: int, campaign_days: int, career := false, turf_cut := 0) -> void:
 	_number_label.text = str(day)
-	_remaining_label.text = "Endless" if endless else _remaining_text(campaign_days - day)
+	_remaining_label.text = StreetCred.rank_name(StreetCred.rank(GameState.run)) if career else _remaining_text(campaign_days - day)
 	_income_label.text = "Your corners paid %s" % Format.money(turf_cut)
 	_income_label.visible = turf_cut > 0
 	modulate.a = 0.0

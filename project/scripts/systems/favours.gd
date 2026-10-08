@@ -6,7 +6,7 @@ class_name Favours
 ## Tributes are paid on the spot. Accepted deliveries are stored without the kind.
 
 enum Kind { DELIVERY, TRIBUTE }
-enum Result { OK, BUSY, TAKEN, EXPIRED, NOT_ENOUGH_CASH }
+enum Result { OK, BUSY, TAKEN, EXPIRED, NOT_ENOUGH_CASH, TOO_BIG }
 
 const POSTED_PER_DAY := 2
 const TRIBUTE_CHANCE := 0.35
@@ -55,6 +55,8 @@ static func accept(run: RunState, offer: Dictionary) -> Result:
 	else:
 		if not active_for(run, family_id).is_empty():
 			return Result.BUSY
+		if not Orders.fits_in_bag(run, offer):
+			return Result.TOO_BIG
 		run.favours.append(sanitize(offer))
 	run.taken_favours.append(str(offer.id))
 	return Result.OK
@@ -94,6 +96,7 @@ static func expire(run: RunState) -> Array[Dictionary]:
 	for favour in missed:
 		run.favours.erase(favour)
 		Families.shift(run, StringName(favour.family), -MISSED_LOSS)
+		StreetCred.add(run, StreetCred.JOB_MISSED)
 	var today := "%d" % (run.day - 1)
 	run.taken_favours = run.taken_favours.filter(func(id: String) -> bool: return id.get_slice(":", 1) == today)
 	return missed
@@ -121,6 +124,7 @@ static func sanitize(source: Dictionary) -> Dictionary:
 
 static func _complete(run: RunState, family_id: StringName) -> void:
 	Families.shift(run, family_id, DONE_GAIN)
+	StreetCred.add(run, StreetCred.FAVOUR_DONE)
 	var family := Content.family(family_id)
 	if family != null and not family.rival.is_empty():
 		Families.shift(run, family.rival, -RIVAL_LOSS)

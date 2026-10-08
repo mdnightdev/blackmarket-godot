@@ -3,7 +3,7 @@ class_name Orders
 ## Delivery work posted on bar boards. An order is stored as
 ## { id, venue, dealer, item, quantity, price, due } where price is per unit and due is the last phase stamp to deliver in.
 
-enum Result { OK, FULL, TAKEN, EXPIRED }
+enum Result { OK, FULL, TAKEN, EXPIRED, TOO_BIG }
 
 const MAX_ACTIVE := 2
 const POSTED_PER_DAY := 3
@@ -20,6 +20,7 @@ const MAX_EXPENSIVE_QUANTITY := 4
 
 
 ## Today's open offers at a bar. Offers come from the run seed, so a reload cannot reroll them.
+## Orders from dealers in districts the player cannot reach yet stay off the board.
 static func board(run: RunState, venue_id: StringName) -> Array[Dictionary]:
 	var day_index := run.day - 1
 	var stamp := Calendar.stamp(run)
@@ -30,18 +31,27 @@ static func board(run: RunState, venue_id: StringName) -> Array[Dictionary]:
 		return offers
 	for index in POSTED_PER_DAY:
 		var offer := _post(run, venue_id, day_index, index, clients, goods)
-		if int(offer.due) > stamp and not run.taken_orders.has(offer.id):
+		if int(offer.due) > stamp and not run.taken_orders.has(offer.id) and _client_reachable(run, offer):
 			offers.append(offer)
 	return offers
 
 
-static func accept(run: RunState, offer: Dictionary) -> Result:
+static func check_accept(run: RunState, offer: Dictionary) -> Result:
 	if run.orders.size() >= MAX_ACTIVE:
 		return Result.FULL
 	if run.taken_orders.has(offer.id):
 		return Result.TAKEN
 	if int(offer.due) < Calendar.stamp(run):
 		return Result.EXPIRED
+	if not fits_in_bag(run, offer):
+		return Result.TOO_BIG
+	return Result.OK
+
+
+static func accept(run: RunState, offer: Dictionary) -> Result:
+	var result := check_accept(run, offer)
+	if result != Result.OK:
+		return result
 	run.orders.append(offer.duplicate())
 	run.taken_orders.append(str(offer.id))
 	return Result.OK
@@ -68,6 +78,7 @@ static func deliver(run: RunState, order: Dictionary) -> bool:
 	if Trade.sell(run, item, int(order.quantity), int(order.price)) != Trade.Result.OK:
 		return false
 	run.orders.erase(order)
+	StreetCred.add(run, StreetCred.ORDER_DELIVERED)
 	return true
 
 
@@ -75,6 +86,7 @@ static func deliver(run: RunState, order: Dictionary) -> bool:
 static func drop(run: RunState, order: Dictionary) -> void:
 	run.orders.erase(order)
 	run.walked_out[StringName(order.dealer)] = Calendar.stamp(run)
+	StreetCred.add(run, StreetCred.JOB_MISSED)
 
 
 ## Closes orders whose deadline has passed and returns them.
@@ -91,6 +103,17 @@ static func expire(run: RunState) -> Array[Dictionary]:
 	return missed
 
 
+## Whether the whole order could ever be carried at once with the current bag.
+static func fits_in_bag(run: RunState, order: Dictionary) -> bool:
+	var item := Content.item(StringName(order.item))
+	return item != null and item.slots * int(order.quantity) <= Inventory.capacity(run)
+
+
+static func slots_needed(order: Dictionary) -> int:
+	var item := Content.item(StringName(order.item))
+	return (item.slots if item != null else 1) * int(order.quantity)
+
+
 static func total(order: Dictionary) -> int:
 	return int(order.price) * int(order.quantity)
 
@@ -105,6 +128,12 @@ static func sanitize(source: Dictionary) -> Dictionary:
 		"price": maxi(1, int(source.get("price", 1))),
 		"due": int(source.get("due", -1)),
 	}
+
+
+static func _client_reachable(run: RunState, offer: Dictionary) -> bool:
+	var dealer := Content.dealer(StringName(offer.dealer))
+	var district := Content.district(dealer.district_id) if dealer != null else null
+	return district != null and not Travel.is_locked(run, district)
 
 
 ## Resident dealers place orders, since they can always be found at home.

@@ -3,6 +3,7 @@ class_name StreetEvents
 const EVENT_CHANCE := 0.18
 const MIN_MUGGING_CASH := 100
 const FIGHT_CHANCE := 0.6
+const MAX_FIGHT_CHANCE := 0.9
 const FIGHT_LOSS_MULTIPLIER := 1.5
 const LUCKY_FIND_MAX_PRICE := 500
 
@@ -81,7 +82,8 @@ static func prepare(run: RunState, event: EventDef, rng: RandomNumberGenerator) 
 		EventDef.Effect.PRICE_SHIFT:
 			details = _prepare_shift(run, event, rng)
 		EventDef.Effect.MUGGING:
-			details = _prepare_mugging(run, event)
+			if rng.randf() < Crew.mugging_factor(run):
+				details = _prepare_mugging(run, event)
 		EventDef.Effect.LUCKY_FIND:
 			details = _prepare_find(run, event, rng)
 	if details.is_empty():
@@ -152,6 +154,10 @@ static func _prepare_mugging(run: RunState, event: EventDef) -> Dictionary:
 		return {}
 	var amount := maxi(1, roundi(run.cash * event.cash_fraction))
 	return { "amount": amount, "text": { "amount": Format.money(amount) } }
+
+
+static func fight_chance(run: RunState) -> float:
+	return minf(FIGHT_CHANCE + Skills.fight_bonus(run) + Crew.fight_bonus(run), MAX_FIGHT_CHANCE)
 
 
 static func _prepare_find(run: RunState, event: EventDef, rng: RandomNumberGenerator) -> Dictionary:

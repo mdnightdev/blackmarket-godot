@@ -1,6 +1,8 @@
 extends VenueScreen
 
 const CLEAN_UP: StringName = &"clean_up"
+const RESPEC: StringName = &"respec"
+const RESPEC_ICON: Texture2D = preload("res://assets/icons/hud/rotate-ccw.svg")
 const SOLD_LINES: Array[String] = [
 	"It's yours. Look after it.",
 	"Good choice. No receipts.",
@@ -38,6 +40,8 @@ func _refresh() -> void:
 	super()
 	_add_label("CLEAN-UP", &"ListHeading")
 	_add_clean_up_row()
+	if Skills.points_spent(GameState.run) > 0:
+		_add_respec_row()
 	_add_label("GEAR", &"ListHeading")
 	var run := GameState.run
 	for item in Content.items(ItemDef.Kind.EQUIPMENT):
@@ -63,6 +67,37 @@ func _add_clean_up_row() -> void:
 	var row := _add_row()
 	row.show_entry(Fixer.CLEAN_UP_ICON, "Make the heat go away", Format.money(Fixer.clean_up_cost(run)), caption, detail, Palette.TEXT_CREAM if Fixer.can_clean_up(run) else Palette.TEXT_MUTED)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_clean_up())
+
+
+func _add_respec_row() -> void:
+	var run := GameState.run
+	var can_pay := Skills.check_respec(run) == Skills.Result.OK
+	var caption := "Refunds all %d skill points so you can spend them again." % Skills.points_spent(run)
+	var row := _add_row()
+	row.show_entry(RESPEC_ICON, "Forget your skills", Format.money(Skills.respec_cost(run)), caption, "TAP TO TALK" if can_pay else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_pay else Palette.TEXT_MUTED)
+	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_respec())
+
+
+func _talk_about_respec() -> void:
+	var run := GameState.run
+	var cost := Skills.respec_cost(run)
+	var line := "Habits are expensive to break. %s and you start fresh with %d points to spend." % [Format.money(cost), Skills.points_spent(run)]
+	var choices: Array[DialogueChoice] = [
+		DialogueChoice.new(RESPEC, "Pay %s" % Format.money(cost), Skills.check_respec(run) == Skills.Result.OK),
+		DialogueChoice.new(LEAVE, "Not now", true, true),
+	]
+	GameOverlay.talk(_host, line, choices, _on_respec_choice, "The price grows with your cred rank. Spend the points again from the Turf tab.")
+
+
+func _on_respec_choice(choice: StringName) -> void:
+	if choice != RESPEC:
+		GameOverlay.end_talk()
+		return
+	if GameState.respec_skills() == Skills.Result.OK:
+		AudioService.play_sfx(Sfx.CLEAN_UP)
+		GameOverlay.say("Done. Whatever you knew, you know it differently now.", _leave_choice(), _end_talk)
+	else:
+		GameOverlay.say("Come back when you have the cash.", _leave_choice(), _end_talk)
 
 
 func _talk_about_clean_up() -> void:

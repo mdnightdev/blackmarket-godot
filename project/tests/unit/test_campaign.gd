@@ -13,23 +13,25 @@ func _start_day(day: int) -> void:
 	Encounters.after_time_passes(_run, true, false, RandomNumberGenerator.new(), _no_events)
 
 
-func test_clearing_the_debt_wins() -> void:
+func test_clearing_the_debt_starts_the_career() -> void:
 	_run.district_id = &"downtown"
 	_run.cash = 10_000
 	Loan.repay(_run, RunState.STARTING_DEBT)
-	assert_true(Campaign.update_outcome(_run))
-	assert_eq(_run.outcome, RunState.Outcome.WON)
-	assert_true(Campaign.is_over(_run))
-
-
-func test_endless_mode_continues_after_a_win() -> void:
-	_run.debt = 0
-	Campaign.update_outcome(_run)
-	Campaign.continue_endless(_run)
+	assert_true(Campaign.start_career_if_cleared(_run))
+	assert_true(_run.career)
+	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
+	assert_eq(str(_run.pending_encounter.type), Campaign.CAREER_START)
 	assert_false(Campaign.is_over(_run))
+	assert_false(Campaign.start_career_if_cleared(_run))
+
+
+func test_career_has_no_deadline() -> void:
+	_run.debt = 0
+	Campaign.start_career_if_cleared(_run)
+	_run.pending_encounter = {}
 	_run.debt = 2000
 	_start_day(RunState.CAMPAIGN_DAYS + 5)
-	assert_eq(_run.outcome, RunState.Outcome.WON)
+	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
 	assert_false(Campaign.is_over(_run))
 
 
@@ -42,12 +44,9 @@ func test_owing_after_the_last_day_loses() -> void:
 	assert_true(_run.pending_encounter.is_empty())
 
 
-func test_endless_needs_a_win() -> void:
-	_run.day = RunState.CAMPAIGN_DAYS + 1
-	Campaign.update_outcome(_run)
-	Campaign.continue_endless(_run)
-	assert_false(_run.endless)
-	assert_true(Campaign.is_over(_run))
+func test_debt_still_owed_does_not_start_the_career() -> void:
+	assert_false(Campaign.start_career_if_cleared(_run))
+	assert_false(_run.career)
 
 
 func test_net_worth_counts_goods_and_stash() -> void:
@@ -64,12 +63,21 @@ func test_trades_and_profit_are_tracked() -> void:
 	assert_eq(_run.profit, 150)
 
 
-func test_outcome_survives_a_save() -> void:
+func test_career_survives_a_save() -> void:
 	_run.debt = 0
-	Campaign.update_outcome(_run)
-	Campaign.continue_endless(_run)
+	Campaign.start_career_if_cleared(_run)
 	_run.busts = 2
 	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
-	assert_eq(restored.outcome, RunState.Outcome.WON)
-	assert_true(restored.endless)
+	assert_true(restored.career)
+	assert_eq(restored.outcome, RunState.Outcome.ONGOING)
 	assert_eq(restored.busts, 2)
+
+
+func test_old_won_and_endless_saves_become_careers() -> void:
+	var saved := _run.to_dict()
+	saved["outcome"] = RunState.Outcome.WON
+	saved["endless"] = true
+	var restored := RunState.from_dict(saved)
+	assert_true(restored.career)
+	assert_eq(restored.outcome, RunState.Outcome.ONGOING)
+	assert_false(Campaign.is_over(restored))

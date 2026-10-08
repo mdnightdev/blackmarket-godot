@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://ui/components/jobs_sheet.gd" id="1_sheet"]
 [ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
 [ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
+[ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="4_confirm"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
 bg_color = Color(0.0471, 0.0549, 0.0706, 1)
@@ -60,18 +61,7 @@ layout_mode = 2
 theme_type_variation = &"HeaderLabel"
 text = "Jobs"
 
-[node name="EmptyLabel" type="Label" parent="Sheet/Page"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 120)
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-text = "No jobs right now. Bars post delivery orders, Pier 9 has crates, and the families hand out favours."
-horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 3
-
 [node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]
-unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
@@ -83,11 +73,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 0
 
-[node name="Filler" type="Control" parent="Sheet/Page"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 2
-
 [node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
 layout_mode = 2
+
+[node name="ConfirmDialog" parent="." instance=ExtResource("4_confirm")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

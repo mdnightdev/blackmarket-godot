@@ -3,7 +3,7 @@ extends CanvasLayer
 const DIALOGUE_PANEL := preload("res://ui/components/dialogue_panel.tscn")
 const LOAN_SHEET := preload("res://ui/components/loan_sheet.tscn")
 const INVENTORY_SHEET := preload("res://ui/components/inventory_sheet.tscn")
-const FAMILIES_SHEET := preload("res://ui/components/families_sheet.tscn")
+const TURF_SHEET := preload("res://ui/components/turf_sheet.tscn")
 const JOBS_SHEET := preload("res://ui/components/jobs_sheet.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
@@ -20,7 +20,7 @@ const RAID_VIBRATE_MS := 350
 var _dialogue: DialoguePanel
 var _loan_sheet: LoanSheet
 var _inventory_sheet: InventorySheet
-var _families_sheet: FamiliesSheet
+var _turf_sheet: TurfSheet
 var _jobs_sheet: JobsSheet
 var _lights: PoliceLights
 var _settled_for := 0.0
@@ -29,6 +29,7 @@ var _shake_pixels := 0.0
 var _missed_orders: Array[Dictionary] = []
 var _missed_favours: Array[Dictionary] = []
 var _lost_crates: Array[Dictionary] = []
+var _notices: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -36,24 +37,26 @@ func _ready() -> void:
 	_dialogue = DIALOGUE_PANEL.instantiate()
 	_loan_sheet = LOAN_SHEET.instantiate()
 	_inventory_sheet = INVENTORY_SHEET.instantiate()
-	_families_sheet = FAMILIES_SHEET.instantiate()
+	_turf_sheet = TURF_SHEET.instantiate()
 	_jobs_sheet = JOBS_SHEET.instantiate()
 	_lights = PoliceLights.new()
 	add_child(_inventory_sheet)
-	add_child(_families_sheet)
+	add_child(_turf_sheet)
 	add_child(_jobs_sheet)
 	add_child(_loan_sheet)
 	add_child(_dialogue)
 	_dialogue.add_backdrop_layer(_lights)
-	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _families_sheet, _jobs_sheet]:
+	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
 		SceneRouter.transition_started.connect(sheet.close)
 	GameState.orders_missed.connect(func(orders: Array[Dictionary]) -> void: _missed_orders.append_array(orders))
 	GameState.favours_missed.connect(func(favours: Array[Dictionary]) -> void: _missed_favours.append_array(favours))
 	GameState.crate_lost.connect(func(crate: Dictionary) -> void: _lost_crates.append(crate))
+	GameState.notices_posted.connect(func(notices: Array[Dictionary]) -> void: _notices.append_array(notices))
 	GameState.run_started.connect(func() -> void:
 		_missed_orders.clear()
 		_missed_favours.clear()
 		_lost_crates.clear()
+		_notices.clear()
 	)
 
 
@@ -74,8 +77,10 @@ func _process(delta: float) -> void:
 			_present_missed_order(_missed_orders.pop_front())
 		elif not _missed_favours.is_empty():
 			_present_missed_favour(_missed_favours.pop_front())
-		else:
+		elif not _lost_crates.is_empty():
 			_present_lost_crate(_lost_crates.pop_front())
+		else:
+			_present_notice(_notices.pop_front())
 
 
 func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
@@ -84,16 +89,20 @@ func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
 
 func open_bag() -> void:
 	_jobs_sheet.close()
+	_turf_sheet.close()
 	if not _inventory_sheet.visible:
 		_inventory_sheet.open_inventory()
 
 
-func open_families() -> void:
-	_families_sheet.open_families()
+func open_turf() -> void:
+	_inventory_sheet.close()
+	_jobs_sheet.close()
+	_turf_sheet.open_turf()
 
 
 func open_jobs() -> void:
 	_inventory_sheet.close()
+	_turf_sheet.close()
 	if not _jobs_sheet.visible:
 		_jobs_sheet.open_jobs()
 
@@ -118,7 +127,11 @@ func is_talking() -> bool:
 func handle_back() -> bool:
 	if _dialogue.visible:
 		return _dialogue.handle_back()
-	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _families_sheet, _jobs_sheet]:
+	if _turf_sheet.visible and _turf_sheet.close_modal():
+		return true
+	if _jobs_sheet.visible and _jobs_sheet.close_modal():
+		return true
+	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
 		if sheet.visible:
 			sheet.close()
 			return true
@@ -128,9 +141,9 @@ func handle_back() -> bool:
 func _can_present() -> bool:
 	if GameState.run == null:
 		return false
-	if not Encounters.has_pending(GameState.run) and _missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty():
+	if not Encounters.has_pending(GameState.run) and _missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty() and _notices.is_empty():
 		return false
-	if _dialogue.visible or _loan_sheet.visible or _inventory_sheet.visible or _families_sheet.visible or _jobs_sheet.visible or SceneRouter.is_transitioning():
+	if _dialogue.visible or _loan_sheet.visible or _inventory_sheet.visible or _turf_sheet.visible or _jobs_sheet.visible or SceneRouter.is_transitioning():
 		return false
 	var screen := get_tree().current_scene
 	return screen != null and screen.has_method("can_present_encounter") and screen.can_present_encounter()
@@ -188,6 +201,13 @@ func _present_lost_crate(crate: Dictionary) -> void:
 	AudioService.play_sfx(Sfx.HAGGLE_FAIL)
 
 
+func _present_notice(notice: Dictionary) -> void:
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
+	var player := Content.player(GameState.run.player_id)
+	_dialogue.open(player, str(notice.get("line", "")), choices, func(_id: StringName) -> void: _dialogue.close(), str(notice.get("hint", "")))
+	AudioService.play_sfx(Sfx.EVENT)
+
+
 func _raise_alarm(type: String) -> void:
 	match type:
 		Encounters.POLICE:
@@ -202,10 +222,10 @@ func _raise_alarm(type: String) -> void:
 		Encounters.ENFORCERS:
 			AudioService.play_sfx(Sfx.CAUGHT)
 			_shake(HIT_SHAKE_PIXELS, POLICE_VIBRATE_MS)
-		Turf.CLASH:
+		Vex.GATE, Vex.HUNT:
 			AudioService.play_sfx(Sfx.TURF_CLASH)
 			_shake(POLICE_SHAKE_PIXELS, POLICE_VIBRATE_MS)
-		Turf.VICTORY:
+		Turf.VICTORY, Campaign.CAREER_START:
 			AudioService.play_sfx(Sfx.TURF_WON)
 		Families.SHAKEDOWN:
 			AudioService.play_sfx(Sfx.SHAKEDOWN)
@@ -234,7 +254,7 @@ func _resolve_encounter(choice: StringName) -> void:
 
 
 func _play_outcome(choice: StringName, lost_something: bool) -> void:
-	if choice in [Encounters.BRIBE, Encounters.PAY, Turf.TRIBUTE, Families.PAY_UP]:
+	if choice in [Encounters.BRIBE, Encounters.PAY, Vex.BRIBE, Vex.PAY, Families.PAY_UP]:
 		AudioService.play_sfx(Sfx.COINS_OUT)
 	elif lost_something:
 		AudioService.play_sfx(Sfx.CAUGHT)

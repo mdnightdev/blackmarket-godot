@@ -1,8 +1,8 @@
 class_name Safehouse
 
-## The player's hideout in the Slums: a stash that raids never touch, and a place to lie low.
+## The player's hideout, reachable from any district they hold: a stash raids never touch,
+## a cash box nobody can take, and a place to lie low.
 
-const VENUE: StringName = &"safehouse"
 const UPGRADE_ICON := preload("res://assets/items/safehouse_lockbox.jpg")
 const LIE_LOW_ICON := preload("res://assets/items/lie_low.jpg")
 const UPGRADES: Array[Dictionary] = [
@@ -14,9 +14,8 @@ const UPGRADES: Array[Dictionary] = [
 const LIE_LOW_HEAT := 15
 
 
-static func is_here(run: RunState) -> bool:
-	var district := Content.district(run.district_id)
-	return district != null and district.venues.has(VENUE)
+static func is_open(run: RunState) -> bool:
+	return Turf.holder(run, run.district_id) == Turf.Holder.PLAYER
 
 
 static func stash_capacity(run: RunState) -> int:
@@ -34,7 +33,7 @@ static func next_upgrade(run: RunState) -> Dictionary:
 
 static func can_upgrade(run: RunState) -> bool:
 	var upgrade := next_upgrade(run)
-	return is_here(run) and not upgrade.is_empty() and run.cash >= int(upgrade.price)
+	return is_open(run) and not upgrade.is_empty() and run.cash >= int(upgrade.price)
 
 
 static func buy_upgrade(run: RunState) -> bool:
@@ -45,8 +44,24 @@ static func buy_upgrade(run: RunState) -> bool:
 	return true
 
 
+static func deposit_cash(run: RunState, amount: int) -> bool:
+	if not is_open(run) or amount <= 0 or amount > run.cash:
+		return false
+	run.cash -= amount
+	run.stashed_cash += amount
+	return true
+
+
+static func withdraw_cash(run: RunState, amount: int) -> bool:
+	if not is_open(run) or amount <= 0 or amount > run.stashed_cash:
+		return false
+	run.stashed_cash -= amount
+	run.cash += amount
+	return true
+
+
 static func lie_low(run: RunState) -> bool:
-	if not is_here(run):
+	if not is_open(run):
 		return false
 	Heat.add(run, -LIE_LOW_HEAT)
 	return true

@@ -6,6 +6,7 @@ var _phones: ItemDef
 
 func before_each() -> void:
 	_run = RunState.new()
+	_run.turf[&"slums"] = 100
 	_phones = Content.item(&"burner_phones")
 
 
@@ -22,7 +23,21 @@ func test_used_space_counts_item_slots() -> void:
 	assert_eq(Inventory.free_space(_run), Inventory.BASE_CAPACITY - 7)
 
 
-func test_stash_needs_lockbox_and_safehouse_district() -> void:
+func test_full_bag_is_not_over_capacity() -> void:
+	_run.inventory = {&"burner_phones": Inventory.BASE_CAPACITY}
+	assert_eq(Inventory.over_capacity(_run), 0)
+
+
+func test_losing_a_bag_leaves_goods_over_capacity() -> void:
+	_run.gear.append(&"messenger_bag")
+	_run.inventory = {&"burner_phones": Inventory.BASE_CAPACITY + 5}
+	assert_eq(Inventory.over_capacity(_run), 0)
+	_run.gear.clear()
+	assert_eq(Inventory.over_capacity(_run), 5)
+	assert_eq(Inventory.free_space(_run), 0)
+
+
+func test_stash_needs_lockbox_and_a_held_district() -> void:
 	_run.district_id = &"slums"
 	assert_false(Inventory.can_use_stash(_run))
 	_run.stash_level = 1

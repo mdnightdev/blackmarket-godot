@@ -129,7 +129,7 @@ static func talk_about_turf() -> void:
 static func _talk_turf(speaker: SpeakerDef, line: String) -> void:
 	var run := GameState.run
 	var choices: Array[DialogueChoice] = []
-	var hint := "Selling here gains you ground. Held districts pay %s each morning, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
+	var hint := "Selling here gains you ground. Held districts pay from %s each morning, more as you level them, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
 	if Turf.is_contested(run.district_id) and not run.vex_gone:
 		var cost := Turf.muscle_cost(run)
 		choices.append(DialogueChoice.new(MUSCLE, "Send muscle %s" % Format.money(cost), Turf.can_send_muscle(run)))

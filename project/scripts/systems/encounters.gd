@@ -4,6 +4,8 @@ const POLICE := "police"
 const RAID := "raid"
 const ENFORCERS := "enforcers"
 const EVENT := "event"
+const RAID_WARNING := "raid_warning"
+const RAID_WARNING_COOLING := 20
 
 const CONTINUE: StringName = &"continue"
 const BRIBE: StringName = &"bribe"
@@ -59,11 +61,13 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	if has_pending(run):
 		return
 	if raid_due:
-		run.pending_encounter = raid(run)
+		run.pending_encounter = raid_or_warning(run)
 	elif rng.randf() < Police.stop_chance(run):
 		run.pending_encounter = police_stop(run)
-	elif Roster.rival_in(run, run.district_id, Calendar.stamp(run)) and Turf.clash_due(run, rng.randf()):
-		run.pending_encounter = Turf.clash(run)
+	elif Vex.hunt_due(run, rng.randf()):
+		run.pending_encounter = Vex.hunt(run)
+	elif Vex.gate_due(run, rng.randf()):
+		run.pending_encounter = Vex.gate(run)
 	elif Families.hostile_family_in(run, run.district_id) != null and rng.randf() < Families.SHAKEDOWN_CHANCE:
 		run.pending_encounter = Families.shakedown(run)
 	elif rng.randf() < StreetEvents.EVENT_CHANCE:
@@ -75,7 +79,21 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 ## Called after anything that raises heat outside of time passing.
 static func check_raid(run: RunState) -> void:
 	if Heat.is_maxed(run) and not has_pending(run):
-		run.pending_encounter = raid(run)
+		run.pending_encounter = raid_or_warning(run)
+
+
+## A lookout on the crew turns one raid a day into a warning and time to scatter the goods.
+static func raid_or_warning(run: RunState) -> Dictionary:
+	if not Crew.can_warn_of_raid(run):
+		return raid(run)
+	Crew.use_raid_warning(run)
+	Heat.add(run, -RAID_WARNING_COOLING)
+	return {
+		"type": RAID_WARNING,
+		"speaker": String(run.player_id),
+		"title": "Raid warning",
+		"body": "Your lookout spots a raid team forming down the street. You scatter the goods before they move in.",
+	}
 
 
 ## The patrol working the district makes the stop, otherwise the beat officer.
@@ -134,12 +152,8 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			list.append(Choice.new(BRIBE, "Bribe %s" % Format.money(bribe), run.cash >= bribe))
 			list.append(Choice.new(RUN, "Run for it (%d%%)" % roundi(Police.escape_chance(run) * 100.0)))
 			list.append(Choice.new(COMPLY, "Comply"))
-		Turf.CLASH:
-			var tribute := int(encounter.tribute)
-			list.append(Choice.new(Turf.TRIBUTE, "Pay %s tribute" % Format.money(tribute), run.cash >= tribute))
-			var district_id := StringName(str(encounter.get("district", run.district_id)))
-			list.append(Choice.new(Turf.FIGHT, "Fight (%d%%)" % roundi(Turf.fight_chance(run, district_id) * 100.0)))
-			list.append(Choice.new(Turf.BACK_OFF, "Back off"))
+		Vex.GATE, Vex.HUNT:
+			list.append_array(Vex.choices(run, encounter))
 		Families.SHAKEDOWN:
 			var demand := int(encounter.demand)
 			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
@@ -148,7 +162,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			match int(encounter.effect):
 				EventDef.Effect.MUGGING:
 					list.append(Choice.new(PAY, "Hand over %s" % Format.money(int(encounter.amount))))
-					list.append(Choice.new(FIGHT, "Fight back (%d%%)" % roundi(StreetEvents.FIGHT_CHANCE * 100.0)))
+					list.append(Choice.new(FIGHT, "Fight back (%d%%)" % roundi(StreetEvents.fight_chance(run) * 100.0)))
 				EventDef.Effect.LUCKY_FIND:
 					list.append(Choice.new(TAKE, "Take it"))
 					list.append(Choice.new(LEAVE, "Leave it"))
@@ -168,8 +182,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		return ""
 	run.pending_encounter = {}
 	match encounter.get("type"):
-		Turf.CLASH:
-			return Turf.resolve_clash(run, encounter, choice, roll)
+		Vex.GATE, Vex.HUNT:
+			return Vex.resolve(run, encounter, choice, roll)
 		Families.SHAKEDOWN:
 			return Families.resolve_shakedown(run, encounter, choice)
 	match choice:
@@ -192,7 +206,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			run.cash -= paid
 			return "You hand over %s." % Format.money(paid)
 		FIGHT:
-			if roll < StreetEvents.FIGHT_CHANCE:
+			if roll < StreetEvents.fight_chance(run):
+				StreetCred.add(run, StreetCred.FIGHT_WON)
 				return "You fight them off and keep your cash."
 			var lost := mini(roundi(int(encounter.amount) * StreetEvents.FIGHT_LOSS_MULTIPLIER), maxi(0, run.cash))
 			run.cash -= lost

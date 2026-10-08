@@ -23,7 +23,9 @@ static func for_trade(run: RunState, item: ItemDef, quantity: int) -> int:
 
 
 static func for_travel(run: RunState) -> int:
-	return ceili(carried_risk(run) / TRAVEL_RISK_DIVISOR)
+	if Crew.removes_travel_heat(run):
+		return 0
+	return maxi(0, ceili(carried_risk(run) / TRAVEL_RISK_DIVISOR) - Skills.travel_heat_reduction(run))
 
 
 static func add(run: RunState, amount: int) -> void:
@@ -31,7 +33,7 @@ static func add(run: RunState, amount: int) -> void:
 
 
 static func cool_down(run: RunState, new_day_started: bool) -> void:
-	add(run, -(DECAY_PER_PHASE + (OVERNIGHT_DECAY if new_day_started else 0)))
+	add(run, -(DECAY_PER_PHASE + Skills.extra_cooling(run) + (OVERNIGHT_DECAY if new_day_started else 0)))
 
 
 static func is_maxed(run: RunState) -> bool:

@@ -1,12 +1,25 @@
 extends GutTest
 
+const HELD: StringName = &"old_market"
+const NOT_HELD: StringName = &"warehouse_row"
+
 var _run: RunState
 
 
 func before_each() -> void:
 	_run = RunState.new()
-	_run.district_id = &"slums"
+	_run.turf[HELD] = 100
+	_run.district_id = HELD
 	_run.cash = 30000
+
+
+func test_opens_only_in_held_districts() -> void:
+	assert_true(Safehouse.is_open(_run))
+	_run.district_id = NOT_HELD
+	assert_false(Safehouse.is_open(_run))
+	_run.district_id = HELD
+	_run.turf[HELD] = Turf.HOLD_SHARE - 1
+	assert_false(Safehouse.is_open(_run))
 
 
 func test_no_stash_until_the_first_upgrade() -> void:
@@ -27,11 +40,11 @@ func test_upgrades_raise_capacity_in_order() -> void:
 	assert_false(Safehouse.buy_upgrade(_run), "nothing left to build")
 
 
-func test_upgrades_need_cash_and_the_safehouse() -> void:
+func test_upgrades_need_cash_and_a_held_district() -> void:
 	_run.cash = int(Safehouse.UPGRADES[0].price) - 1
 	assert_false(Safehouse.buy_upgrade(_run))
 	_run.cash = 30000
-	_run.district_id = &"old_market"
+	_run.district_id = NOT_HELD
 	assert_false(Safehouse.buy_upgrade(_run))
 	assert_eq(_run.stash_level, 0)
 
@@ -42,17 +55,56 @@ func test_lying_low_cools_heat_beyond_the_normal_decay() -> void:
 	assert_eq(_run.heat, 50 - Safehouse.LIE_LOW_HEAT)
 
 
-func test_lying_low_only_at_the_safehouse() -> void:
+func test_lying_low_only_in_a_held_district() -> void:
 	_run.heat = 50
-	_run.district_id = &"old_market"
+	_run.district_id = NOT_HELD
 	assert_false(Safehouse.lie_low(_run))
 	assert_eq(_run.heat, 50)
 
 
-func test_stash_level_survives_a_save() -> void:
+func test_cash_moves_between_pocket_and_cash_box() -> void:
+	assert_true(Safehouse.deposit_cash(_run, 10000))
+	assert_eq(_run.cash, 20000)
+	assert_eq(_run.stashed_cash, 10000)
+	assert_true(Safehouse.withdraw_cash(_run, 4000))
+	assert_eq(_run.cash, 24000)
+	assert_eq(_run.stashed_cash, 6000)
+
+
+func test_cash_box_rejects_bad_amounts_and_closed_safehouse() -> void:
+	assert_false(Safehouse.deposit_cash(_run, 0))
+	assert_false(Safehouse.deposit_cash(_run, 30001))
+	assert_false(Safehouse.withdraw_cash(_run, 1))
+	_run.district_id = NOT_HELD
+	assert_false(Safehouse.deposit_cash(_run, 100))
+	assert_eq(_run.cash, 30000)
+	assert_eq(_run.stashed_cash, 0)
+
+
+func test_stashed_cash_is_out_of_reach_of_enforcers() -> void:
+	assert_true(Safehouse.deposit_cash(_run, 30000))
+	assert_eq(Loan.enforcer_cash_take(_run), 0)
+	assert_eq(_run.stashed_cash, 30000)
+
+
+func test_stashed_cash_counts_towards_net_worth() -> void:
+	var before := Campaign.net_worth(_run)
+	assert_true(Safehouse.deposit_cash(_run, 5000))
+	assert_eq(Campaign.net_worth(_run), before)
+
+
+func test_stash_and_cash_box_survive_a_save() -> void:
 	_run.stash_level = 2
+	_run.stashed_cash = 1234
 	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
 	assert_eq(restored.stash_level, 2)
+	assert_eq(restored.stashed_cash, 1234)
+
+
+func test_negative_saved_cash_box_is_cleared() -> void:
+	var data := _run.to_dict()
+	data.stashed_cash = -50
+	assert_eq(RunState.from_dict(data).stashed_cash, 0)
 
 
 func test_old_lockbox_saves_become_the_first_level() -> void:

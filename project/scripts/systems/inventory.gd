@@ -12,7 +12,7 @@ static func stashed(run: RunState, item_id: StringName) -> int:
 
 
 static func capacity(run: RunState) -> int:
-	return BASE_CAPACITY + Gear.capacity_bonus(run)
+	return BASE_CAPACITY + Gear.capacity_bonus(run) + Skills.capacity_bonus(run) + Crew.capacity_bonus(run)
 
 
 static func used(run: RunState) -> int:
@@ -23,6 +23,11 @@ static func free_space(run: RunState) -> int:
 	return maxi(0, capacity(run) - used(run))
 
 
+## Slots carried beyond capacity, for when capacity shrinks or a save loads a heavier bag.
+static func over_capacity(run: RunState) -> int:
+	return maxi(0, used(run) - capacity(run))
+
+
 static func stash_used(run: RunState) -> int:
 	return _slots_used(run.stash)
 
@@ -31,9 +36,9 @@ static func stash_free_space(run: RunState) -> int:
 	return maxi(0, Safehouse.stash_capacity(run) - stash_used(run))
 
 
-## The stash lives in the safehouse, so it can only be reached from a district that has one.
+## The stash lives in the safehouse, so it can only be reached from a district the player holds.
 static func can_use_stash(run: RunState) -> bool:
-	return Safehouse.stash_capacity(run) > 0 and Safehouse.is_here(run)
+	return Safehouse.stash_capacity(run) > 0 and Safehouse.is_open(run)
 
 
 static func max_to_stash(run: RunState, item: ItemDef) -> int:
@@ -67,7 +72,7 @@ static func add_units(run: RunState, item_id: StringName, quantity: int) -> void
 ## Removes carried units and forgets the price paid once none are held anywhere.
 static func discard(run: RunState, item_id: StringName, quantity: int) -> void:
 	_add(run.inventory, item_id, -quantity)
-	if count(run, item_id) == 0 and stashed(run, item_id) == 0:
+	if count(run, item_id) == 0 and stashed(run, item_id) == 0 and Businesses.total_stocked(run, item_id) == 0:
 		run.cost_basis.erase(item_id)
 
 

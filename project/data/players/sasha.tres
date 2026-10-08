@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PlayerDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/player_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/player_sasha.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/player_sasha_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"sasha"
+display_name = "Sasha"
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+tagline = "Dealt cards for the house for ten years. Now she wants to be the house."
+intro_line = "Ten years of watching other people get rich at my table. My turn."

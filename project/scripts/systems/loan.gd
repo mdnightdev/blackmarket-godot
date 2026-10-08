@@ -43,8 +43,9 @@ static func can_visit(run: RunState) -> bool:
 	return district != null and district.venues.has(VENUE)
 
 
+## Repaying works from anywhere. Only borrowing needs a visit to The Shark.
 static func repay(run: RunState, amount: int) -> bool:
-	if not can_visit(run) or amount <= 0 or amount > max_repay(run):
+	if amount <= 0 or amount > max_repay(run):
 		return false
 	run.cash -= amount
 	run.debt -= amount

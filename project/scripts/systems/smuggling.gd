@@ -27,7 +27,7 @@ const MAX_LEAD_PHASES := 4
 static func board(run: RunState) -> Array[Dictionary]:
 	var offers: Array[Dictionary] = []
 	var origin := Content.district(ORIGIN)
-	var destinations := _destinations()
+	var destinations := _destinations(run)
 	if is_banned(run) or origin == null or destinations.is_empty():
 		return offers
 	for index in POSTED_PER_DAY:
@@ -73,7 +73,7 @@ static func slots_used(run: RunState) -> int:
 
 
 static func carried_risk(run: RunState) -> int:
-	return slots_used(run) * RISK_PER_SLOT
+	return roundi(slots_used(run) * RISK_PER_SLOT * Skills.crate_risk_factor(run))
 
 
 ## What the police treat the crate as being worth when pricing a bribe.
@@ -104,11 +104,17 @@ static func can_deliver(run: RunState) -> bool:
 static func deliver(run: RunState) -> int:
 	if not can_deliver(run):
 		return 0
-	var pay := int(run.crate.pay)
+	var pay := payout(run, run.crate)
 	run.cash += pay
 	run.profit += pay
 	run.crate = {}
+	StreetCred.add(run, StreetCred.CRATE_DELIVERED)
 	return pay
+
+
+## What delivering the crate pays, after the Smuggler skill.
+static func payout(run: RunState, crate: Dictionary) -> int:
+	return roundi(int(crate.get("pay", 0)) * (1.0 + Skills.crate_pay_bonus(run)))
 
 
 ## The police took the crate. Voronin gives no more work today.
@@ -117,6 +123,7 @@ static func seize(run: RunState) -> bool:
 		return false
 	run.crate = {}
 	run.smuggling_ban_day = run.day
+	StreetCred.add(run, StreetCred.CRATE_LOST)
 	return true
 
 
@@ -129,6 +136,7 @@ static func expire(run: RunState) -> Dictionary:
 	var lost := run.crate
 	run.crate = {}
 	run.smuggling_ban_day = run.day
+	StreetCred.add(run, StreetCred.CRATE_LOST)
 	return lost
 
 
@@ -145,10 +153,10 @@ static func sanitize(source: Dictionary) -> Dictionary:
 	}
 
 
-static func _destinations() -> Array[DistrictDef]:
+static func _destinations(run: RunState) -> Array[DistrictDef]:
 	var list: Array[DistrictDef] = []
 	for district in Content.districts():
-		if district.id != ORIGIN:
+		if district.id != ORIGIN and not Travel.is_locked(run, district):
 			list.append(district)
 	list.sort_custom(func(a: DistrictDef, b: DistrictDef) -> bool: return String(a.id) < String(b.id))
 	return list

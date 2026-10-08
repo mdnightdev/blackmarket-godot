@@ -42,5 +42,7 @@ func show_district(district: DistrictDef, travel_check: Travel.Check) -> void:
 			_travel_button.text = "Enter"
 		Travel.Check.NOT_ENOUGH_CASH:
 			_travel_button.text = "Not enough cash"
-	_travel_button.disabled = travel_check == Travel.Check.NOT_ENOUGH_CASH
+		Travel.Check.LOCKED:
+			_travel_button.text = Travel.lock_reason(GameState.run, district)
+	_travel_button.disabled = travel_check == Travel.Check.NOT_ENOUGH_CASH or travel_check == Travel.Check.LOCKED
 	open_sheet()

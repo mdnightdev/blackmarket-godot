@@ -32,7 +32,7 @@ static func stop_chance(run: RunState) -> float:
 	var patrol := Roster.patrol_multiplier(run, run.district_id, Calendar.stamp(run))
 	var chance := BASE_STOP_CHANCE + float(run.heat) / Heat.MAX * HEAT_STOP_CHANCE
 	chance += minf(cargo_risk / CARGO_RISK_SCALE, MAX_CARGO_STOP_CHANCE)
-	return minf(chance * strictness * patrol * Turf.stop_factor(run, run.district_id), MAX_STOP_CHANCE)
+	return minf(chance * strictness * patrol * Turf.stop_factor(run, run.district_id) * Crew.stop_factor(run), MAX_STOP_CHANCE)
 
 
 ## True during the phase of a stop and the phase after it.
@@ -57,7 +57,7 @@ static func escape_chance(run: RunState) -> float:
 	var chance := clampf(BASE_ESCAPE_CHANCE - run.heat / ESCAPE_HEAT_SCALE, MIN_ESCAPE_CHANCE, MAX_ESCAPE_CHANCE)
 	if Gear.fare_discount(run) > 0.0:
 		chance += VEHICLE_ESCAPE_BONUS
-	return chance
+	return chance + Skills.escape_bonus(run) + Crew.escape_bonus(run)
 
 
 static func riskiest_item(run: RunState) -> ItemDef:
@@ -84,6 +84,7 @@ static func run_for_it(run: RunState, roll: float) -> bool:
 	seize_bag(run)
 	Heat.add(run, CAUGHT_HEAT)
 	run.busts += 1
+	StreetCred.add(run, StreetCred.BUSTED)
 	return false
 
 
@@ -105,6 +106,7 @@ static func raid(run: RunState) -> void:
 	seize_bag(run)
 	run.heat = RAID_HEAT_AFTER
 	run.busts += 1
+	StreetCred.add(run, StreetCred.BUSTED)
 
 
 static func seize_bag(run: RunState) -> void:

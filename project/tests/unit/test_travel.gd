@@ -30,6 +30,50 @@ func test_check_allows_spending_exact_fare() -> void:
 	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
 
 
+func test_open_destination_has_no_lock_reason() -> void:
+	assert_false(Travel.is_locked(_run, _destination))
+	assert_eq(Travel.lock_reason(_run, _destination), "")
+
+
+func test_check_locks_destination_above_players_rank() -> void:
+	_destination.min_rank = 4
+	assert_eq(Travel.check(_run, _destination), Travel.Check.LOCKED)
+	assert_eq(Travel.lock_reason(_run, _destination), "Needs Hustler rank")
+	_run.street_cred = int(StreetCred.RANKS[3].cred)
+	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
+
+
+func test_check_locks_destination_above_players_power() -> void:
+	_destination.min_power = 2
+	assert_eq(Travel.check(_run, _destination), Travel.Check.LOCKED)
+	assert_eq(Travel.lock_reason(_run, _destination), "Needs Power 2")
+	_run.turf[&"docks"] = Turf.HOLD_SHARE
+	_run.turf[&"old_market"] = Turf.HOLD_SHARE
+	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
+
+
+func test_lock_reason_lists_every_unmet_gate() -> void:
+	_destination.min_rank = 4
+	_destination.min_power = 2
+	assert_eq(Travel.lock_reason(_run, _destination), "Needs Hustler rank and Power 2")
+
+
+func test_lock_is_checked_before_the_fare() -> void:
+	_destination.min_rank = 4
+	_run.cash = 0
+	assert_eq(Travel.check(_run, _destination), Travel.Check.LOCKED)
+
+
+func test_current_district_is_never_locked() -> void:
+	_destination.id = _run.district_id
+	_destination.min_rank = 4
+	assert_eq(Travel.check(_run, _destination), Travel.Check.ALREADY_HERE)
+
+
+func test_north_port_starts_locked() -> void:
+	assert_eq(Travel.check(_run, Content.district(&"north_port")), Travel.Check.LOCKED)
+
+
 func test_travel_pays_fare_and_moves_player() -> void:
 	Travel.travel(_run, _destination)
 	assert_eq(_run.cash, RunState.STARTING_CASH - 60)

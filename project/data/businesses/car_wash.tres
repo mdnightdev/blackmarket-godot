@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BusinessDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/business_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/car.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"car_wash"
+display_name = "Car Wash"
+icon = ExtResource("2_icon")
+description = "Cash business, steady trade, and the cops get bored watching it."
+price = 10000
+min_turf_level = 2
+stock_capacity = 40
+sales_per_phase = 5
+daily_upkeep = 120
+daily_heat_drop = 3

@@ -5,6 +5,8 @@ const GREETING_DELAY := 0.35
 const TAKE: StringName = &"take"
 const DROP: StringName = &"drop"
 const LEAVE: StringName = &"leave"
+const HIRE: StringName = &"hire"
+const HIRING_VENUE: StringName = &"tran_bar"
 
 @onready var _background: TextureRect = %Background
 @onready var _margin: MarginContainer = %Margin
@@ -91,6 +93,11 @@ func _refresh() -> void:
 	if run.orders.is_empty():
 		_add_label("No orders taken. Deliver at the dealer's market before the deadline.", &"MutedLabel")
 
+	if _venue.id == HIRING_VENUE and run.career:
+		_add_label("HIRE CREW %d/%d" % [run.crew.size(), Crew.cap(run)], &"ListHeading")
+		for role in Content.crew_roles():
+			_add_crew_row(role)
+
 
 func _refresh_rumor_button() -> void:
 	var run := GameState.run
@@ -133,6 +140,63 @@ func _add_order_row(order: Dictionary, taken: bool) -> void:
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_order(order, taken))
 
 
+func _add_crew_row(role: CrewRoleDef) -> void:
+	var result := Crew.check_hire(GameState.run, role.id)
+	var detail := ""
+	var detail_color := Palette.TEXT_MUTED
+	match result:
+		Crew.Result.OK:
+			detail = "HIRE"
+			detail_color = Palette.TEXT_CREAM
+		Crew.Result.ALREADY_HIRED:
+			detail = "ON YOUR CREW"
+			detail_color = Palette.RISK_LOW
+		Crew.Result.RANK_TOO_LOW:
+			detail = "NEEDS %s" % StreetCred.rank_name(role.min_rank).to_upper()
+		Crew.Result.CREW_FULL:
+			detail = "CREW FULL"
+		Crew.Result.NOT_ENOUGH_CASH:
+			detail = "NOT ENOUGH CASH"
+	var row: ItemRow = ITEM_ROW.instantiate()
+	_list.add_child(row)
+	row.show_entry(role.icon, role.display_name, Format.money(role.hire_cost), "%s %s a day." % [role.description, Format.money(role.daily_wage)], detail, detail_color)
+	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_crew(role))
+
+
+func _talk_about_crew(role: CrewRoleDef) -> void:
+	var run := GameState.run
+	var result := Crew.check_hire(run, role.id)
+	var line := "I know a %s who could use the work. %s up front, then %s every morning." % [role.display_name.to_lower(), Format.money(role.hire_cost), Format.money(role.daily_wage)]
+	var hint := "Miss two mornings of wages and they walk."
+	match result:
+		Crew.Result.ALREADY_HIRED:
+			line = "Your %s is already working for you. Treat them well." % role.display_name.to_lower()
+		Crew.Result.RANK_TOO_LOW:
+			line = "Nobody good works for a %s. Come back when people know your name." % StreetCred.rank_name(StreetCred.rank(run)).to_lower()
+			hint = "Needs %s." % StreetCred.rank_name(role.min_rank)
+		Crew.Result.CREW_FULL:
+			hint = "Your crew is full. A bigger safehouse makes room for more."
+		Crew.Result.NOT_ENOUGH_CASH:
+			hint = "You need %s to hire." % Format.money(role.hire_cost)
+	var choices: Array[DialogueChoice] = []
+	if result != Crew.Result.ALREADY_HIRED and result != Crew.Result.RANK_TOO_LOW:
+		choices.append(DialogueChoice.new(HIRE, "Hire for %s" % Format.money(role.hire_cost), result == Crew.Result.OK))
+	choices.append(DialogueChoice.new(LEAVE, "Not now", true, true))
+	GameOverlay.talk(_host, line, choices, _on_crew_choice.bind(role), hint)
+
+
+func _on_crew_choice(choice: StringName, role: CrewRoleDef) -> void:
+	if choice != HIRE:
+		GameOverlay.end_talk()
+		return
+	var leave: Array[DialogueChoice] = [DialogueChoice.new(LEAVE, "Leave", true, true)]
+	if GameState.hire_crew(role.id) == Crew.Result.OK:
+		AudioService.play_sfx(Sfx.COINS_OUT)
+		GameOverlay.say("Done. They start today. Pay them on time.", leave, _end_talk)
+	else:
+		GameOverlay.say("Changed my mind. Come back later.", leave, _end_talk)
+
+
 func _talk_about_order(order: Dictionary, taken: bool) -> void:
 	var item := Content.item(StringName(order.item))
 	var dealer := Content.dealer(StringName(order.dealer))
@@ -149,12 +213,15 @@ func _talk_about_order(order: Dictionary, taken: bool) -> void:
 		dealer.display_name, int(order.quantity), item.display_name, _district_name(dealer), due,
 		Format.money(int(order.price)), Format.money(Orders.total(order)),
 	]
-	var full := GameState.run.orders.size() >= Orders.MAX_ACTIVE
-	choices.append(DialogueChoice.new(TAKE, "Take the order", not full))
+	var check := Orders.check_accept(GameState.run, order)
+	choices.append(DialogueChoice.new(TAKE, "Take the order", check == Orders.Result.OK))
 	choices.append(DialogueChoice.new(LEAVE, "Not now", true, true))
-	var hint := "Miss the deadline and %s will not trade with you for a phase." % dealer.display_name
-	if full:
-		hint = "You already hold %d orders. Deliver or drop one first." % Orders.MAX_ACTIVE
+	var hint := "Buy the goods at any market, then deliver them at %s's market. Miss the deadline and %s will not trade with you for a phase." % [dealer.display_name, dealer.display_name]
+	match check:
+		Orders.Result.FULL:
+			hint = "You already hold %d orders. Deliver or drop one first." % Orders.MAX_ACTIVE
+		Orders.Result.TOO_BIG:
+			hint = "That is %d slots of goods. Your bag holds %d." % [Orders.slots_needed(order), Inventory.capacity(GameState.run)]
 	GameOverlay.talk(_host, line, choices, _on_order_choice.bind(order), hint)
 
 

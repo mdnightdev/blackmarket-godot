@@ -15,6 +15,15 @@ func _set_all_shares(value: int) -> void:
 		_run.turf[district_id] = value
 
 
+func _set_rank(rank_number: int) -> void:
+	_run.street_cred = int(StreetCred.RANKS[rank_number - 1].cred)
+
+
+func _hold_at_level(district_id: StringName, bought: int) -> void:
+	_run.turf[district_id] = Turf.HOLD_SHARE
+	_run.turf_levels[district_id] = bought
+
+
 func _move_to_vex() -> void:
 	for attempt in 40:
 		var location := Roster.rival_location(_run, Calendar.stamp(_run))
@@ -96,26 +105,6 @@ func test_vex_pushes_where_she_is() -> void:
 	assert_eq(Turf.share(_run, _run.district_id), before - Turf.VEX_PUSH_PER_PHASE)
 
 
-func test_clash_only_where_vex_is_and_does_not_already_hold() -> void:
-	_move_to_vex()
-	_run.turf[_run.district_id] = 50
-	assert_true(Turf.clash_due(_run, 0.0))
-	assert_false(Turf.clash_due(_run, 0.99))
-	_run.turf[_run.district_id] = Turf.VEX_HOLD_SHARE
-	assert_false(Turf.clash_due(_run, 0.0), "no clash on her own turf")
-	_run.turf[_run.district_id] = 50
-	_run.district_id = &"warehouse_row"
-	assert_false(Turf.clash_due(_run, 0.0))
-
-
-func test_clashes_are_rarer_on_held_turf() -> void:
-	_move_to_vex()
-	_run.turf[_run.district_id] = Turf.HOLD_SHARE
-	var held_chance := Turf.CLASH_CHANCE * Turf.HELD_CLASH_FACTOR
-	assert_true(Turf.clash_due(_run, held_chance - 0.01))
-	assert_false(Turf.clash_due(_run, held_chance + 0.01))
-
-
 func test_fight_odds_grow_with_the_share() -> void:
 	_run.turf[&"docks"] = 50
 	var contested := Turf.fight_chance(_run, &"docks")
@@ -134,48 +123,145 @@ func test_held_districts_pay_a_daily_cut() -> void:
 	assert_eq(_run.cash, 10000 + 2 * Turf.DAILY_CUT)
 
 
+func test_daily_cut_grows_with_the_level() -> void:
+	_hold_at_level(&"docks", 1)
+	_hold_at_level(&"old_market", 3)
+	assert_eq(Turf.district_cut(_run, &"docks"), Turf.DAILY_CUT)
+	assert_eq(Turf.district_cut(_run, &"old_market"), Turf.DAILY_CUT + 2 * Turf.CUT_PER_LEVEL)
+	assert_eq(Turf.district_cut(_run, &"slums"), 0)
+	var expected := 2 * Turf.DAILY_CUT + 2 * Turf.CUT_PER_LEVEL
+	assert_eq(Turf.collect_daily_cut(_run), expected)
+	assert_eq(_run.cash, 10000 + expected)
+
+
+func test_level_counts_only_while_held() -> void:
+	assert_eq(Turf.level(_run, &"docks"), 0)
+	assert_eq(Turf.bought_level(_run, &"docks"), 1)
+	_run.turf[&"docks"] = Turf.HOLD_SHARE
+	assert_eq(Turf.level(_run, &"docks"), 1)
+	assert_eq(Turf.level(_run, &"warehouse_row"), 0)
+
+
+func test_levels_pause_when_the_hold_is_lost() -> void:
+	_hold_at_level(&"docks", 4)
+	assert_eq(Turf.level(_run, &"docks"), 4)
+	_run.turf[&"docks"] = 50
+	assert_eq(Turf.level(_run, &"docks"), 0)
+	assert_eq(Turf.bought_level(_run, &"docks"), 4)
+	assert_eq(Turf.district_cut(_run, &"docks"), 0)
+	assert_eq(Turf.stop_factor(_run, &"docks"), 1.0)
+	assert_eq(Turf.business_slots(_run, &"docks"), 0)
+	assert_eq(Turf.check_level_up(_run, &"docks"), Turf.LevelResult.NOT_HELD)
+	_run.turf[&"docks"] = Turf.HOLD_SHARE
+	assert_eq(Turf.level(_run, &"docks"), 4)
+
+
+func test_vex_leaving_hands_over_every_level() -> void:
+	_run.vex_gone = true
+	_run.turf_levels[&"slums"] = 2
+	assert_eq(Turf.level(_run, &"slums"), 2)
+	assert_eq(Turf.level(_run, &"downtown"), 1)
+
+
+func test_stop_factor_drops_with_the_level_down_to_the_floor() -> void:
+	_hold_at_level(&"docks", 1)
+	assert_eq(Turf.stop_factor(_run, &"docks"), Turf.HELD_STOP_FACTOR)
+	_run.turf_levels[&"docks"] = 3
+	assert_almost_eq(Turf.stop_factor(_run, &"docks"), 0.6, 0.0001)
+	_run.turf_levels[&"docks"] = Turf.MAX_LEVEL
+	assert_almost_eq(Turf.stop_factor(_run, &"docks"), Turf.MIN_HELD_STOP_FACTOR, 0.0001)
+	_run.turf_levels[&"docks"] = 99
+	assert_almost_eq(Turf.stop_factor(_run, &"docks"), Turf.MIN_HELD_STOP_FACTOR, 0.0001)
+	assert_eq(Turf.stop_factor(_run, &"slums"), 1.0)
+
+
+func test_business_slots_open_at_levels_two_and_four() -> void:
+	var expected := [0, 1, 1, 2, 2]
+	for bought in Turf.MAX_LEVEL:
+		_hold_at_level(&"docks", bought + 1)
+		assert_eq(Turf.business_slots(_run, &"docks"), expected[bought], "level %d" % (bought + 1))
+
+
+func test_power_sums_levels_in_effect() -> void:
+	assert_eq(Turf.power(_run), 0)
+	_hold_at_level(&"docks", 2)
+	_hold_at_level(&"old_market", 1)
+	_run.turf_levels[&"downtown"] = 5
+	assert_eq(Turf.power(_run), 3)
+	assert_eq(Turf.MAX_POWER, Turf.CONTESTED.size() * Turf.MAX_LEVEL)
+	_run.vex_gone = true
+	for district_id in Turf.CONTESTED:
+		_run.turf_levels[district_id] = Turf.MAX_LEVEL
+	assert_eq(Turf.power(_run), Turf.MAX_POWER)
+
+
+func test_level_up_costs_climb_with_rank_gates() -> void:
+	_hold_at_level(&"old_market", 1)
+	assert_eq(Turf.next_level_cost(_run, &"old_market"), 2000)
+	assert_eq(Turf.next_level_rank(_run, &"old_market"), 3)
+	assert_eq(Turf.level_up(_run, &"old_market"), Turf.LevelResult.RANK_TOO_LOW)
+	assert_eq(_run.cash, 10000)
+	_set_rank(3)
+	assert_eq(Turf.level_up(_run, &"old_market"), Turf.LevelResult.OK)
+	assert_eq(_run.cash, 8000)
+	assert_eq(Turf.level(_run, &"old_market"), 2)
+	assert_eq(Turf.next_level_cost(_run, &"old_market"), 5000)
+	assert_eq(Turf.next_level_rank(_run, &"old_market"), 5)
+	assert_eq(Turf.check_level_up(_run, &"old_market"), Turf.LevelResult.RANK_TOO_LOW)
+	_run.turf_levels[&"old_market"] = 3
+	assert_eq(Turf.next_level_cost(_run, &"old_market"), 12000)
+	assert_eq(Turf.next_level_rank(_run, &"old_market"), 7)
+	_run.turf_levels[&"old_market"] = 4
+	assert_eq(Turf.next_level_cost(_run, &"old_market"), 25000)
+	assert_eq(Turf.next_level_rank(_run, &"old_market"), 9)
+
+
+func test_level_up_needs_a_held_contested_district() -> void:
+	_set_rank(StreetCred.max_rank())
+	assert_eq(Turf.check_level_up(_run, &"warehouse_row"), Turf.LevelResult.NOT_CONTESTED)
+	assert_eq(Turf.next_level_cost(_run, &"warehouse_row"), -1)
+	assert_eq(Turf.check_level_up(_run, &"docks"), Turf.LevelResult.NOT_HELD)
+
+
+func test_level_up_needs_the_cash() -> void:
+	_set_rank(3)
+	_hold_at_level(&"docks", 1)
+	_run.cash = 1999
+	assert_eq(Turf.level_up(_run, &"docks"), Turf.LevelResult.NOT_ENOUGH_CASH)
+	assert_eq(_run.cash, 1999)
+	assert_eq(Turf.bought_level(_run, &"docks"), 1)
+
+
+func test_level_up_stops_at_max_level() -> void:
+	_set_rank(StreetCred.max_rank())
+	_hold_at_level(&"docks", Turf.MAX_LEVEL)
+	assert_eq(Turf.check_level_up(_run, &"docks"), Turf.LevelResult.MAX_LEVEL)
+	assert_eq(Turf.next_level_cost(_run, &"docks"), -1)
+	assert_eq(Turf.next_level_rank(_run, &"docks"), -1)
+
+
+func test_top_levels_in_a_family_home_need_its_trust() -> void:
+	_set_rank(StreetCred.max_rank())
+	_run.cash = 100000
+	_hold_at_level(&"docks", 2)
+	assert_eq(Turf.home_family(&"docks").id, &"white_tiger")
+	assert_eq(Turf.level_up(_run, &"docks"), Turf.LevelResult.OK, "level 3 needs no trust")
+	assert_eq(Turf.level_up(_run, &"docks"), Turf.LevelResult.NEEDS_TRUST)
+	_run.family_standing[&"white_tiger"] = Families.TRUSTED_AT
+	assert_eq(Turf.level_up(_run, &"docks"), Turf.LevelResult.OK)
+	_run.family_standing[&"white_tiger"] = Families.TRUSTED_AT - 1
+	assert_eq(Turf.check_level_up(_run, &"docks"), Turf.LevelResult.NEEDS_TRUST)
+	_run.family_standing[&"white_tiger"] = Families.FAMILY_AT
+	assert_eq(Turf.level_up(_run, &"docks"), Turf.LevelResult.OK)
+	assert_eq(Turf.level(_run, &"docks"), Turf.MAX_LEVEL)
+	assert_eq(_run.cash, 100000 - 5000 - 12000 - 25000)
+
+
 func test_no_muggings_on_held_turf() -> void:
 	var mugging: EventDef = Content.events().filter(func(event: EventDef) -> bool: return event.effect == EventDef.Effect.MUGGING)[0]
 	assert_false(StreetEvents.prepare(_run, mugging, RandomNumberGenerator.new()).is_empty())
 	_run.turf[&"old_market"] = Turf.HOLD_SHARE
 	assert_true(StreetEvents.prepare(_run, mugging, RandomNumberGenerator.new()).is_empty())
-
-
-func test_clash_offers_tribute_fight_and_back_off() -> void:
-	_run.pending_encounter = Turf.clash(_run)
-	var ids := Encounters.choices(_run, _run.pending_encounter).map(func(choice: Encounters.Choice) -> StringName: return choice.id)
-	assert_eq(ids, [Turf.TRIBUTE, Turf.FIGHT, Turf.BACK_OFF])
-	_run.cash = 0
-	assert_false(Encounters.choices(_run, _run.pending_encounter)[0].enabled, "tribute needs cash")
-
-
-func test_tribute_costs_cash_and_keeps_the_share() -> void:
-	_run.pending_encounter = Turf.clash(_run)
-	var tribute := Turf.tribute_cost(_run)
-	Encounters.resolve(_run, Turf.TRIBUTE, 0.0)
-	assert_eq(_run.cash, 10000 - tribute)
-	assert_eq(Turf.share(_run, &"old_market"), Turf.STARTING_SHARE)
-	assert_false(Encounters.has_pending(_run))
-
-
-func test_winning_a_fight_gains_ground() -> void:
-	_run.pending_encounter = Turf.clash(_run)
-	Encounters.resolve(_run, Turf.FIGHT, 0.0)
-	assert_eq(Turf.share(_run, &"old_market"), Turf.STARTING_SHARE + Turf.FIGHT_GAIN)
-	assert_eq(_run.cash, 10000)
-
-
-func test_losing_a_fight_costs_ground_and_cash() -> void:
-	_run.pending_encounter = Turf.clash(_run)
-	Encounters.resolve(_run, Turf.FIGHT, 0.99)
-	assert_eq(Turf.share(_run, &"old_market"), Turf.STARTING_SHARE - Turf.FIGHT_LOSS)
-	assert_eq(_run.cash, 10000 - floori(10000 * Turf.BEATING_CASH_FRACTION))
-
-
-func test_backing_off_gives_up_ground() -> void:
-	_run.pending_encounter = Turf.clash(_run)
-	Encounters.resolve(_run, Turf.BACK_OFF, 0.0)
-	assert_eq(Turf.share(_run, &"old_market"), Turf.STARTING_SHARE - Turf.BACK_OFF_LOSS)
 
 
 func test_taking_every_district_drives_vex_out() -> void:
@@ -204,7 +290,7 @@ func test_turf_freezes_once_vex_is_gone() -> void:
 	assert_eq(Turf.shift(_run, &"docks", -30), 0)
 	assert_eq(Turf.holder(_run, &"slums"), Turf.Holder.PLAYER)
 	assert_false(Turf.can_send_muscle(_run))
-	assert_false(Turf.clash_due(_run, 0.0))
+	assert_false(Vex.gate_due(_run, 0.0))
 
 
 func test_turf_survives_a_save() -> void:
@@ -215,6 +301,12 @@ func test_turf_survives_a_save() -> void:
 	assert_eq(Turf.share(restored, &"docks"), 72)
 	assert_eq(restored.muscle_stamp, 5)
 	assert_true(restored.vex_gone)
+
+
+func test_turf_levels_survive_a_save() -> void:
+	_run.turf_levels[&"docks"] = 3
+	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
+	assert_eq(Turf.bought_level(restored, &"docks"), 3)
 
 
 func test_sanitize_drops_unknown_districts_and_clamps() -> void:

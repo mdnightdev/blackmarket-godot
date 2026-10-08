@@ -1,6 +1,6 @@
 class_name Trade
 
-enum Result { OK, INVALID_QUANTITY, NOT_ENOUGH_CASH, NO_SPACE, NOT_ENOUGH_UNITS, ALREADY_OWNED }
+enum Result { OK, INVALID_QUANTITY, NOT_ENOUGH_CASH, NO_SPACE, NOT_ENOUGH_UNITS, ALREADY_OWNED, OVER_CAPACITY }
 
 
 static func max_buyable(run: RunState, item: ItemDef, unit_price: int) -> int:
@@ -12,6 +12,8 @@ static func max_buyable(run: RunState, item: ItemDef, unit_price: int) -> int:
 static func check_buy(run: RunState, item: ItemDef, quantity: int, unit_price: int) -> Result:
 	if quantity <= 0:
 		return Result.INVALID_QUANTITY
+	if Inventory.over_capacity(run) > 0:
+		return Result.OVER_CAPACITY
 	if unit_price * quantity > run.cash:
 		return Result.NOT_ENOUGH_CASH
 	if item.slots * quantity > Inventory.free_space(run):
@@ -23,7 +25,7 @@ static func buy(run: RunState, item: ItemDef, quantity: int, unit_price: int) ->
 	var result := check_buy(run, item, quantity, unit_price)
 	if result != Result.OK:
 		return result
-	var held := Inventory.count(run, item.id) + Inventory.stashed(run, item.id)
+	var held := Inventory.count(run, item.id) + Inventory.stashed(run, item.id) + Businesses.total_stocked(run, item.id)
 	var paid_before := int(run.cost_basis.get(item.id, 0)) * held
 	run.cash -= unit_price * quantity
 	Inventory.add_units(run, item.id, quantity)
@@ -50,6 +52,7 @@ static func sell(run: RunState, item: ItemDef, quantity: int, unit_price: int) -
 	run.trades += 1
 	Inventory.discard(run, item.id, quantity)
 	Turf.record_sale(run, unit_price * quantity)
+	StreetCred.add_from_sale(run, unit_price * quantity)
 	return Result.OK
 
 

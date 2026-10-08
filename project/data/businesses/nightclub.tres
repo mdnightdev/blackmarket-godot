@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BusinessDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/business_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/music.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"nightclub"
+display_name = "Nightclub"
+icon = ExtResource("2_icon")
+description = "Loud, late and full of buyers with money. Luxury goods sell for more."
+price = 25000
+min_turf_level = 4
+stock_capacity = 60
+sales_per_phase = 8
+daily_upkeep = 300
+luxury_bonus = 0.1

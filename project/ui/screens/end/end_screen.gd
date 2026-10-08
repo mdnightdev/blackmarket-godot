@@ -14,8 +14,6 @@ extends Control
 @onready var _primary_button: Button = %PrimaryButton
 @onready var _menu_button: Button = %MenuButton
 
-var _won := false
-
 
 func _ready() -> void:
 	var run := GameState.run
@@ -24,7 +22,6 @@ func _ready() -> void:
 		return
 
 	SafeArea.apply_top_margin(_margin, 40)
-	_won = run.outcome == RunState.Outcome.WON
 	_day_label.text = "DAY %d" % run.day
 	_net_worth_value.text = Format.money(Campaign.net_worth(run))
 	_profit_value.text = Format.money(run.profit)
@@ -32,18 +29,12 @@ func _ready() -> void:
 	_trades_value.text = str(run.trades)
 	_busts_value.text = str(run.busts)
 
-	if _won:
-		var days_spare := run.campaign_days - run.day
-		_headline_label.text = "DEBT CLEARED"
-		_summary_label.text = "You paid off the shark with %d days to spare. The streets are yours." % days_spare if days_spare > 0 else "You paid off the shark on the final day. The streets are yours."
-		_primary_button.text = "Keep playing"
-	else:
-		_headline_label.text = "THE SHARK TAKES EVERYTHING"
-		_summary_label.text = "Day %d came and went with %s still owed. His men took the cash, the goods and the stash." % [run.campaign_days, Format.money(run.debt)]
-		_primary_button.text = "New game"
-		GameState.delete_run()
+	_headline_label.text = "THE SHARK TAKES EVERYTHING"
+	_summary_label.text = "Day %d came and went with %s still owed. His men took the cash, the goods and the stash." % [run.campaign_days, Format.money(run.debt)]
+	_primary_button.text = "New game"
+	GameState.delete_run()
 
-	_primary_button.pressed.connect(_on_primary_pressed)
+	_primary_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.CHARACTER_SELECT))
 	_menu_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.TITLE_SCREEN))
 	_play_entrance()
 
@@ -51,14 +42,6 @@ func _ready() -> void:
 func handle_back() -> bool:
 	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
 	return true
-
-
-func _on_primary_pressed() -> void:
-	if _won:
-		GameState.continue_endless()
-		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
-	else:
-		SceneRouter.go_to(SceneRouter.CHARACTER_SELECT)
 
 
 func _play_entrance() -> void:

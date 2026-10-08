@@ -1,8 +1,15 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/components/nav_tab.gd" id="1_tab"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tab"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
+bg_color = Color(0.7216, 0.3647, 0.4078, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="NavTab" type="Button"]
 custom_minimum_size = Vector2(0, 68)
@@ -44,3 +51,17 @@ theme_type_variation = &"HudCaptionLabel"
 theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
+
+[node name="Badge" type="Panel" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 20.0
+offset_bottom = 20.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
