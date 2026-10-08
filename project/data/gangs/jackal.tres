@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="GangDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/gang_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"jackal"
+display_name = "Jackal"
+crew_name = "Jackal's crew"
+boss = &"jackal"
+style = 1
+turf = Array[StringName]([&"warehouse_row", &"riverside"])
+strongholds = {
+&"riverside": 30
+}
+color = Color(0.7529, 0.5412, 0.2902, 1)
+gate_title = "Jackal's crew jumps you"
+gate_line = "Nice night to be walking %s with full pockets. Empty them, or we empty you."
+hunt_title = "Jackal tracked you down"
+hunt_line = "You ran from my boys and fought my boys. Now you get me. Pay up or put your hands up."
+ambush_line = "Whatever Voronin gave you to carry, half of it is mine now. Or we do this the loud way."
+dealer_line = "Jackal's crew robs my buyers on the way out. Nobody pays full price on these streets."
+victory_title = "Jackal is out"
+victory_line = "You got lucky, that's all. Keep the streets, I'm done with this river. The lockup under the bridge is yours, %s inside."
+max_gate_chance = 0.3
+bribe_base = 250
+bribe_per_anger = 100
+hunt_fee = 600
+max_push = 6
+victory_reward = 6000

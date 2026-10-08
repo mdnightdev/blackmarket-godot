@@ -1,8 +1,9 @@
 class_name Gangs
 
-## Street crews fighting the player for turf, see GangDef. A crew only taxes the player on its own turf: in the
+## Street crews fighting the player for turf, see GangDef. A crew only comes for the player on its own turf: in the
 ## district its boss is working, when the crew holds the bigger share of it. The stronger its hold, the more often
-## it asks. Refusing angers the boss, and at full anger the crew hunts the player down wherever they are.
+## it comes, and the gang's style decides how. Crossing the crew angers the boss, and at full anger the crew hunts
+## the player down wherever they are.
 
 const GATE := "gang_gate"
 const HUNT := "gang_hunt"
@@ -16,12 +17,19 @@ const FIGHT_LOSS := 10
 const FIGHT_LOSS_HEAT := 10
 const ANGER_AFTER_PAYING := 1
 const ANGER_AFTER_BEATING := MAX_ANGER - 1
+## A mugging crew asks for this share of the cash carried, and takes twice as much from a player it beats.
+const MUGGING_SHARE := 0.15
+const BEATEN_MUGGING_FACTOR := 2.0
+const ESCAPED_HEAT := 10
+## An informer crew's tip-off brings the police with this much extra heat.
+const TIP_OFF_HEAT := 15
 
 const BRIBE: StringName = &"gang_bribe"
 const THREATEN: StringName = &"gang_threaten"
 const IGNORE: StringName = &"gang_ignore"
 const PAY: StringName = &"gang_pay"
 const FIGHT: StringName = &"gang_fight"
+const RUN: StringName = &"gang_run"
 
 ## Saves from before gangs were data only knew Vex.
 const LEGACY_GANG: StringName = &"vex"
@@ -124,7 +132,7 @@ static func gate(run: RunState, gang: GangDef) -> Dictionary:
 		"title": gang.gate_title,
 		"body": gang.gate_line % (district.display_name if district != null else "town"),
 		"district": String(location),
-		"bribe": bribe_cost(run, gang),
+		"bribe": mugging_cut(run, gang) if gang.style == GangDef.Style.MUGGING else bribe_cost(run, gang),
 	}
 
 
@@ -142,6 +150,10 @@ static func hunt(run: RunState, gang: GangDef) -> Dictionary:
 
 static func bribe_cost(run: RunState, gang: GangDef) -> int:
 	return gang.bribe_base + gang.bribe_per_anger * anger(run, gang)
+
+
+static func mugging_cut(run: RunState, gang: GangDef) -> int:
+	return maxi(gang.bribe_base, roundi(maxi(0, run.cash) * MUGGING_SHARE))
 
 
 ## The triad family that trusts the player most, or null. Their name is what scares a crew off.
@@ -169,21 +181,31 @@ static func fight_district(run: RunState, gang: GangDef) -> StringName:
 
 static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Choice]:
 	var list: Array[Encounters.Choice] = []
-	match encounter.get("type"):
-		GATE:
-			var bribe := int(encounter.bribe)
-			list.append(Encounters.Choice.new(BRIBE, "Pay %s" % Format.money(bribe), run.cash >= bribe))
+	var gang := of_encounter(encounter)
+	if gang == null:
+		return list
+	var district_id := StringName(str(encounter.get("district", run.district_id)))
+	var fight := Encounters.Choice.new(FIGHT, "Fight (%s)" % Odds.reading(Turf.fight_chance(run, district_id)))
+	if encounter.get("type") == HUNT:
+		var fee := int(encounter.fee)
+		list.append(Encounters.Choice.new(PAY, "Pay %s" % Format.money(fee), run.cash >= fee))
+		list.append(fight)
+		return list
+	var bribe := int(encounter.bribe)
+	match gang.style:
+		GangDef.Style.MUGGING:
+			list.append(Encounters.Choice.new(BRIBE, "Hand over %s" % Format.money(bribe), run.cash >= bribe))
+			list.append(fight)
+			list.append(Encounters.Choice.new(RUN, "Run for it (%s)" % Odds.reading(Ambush.escape_chance(run))))
+		_:
+			var label := "Pay %s to keep quiet" if gang.style == GangDef.Style.INFORMER else "Pay %s"
+			list.append(Encounters.Choice.new(BRIBE, label % Format.money(bribe), run.cash >= bribe))
 			var family := backer(run)
 			if family != null:
 				list.append(Encounters.Choice.new(THREATEN, "Threaten with the %s" % family.english_name))
 			else:
 				list.append(Encounters.Choice.new(THREATEN, "Threaten (needs a triad's trust)", false))
 			list.append(Encounters.Choice.new(IGNORE, "Refuse"))
-		HUNT:
-			var fee := int(encounter.fee)
-			list.append(Encounters.Choice.new(PAY, "Pay %s" % Format.money(fee), run.cash >= fee))
-			var district_id := StringName(str(encounter.district))
-			list.append(Encounters.Choice.new(FIGHT, "Fight (%s)" % Odds.reading(Turf.fight_chance(run, district_id))))
 	return list
 
 
@@ -197,8 +219,12 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 	var place := district.display_name if district != null else "town"
 	match choice:
 		BRIBE:
-			var paid := mini(int(encounter.bribe), maxi(0, run.cash))
-			run.cash -= paid
+			var paid := _take_cash(run, int(encounter.bribe))
+			match gang.style:
+				GangDef.Style.MUGGING:
+					return "You hand over %s. %s melts back into the alleys." % [Format.money(paid), gang.crew_name]
+				GangDef.Style.INFORMER:
+					return "You pay %s. %s forgets your face, for now." % [Format.money(paid), gang.crew_name]
 			return "You hand over %s. %s counts it and lets you work." % [Format.money(paid), gang.crew_name]
 		THREATEN:
 			var family := backer(run)
@@ -211,12 +237,15 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 			Turf.shift(run, district_id, -IGNORE_LOSS)
 			StreetCred.add(run, StreetCred.BACKED_OFF)
 			set_anger(run, gang, anger(run, gang) + 1)
+			if gang.style == GangDef.Style.INFORMER:
+				Heat.add(run, TIP_OFF_HEAT)
+				run.pending_encounter = Encounters.police_stop(run)
+				return "You walk off. Minutes later a patrol car pulls up. Somebody gave them your description."
 			if anger(run, gang) >= MAX_ANGER:
 				return "You walk off. %s leans on your people in %s. %s is done waiting and comes looking for you." % [gang.crew_name, place, gang.display_name]
 			return "You walk off. %s leans on your people in %s. %s will remember this." % [gang.crew_name, place, gang.display_name]
 		PAY:
-			var paid := mini(int(encounter.fee), maxi(0, run.cash))
-			run.cash -= paid
+			var paid := _take_cash(run, int(encounter.fee))
 			set_anger(run, gang, ANGER_AFTER_PAYING)
 			return "You pay %s for the trouble. %s calls the crew off, for now." % [Format.money(paid), gang.display_name]
 		FIGHT:
@@ -228,8 +257,25 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 			Turf.shift(run, district_id, -FIGHT_LOSS)
 			Heat.add(run, FIGHT_LOSS_HEAT)
 			set_anger(run, gang, ANGER_AFTER_BEATING)
+			if encounter.get("type") == GATE:
+				var taken := _take_cash(run, roundi(int(encounter.bribe) * BEATEN_MUGGING_FACTOR))
+				return "They beat you down and empty your pockets of %s. %s takes more of %s." % [Format.money(taken), gang.display_name, place]
 			return "They beat you down in the street. %s takes more of %s, and the police heard every punch." % [gang.display_name, place]
+		RUN:
+			set_anger(run, gang, anger(run, gang) + 1)
+			if roll < Ambush.escape_chance(run):
+				Heat.add(run, ESCAPED_HEAT)
+				return "You lose them in the alleys. %s will not forget it." % gang.display_name
+			Turf.shift(run, district_id, -IGNORE_LOSS)
+			var lost := _take_cash(run, int(encounter.bribe))
+			return "They catch you two streets over and take %s. Word spreads that you ran." % Format.money(lost)
 	return ""
+
+
+static func _take_cash(run: RunState, amount: int) -> int:
+	var taken := mini(amount, maxi(0, run.cash))
+	run.cash -= taken
+	return taken
 
 
 ## Renames encounters saved before gangs were data.

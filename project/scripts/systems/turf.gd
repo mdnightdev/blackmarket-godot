@@ -246,11 +246,13 @@ static func send_muscle(run: RunState) -> bool:
 
 ## Each gang gains ground wherever its boss spends the phase, hard where it is strong and barely where the player
 ## dominates.
+## Crews leave districts the player cannot reach yet alone, so the player never arrives to find them already lost.
 static func gangs_push(run: RunState) -> void:
 	var stamp := Calendar.stamp(run)
 	for gang in Gangs.active(run):
 		var location := Gangs.boss_location(run, gang, stamp)
-		if Gangs.owner(location) == gang:
+		var district := Content.district(location)
+		if Gangs.owner(location) == gang and district != null and not Travel.is_locked(run, district):
 			shift(run, location, -gang_push(run, gang, location))
 
 

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/celeste.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/celeste_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"celeste"
+display_name = "Celeste"
+role = 4
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "Everyone up here has a secret. Yours is cheaper to keep than most."
+blurb = "Celeste Marchand trades in secrets across the wealthy districts. Refuse her hush money and the police hear about you."
+route = Array[StringName]([&"west_end", &"the_heights"])

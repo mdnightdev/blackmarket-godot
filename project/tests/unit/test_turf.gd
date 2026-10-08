@@ -10,9 +10,9 @@ func before_each() -> void:
 	_run.cash = 10000
 
 
-func _set_all_shares(value: int) -> void:
-	for district_id in Turf.contested():
-		_run.turf[district_id] = value
+func _hold_vex_turf() -> void:
+	for district_id in _vex().turf:
+		_run.turf[district_id] = Turf.HOLD_SHARE
 
 
 func _set_rank(rank_number: int) -> void:
@@ -39,7 +39,7 @@ func test_starting_shares() -> void:
 	assert_eq(Turf.share(_run, &"slums"), 25)
 	assert_eq(Turf.holder(_run, &"old_market"), Turf.Holder.NOBODY)
 	assert_eq(Turf.holder(_run, &"slums"), Turf.Holder.GANG)
-	assert_eq(Turf.holder(_run, &"warehouse_row"), Turf.Holder.NOBODY)
+	assert_eq(Turf.holder(_run, &"golden_mile"), Turf.Holder.NOBODY)
 	assert_eq(Turf.held_count(_run), 0)
 
 
@@ -56,7 +56,7 @@ func test_sell_factor_depends_on_who_holds_the_district() -> void:
 	assert_eq(Turf.sell_factor(_run, &"docks"), Turf.HELD_SELL_FACTOR)
 	assert_eq(Turf.sell_factor(_run, &"slums"), Turf.GANG_SELL_FACTOR)
 	assert_eq(Turf.sell_factor(_run, &"old_market"), 1.0)
-	assert_eq(Turf.sell_factor(_run, &"warehouse_row"), 1.0)
+	assert_eq(Turf.sell_factor(_run, &"golden_mile"), 1.0)
 
 
 func test_sales_gain_a_little_ground() -> void:
@@ -67,7 +67,7 @@ func test_sales_gain_a_little_ground() -> void:
 
 
 func test_neutral_districts_have_no_turf() -> void:
-	_run.district_id = &"warehouse_row"
+	_run.district_id = &"golden_mile"
 	Turf.record_sale(_run, 5000)
 	assert_true(_run.turf.is_empty())
 	assert_false(Turf.can_send_muscle(_run))
@@ -151,7 +151,7 @@ func test_level_counts_only_while_held() -> void:
 	assert_eq(Turf.bought_level(_run, &"docks"), 1)
 	_run.turf[&"docks"] = Turf.HOLD_SHARE
 	assert_eq(Turf.level(_run, &"docks"), 1)
-	assert_eq(Turf.level(_run, &"warehouse_row"), 0)
+	assert_eq(Turf.level(_run, &"golden_mile"), 0)
 
 
 func test_levels_pause_when_the_hold_is_lost() -> void:
@@ -201,7 +201,8 @@ func test_power_sums_levels_in_effect() -> void:
 	_run.turf_levels[&"downtown"] = 5
 	assert_eq(Turf.power(_run), 3)
 	assert_eq(Turf.max_power(), Turf.contested().size() * Turf.MAX_LEVEL)
-	_run.gangs_gone.append(&"vex")
+	for gang in Content.gangs():
+		_run.gangs_gone.append(gang.id)
 	for district_id in Turf.contested():
 		_run.turf_levels[district_id] = Turf.MAX_LEVEL
 	assert_eq(Turf.power(_run), Turf.max_power())
@@ -230,8 +231,8 @@ func test_level_up_costs_climb_with_rank_gates() -> void:
 
 func test_level_up_needs_a_held_contested_district() -> void:
 	_set_rank(StreetCred.max_rank())
-	assert_eq(Turf.check_level_up(_run, &"warehouse_row"), Turf.LevelResult.NOT_CONTESTED)
-	assert_eq(Turf.next_level_cost(_run, &"warehouse_row"), -1)
+	assert_eq(Turf.check_level_up(_run, &"golden_mile"), Turf.LevelResult.NOT_CONTESTED)
+	assert_eq(Turf.next_level_cost(_run, &"golden_mile"), -1)
 	assert_eq(Turf.check_level_up(_run, &"docks"), Turf.LevelResult.NOT_HELD)
 
 
@@ -277,18 +278,18 @@ func test_no_muggings_on_held_turf() -> void:
 
 
 func test_taking_every_district_drives_vex_out() -> void:
-	_set_all_shares(Turf.HOLD_SHARE)
+	_hold_vex_turf()
 	_run.turf[&"downtown"] = Turf.HOLD_SHARE - 1
 	Turf.shift(_run, &"downtown", 1)
 	assert_true(Gangs.is_gone(_run, _vex()))
 	assert_eq(_run.cash, 10000 + _vex().victory_reward)
 	assert_eq(_run.pending_encounter.type, Turf.VICTORY)
 	assert_eq(Gangs.boss_location(_run, _vex(), Calendar.stamp(_run)), &"")
-	assert_eq(Turf.held_count(_run), Turf.contested().size())
+	assert_eq(Turf.held_count(_run), _vex().turf.size())
 
 
 func test_victory_ends_with_a_summary_of_what_was_won() -> void:
-	_set_all_shares(Turf.HOLD_SHARE)
+	_hold_vex_turf()
 	Turf.check_victory(_run)
 	var summary := Encounters.resolve(_run, Encounters.CONTINUE, 0.0)
 	assert_string_contains(summary, Format.money(_vex().victory_reward))
@@ -297,7 +298,7 @@ func test_victory_ends_with_a_summary_of_what_was_won() -> void:
 
 
 func test_victory_waits_for_the_pending_encounter() -> void:
-	_set_all_shares(Turf.HOLD_SHARE)
+	_hold_vex_turf()
 	_run.pending_encounter = {"type": Encounters.RAID}
 	Turf.check_victory(_run)
 	assert_false(Gangs.is_gone(_run, _vex()))
@@ -331,7 +332,7 @@ func test_turf_levels_survive_a_save() -> void:
 
 
 func test_sanitize_drops_unknown_districts_and_clamps() -> void:
-	var clean := Turf.sanitize({"docks": 140, "warehouse_row": 80, "slums": -5})
+	var clean := Turf.sanitize({"docks": 140, "golden_mile": 80, "slums": -5})
 	assert_eq(clean, {&"docks": 100, &"slums": 0})
 
 

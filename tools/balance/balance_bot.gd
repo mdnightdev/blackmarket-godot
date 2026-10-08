@@ -454,7 +454,7 @@ func _choose(run: RunState, encounter: Dictionary) -> StringName:
 				return Gangs.THREATEN
 			if enabled.has(Gangs.BRIBE) and int(encounter.bribe) <= run.cash * GANG_BRIBE_SHARE_OF_CASH:
 				return Gangs.BRIBE
-			return Gangs.IGNORE
+			return Gangs.IGNORE if enabled.has(Gangs.IGNORE) else Gangs.FIGHT
 		Gangs.HUNT:
 			return Gangs.PAY if enabled.has(Gangs.PAY) else Gangs.FIGHT
 		Families.SHAKEDOWN:

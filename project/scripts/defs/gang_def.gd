@@ -4,6 +4,16 @@ extends Resource
 ## A street crew fighting the player for turf. Its boss walks the turf on the boss character's route, and the
 ## player wins a district from the crew by holding most of it. Taking every district of its turf drives the crew out.
 
+## What the crew does to a player working its corners.
+enum Style {
+	## Asks for a cut. Refusing costs ground and angers the boss.
+	TAX,
+	## Jumps the player for a share of the cash carried. Hand it over, fight or run.
+	MUGGING,
+	## Wants hush money. Refusing sends the police after the player.
+	INFORMER,
+}
+
 @export var id: StringName
 ## Short name for labels, for example "Vex".
 @export var display_name: String
@@ -11,6 +21,7 @@ extends Resource
 @export var crew_name: String
 ## Character id of the boss.
 @export var boss: StringName
+@export var style := Style.TAX
 @export var turf: Array[StringName] = []
 ## Districts where the crew starts strong, mapped to the player's starting share there.
 @export var strongholds: Dictionary = {}
