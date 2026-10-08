@@ -15,14 +15,17 @@ const HOLD_FIRM: StringName = &"handover_hold"
 static func start(run: RunState, order: Dictionary) -> Dictionary:
 	var customer := Content.customer(StringName(str(order.customer)))
 	var line := " \"%s\"" % customer.line if customer != null else ""
+	var meeting := Customers.is_meeting(run, order)
+	var unit_price := Meetings.offered_price(int(order.unit_price)) if meeting else int(order.unit_price)
+	var arrival := "came out to meet you" if meeting else "is here"
 	return {
 		"type": TYPE,
 		"stage": OFFER_STAGE,
 		"speaker": String(run.player_id),
 		"title": "Handover",
-		"body": "%s is here for %s at %s each.%s" % [Customers.customer_name(order), Customers.goods_label(order), Format.money(int(order.unit_price)), line],
+		"body": "%s %s for %s at %s each.%s" % [Customers.customer_name(order), arrival, Customers.goods_label(order), Format.money(unit_price), line],
 		"order": str(order.id),
-		"total": Customers.total(order),
+		"total": Customers.meeting_total(order) if meeting else Customers.total(order),
 	}
 
 

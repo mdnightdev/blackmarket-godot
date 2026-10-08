@@ -150,7 +150,20 @@ func _add_active(run: RunState) -> void:
 		var place := " in %s" % district.display_name if district != null else ""
 		var caption := "Buy them, then deliver to %s%s by %s" % [dealer.display_name, place, Calendar.describe(int(order.due)).to_lower()]
 		var row := _add_row(item.icon, "%d %s" % [int(order.quantity), item.display_name], Format.money(Orders.total(order)), caption, "")
-		_offer_runner(run, row, order, item, dealer.display_name, Orders.can_deliver(run, order), Orders.total(order))
+		if Orders.can_meet(run, order):
+			row.set_hint("MEET HERE", Palette.TEXT_CREAM)
+			row.set_tappable(true)
+			row.pressed.connect(_meet_dealer.bind(order))
+			continue
+		var ready := Orders.can_deliver(run, order)
+		if _offer_runner(run, row, order, item, dealer.display_name, ready, Orders.total(order)) or not ready:
+			continue
+		if district != null and district.id != run.district_id:
+			var spot := Content.district(Meetings.spot(order))
+			if spot != null:
+				row.set_hint("MEET IN %s" % spot.display_name.to_upper(), Palette.TEXT_CREAM)
+			row.set_tappable(true)
+			row.pressed.connect(_offer_meeting.bind(order, dealer, district))
 
 	for favour in run.favours:
 		var item := Content.item(StringName(favour.item))
@@ -172,20 +185,20 @@ func _add_active(run: RunState) -> void:
 		_add_note("No jobs taken. Customers order by phone, bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
 
 
-## Rows the runner can take become tappable. Otherwise the hint shows how much of the job is in the bag.
-func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, client: String, ready: bool, pay: int) -> void:
+## Rows the runner can take become tappable and return true. Otherwise the hint shows how much of the job is in the bag.
+func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, client: String, ready: bool, pay: int) -> bool:
 	var quantity := int(job.quantity)
 	var held := Inventory.count(run, item.id)
 	if not ready:
 		row.set_hint("HAVE %d/%d" % [held, quantity])
-		return
+		return false
 	var runner := Crew.runner(run)
 	if runner == null:
 		row.set_hint(READY_HINT)
-		return
+		return false
 	if not Crew.runner_ready(run):
 		row.set_hint("RUNNER BACK NEXT PHASE")
-		return
+		return false
 	row.set_hint("SEND %s" % runner.display_name.to_upper(), Palette.TEXT_CREAM)
 	row.set_tappable(true)
 	row.pressed.connect(_ask.bind(
@@ -193,6 +206,27 @@ func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, c
 		"Your %s takes the %d %s to %s and brings back %s. No trip and no heat. One run a phase." % [runner.display_name.to_lower(), quantity, item.display_name, client, Format.money(pay)],
 		"Send",
 		_send_runner.bind(job)))
+	return true
+
+
+func _offer_meeting(order: Dictionary, dealer: DealerDef, district: DistrictDef) -> void:
+	close()
+	MeetTalk.open(dealer, str(order.id), district, Orders.total(order), Orders.meeting_total(order), _meet_dealer.bind(order))
+
+
+func _meet_dealer(order: Dictionary) -> void:
+	var run := GameState.run
+	var dealer := Content.dealer(StringName(str(order.dealer)))
+	var scammed := Meetings.is_scam(run, order)
+	var paid := GameState.meet_order(order)
+	if paid <= 0 or dealer == null:
+		return
+	close()
+	AudioService.play_sfx(Sfx.FAVOUR_DONE)
+	var line := "Here, %s. Pleasure doing business on the road." % Format.money(paid)
+	if scammed:
+		line = "%s. That is all you get. Say a word and my boys come round the corner." % Format.money(paid)
+	GameOverlay.talk(dealer, line, TripTalk.continue_only(), TripTalk.end)
 
 
 func _add_owed(run: RunState) -> void:
@@ -249,7 +283,8 @@ func _add_customer_orders(run: RunState) -> void:
 			row.set_hint("HAND OVER HERE", Palette.TEXT_CREAM)
 			row.pressed.connect(_head_to_customer.bind(order))
 		else:
-			row.set_hint("GO TO %s" % place.to_upper(), Palette.TEXT_CREAM)
+			var spot := Content.district(Meetings.spot(order))
+			row.set_hint("MEET IN %s" % spot.display_name.to_upper() if spot != null else "GO TO %s" % place.to_upper(), Palette.TEXT_CREAM)
 			row.pressed.connect(_head_to_customer.bind(order))
 
 

@@ -59,15 +59,17 @@ static func pick_source(order_id: String, quote: Dictionary) -> void:
 		SceneRouter.go_to(SceneRouter.MARKET_SCREEN)
 
 
-## In the customer's district the handover card comes up, anywhere else the trip there is offered.
+## In the customer's district or at the agreed meeting spot the handover card comes up. Anywhere else the customer
+## offers to meet on the way.
 static func head_to_customer(order: Dictionary, line := "") -> void:
 	var run := GameState.run
-	if StringName(str(order.district)) == run.district_id:
-		GameState.queue_handover(str(order.id))
+	var id := str(order.id)
+	if StringName(str(order.district)) == run.district_id or Meetings.is_here(run, order):
+		GameState.queue_handover(id)
 		return
 	var district := Content.district(StringName(str(order.district)))
 	if district != null:
-		TripTalk.offer(district, line)
+		MeetTalk.open(speaker(order), id, district, Customers.total(order), Customers.meeting_total(order), GameState.queue_handover.bind(id), line)
 
 
 ## Asked once, when the bag first holds every unit of an accepted order.
@@ -75,7 +77,10 @@ static func announce_stocked(order_id: String) -> void:
 	var order := Customers.find(GameState.run, order_id)
 	if order.is_empty() or not Customers.is_stocked(GameState.run, order):
 		return
-	var line := "You have the %s for %s. Head to %s now?" % [Customers.goods_label(order), Customers.customer_name(order), Customers.district_name(order)]
+	var line := "Got my %s? Bring them to me in %s for %s, or I come out to you for %s." % [
+		Customers.goods_label(order), Customers.district_name(order), Format.money(Customers.total(order)),
+		Format.money(Customers.meeting_total(order)),
+	]
 	head_to_customer(order, line)
 
 

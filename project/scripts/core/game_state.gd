@@ -369,6 +369,34 @@ func decline_customer_offer(id: String) -> void:
 		_commit(false)
 
 
+## Agrees where a bar client or street customer comes out to meet the player. False when the order is gone.
+func agree_meeting(order_id: String, spot: StringName) -> bool:
+	var order := Customers.find(run, order_id)
+	if order.is_empty():
+		for bar_order in run.orders:
+			if str(bar_order.id) == order_id:
+				order = bar_order
+	if order.is_empty():
+		return false
+	Meetings.agree(order, spot)
+	_commit(false)
+	return true
+
+
+## Hands a bar order over at the agreed meeting spot. Returns the cash taken, 0 when there is no meeting here.
+func meet_order(order: Dictionary) -> int:
+	var item := Content.item(StringName(order.item))
+	var paid := Orders.meet(run, order)
+	if paid <= 0:
+		return 0
+	Heat.add(run, Heat.for_trade(run, item, int(order.quantity)))
+	Encounters.check_raid(run)
+	var finished := DailyTasks.record_delivery(run)
+	_commit(false)
+	_report_tasks(finished)
+	return paid
+
+
 ## Queues the handover card for an order that can be handed over where the player stands.
 func queue_handover(id: String) -> bool:
 	var order := Customers.find(run, id)

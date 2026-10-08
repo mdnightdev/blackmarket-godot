@@ -1,7 +1,8 @@
 class_name Orders
 
 ## Delivery work posted on bar boards. An order is stored as
-## { id, venue, dealer, item, quantity, price, due } where price is per unit and due is the last phase stamp to deliver in.
+## { id, venue, dealer, item, quantity, price, due, meet } where price is per unit, due is the last phase stamp to deliver
+## in and meet the district the dealer agreed to come out to, empty for none. See Meetings.
 
 enum Result { OK, FULL, TAKEN, EXPIRED, TOO_BIG }
 
@@ -83,6 +84,29 @@ static func deliver(run: RunState, order: Dictionary) -> bool:
 	return true
 
 
+static func client_district(order: Dictionary) -> StringName:
+	var dealer := Content.dealer(StringName(str(order.get("dealer", ""))))
+	return dealer.district_id if dealer != null else &""
+
+
+## The dealer came out to the agreed spot and the goods are in the bag.
+static func can_meet(run: RunState, order: Dictionary) -> bool:
+	return Meetings.is_here(run, order) and run.district_id != client_district(order) and can_deliver(run, order)
+
+
+## Sells the order to the dealer at the meeting price and closes it. Returns the cash taken, 0 when there is no meeting.
+static func meet(run: RunState, order: Dictionary) -> int:
+	var item := Content.item(StringName(order.item))
+	if item == null or not can_meet(run, order):
+		return 0
+	var price := Meetings.unit_price(run, order, int(order.price))
+	if Trade.sell(run, item, int(order.quantity), price) != Trade.Result.OK:
+		return 0
+	run.orders.erase(order)
+	StreetCred.add(run, StreetCred.ORDER_DELIVERED)
+	return price * int(order.quantity)
+
+
 ## Giving up an order costs the same as missing it: the dealer refuses to trade for the rest of the phase.
 static func drop(run: RunState, order: Dictionary) -> void:
 	run.orders.erase(order)
@@ -120,8 +144,13 @@ static func total(order: Dictionary) -> int:
 	return int(order.price) * int(order.quantity)
 
 
+## What the order pays when the dealer comes out to meet the player.
+static func meeting_total(order: Dictionary) -> int:
+	return Meetings.offered_price(int(order.price)) * int(order.quantity)
+
+
 static func sanitize(source: Dictionary) -> Dictionary:
-	return {
+	var clean := {
 		"id": str(source.get("id", "")),
 		"venue": str(source.get("venue", "")),
 		"dealer": str(source.get("dealer", "")),
@@ -130,6 +159,8 @@ static func sanitize(source: Dictionary) -> Dictionary:
 		"price": maxi(1, int(source.get("price", 1))),
 		"due": int(source.get("due", -1)),
 	}
+	Meetings.copy_spot(source, clean)
+	return clean
 
 
 ## Resident dealers place orders, since they can always be found at home.

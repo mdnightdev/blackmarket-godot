@@ -3,13 +3,14 @@ class_name Customers
 ## Street customers post orders to the player's phone. Offers wait in run.customer_offers until answered,
 ## accepted ones move to run.customer_orders. Every entry has the same keys:
 ## { id, customer, item, quantity, unit_price, street_price, district, temperament, rush, lead, posted_stamp,
-##   expires_stamp, due_stamp, counter_price, countered }
+##   expires_stamp, due_stamp, counter_price, countered, meet }
 ## unit_price is what the customer pays per unit and street_price the average asking price of the dealers stocking
 ## the goods when it was posted.
 ## temperament is the customer's CustomerDef.Temperament at posting. expires_stamp is the last phase stamp an offer can
 ## be accepted in, lead the phases allowed once accepted and due_stamp the last phase stamp to hand over in (-1 until
 ## accepted). counter_price is a haggler's lower price per unit (0 for everyone else) and countered turns true once he
-## has asked for it at the handover. CustomerOffers posts and prices the offers.
+## has asked for it at the handover. meet is the district the customer agreed to come out to, empty for none, see
+## Meetings. CustomerOffers posts and prices the offers.
 
 const MAX_OPEN_OFFERS := 3
 const MAX_ACTIVE := 3
@@ -73,11 +74,17 @@ static func phases_left(run: RunState, offer: Dictionary) -> int:
 	return maxi(0, int(offer.get("expires_stamp", -1)) - Calendar.stamp(run) + 1)
 
 
-## An accepted order can be handed over in the customer's district, before the deadline, with every unit in the bag.
+## An accepted order can be handed over in the customer's district or at the agreed meeting spot, before the
+## deadline, with every unit in the bag.
 static func can_hand_over(run: RunState, order: Dictionary) -> bool:
 	if find(run, str(order.get("id", ""))).is_empty() or int(order.due_stamp) < Calendar.stamp(run):
 		return false
-	return StringName(str(order.district)) == run.district_id and is_stocked(run, order)
+	return (StringName(str(order.district)) == run.district_id or Meetings.is_here(run, order)) and is_stocked(run, order)
+
+
+## The customer came out to meet the player instead of waiting at home.
+static func is_meeting(run: RunState, order: Dictionary) -> bool:
+	return Meetings.is_here(run, order) and StringName(str(order.district)) != run.district_id
 
 
 ## Every unit of the order is in the bag.
@@ -85,28 +92,30 @@ static func is_stocked(run: RunState, order: Dictionary) -> bool:
 	return Inventory.count(run, StringName(str(order.get("item", "")))) >= int(order.get("quantity", 0))
 
 
-## Returns { paid, haggled, sting, walked, line, tasks }, empty when the handover cannot happen. paid is the cash taken
-## in and tasks the daily tasks the sale finished. A haggler who asks for less sets haggled and keeps the order open
-## until answer_haggle. An undercover buyer closes the order and queues a police stop.
+## Returns { paid, haggled, sting, walked, scammed, line, tasks }, empty when the handover cannot happen. paid is the
+## cash taken in and tasks the daily tasks the sale finished. A haggler who asks for less sets haggled and keeps the
+## order open until answer_haggle. An undercover buyer closes the order and queues a police stop. scammed means the
+## customer short-paid at a meeting.
 ## The roll decides whether a haggler tries it on and must be in the range [0, 1).
 static func hand_over(run: RunState, order: Dictionary, roll: float) -> Dictionary:
 	if not can_hand_over(run, order):
 		return {}
 	var name := customer_name(order)
-	match int(order.temperament):
-		CustomerDef.Temperament.STING:
-			run.customer_orders.erase(order)
-			Journal.mark_failed(run, str(order.id))
-			run.pending_encounter = Encounters.police_stop(run)
-			var sting := _result("%s takes one look at the goods and flashes a badge. It was a setup." % name)
-			sting.sting = true
-			return sting
-		CustomerDef.Temperament.HAGGLER:
-			if bool(order.countered) or roll < HAGGLE_TRY_CHANCE:
-				order.countered = true
-				var haggled := _result("%s turns the goods over and frowns. \"%s a unit. Not a dollar more.\"" % [name, Format.money(int(order.counter_price))])
-				haggled.haggled = true
-				return haggled
+	var temperament := int(order.temperament)
+	if temperament == CustomerDef.Temperament.STING:
+		run.customer_orders.erase(order)
+		Journal.mark_failed(run, str(order.id))
+		run.pending_encounter = Encounters.police_stop(run)
+		var sting := _result("%s takes one look at the goods and flashes a badge. It was a setup." % name)
+		sting.sting = true
+		return sting
+	if is_meeting(run, order):
+		return _meet(run, order, name)
+	if temperament == CustomerDef.Temperament.HAGGLER and (bool(order.countered) or roll < HAGGLE_TRY_CHANCE):
+		order.countered = true
+		var haggled := _result("%s turns the goods over and frowns. \"%s a unit. Not a dollar more.\"" % [name, Format.money(int(order.counter_price))])
+		haggled.haggled = true
+		return haggled
 	return _complete(run, order, int(order.unit_price), "%s counts out %s and takes the goods." % [name, Format.money(total(order))])
 
 
@@ -180,6 +189,11 @@ static func total(order: Dictionary) -> int:
 	return int(order.get("unit_price", 0)) * int(order.get("quantity", 0))
 
 
+## What the order pays when the customer comes out to meet the player.
+static func meeting_total(order: Dictionary) -> int:
+	return Meetings.offered_price(int(order.get("unit_price", 0))) * int(order.get("quantity", 0))
+
+
 static func customer_name(order: Dictionary) -> String:
 	var customer := Content.customer(StringName(str(order.get("customer", ""))))
 	return customer.display_name if customer != null else "The buyer"
@@ -225,7 +239,7 @@ static func sanitize(source: Dictionary) -> Dictionary:
 	if quantity <= 0 or unit_price <= 0 or not CustomerDef.Temperament.values().has(temperament):
 		return {}
 	var counter_price := clampi(int(source.get("counter_price", 0)), 0, unit_price)
-	return {
+	var clean := {
 		"id": id,
 		"customer": String(customer.id),
 		"item": String(item.id),
@@ -242,6 +256,21 @@ static func sanitize(source: Dictionary) -> Dictionary:
 		"counter_price": counter_price,
 		"countered": bool(source.get("countered", false)) and counter_price > 0,
 	}
+	Meetings.copy_spot(source, clean)
+	return clean
+
+
+## The meeting price was settled when the spot was agreed, so nobody haggles here. Some use it to rip the player off.
+static func _meet(run: RunState, order: Dictionary, name: String) -> Dictionary:
+	var price := Meetings.unit_price(run, order, int(order.unit_price))
+	var paid := Format.money(price * int(order.quantity))
+	if Meetings.is_scam(run, order):
+		var line := "%s grabs the goods and shoves an envelope at you. Back around the corner you count it: %s. Gone." % [name, paid]
+		var scam := _complete(run, order, price, line)
+		if not scam.is_empty():
+			scam.scammed = true
+		return scam
+	return _complete(run, order, price, "%s meets you as agreed, counts out %s and takes the goods." % [name, paid])
 
 
 static func _complete(run: RunState, order: Dictionary, unit_price: int, line: String) -> Dictionary:
@@ -260,4 +289,4 @@ static func _complete(run: RunState, order: Dictionary, unit_price: int, line: S
 
 static func _result(line: String) -> Dictionary:
 	var tasks: Array[Dictionary] = []
-	return { "paid": 0, "haggled": false, "sting": false, "walked": false, "line": line, "tasks": tasks }
+	return { "paid": 0, "haggled": false, "sting": false, "walked": false, "scammed": false, "line": line, "tasks": tasks }
