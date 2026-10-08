@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/items/stealth_drone.jpg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"stealth_drone"
+display_name = "Stealth Drone"
+kind = 0
+category = &"military"
+base_price = 800000
+risk = 58
+slots = 3
+tier = 3
+min_rank = 9
+description = "Folded wings, radar-absorbent skin, no serial numbers."
+icon = ExtResource("2_icon")

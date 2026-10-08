@@ -76,3 +76,23 @@ func test_gear_is_bought_once() -> void:
 func test_gear_needs_cash() -> void:
 	assert_eq(Trade.buy_gear(_run, Content.item(&"smuggler_van")), Trade.Result.NOT_ENOUGH_CASH)
 	assert_true(_run.gear.is_empty())
+
+
+func test_restricted_goods_need_the_rank() -> void:
+	var warhead := Content.item(&"nuclear_warhead")
+	_run.cash = warhead.base_price
+	assert_eq(Trade.buy(_run, warhead, 1, warhead.base_price), Trade.Result.RANK_TOO_LOW)
+	_run.street_cred = int(StreetCred.RANKS[warhead.min_rank - 1].cred)
+	assert_eq(Trade.buy(_run, warhead, 1, warhead.base_price), Trade.Result.OK)
+
+
+func test_restricted_goods_have_a_seller_and_never_show_up_in_orders() -> void:
+	var restricted := Content.items(ItemDef.Kind.TRADE_GOOD).filter(func(item: ItemDef) -> bool: return item.is_restricted())
+	assert_gt(restricted.size(), 0)
+	for item: ItemDef in restricted:
+		assert_true(Content.dealers().any(func(dealer: DealerDef) -> bool: return dealer.sells(item)), String(item.id))
+	_run.street_cred = int(StreetCred.RANKS[-1].cred)
+	for day in range(1, 15):
+		_run.day = day
+		for offer in Orders.board(_run, &"tran_bar"):
+			assert_false(Content.item(StringName(offer.item)).is_restricted(), offer.id)

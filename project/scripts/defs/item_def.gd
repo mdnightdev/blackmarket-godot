@@ -12,6 +12,8 @@ enum Kind { TRADE_GOOD, EQUIPMENT }
 @export_range(1, 50) var slots: int = 1
 ## 1 street, 2 middle class, 3 wealthy. Dealers trade their own tier and the one below.
 @export_range(1, 3) var tier: int = 1
+## Street rank a player needs before anyone sells it to them. Jobs never ask for these goods.
+@export_range(0, 10) var min_rank: int = 0
 @export_multiline var description: String
 @export var icon: Texture2D
 
@@ -23,6 +25,10 @@ enum Kind { TRADE_GOOD, EQUIPMENT }
 
 func is_equipment() -> bool:
 	return kind == Kind.EQUIPMENT
+
+
+func is_restricted() -> bool:
+	return min_rank > 0
 
 
 func risk_label() -> String:

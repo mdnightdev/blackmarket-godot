@@ -18,6 +18,7 @@ price_bias = {
 &"art": 0.8,
 &"luxury": 0.9,
 &"finance": 1.1,
-&"precious": 1.05
+&"precious": 1.05,
+&"military": 1.1
 }
 haggle_tolerance = 0.06

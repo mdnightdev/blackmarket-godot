@@ -23,7 +23,10 @@ static func board(run: RunState, venue_id: StringName) -> Array[Dictionary]:
 	var day_index := run.day - 1
 	var stamp := Calendar.stamp(run)
 	var clients := _clients(run)
-	var goods := Content.items(ItemDef.Kind.TRADE_GOOD)
+	var goods: Array[ItemDef] = []
+	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+		if not item.is_restricted():
+			goods.append(item)
 	var offers: Array[Dictionary] = []
 	if clients.is_empty() or goods.is_empty():
 		return offers

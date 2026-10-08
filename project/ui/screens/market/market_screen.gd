@@ -218,6 +218,9 @@ func _fill_buy_list() -> void:
 	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
 		if not _dealer.sells(item):
 			continue
+		if not Trade.rank_allows(run, item):
+			_add_row(item, "", "Needs rank %s" % StreetCred.rank_name(item.min_rank), "LOCKED")
+			continue
 		var held := Inventory.count(run, item.id)
 		var caption := "%s, %s" % [item.category_name(), item.risk_label().to_lower()]
 		if held > 0:
@@ -266,6 +269,9 @@ func _change_color(change: float) -> Color:
 func _on_item_selected(item: ItemDef) -> void:
 	if not _dealer.deals_in(item):
 		_dealer_says(Tiers.refusal(_dealer, item))
+		return
+	if _tab == Tab.BUY and not Trade.rank_allows(GameState.run, item):
+		_dealer_says("%s? I sell those to a %s, not to you. Not yet." % [item.display_name, StreetCred.rank_name(item.min_rank)])
 		return
 	var mode := TradeSheet.Mode.BUY if _tab == Tab.BUY else TradeSheet.Mode.SELL
 	_trade_sheet.show_trade(mode, item, _dealer)

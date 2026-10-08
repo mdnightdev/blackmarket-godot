@@ -1,6 +1,6 @@
 class_name Trade
 
-enum Result { OK, INVALID_QUANTITY, NOT_ENOUGH_CASH, NO_SPACE, NOT_ENOUGH_UNITS, ALREADY_OWNED, OVER_CAPACITY }
+enum Result { OK, INVALID_QUANTITY, NOT_ENOUGH_CASH, NO_SPACE, NOT_ENOUGH_UNITS, ALREADY_OWNED, OVER_CAPACITY, RANK_TOO_LOW }
 
 
 static func max_buyable(run: RunState, item: ItemDef, unit_price: int) -> int:
@@ -9,9 +9,15 @@ static func max_buyable(run: RunState, item: ItemDef, unit_price: int) -> int:
 	return maxi(0, mini(affordable, fits))
 
 
+static func rank_allows(run: RunState, item: ItemDef) -> bool:
+	return StreetCred.rank(run) >= item.min_rank
+
+
 static func check_buy(run: RunState, item: ItemDef, quantity: int, unit_price: int) -> Result:
 	if quantity <= 0:
 		return Result.INVALID_QUANTITY
+	if not rank_allows(run, item):
+		return Result.RANK_TOO_LOW
 	if Inventory.over_capacity(run) > 0:
 		return Result.OVER_CAPACITY
 	if unit_price * quantity > run.cash:

@@ -12,13 +12,14 @@ district_id = &"golden_mile"
 greeting = "A painting is just a bearer bond with better lighting."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"art", &"finance"])
+stock_categories = Array[StringName]([&"art", &"finance", &"military"])
 tier = 3
 price_bias = {
 &"art": 0.85,
 &"finance": 0.9,
 &"precious": 1.1,
-&"luxury": 1.05
+&"luxury": 1.05,
+&"military": 0.85
 }
 haggle_tolerance = 0.09
 route = Array[StringName]([&"golden_mile", &"the_heights"])
