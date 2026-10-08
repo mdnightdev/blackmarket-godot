@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/items/crypto_seed.jpg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"crypto_seed"
+display_name = "Crypto Wallet Seed"
+kind = 0
+category = &"finance"
+base_price = 50000
+risk = 50
+slots = 1
+tier = 3
+description = "Twelve words, infinite regret."
+icon = ExtResource("2_icon")

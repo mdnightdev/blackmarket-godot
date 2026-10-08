@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/items/anti_materiel_rifle.jpg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"anti_materiel_rifle"
+display_name = "Anti-Materiel Rifle"
+kind = 0
+category = &"weapons"
+base_price = 32000
+risk = 56
+slots = 4
+tier = 2
+description = "Stops engines and soft cover."
+icon = ExtResource("2_icon")

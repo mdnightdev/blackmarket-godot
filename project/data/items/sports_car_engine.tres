@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/items/sports_car_engine.jpg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"sports_car_engine"
+display_name = "Sports Car Engine"
+kind = 0
+category = &"auto_parts"
+base_price = 26000
+risk = 34
+slots = 5
+tier = 2
+description = "Pulled from a hot coupe."
+icon = ExtResource("2_icon")

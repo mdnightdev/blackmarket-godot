@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/item_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/items/masterpiece_painting.jpg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"masterpiece_painting"
+display_name = "Masterpiece Painting"
+kind = 0
+category = &"art"
+base_price = 450000
+risk = 55
+slots = 2
+tier = 3
+description = "Cut from a museum frame."
+icon = ExtResource("2_icon")
