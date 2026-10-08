@@ -289,3 +289,27 @@ func test_an_ambush_never_asks_past_the_loss_cap() -> void:
 		assert_lte(int(encounter.toll), Smuggling.toll_room(_run.crate))
 	else:
 		pass_test("police stop this phase")
+
+
+func test_job_report_adds_up_to_the_take_home() -> void:
+	var offer := _first_offer()
+	Smuggling.accept(_run, offer, [], true)
+	_run.crate.off_route = true
+	_run.crate.skimmed = 0.15
+	_run.crate.tolls = 200
+	for halfway in [false, true]:
+		var lines := Smuggling.report(_run, _run.crate, halfway)
+		var total := 0
+		for line in lines:
+			total += int(line.amount)
+		assert_eq(total, Smuggling.payout(_run, _run.crate, halfway) - 200)
+		assert_eq(int(lines[0].amount), int(offer.pay))
+		assert_string_contains(Smuggling.describe_report(lines), "Take-home %s" % Format.money(total))
+
+
+func test_a_clean_run_reports_only_the_pay() -> void:
+	var offer := _first_offer()
+	Smuggling.accept(_run, offer)
+	var lines := Smuggling.report(_run, _run.crate)
+	assert_eq(lines.size(), 1)
+	assert_eq(Smuggling.describe_report(lines), "Pay %s. Take-home %s." % [Format.money(int(offer.pay)), Format.money(int(offer.pay))])

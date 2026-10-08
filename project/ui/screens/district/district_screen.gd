@@ -200,7 +200,8 @@ func _deliver_crate() -> void:
 	var run := GameState.run
 	if Smuggling.can_deliver(run):
 		var invoiced := Smuggling.is_invoiced(run.crate)
-		_hand_over_crate(GameState.deliver_crate(), invoiced)
+		var report := Smuggling.describe_report(Smuggling.report(run, run.crate))
+		_hand_over_crate(GameState.deliver_crate(), invoiced, report)
 	elif Smuggling.can_meet_halfway(run):
 		_ask_buyer_to_meet()
 
@@ -222,11 +223,14 @@ func _on_meet_choice(choice: StringName) -> void:
 	if choice != &"meet":
 		GameOverlay.end_talk()
 		return
-	var invoiced := Smuggling.is_invoiced(GameState.run.crate)
-	_hand_over_crate(GameState.meet_crate_buyer(), invoiced)
+	var run := GameState.run
+	var invoiced := Smuggling.is_invoiced(run.crate)
+	var report := Smuggling.describe_report(Smuggling.report(run, run.crate, true))
+	_hand_over_crate(GameState.meet_crate_buyer(), invoiced, report)
 
 
-func _hand_over_crate(pay: int, invoiced: bool) -> void:
+## report is the job's pay breakdown, shown under the line.
+func _hand_over_crate(pay: int, invoiced: bool, report: String) -> void:
 	if pay <= 0:
 		GameOverlay.end_talk()
 		return
@@ -237,7 +241,7 @@ func _hand_over_crate(pay: int, invoiced: bool) -> void:
 	else:
 		AudioService.play_sfx(Sfx.COINS_IN)
 	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"continue", "Continue", true, true)]
-	GameOverlay.talk(Content.player(GameState.run.player_id), line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk())
+	GameOverlay.talk(Content.player(GameState.run.player_id), line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk(), report)
 
 
 func _enter_casino(casino: CasinoDef, host: CharacterDef) -> void:

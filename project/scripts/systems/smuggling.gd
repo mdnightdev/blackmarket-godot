@@ -221,6 +221,45 @@ static func payout(run: RunState, crate: Dictionary, halfway := false) -> int:
 	return roundi(pay)
 
 
+## How payout arrives at its figure, as { label, amount } lines in the order they apply, then the tolls already paid
+## on the way. Each line is the change in the rounded running total, so the lines add up to payout minus tolls exactly.
+static func report(run: RunState, crate: Dictionary, halfway := false) -> Array[Dictionary]:
+	var lines: Array[Dictionary] = []
+	var value := float(int(crate.get("pay", 0)))
+	lines.append({ "label": "Pay", "amount": roundi(value) })
+	var steps: Array = [
+		["Smuggler skill", 1.0 + Skills.crate_pay_bonus(run)],
+		["Off route", OFF_ROUTE_PAY if bool(crate.get("off_route", false)) else 1.0],
+		["Met halfway", HALFWAY_PAY if halfway else 1.0],
+		["Cargo skimmed", 1.0 - float(crate.get("skimmed", 0.0))],
+		["Invoice bonus", 1.0 + Invoices.PAY_BONUS if is_invoiced(crate) else 1.0],
+	]
+	for step: Array in steps:
+		var next := value * float(step[1])
+		var change := roundi(next) - roundi(value)
+		value = next
+		if change != 0:
+			lines.append({ "label": step[0], "amount": change })
+	var tolls := int(crate.get("tolls", 0))
+	if tolls > 0:
+		lines.append({ "label": "Tolls paid", "amount": -tolls })
+	return lines
+
+
+## "Pay $2,400, cargo skimmed -$480, tolls paid -$240. Take-home $1,680."
+static func describe_report(lines: Array[Dictionary]) -> String:
+	var parts: PackedStringArray = []
+	var take_home := 0
+	for index in lines.size():
+		var amount := int(lines[index].amount)
+		var label := str(lines[index].label)
+		take_home += amount
+		var money := Format.money(absi(amount))
+		var signed := money if index == 0 else ("+%s" % money if amount > 0 else "-%s" % money)
+		parts.append("%s %s" % [label if index == 0 else label.to_lower(), signed])
+	return "%s. Take-home %s." % [", ".join(parts), Format.money(take_home)]
+
+
 static func _hand_over(run: RunState, pay: int) -> int:
 	if is_invoiced(run.crate):
 		Invoices.file(run, "invoice:%s" % run.crate.id, CLIENT, pay)
