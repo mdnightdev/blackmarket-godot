@@ -51,3 +51,14 @@ func test_every_dealer_works_a_district_of_the_same_tier() -> void:
 		assert_eq(dealer.tier, district.tier, dealer.id)
 		for stop in dealer.route:
 			assert_eq(Content.district(stop).tier, dealer.tier, "%s route %s" % [dealer.id, stop])
+
+
+func test_every_tier_has_its_own_voice() -> void:
+	for lines: Dictionary in [TierVoice.CLOSING, TierVoice.DELIVERED, TierVoice.SHORT, TierVoice.PAY_TERMS]:
+		for tier in [Tiers.STREET, Tiers.MIDDLE, Tiers.WEALTHY]:
+			assert_false((lines[tier] as Array).is_empty())
+	for tier in [Tiers.STREET, Tiers.MIDDLE, Tiers.WEALTHY]:
+		for line: String in TierVoice.SHORT[tier]:
+			assert_string_contains(line % [3, "Gold Bars"], "3 Gold Bars")
+		for line: String in TierVoice.PAY_TERMS[tier]:
+			assert_string_contains(line % "$9,000", "$9,000")

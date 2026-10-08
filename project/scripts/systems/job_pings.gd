@@ -200,8 +200,9 @@ static func pitch(ping: Dictionary) -> String:
 		]
 	var item := Content.item(StringName(str(offer.item)))
 	var goods := item.display_name if item != null else str(offer.item)
-	return "I need %d %s in %s, %s. I pay %s for the lot." % [
-		int(offer.quantity), goods, place_name, Calendar.describe(int(offer.due)).to_lower(), pay,
+	var terms := TierVoice.pick(TierVoice.PAY_TERMS, place.tier if place != null else Tiers.STREET) % pay
+	return "I need %d %s in %s, %s. %s" % [
+		int(offer.quantity), goods, place_name, Calendar.describe(int(offer.due)).to_lower(), terms,
 	]
 
 

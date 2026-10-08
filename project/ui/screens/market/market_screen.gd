@@ -6,12 +6,6 @@ const ITEM_ROW := preload("res://ui/components/item_row.tscn")
 const STEADY_CHANGE := 0.005
 const TOAST_HOLD_SECONDS := 1.8
 const GREETING_DELAY := 0.35
-const CLOSING_LINES: Array[String] = [
-	"Pleasure doing business.",
-	"Done. Don't spend it all at once.",
-	"Smart move. Come back soon.",
-	"We never met.",
-]
 const VEX_TURF_LINE := "Vex runs these corners. I pay her cut first, so I can't pay you full price."
 const PLAYER_TURF_LINE := "Your people run this block now. You get the best price in town."
 const FAMILY_LINES := {
@@ -126,7 +120,7 @@ func _dealer_says(line: String) -> void:
 func _on_trade_completed(message: String, cash_delta: int, haggled: bool) -> void:
 	_deal_flash.play(cash_delta, haggled or absi(cash_delta) >= HANDSHAKE_MIN_TOTAL)
 	_show_toast(message)
-	_dealer_says(CLOSING_LINES.pick_random())
+	_dealer_says(TierVoice.pick(TierVoice.CLOSING, _dealer.tier))
 
 
 func _dealer_is_here() -> bool:
@@ -206,11 +200,11 @@ func _deliver(order: Dictionary) -> void:
 	var item := Content.item(StringName(order.item))
 	var total := Orders.total(order)
 	if not GameState.deliver_order(order):
-		_dealer_says("You're short. I said %d %s, not a handful." % [int(order.quantity), item.display_name])
+		_dealer_says(TierVoice.pick(TierVoice.SHORT, _dealer.tier) % [int(order.quantity), item.display_name])
 		return
 	_deal_flash.play(total, true)
 	_show_toast("Delivered %d %s for %s" % [int(order.quantity), item.display_name, Format.money(total)])
-	_dealer_says("Right on time. That's how you stay in business.")
+	_dealer_says(TierVoice.pick(TierVoice.DELIVERED, _dealer.tier))
 
 
 func _fill_buy_list() -> void:
