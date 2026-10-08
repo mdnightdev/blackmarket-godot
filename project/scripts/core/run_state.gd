@@ -117,6 +117,10 @@ var errands: Array[Dictionary] = []
 var customer_offers: Array[Dictionary] = []
 ## Accepted customer orders waiting for the handover. See Customers for the entry layout.
 var customer_orders: Array[Dictionary] = []
+## Board jobs offered by phone and not yet answered. See JobPings for the entry layout.
+var job_pings: Array[Dictionary] = []
+## Ids of today's board entries already sent as pings, so each one rings once.
+var seen_pings: Array[String] = []
 ## Weekly payments to the Shark missed in a row. See Loan.
 var missed_weeks: int = 0
 ## Finished jobs, newest first. See Journal for the entry layout.
@@ -201,6 +205,8 @@ func to_dict() -> Dictionary:
 		"errands": errands,
 		"customer_offers": customer_offers,
 		"customer_orders": customer_orders,
+		"job_pings": job_pings,
+		"seen_pings": seen_pings,
 		"missed_weeks": missed_weeks,
 		"journal": journal,
 		"next_due_day": next_due_day,
@@ -341,6 +347,14 @@ static func from_dict(data: Dictionary) -> RunState:
 		var clean := Customers.sanitize(order)
 		if not clean.is_empty() and state.customer_orders.size() < Customers.MAX_ACTIVE:
 			state.customer_orders.append(clean)
+	for ping in _dictionaries(data.get("job_pings")):
+		var clean := JobPings.sanitize(ping)
+		if not clean.is_empty() and state.job_pings.size() < JobPings.MAX_OPEN:
+			state.job_pings.append(clean)
+	var saved_seen_pings: Variant = data.get("seen_pings", [])
+	if saved_seen_pings is Array:
+		for id: Variant in saved_seen_pings:
+			state.seen_pings.append(str(id))
 	state.missed_weeks = maxi(0, int(data.get("missed_weeks", 0)))
 	for entry in _dictionaries(data.get("journal")):
 		var clean := Journal.sanitize(entry)

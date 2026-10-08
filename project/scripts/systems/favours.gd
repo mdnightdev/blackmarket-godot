@@ -14,10 +14,8 @@ const PREMIUM_MIN := 1.15
 const PREMIUM_MAX := 1.35
 const LEAD_MIN_PHASES := 2
 const LEAD_MAX_PHASES := 4
-const MIN_QUANTITY := 2
-const MAX_QUANTITY := 6
-const MIN_EXPENSIVE_QUANTITY := 1
-const MAX_EXPENSIVE_QUANTITY := 3
+const MIN_QUANTITY := 1
+const MAX_QUANTITY := 10
 const TRIBUTE_BASE := 300
 const TRIBUTE_PER_DAY := 60
 
@@ -122,6 +120,17 @@ static func sanitize(source: Dictionary) -> Dictionary:
 	}
 
 
+## Where the family's lieutenant takes deliveries. Empty when the family is gone.
+static func lieutenant_district(family_id: StringName) -> StringName:
+	var family := Content.family(family_id)
+	if family == null:
+		return &""
+	var lieutenant := Content.character(family.lieutenant)
+	if lieutenant != null and not lieutenant.district_id.is_empty():
+		return lieutenant.district_id
+	return family.home_districts[0] if not family.home_districts.is_empty() else &""
+
+
 static func _complete(run: RunState, family_id: StringName) -> void:
 	Families.shift(run, family_id, DONE_GAIN)
 	StreetCred.add(run, StreetCred.FAVOUR_DONE)
@@ -147,13 +156,12 @@ static func _post(run: RunState, family: FamilyDef, day_index: int, index: int, 
 		})
 		return offer
 	var item: ItemDef = goods[rng.randi_range(0, goods.size() - 1)]
-	var expensive := item.base_price >= Orders.EXPENSIVE_PRICE
-	var quantity := rng.randi_range(MIN_EXPENSIVE_QUANTITY, MAX_EXPENSIVE_QUANTITY) if expensive else rng.randi_range(MIN_QUANTITY, MAX_QUANTITY)
+	var price := maxi(1, roundi(item.base_price * rng.randf_range(PREMIUM_MIN, PREMIUM_MAX)))
 	offer.merge({
 		"kind": Kind.DELIVERY,
 		"item": String(item.id),
-		"quantity": quantity,
-		"price": maxi(1, roundi(item.base_price * rng.randf_range(PREMIUM_MIN, PREMIUM_MAX))),
+		"quantity": Orders.lot_size(PayScale.roll(rng, run, Tiers.STREET) * Orders.ORDER_VALUE_PER_PAY, price, MIN_QUANTITY, MAX_QUANTITY),
+		"price": price,
 		"due": day_index * RunState.Phase.size() + rng.randi_range(LEAD_MIN_PHASES, LEAD_MAX_PHASES),
 	})
 	return offer

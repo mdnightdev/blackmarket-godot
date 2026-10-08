@@ -21,7 +21,8 @@ func test_board_posts_crates_to_other_districts_within_limits() -> void:
 		assert_not_null(Smuggling.destination(offer))
 		assert_between(int(offer.slots), Smuggling.MIN_SLOTS, Smuggling.MAX_SLOTS)
 		assert_between(int(offer.lead), Smuggling.MIN_LEAD_PHASES, Smuggling.MAX_LEAD_PHASES)
-		assert_between(int(offer.pay), 300, 4000)
+		var band: Array = PayScale.BANDS[Smuggling.destination(offer).tier]
+		assert_between(int(offer.pay), int(band[0]) - Smuggling.PAY_ROUNDING, ceili(band[2] * (1.0 + Smuggling.DISTANCE_BONUS * sqrt(2.0))))
 		assert_eq(int(offer.pay) % Smuggling.PAY_ROUNDING, 0)
 	assert_eq(Smuggling.board(_run), offers, "same seed and day give the same board")
 

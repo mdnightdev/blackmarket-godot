@@ -269,20 +269,33 @@ func _show_next_offer() -> void:
 		if not order.is_empty():
 			_banner.show_offer(offer_id, CustomerTalk.PORTRAIT, Customers.customer_name(order), Customers.headline(order), "", Customers.district_name(order).to_upper())
 			return
+		var ping := JobPings.find(run, offer_id)
+		var caller := JobPings.sender(ping) if not ping.is_empty() else null
+		if caller != null:
+			var place := JobPings.destination(ping)
+			_banner.show_offer(offer_id, caller.portrait, caller.display_name, JobPings.headline(ping), Format.money(JobPings.total_pay(ping)), place.display_name.to_upper() if place != null else "")
+			return
 
 
 func _open_offer(offer_id: String) -> void:
-	if Customers.find_offer(GameState.run, offer_id).is_empty():
-		OfferTalk.open(offer_id)
-	else:
+	var run := GameState.run
+	if not Customers.find_offer(run, offer_id).is_empty():
 		CustomerTalk.open(offer_id)
+	elif not JobPings.find(run, offer_id).is_empty():
+		JobTalk.open(offer_id)
+	else:
+		OfferTalk.open(offer_id)
 
 
 func _on_run_changed() -> void:
 	var run := GameState.run
-	if _banner.is_showing() and Errands.find_offer(run, _banner.offer_id).is_empty() and Customers.find_offer(run, _banner.offer_id).is_empty():
+	if _banner.is_showing() and not _is_open_offer(run, _banner.offer_id):
 		_banner.retract()
 	_filled_orders.append_array(_stocked_orders.check(run))
+
+
+func _is_open_offer(run: RunState, offer_id: String) -> bool:
+	return not (Errands.find_offer(run, offer_id).is_empty() and Customers.find_offer(run, offer_id).is_empty() and JobPings.find(run, offer_id).is_empty())
 
 
 func _forget_filled_orders() -> void:

@@ -309,6 +309,18 @@ func decline_offer(id: String) -> void:
 		_commit(false)
 
 
+func accept_ping(id: String) -> JobPings.Result:
+	var result := JobPings.accept(run, id)
+	if result == JobPings.Result.OK:
+		_commit(false)
+	return result
+
+
+func decline_ping(id: String) -> void:
+	if JobPings.decline(run, id):
+		_commit(false)
+
+
 ## Takes a customer order off the phone. Accepting where the customer waits with the goods in the bag queues the handover.
 func accept_customer_offer(id: String) -> bool:
 	if not Customers.accept(run, id):
@@ -566,6 +578,7 @@ func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Di
 	var notices := _task_notices(finished_tasks)
 	notices.append_array(Errands.expire(run))
 	notices.append_array(Customers.expire(run))
+	JobPings.expire(run)
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
 	if new_day_started and not Campaign.is_over(run):
 		notices.append_array(_start_morning())
@@ -575,6 +588,7 @@ func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Di
 		if travelled:
 			Customers.visit(run)
 	var offers := Errands.post(run)
+	offers.append_array(JobPings.post(run))
 	var customer_offers := CustomerOffers.post(run)
 	if travelled:
 		finished_tasks = DailyTasks.record_arrival(run, run.district_id)

@@ -1,11 +1,11 @@
 class_name Smuggling
 
 ## Crate runs posted at Pier 9. A crate is stored as
-## { id, destination, slots, pay, lead, due, route, stop, off_route, invoice, skimmed } where lead is the phases
+## { id, destination, slots, pay, lead, due, route, stop, off_route, invoice, skimmed, fragile } where lead is the phases
 ## allowed once taken, due is the last phase stamp to deliver in (-1 until the crate is taken), route lists the
 ## stops the player agreed to take ending at the destination, stop is the index of the next one, off_route is set
 ## once the player strays from it, invoice means the buyer pays later instead of cash on delivery, and skimmed is
-## the share of the cargo lost to ambushes.
+## the share of the cargo lost to ambushes. A fragile crate loses twice as much to each ambush.
 
 enum Result { OK, CARRYING, NO_ROOM, TAKEN, BANNED, NO_ROUTE }
 
@@ -17,10 +17,8 @@ const MIN_SLOTS := 4
 const MAX_SLOTS := 8
 ## A sealed crate draws police attention like a bag of risky goods.
 const RISK_PER_SLOT := 60
-const MIN_PAY_PER_SLOT := 90
-const MAX_PAY_PER_SLOT := 130
-## Pay grows with the map distance the crate has to travel.
-const DISTANCE_BONUS := 2.5
+## Crates pay the destination district's job rate, more for a long haul across the map.
+const DISTANCE_BONUS := 0.8
 const PAY_ROUNDING := 10
 const MIN_LEAD_PHASES := 2
 const MAX_LEAD_PHASES := 4
@@ -31,6 +29,7 @@ const HALFWAY_PAY := 0.7
 ## Most of the cargo ambushes can take from one crate, however many times the run goes wrong.
 const MAX_SKIM := 0.35
 const CLIENT := "Voronin's buyer"
+const FRAGILE_SKIM := 2.0
 
 
 ## Today's crates on offer. They come from the run seed, so a reload cannot reroll them.
@@ -61,17 +60,20 @@ static func check_accept(run: RunState, offer: Dictionary) -> Result:
 
 
 ## The route must be a road path from Pier 9 to the destination. An empty route takes the shortest one.
-static func accept(run: RunState, offer: Dictionary, route: Array[StringName] = [], invoice := false) -> Result:
+## origin is where the crate is handed over: Pier 9, or wherever Voronin's runner meets the player.
+static func accept(run: RunState, offer: Dictionary, route: Array[StringName] = [], invoice := false, origin := ORIGIN) -> Result:
 	var result := check_accept(run, offer)
 	if result != Result.OK:
 		return result
 	var target := StringName(str(offer.destination))
+	if target == origin:
+		return Result.NO_ROUTE
 	var stops: Array[StringName] = route.duplicate()
 	if stops.is_empty():
-		var options := Routes.options(run, ORIGIN, target)
+		var options := Routes.options(run, origin, target)
 		if not options.is_empty():
 			stops.assign(options[0])
-	elif not Routes.is_path(ORIGIN, stops, target):
+	elif not Routes.is_path(origin, stops, target):
 		return Result.NO_ROUTE
 	var crate := offer.duplicate()
 	crate.due = Calendar.stamp(run) + int(offer.lead)
@@ -220,7 +222,8 @@ static func _hand_over(run: RunState, pay: int) -> int:
 ## An ambush pulled part of the cargo out. The total taken from one crate never passes MAX_SKIM.
 static func skim(run: RunState, share: float) -> void:
 	if is_carrying(run):
-		run.crate.skimmed = minf(MAX_SKIM, float(run.crate.get("skimmed", 0.0)) + share)
+		var taken := share * (FRAGILE_SKIM if bool(run.crate.get("fragile", false)) else 1.0)
+		run.crate.skimmed = minf(MAX_SKIM, float(run.crate.get("skimmed", 0.0)) + taken)
 
 
 ## The crate was lost to the police. Voronin gives no more work today.
@@ -271,6 +274,7 @@ static func sanitize(source: Dictionary) -> Dictionary:
 		"off_route": bool(source.get("off_route", false)),
 		"invoice": bool(source.get("invoice", false)),
 		"skimmed": clampf(float(source.get("skimmed", 0.0)), 0.0, MAX_SKIM),
+		"fragile": bool(source.get("fragile", false)),
 	}
 
 
@@ -294,7 +298,7 @@ static func _post(run: RunState, day_index: int, index: int, origin: DistrictDef
 	var target: DistrictDef = pool[rng.randi_range(0, pool.size() - 1)]
 	var slots := rng.randi_range(MIN_SLOTS, MAX_SLOTS)
 	var distance := origin.map_position.distance_to(target.map_position)
-	var pay := slots * rng.randi_range(MIN_PAY_PER_SLOT, MAX_PAY_PER_SLOT) * (1.0 + distance * DISTANCE_BONUS)
+	var pay := PayScale.roll(rng, run, target.tier) * (1.0 + distance * DISTANCE_BONUS)
 	return {
 		"id": "crate:%d:%d" % [day_index, index],
 		"destination": String(target.id),
