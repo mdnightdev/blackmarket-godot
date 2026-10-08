@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"celia_hart"
+display_name = "Celia Hart"
+district_id = &"the_heights"
+line = "I know what things cost. Do you?"
+wants = Array[StringName]([&"luxury"])
+temperament = 4
+active_phases = Array[int]([0, 1, 2])
+min_rank = 7

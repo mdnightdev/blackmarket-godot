@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lou_ferraro"
+display_name = "Big Lou Ferraro"
+district_id = &"riverside"
+line = "My garage eats parts. Bring me a pile."
+wants = Array[StringName]([&"auto_parts"])
+temperament = 3
+active_phases = Array[int]([1, 2, 3])
+min_rank = 4

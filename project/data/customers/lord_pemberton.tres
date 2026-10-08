@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lord_pemberton"
+display_name = "Lord Pemberton"
+district_id = &"the_heights"
+line = "The east wing looks bare. Fill it."
+wants = Array[StringName]([&"art"])
+temperament = 2
+active_phases = Array[int]([1, 2])
+min_rank = 7

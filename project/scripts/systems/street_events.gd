@@ -117,6 +117,7 @@ static func _prepare_shift(run: RunState, event: EventDef, rng: RandomNumberGene
 		EventDef.Scope.ELSEWHERE:
 			var targets := Content.dealers().filter(func(entry: DealerDef) -> bool:
 				return entry.is_resident() and entry.district_id != run.district_id \
+						and not Travel.is_locked(run, Content.district(entry.district_id)) \
 						and (event.category.is_empty() or entry.stock_categories.has(event.category)))
 			if not targets.is_empty():
 				dealer = targets[rng.randi_range(0, targets.size() - 1)]

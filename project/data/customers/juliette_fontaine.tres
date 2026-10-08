@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"juliette_fontaine"
+display_name = "Juliette Fontaine"
+district_id = &"golden_mile"
+line = "Money is boring. Things are not."
+wants = Array[StringName]([&"luxury"])
+temperament = 2
+active_phases = Array[int]([2, 3])
+min_rank = 7

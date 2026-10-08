@@ -1,6 +1,6 @@
 extends GutTest
 
-const EXPECTED_DISTRICTS := 6
+const EXPECTED_DISTRICTS := 10
 
 
 func test_all_districts_load() -> void:

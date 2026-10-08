@@ -15,5 +15,5 @@ ambient_effect = ExtResource("3_effect")
 map_position = Vector2(0.27, 0.66)
 travel_cost = 120
 heat_multiplier = 1.4
-roads = Array[StringName]([&"old_market", &"docks"])
+roads = Array[StringName]([&"old_market", &"docks", &"west_end", &"riverside"])
 venues = Array[StringName]([&"loan_shark", &"la_paloma", &"casino"])

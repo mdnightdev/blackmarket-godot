@@ -57,8 +57,11 @@ func test_elsewhere_events_target_another_market() -> void:
 	for attempt in 30:
 		var encounter := StreetEvents.prepare(_run, event, _rng)
 		assert_ne(encounter.district, String(_run.district_id))
-		var dealer := Content.dealer_in(StringName(encounter.district))
-		assert_true(dealer.stock_categories.has(StringName(encounter.category)))
+		var district_id := StringName(encounter.district)
+		assert_false(Travel.is_locked(_run, Content.district(district_id)))
+		var stocked := Content.dealers().any(func(dealer: DealerDef) -> bool:
+			return dealer.district_id == district_id and dealer.stock_categories.has(StringName(encounter.category)))
+		assert_true(stocked, "a dealer in %s stocks %s" % [district_id, encounter.category])
 
 
 func test_tip_starts_next_morning() -> void:

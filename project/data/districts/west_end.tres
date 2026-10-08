@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/districts/west_end.jpg" id="2_background"]
+[ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"west_end"
+display_name = "West End"
+tagline = "Theatres, cafes and quiet money"
+tier = 2
+description = "Brownstones and stage doors. The people here have salaries, lawyers and a taste for things that fell off better trucks."
+background = ExtResource("2_background")
+ambient_effect = ExtResource("3_effect")
+map_position = Vector2(0.14, 0.42)
+travel_cost = 300
+heat_multiplier = 1.1
+venues = Array[StringName]([&"market", &"casino"])
+roads = Array[StringName]([&"downtown", &"old_market", &"riverside", &"the_heights"])
+min_rank = 4
+min_power = 0

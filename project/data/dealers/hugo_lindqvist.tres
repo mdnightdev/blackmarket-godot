@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="DealerDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/dealer_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/hugo_lindqvist.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/hugo_lindqvist_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"hugo_lindqvist"
+display_name = "Hugo Lindqvist"
+district_id = &"golden_mile"
+greeting = "A painting is just a bearer bond with better lighting."
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+stock_categories = Array[StringName]([&"art", &"finance"])
+tier = 3
+price_bias = {
+&"art": 0.85,
+&"finance": 0.9,
+&"precious": 1.1,
+&"luxury": 1.05
+}
+haggle_tolerance = 0.09
+route = Array[StringName]([&"golden_mile", &"the_heights"])
+working_phases = Array[int]([1, 2, 3])
