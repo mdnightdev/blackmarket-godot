@@ -2,7 +2,7 @@
 
 All notable changes to BLACK MARKET are listed here. Versions follow [Semantic Versioning](https://semver.org/), and the format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.18.0] - 2026-10-08
 
 ### Added
 - Money tiers. Goods, districts and dealers are street, middle class or wealthy. Dealers trade their own tier and the one below, and wealthy dealers turn down cheap goods.
@@ -11,13 +11,19 @@ All notable changes to BLACK MARKET are listed here. Versions follow [Semantic V
 - Military goods worth $650k to $3.5M, from fighter jets to a nuclear warhead. Only Hugo Lindqvist sells them, and only to a Boss or higher.
 - Phone jobs. Bar orders, family deliveries and Voronin's crates ring your phone, sometimes with a twist: rush, hot, fragile or a big client.
 - Buy out the Shark for $300,000 once your debt is clear. He walks with you as free muscle, and his desk becomes yours for lending to dealers.
+- New city map covering all ten districts. Roads out of your district are drawn on the map, and trips follow the real roads.
+- Police roadblocks. Carrying a crate into one, you can risk the search, lie low until it lifts or take a detour. Recon tells you when it lifts.
+- Meet on the way: customers and bar clients can come out to a stop between you for 80% of the price. A few use the meeting to short-pay.
 
 ### Changed
 - Job pay follows the district's tier and your rank: street jobs pay $2k to $10k, middle class $10k to $40k, wealthy $50k to $250k. Street jobs stop calling once you outgrow them.
 - Dealers and job givers talk like their tier: rough on the street, polished and impatient uptown.
+- Road danger shifts a little every phase.
+- Ambush tolls and lost cargo together never take more than 35% of a crate's pay.
 
 ### Fixed
 - Bar boards no longer come up empty when most clients live in districts you can't reach yet.
+- Trade and district sheets could grow past the top of the screen on some phones and black it out.
 
 ## [0.17.0] - 2026-10-08
 
