@@ -114,7 +114,7 @@ theme_override_constants/separation = 10
 
 [node name="StartButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"

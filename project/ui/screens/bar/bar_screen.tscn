@@ -121,7 +121,7 @@ script = ExtResource("7_typewriter")
 
 [node name="RumorButton" type="Button" parent="Margin/Layout/Panel/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 script = ExtResource("4_button")

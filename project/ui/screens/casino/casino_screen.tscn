@@ -116,7 +116,7 @@ theme_override_constants/separation = 10
 
 [node name="SicBoTab" type="Button" parent="Margin/Layout/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"TabButton"
@@ -126,7 +126,7 @@ script = ExtResource("4_button")
 
 [node name="BlackjackTab" type="Button" parent="Margin/Layout/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"TabButton"
@@ -136,7 +136,7 @@ script = ExtResource("4_button")
 
 [node name="SlotsTab" type="Button" parent="Margin/Layout/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"TabButton"
@@ -220,7 +220,7 @@ theme_override_constants/separation = 12
 
 [node name="LessButton" type="Button" parent="Margin/Layout/BetRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(96, 64)
+custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 text = "-"
@@ -246,7 +246,7 @@ horizontal_alignment = 1
 
 [node name="MoreButton" type="Button" parent="Margin/Layout/BetRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(96, 64)
+custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 text = "+"
@@ -258,7 +258,7 @@ theme_override_constants/separation = 12
 
 [node name="SmallButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
@@ -267,7 +267,7 @@ script = ExtResource("4_button")
 
 [node name="BigButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
@@ -276,7 +276,7 @@ script = ExtResource("4_button")
 
 [node name="DealButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
@@ -285,7 +285,7 @@ script = ExtResource("4_button")
 
 [node name="HitButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
@@ -294,7 +294,7 @@ script = ExtResource("4_button")
 
 [node name="StandButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"SecondaryButton"
@@ -303,7 +303,7 @@ script = ExtResource("4_button")
 
 [node name="DoubleButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"SecondaryButton"
@@ -312,7 +312,7 @@ script = ExtResource("4_button")
 
 [node name="SpinButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"

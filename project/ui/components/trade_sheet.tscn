@@ -149,7 +149,7 @@ theme_override_constants/separation = 12
 
 [node name="MinusButton" type="Button" parent="Sheet/Content/QuantityBox/Stepper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 64)
+custom_minimum_size = Vector2(56, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 theme_override_font_sizes/font_size = 28
@@ -166,7 +166,7 @@ horizontal_alignment = 1
 
 [node name="PlusButton" type="Button" parent="Sheet/Content/QuantityBox/Stepper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 64)
+custom_minimum_size = Vector2(56, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 theme_override_font_sizes/font_size = 28
@@ -175,7 +175,7 @@ script = ExtResource("2_button")
 
 [node name="MaxButton" type="Button" parent="Sheet/Content/QuantityBox/Stepper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(88, 64)
+custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 text = "Max"
@@ -211,7 +211,7 @@ theme_type_variation = &"MutedLabel"
 
 [node name="OfferButton" type="Button" parent="Sheet/Content/HaggleBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 text = "Make offer"
@@ -230,7 +230,7 @@ theme_override_constants/separation = 14
 
 [node name="HaggleButton" type="Button" parent="Sheet/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 72)
+custom_minimum_size = Vector2(160, 48)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 text = "Haggle"
@@ -238,7 +238,7 @@ script = ExtResource("2_button")
 
 [node name="ConfirmButton" type="Button" parent="Sheet/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"

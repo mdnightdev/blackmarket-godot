@@ -118,18 +118,18 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -250.0
+offset_left = -170.0
 offset_top = -500.0
-offset_right = 250.0
+offset_right = 170.0
 offset_bottom = -130.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 alignment = 2
 
 [node name="ContinueButton" type="Button" parent="Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 text = "Continue"
@@ -137,7 +137,7 @@ script = ExtResource("3_button")
 
 [node name="NewGameButton" type="Button" parent="Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 text = "New Game"

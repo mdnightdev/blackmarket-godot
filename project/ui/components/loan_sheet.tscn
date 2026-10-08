@@ -120,7 +120,7 @@ theme_override_constants/separation = 10
 
 [node name="RepayTab" type="Button" parent="Sheet/Content/ActionBox/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"TabButton"
@@ -130,7 +130,7 @@ script = ExtResource("2_button")
 
 [node name="BorrowTab" type="Button" parent="Sheet/Content/ActionBox/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"TabButton"
@@ -151,7 +151,7 @@ text = "$0"
 
 [node name="DueButton" type="Button" parent="Sheet/Content/ActionBox/AmountRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(110, 60)
+custom_minimum_size = Vector2(96, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 text = "Due"
@@ -159,7 +159,7 @@ script = ExtResource("2_button")
 
 [node name="MaxButton" type="Button" parent="Sheet/Content/ActionBox/AmountRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(110, 60)
+custom_minimum_size = Vector2(96, 48)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
 text = "Max"
@@ -174,7 +174,7 @@ value = 1.0
 
 [node name="ConfirmButton" type="Button" parent="Sheet/Content/ActionBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 text = "Repay"

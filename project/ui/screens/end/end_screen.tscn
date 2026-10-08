@@ -180,14 +180,14 @@ theme_override_constants/separation = 14
 
 [node name="PrimaryButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 script = ExtResource("3_button")
 
 [node name="MenuButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"GhostButton"
 text = "Main menu"

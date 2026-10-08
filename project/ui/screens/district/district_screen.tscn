@@ -155,7 +155,7 @@ layout_mode = 2
 [node name="CrateButton" type="Button" parent="Margin/Layout"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 script = ExtResource("4_button")

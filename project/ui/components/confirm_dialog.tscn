@@ -59,7 +59,7 @@ theme_override_constants/separation = 10
 
 [node name="CancelButton" type="Button" parent="Center/Card/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"SecondaryButton"
@@ -68,7 +68,7 @@ script = ExtResource("2_button")
 
 [node name="ConfirmButton" type="Button" parent="Center/Card/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
