@@ -4,8 +4,10 @@ extends SpeakerDef
 ## Home district. Residents always trade here.
 @export var district_id: StringName
 @export var greeting: String
-## Categories this dealer sells. Dealers buy every trade good.
+## Categories this dealer sells.
 @export var stock_categories: Array[StringName] = []
+## District tier the dealer works. Dealers buy every trade good of their tier and the one below.
+@export_range(1, 3) var tier: int = 1
 ## Category to price multiplier. Missing categories trade at 1.0.
 @export var price_bias: Dictionary = {}
 ## Discount fraction the dealer accepts on an average mood.
@@ -21,7 +23,11 @@ func title() -> String:
 
 
 func sells(item: ItemDef) -> bool:
-	return stock_categories.has(item.category)
+	return stock_categories.has(item.category) and deals_in(item)
+
+
+func deals_in(item: ItemDef) -> bool:
+	return item.tier == tier or item.tier == tier - 1
 
 
 func bias_for(category: StringName) -> float:

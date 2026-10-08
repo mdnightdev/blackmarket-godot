@@ -30,7 +30,7 @@ const MISSED_LOSS := 20
 static func board(run: RunState, family: FamilyDef) -> Array[Dictionary]:
 	var day_index := run.day - 1
 	var stamp := Calendar.stamp(run)
-	var goods := Content.items(ItemDef.Kind.TRADE_GOOD)
+	var goods := Tiers.goods(Tiers.STREET)
 	var offers: Array[Dictionary] = []
 	if goods.is_empty():
 		return offers

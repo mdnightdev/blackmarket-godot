@@ -89,8 +89,9 @@ static func sting_ready(run: RunState, district: DistrictDef) -> bool:
 ## Quantities can outgrow the bag by the next bag upgrade, so bigger orders ask for a bigger bag.
 ## Empty when none of the goods they want exist.
 static func generate(run: RunState, customer: CustomerDef) -> Dictionary:
+	var district := Content.district(customer.district_id)
 	var goods: Array[ItemDef] = []
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Tiers.goods(district.tier if district != null else Tiers.STREET):
 		if customer.wants.has(item.category):
 			goods.append(item)
 	if goods.is_empty():

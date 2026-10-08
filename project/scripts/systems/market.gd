@@ -47,7 +47,7 @@ static func price_change(run: RunState, dealer: DealerDef, item: ItemDef) -> flo
 static func best_sale(run: RunState, dealer: DealerDef) -> ItemDef:
 	var best: ItemDef = null
 	var best_ratio := 0.0
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Tiers.goods(dealer.tier):
 		var ratio := float(sell_price(run, dealer, item)) / item.base_price
 		if best == null or ratio > best_ratio:
 			best = item
@@ -59,7 +59,7 @@ static func best_sale(run: RunState, dealer: DealerDef) -> ItemDef:
 static func best_local_buyer(run: RunState, item: ItemDef) -> DealerDef:
 	var best: DealerDef = null
 	for dealer in Roster.dealers_at(run, run.district_id, Calendar.stamp(run)):
-		if is_open(run, dealer) and (best == null or sell_price(run, dealer, item) > sell_price(run, best, item)):
+		if is_open(run, dealer) and dealer.deals_in(item) and (best == null or sell_price(run, dealer, item) > sell_price(run, best, item)):
 			best = dealer
 	return best
 

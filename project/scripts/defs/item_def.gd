@@ -10,6 +10,8 @@ enum Kind { TRADE_GOOD, EQUIPMENT }
 @export_range(1, 10_000_000) var base_price: int = 100
 @export_range(0, 100) var risk: int = 10
 @export_range(1, 50) var slots: int = 1
+## 1 street, 2 middle class, 3 wealthy. Dealers trade their own tier and the one below.
+@export_range(1, 3) var tier: int = 1
 @export_multiline var description: String
 @export var icon: Texture2D
 

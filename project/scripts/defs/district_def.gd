@@ -4,6 +4,8 @@ extends Resource
 @export var id: StringName
 @export var display_name: String
 @export var tagline: String
+## 1 street, 2 middle class, 3 wealthy.
+@export_range(1, 3) var tier: int = 1
 @export_multiline var description: String
 @export var background: Texture2D
 @export var ambient_effect: PackedScene

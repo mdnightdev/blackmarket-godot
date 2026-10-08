@@ -16,7 +16,7 @@ const MAX_QUANTITY := 20
 
 ## This phase's shipment. It comes from the run seed, so a reload cannot reroll it.
 static func target(run: RunState) -> Dictionary:
-	var goods := Content.items(ItemDef.Kind.TRADE_GOOD)
+	var goods := Tiers.goods(Tiers.STREET)
 	if goods.is_empty():
 		return {}
 	goods.sort_custom(func(a: ItemDef, b: ItemDef) -> bool: return String(a.id) < String(b.id))

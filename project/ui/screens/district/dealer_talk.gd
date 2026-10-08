@@ -22,7 +22,7 @@ static func talk_to(dealer: DealerDef) -> void:
 
 ## The goods this dealer pays the most for right now, best first.
 static func best_buys(run: RunState, dealer: DealerDef) -> Array[ItemDef]:
-	var goods := Content.items(ItemDef.Kind.TRADE_GOOD)
+	var goods := Tiers.goods(dealer.tier)
 	goods.sort_custom(func(a: ItemDef, b: ItemDef) -> bool:
 		return Market.sell_price(run, dealer, a) / float(a.base_price) > Market.sell_price(run, dealer, b) / float(b.base_price))
 	return goods.slice(0, NAMED_GOODS)

@@ -151,9 +151,9 @@ static func _post(run: RunState, venue_id: StringName, day_index: int, index: in
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([run.price_seed, &"order", venue_id, day_index, index])
 	var dealer := clients[rng.randi_range(0, clients.size() - 1)]
-	var wanted := goods.filter(func(item: ItemDef) -> bool: return not dealer.sells(item))
+	var wanted := goods.filter(func(item: ItemDef) -> bool: return dealer.deals_in(item) and not dealer.sells(item))
 	if wanted.is_empty():
-		wanted = goods
+		wanted = goods.filter(dealer.deals_in)
 	var item: ItemDef = wanted[rng.randi_range(0, wanted.size() - 1)]
 	var expensive := item.base_price >= EXPENSIVE_PRICE
 	var quantity := rng.randi_range(MIN_EXPENSIVE_QUANTITY, MAX_EXPENSIVE_QUANTITY) if expensive else rng.randi_range(MIN_QUANTITY, MAX_QUANTITY)

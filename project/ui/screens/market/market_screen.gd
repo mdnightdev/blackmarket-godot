@@ -233,6 +233,9 @@ func _fill_sell_list() -> void:
 		var held := Inventory.count(run, item.id)
 		if held == 0:
 			continue
+		if not _dealer.deals_in(item):
+			_add_row(item, "", "You have %d" % held, "WON'T BUY")
+			continue
 		var offer := Market.sell_price(run, _dealer, item)
 		var paid := int(run.cost_basis.get(item.id, 0))
 		var margin := float(offer - paid) / paid if paid > 0 else 0.0
@@ -261,6 +264,9 @@ func _change_color(change: float) -> Color:
 
 
 func _on_item_selected(item: ItemDef) -> void:
+	if not _dealer.deals_in(item):
+		_dealer_says(Tiers.refusal(_dealer, item))
+		return
 	var mode := TradeSheet.Mode.BUY if _tab == Tab.BUY else TradeSheet.Mode.SELL
 	_trade_sheet.show_trade(mode, item, _dealer)
 

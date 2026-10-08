@@ -17,7 +17,7 @@ static func record(run: RunState, dealer: DealerDef, goods: Array[ItemDef]) -> b
 			"dealer": dealer_id,
 			"district": district_id,
 			"buy": Market.buy_price(run, dealer, item) if dealer.sells(item) else 0,
-			"sell": Market.sell_price(run, dealer, item),
+			"sell": Market.sell_price(run, dealer, item) if dealer.deals_in(item) else 0,
 			"stamp": stamp,
 		})
 	var previous := run.price_sightings.filter(func(sighting: Dictionary) -> bool: return sighting.dealer == dealer_id)
@@ -33,7 +33,7 @@ static func record(run: RunState, dealer: DealerDef, goods: Array[ItemDef]) -> b
 static func best_sale(run: RunState, item: ItemDef, excluded_dealer: DealerDef) -> Dictionary:
 	var best := {}
 	for sighting in _fresh_sightings(run, item, excluded_dealer):
-		if best.is_empty() or int(sighting.sell) > int(best.sell):
+		if int(sighting.sell) > 0 and (best.is_empty() or int(sighting.sell) > int(best.sell)):
 			best = sighting
 	return best
 
