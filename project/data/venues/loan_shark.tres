@@ -6,5 +6,5 @@
 script = ExtResource("1_def")
 id = &"loan_shark"
 display_name = "The Shark"
-tagline = "Repay your debt or borrow more"
+tagline = "Repay your debt, borrow once clear"
 available = true

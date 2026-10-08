@@ -15,8 +15,8 @@ func _start_day(day: int) -> void:
 
 func test_clearing_the_debt_starts_the_career() -> void:
 	_run.district_id = &"downtown"
-	_run.cash = 10_000
-	Loan.repay(_run, RunState.STARTING_DEBT)
+	_run.cash = RunState.STARTING_DEBT
+	assert_true(Loan.repay(_run, RunState.STARTING_DEBT))
 	assert_true(Campaign.start_career_if_cleared(_run))
 	assert_true(_run.career)
 	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
@@ -25,20 +25,38 @@ func test_clearing_the_debt_starts_the_career() -> void:
 	assert_false(Campaign.start_career_if_cleared(_run))
 
 
-func test_career_has_no_deadline() -> void:
+func test_career_survives_missed_weeks() -> void:
 	_run.debt = 0
 	Campaign.start_career_if_cleared(_run)
 	_run.pending_encounter = {}
 	_run.debt = 2000
-	_start_day(RunState.CAMPAIGN_DAYS + 5)
+	_run.period_minimum = 2000
+	_run.missed_weeks = Loan.MAX_MISSED_WEEKS
+	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
 	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
 	assert_false(Campaign.is_over(_run))
 
 
-func test_owing_after_the_last_day_loses() -> void:
-	_start_day(RunState.CAMPAIGN_DAYS)
+func test_act_one_has_no_day_limit() -> void:
+	_run.cash = 10000
+	Loan.repay(_run, Loan.FIRST_PAYMENT)
+	_start_day(100)
 	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
-	_start_day(RunState.CAMPAIGN_DAYS + 1)
+	assert_false(Campaign.is_over(_run))
+
+
+func test_missing_a_week_while_under_the_limit_keeps_the_run() -> void:
+	_run.missed_weeks = Loan.MAX_MISSED_WEEKS - 2
+	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
+	assert_eq(_run.missed_weeks, Loan.MAX_MISSED_WEEKS - 1)
+	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
+	assert_eq(_run.pending_encounter.type, Encounters.ENFORCERS)
+
+
+func test_third_missed_week_in_a_row_loses() -> void:
+	_run.missed_weeks = Loan.MAX_MISSED_WEEKS - 1
+	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
+	assert_eq(_run.missed_weeks, Loan.MAX_MISSED_WEEKS)
 	assert_eq(_run.outcome, RunState.Outcome.LOST)
 	assert_true(Campaign.is_over(_run))
 	assert_true(_run.pending_encounter.is_empty())

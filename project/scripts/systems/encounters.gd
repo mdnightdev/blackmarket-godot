@@ -50,12 +50,15 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	if new_day_started:
 		Turf.collect_daily_cut(run)
 		Loan.accrue_interest(run)
-		if Campaign.update_outcome(run):
-			return
 		if Loan.is_payment_due_today(run):
 			if Loan.amount_due(run) > 0:
+				run.missed_weeks += 1
 				run.pending_encounter = send_enforcers(run)
+			else:
+				run.missed_weeks = 0
 			Loan.start_next_period(run)
+		if Campaign.update_outcome(run):
+			return
 
 	if has_pending(run):
 		return
@@ -149,11 +152,14 @@ static func send_enforcers(run: RunState) -> Dictionary:
 	run.cash -= cash_taken
 	run.debt += penalty
 	var taken := Format.money(cash_taken) if cash_taken > 0 else "nothing worth taking"
+	var body := "You missed The Shark's payment. I took %s, and %s goes on your debt." % [taken, Format.money(penalty)]
+	if not run.career:
+		body += " Missed %d of %d." % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
 	return {
 		"type": ENFORCERS,
 		"speaker": String(COLLECTOR),
 		"title": "Enforcers",
-		"body": "You missed The Shark's payment. I took %s, and %s goes on your debt." % [taken, Format.money(penalty)],
+		"body": body,
 	}
 
 
@@ -165,12 +171,16 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			list.append(Choice.new(BRIBE, "Bribe %s" % Format.money(bribe), run.cash >= bribe))
 			if not bool(encounter.get("cornered", false)):
 				list.append(Choice.new(RUN, "Run for it (%s)" % Odds.reading(Police.escape_chance(run))))
+				var line := Talk.police_line(run)
+				list.append(Choice.new(line, Talk.police_label(run, line)))
 			list.append(Choice.new(COMPLY, "Comply"))
 			list.append(Choice.new(JAIL, "Go to jail (%d min)" % roundi(Police.JAIL_SECONDS / 60.0)))
 		Vex.GATE, Vex.HUNT:
 			list.append_array(Vex.choices(run, encounter))
 		Ambush.TYPE:
 			list.append_array(Ambush.choices(run, encounter))
+		Collections.TYPE:
+			list.append_array(Collections.choices(run, encounter))
 		Families.SHAKEDOWN:
 			var demand := int(encounter.demand)
 			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
@@ -203,6 +213,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			return Vex.resolve(run, encounter, choice, roll)
 		Ambush.TYPE:
 			return Ambush.resolve(run, encounter, choice, roll)
+		Collections.TYPE:
+			return Collections.resolve(run, encounter, choice, roll)
 		Families.SHAKEDOWN:
 			return Families.resolve_shakedown(run, encounter, choice)
 	match choice:
@@ -214,6 +226,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 				return "You lose them in the alleys, but they will remember your face."
 			run.pending_encounter = police_stop(run, true)
 			return "They cut you off at the end of the alley. No more running."
+		Talk.PLAY_DUMB, Talk.SHOW_ID, Talk.NAME_DROP:
+			return Talk.resolve_police(run, choice, roll)
 		COMPLY:
 			var taken := Police.comply(run)
 			if taken.is_empty():

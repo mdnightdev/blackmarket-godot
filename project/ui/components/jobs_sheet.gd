@@ -47,6 +47,7 @@ func _rebuild() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 	_add_tasks(run)
+	_add_offers(run)
 	_add_active(run)
 	_add_owed(run)
 	_add_heists(run)
@@ -59,6 +60,29 @@ func _add_tasks(run: RunState) -> void:
 	for task in run.daily_tasks:
 		var done := bool(task.done)
 		_add_row(TASK_ICON, DailyTasks.describe(task), Format.money(DailyTasks.reward(run)), DailyTasks.progress_text(task), "DONE" if done else "+%d CRED" % StreetCred.TASK_DONE)
+
+
+## Unanswered phone offers. Tapping one opens the same prompt as the banner.
+func _add_offers(run: RunState) -> void:
+	if run.errand_offers.is_empty():
+		return
+	_add_heading("OFFERS")
+	for offer in run.errand_offers:
+		var sender := Content.character(StringName(str(offer.sender)))
+		if sender == null:
+			continue
+		var left := Errands.phases_left(run, offer)
+		var caption := "From %s. %d phases to finish once taken" % [sender.display_name, int(offer.lead)]
+		var hint := "LAST PHASE" if left <= 1 else "%d PHASES LEFT" % left
+		var hint_color := Palette.RISK_HIGH if left <= 1 else Palette.TEXT_CREAM
+		var row := _add_row(sender.portrait, Errands.describe(offer), Format.money(int(offer.pay)), caption, hint, hint_color)
+		row.set_tappable(true)
+		row.pressed.connect(_open_offer.bind(str(offer.id)))
+
+
+func _open_offer(offer_id: String) -> void:
+	close()
+	OfferTalk.open(offer_id)
 
 
 func _add_active(run: RunState) -> void:
@@ -87,6 +111,8 @@ func _add_active(run: RunState) -> void:
 
 	if Smuggling.is_carrying(run):
 		_add_crate(run)
+
+	_add_errands(run)
 
 	if _list.get_child_count() == count:
 		_add_note("No jobs taken. Bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
@@ -141,6 +167,15 @@ func _add_crate(run: RunState) -> void:
 			_buy_recon))
 	elif Smuggling.can_meet_halfway(run):
 		row.set_hint("BUYER CAN MEET HERE", Palette.TEXT_CREAM)
+
+
+func _add_errands(run: RunState) -> void:
+	var sender := Content.character(Errands.SENDER)
+	for errand in run.errands:
+		var caption := "For %s by %s" % [sender.display_name, Calendar.describe(int(errand.due_stamp)).to_lower()]
+		var place := Content.district(Errands.target_district(errand))
+		var hint := "GO TO %s" % place.display_name.to_upper() if place != null else ""
+		_add_row(sender.portrait, Errands.describe(errand), Format.money(int(errand.pay)), caption, hint)
 
 
 func _buy_recon() -> void:

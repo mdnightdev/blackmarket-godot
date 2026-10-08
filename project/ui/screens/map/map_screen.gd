@@ -6,6 +6,7 @@ const ROUTE_SAMPLES := 32
 const ROUTE_BEND := 0.22
 const CAMERA_GLIDE_SECONDS := 0.4
 const LOCKED_PIN_ALPHA := 0.45
+const BOOKED_TRIP_DELAY_SECONDS := 0.7
 
 @onready var _city_view: CityView = %CityView
 @onready var _route: Line2D = %Route
@@ -37,6 +38,8 @@ func _ready() -> void:
 	_district_sheet.enter_requested.connect(_return_to_district)
 	GameState.clock_active = true
 	_play_entrance()
+	if not GameState.travelling_to.is_empty():
+		_start_booked_trip()
 
 
 func _exit_tree() -> void:
@@ -59,6 +62,22 @@ func handle_back() -> bool:
 
 func _on_district_selected(district: DistrictDef) -> void:
 	_district_sheet.show_district(district, Travel.check(GameState.run, district))
+
+
+## A trip booked from another screen waits for the map to fade in. If it can no longer go ahead,
+## the district sheet shows the reason instead.
+func _start_booked_trip() -> void:
+	var destination := Content.district(GameState.travelling_to)
+	GameState.travelling_to = &""
+	if destination == null:
+		return
+	_input_blocker.show()
+	await get_tree().create_timer(BOOKED_TRIP_DELAY_SECONDS).timeout
+	if Travel.check(GameState.run, destination) != Travel.Check.OK:
+		_input_blocker.hide()
+		_on_district_selected(destination)
+		return
+	_on_travel_requested(destination)
 
 
 func _on_travel_requested(destination: DistrictDef) -> void:

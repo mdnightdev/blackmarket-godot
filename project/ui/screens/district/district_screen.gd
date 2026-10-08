@@ -280,7 +280,7 @@ func _show_day_card() -> void:
 	GameState.has_unseen_new_day = false
 	var run := GameState.run
 	var turf_cut := Turf.daily_cut(run) if run.day > 1 else 0
-	_day_card.play(run.day, run.campaign_days, run.career, turf_cut)
+	_day_card.play(run, turf_cut)
 
 
 func _center_background_pivot() -> void:

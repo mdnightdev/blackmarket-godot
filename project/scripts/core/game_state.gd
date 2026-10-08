@@ -13,6 +13,8 @@ signal crate_lost(crate: Dictionary)
 signal favours_missed(favours: Array[Dictionary])
 ## Short reports for the player: { line, hint }. Finished tasks, crew walking out, raided businesses.
 signal notices_posted(notices: Array[Dictionary])
+## New errand offers landed on the player's phone.
+signal offers_posted(offers: Array[Dictionary])
 
 const SAVE_PATH := "user://run.json"
 
@@ -25,6 +27,8 @@ var has_unseen_new_day := false
 var trading_with: StringName = &""
 ## Venue the bar screen opens for.
 var visiting_venue: StringName = &""
+## District the map screen starts a trip to as soon as it opens. Empty means the player picks one.
+var travelling_to: StringName = &""
 
 var _store := SaveStore.new(SAVE_PATH)
 var _rng := RandomNumberGenerator.new()
@@ -54,9 +58,12 @@ func start_new_run(player_id := RunState.DEFAULT_PLAYER) -> void:
 	run = RunState.new()
 	run.player_id = player_id
 	DailyTasks.deal(run)
+	var offers := Errands.post(run)
 	has_unseen_new_day = true
 	save_run()
 	run_started.emit()
+	if not offers.is_empty():
+		offers_posted.emit(offers)
 
 
 func load_saved_run() -> bool:
@@ -277,6 +284,22 @@ func accept_crate(offer: Dictionary, route: Array[StringName] = [], invoice := f
 	return result
 
 
+## Takes an errand off the phone. Starting it where the player already stands picks up or meets the debtor now.
+func accept_offer(id: String) -> bool:
+	if not Errands.accept(run, id):
+		return false
+	var notices := Errands.visit(run)
+	_commit(false)
+	if not notices.is_empty():
+		notices_posted.emit(notices)
+	return true
+
+
+func decline_offer(id: String) -> void:
+	if Errands.decline(run, id):
+		_commit(false)
+
+
 func buy_recon() -> bool:
 	if not Routes.buy_recon(run):
 		return false
@@ -461,7 +484,8 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 ## A trip that ended inside the current phase: no time effects, only what can happen on arrival.
 func _arrive() -> void:
 	Encounters.after_arrival(run, _rng)
-	var notices := _task_notices(DailyTasks.record_arrival(run, run.district_id))
+	var notices := Errands.visit(run)
+	notices.append_array(_task_notices(DailyTasks.record_arrival(run, run.district_id)))
 	_commit(false)
 	if not notices.is_empty():
 		notices_posted.emit(notices)
@@ -472,10 +496,14 @@ func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Di
 	var missed_favours := Favours.expire(run)
 	var lost_crate := Smuggling.expire(run)
 	var notices := _task_notices(finished_tasks)
+	notices.append_array(Errands.expire(run))
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
 	if new_day_started and not Campaign.is_over(run):
 		notices.append_array(_start_morning())
 	Businesses.sell_phase(run)
+	if not Campaign.is_over(run) and not Police.is_jailed(run):
+		notices.append_array(Errands.visit(run))
+	var offers := Errands.post(run)
 	if travelled:
 		finished_tasks = DailyTasks.record_arrival(run, run.district_id)
 		notices.append_array(_task_notices(finished_tasks))
@@ -483,6 +511,8 @@ func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Di
 	_commit(new_day_started)
 	if not notices.is_empty():
 		notices_posted.emit(notices)
+	if not offers.is_empty():
+		offers_posted.emit(offers)
 	if not missed.is_empty():
 		orders_missed.emit(missed)
 	if not missed_favours.is_empty():

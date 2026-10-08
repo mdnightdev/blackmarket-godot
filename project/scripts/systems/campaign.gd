@@ -4,11 +4,11 @@ const CAREER_START := "career_start"
 const SHARK: StringName = &"shark"
 
 
-## Ends the run when the deadline passes with debt still owed. Returns true when the run was lost.
+## Ends Act 1 once the Shark's weekly payment is missed too many weeks in a row. Returns true when the run was lost.
 static func update_outcome(run: RunState) -> bool:
 	if run.outcome != RunState.Outcome.ONGOING or run.career:
 		return false
-	if run.day <= run.campaign_days:
+	if run.missed_weeks < Loan.MAX_MISSED_WEEKS:
 		return false
 	run.outcome = RunState.Outcome.LOST
 	run.pending_encounter = {}

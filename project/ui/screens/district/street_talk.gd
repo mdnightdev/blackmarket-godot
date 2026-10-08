@@ -39,7 +39,10 @@ static func _talk_to_lender(shark: CharacterDef) -> void:
 	else:
 		line = "You owe me %s. This week is covered. Next payment is set on day %d." % [Format.money(run.debt), due_day]
 		choices.append(DialogueChoice.new(REPAY, "Repay early"))
-	choices.append(DialogueChoice.new(BORROW, "Borrow"))
+	if not run.career and run.missed_weeks > 0:
+		line += " Missed %d of %d in a row. Then we're done." % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
+	if run.career:
+		choices.append(DialogueChoice.new(BORROW, "Borrow"))
 	choices.append(_leave())
 	GameOverlay.talk(shark, line, choices, _on_lender_choice)
 

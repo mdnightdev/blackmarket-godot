@@ -55,10 +55,10 @@ func test_check_raid_only_at_max_heat() -> void:
 	assert_eq(_run.pending_encounter.type, Encounters.RAID)
 
 
-func test_police_stop_offers_four_choices() -> void:
+func test_police_stop_offers_five_choices() -> void:
 	Inventory.add_units(_run, _phones.id, 5)
 	_run.pending_encounter = Encounters.police_stop(_run)
-	assert_eq(_choice_ids(), [Encounters.BRIBE, Encounters.RUN, Encounters.COMPLY, Encounters.JAIL])
+	assert_eq(_choice_ids(), [Encounters.BRIBE, Encounters.RUN, Talk.PLAY_DUMB, Encounters.COMPLY, Encounters.JAIL])
 
 
 func test_jail_keeps_everything_and_locks_the_player_up() -> void:

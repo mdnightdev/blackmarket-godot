@@ -493,7 +493,7 @@ func _capture_phase_four(dealer: Resource) -> void:
 	run.pending_encounter = Encounters.police_stop(run)
 	await _wait(2.4)
 	await _capture("12_police_stop")
-	dialogue.get_node("%ChoiceList").get_child(2).pressed.emit()
+	dialogue.get_node("%ChoiceList").get_child(3).pressed.emit()
 	await _wait(1.4)
 	await _capture("13_police_result")
 	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
@@ -516,7 +516,7 @@ func _capture_phase_four(dealer: Resource) -> void:
 	run.stop_stamp = -1
 	run.pending_encounter = Encounters.police_stop(run)
 	await _wait(2.4)
-	dialogue.get_node("%ChoiceList").get_child(3).pressed.emit()
+	dialogue.get_node("%ChoiceList").get_child(4).pressed.emit()
 	await _wait(3.2)
 	await _capture("14c_jail_result")
 	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
@@ -548,7 +548,7 @@ func _capture_phase_four(dealer: Resource) -> void:
 	await _capture_career()
 
 	_game_state.start_new_run()
-	_game_state.run.day = RunState.CAMPAIGN_DAYS + 1
+	_game_state.run.missed_weeks = Loan.MAX_MISSED_WEEKS
 	Campaign.update_outcome(_game_state.run)
 	await _open(_router.END_SCREEN, "19_end_lost", 2.2)
 

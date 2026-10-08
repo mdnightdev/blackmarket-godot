@@ -228,4 +228,42 @@ func test_ambush_is_a_police_stop_or_a_crew_after_the_crate() -> void:
 		assert_eq(encounter.type, Ambush.TYPE)
 		assert_gte(int(encounter.toll), Ambush.MIN_TOLL)
 		assert_not_null(Content.speaker(StringName(str(encounter.speaker))))
-		assert_eq(Encounters.choices(_run, encounter).size(), 3)
+		assert_eq(Encounters.choices(_run, encounter).size(), 5)
+
+
+func test_voronin_name_lets_the_crate_pass_for_free() -> void:
+	Smuggling.accept(_run, _first_offer())
+	assert_ne(Ambush.resolve(_run, _crew_ambush(), Ambush.NAME_VORONIN, 0.0), "")
+	assert_eq(_run.cash, 10000)
+	assert_true(_run.pending_encounter.is_empty())
+
+
+func test_a_crew_that_laughs_off_voronin_asks_for_more_and_stops_talking() -> void:
+	Smuggling.accept(_run, _first_offer())
+	Ambush.resolve(_run, _crew_ambush(), Ambush.NAME_VORONIN, 0.999)
+	var pressed := _run.pending_encounter
+	assert_eq(int(pressed.toll), roundi(300 * Ambush.PRESSED_TOLL_FACTOR))
+	var ids := Encounters.choices(_run, pressed).map(func(choice: Encounters.Choice) -> StringName: return choice.id)
+	assert_eq(ids, [Ambush.PAY, Ambush.FIGHT, Ambush.RUN])
+
+
+func test_talk_lands_best_on_a_street_crew_and_worst_on_vex() -> void:
+	var crew := _crew_ambush()
+	var family := _crew_ambush()
+	family.threat = Routes.Threat.FAMILY
+	var vex := _crew_ambush()
+	vex.threat = Routes.Threat.VEX
+	assert_gt(Ambush.name_chance(_run, crew), Ambush.name_chance(_run, family))
+	assert_gt(Ambush.name_chance(_run, family), Ambush.name_chance(_run, vex))
+	assert_gt(Ambush.back_off_chance(crew), Ambush.back_off_chance(vex))
+
+
+func test_backing_off_costs_cred_not_cargo_and_failing_costs_cargo() -> void:
+	var offer := _first_offer()
+	Smuggling.accept(_run, offer)
+	_run.street_cred = 100
+	Ambush.resolve(_run, _crew_ambush(), Ambush.BACK_OFF, 0.0)
+	assert_eq(_run.street_cred, 100 + StreetCred.BACKED_OFF)
+	assert_almost_eq(float(_run.crate.get("skimmed", 0.0)), 0.0, 0.0001)
+	Ambush.resolve(_run, _crew_ambush(), Ambush.BACK_OFF, 0.999)
+	assert_almost_eq(float(_run.crate.skimmed), 0.2, 0.0001)

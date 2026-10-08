@@ -2,20 +2,20 @@ extends RefCounted
 
 ## Plays one run through GameState with a fixed strategy and records where the money went.
 ## Net worth counts cash, plus carried goods at base price, minus debt.
+## Every strategy pays the Shark's weekly minimum when it falls due and puts cash above a trading float into the debt.
 
 const IDLE: StringName = &"idle"
 const LOCAL: StringName = &"local"
 const ROUTE: StringName = &"route"
 
-const DAYS := 30
-const CHECKPOINT_DAYS: Array[int] = [3, 7, 14, 30]
+const CHECKPOINT_DAYS: Array[int] = [7, 14, 30, 60]
 const BUY_BELOW_BASE := 0.92
 const SELL_ABOVE_COST := 1.05
 const ROUTE_MIN_MARGIN := 0.15
 const CASH_RESERVE := 150
+const TRADING_FLOAT := 4000
 const BRIBE_SHARE_OF_CASH := 0.25
 const VEX_BRIBE_SHARE_OF_CASH := 0.2
-const LOAN_DISTRICT: StringName = &"downtown"
 
 var _game_state: Node
 var _content: Node
@@ -29,7 +29,7 @@ func _init(game_state: Node, content: Node) -> void:
 	_content = content
 
 
-func play(strategy: StringName, seed_value: int) -> Dictionary:
+func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 	_game_state.start_new_run()
 	var run: RunState = _game_state.run
 	run.price_seed = seed_value
@@ -39,30 +39,45 @@ func play(strategy: StringName, seed_value: int) -> Dictionary:
 	_realized = 0
 	var start_worth := _worth(run)
 	var checkpoints := {}
-	var phases_left := DAYS * RunState.Phase.size()
+	var phases_left := days * RunState.Phase.size()
+	var cleared_day := 0
+	var missed_weeks := 0
+	var worst_streak := 0
 
 	while phases_left > 0 and not Campaign.is_over(run):
 		phases_left -= 1
 		_resolve_pending(run)
 		var day_before := run.day
+		var streak_before := run.missed_weeks
 		match strategy:
 			LOCAL:
 				_trade_here(run)
 				_pass_phase(run, &"")
 			ROUTE:
-				_play_route(run)
+				_trade_here(run)
+				_pass_phase(run, _best_destination(run))
 			_:
+				_pay_shark(run)
 				_pass_phase(run, &"")
+		if run.missed_weeks > streak_before:
+			missed_weeks += 1
+		worst_streak = maxi(worst_streak, run.missed_weeks)
+		if run.career and cleared_day == 0:
+			cleared_day = run.day
 		if run.day != day_before and CHECKPOINT_DAYS.has(day_before):
 			checkpoints[day_before] = _worth(run) - start_worth
 	_resolve_pending(run)
-	checkpoints[DAYS] = _worth(run) - start_worth
+	checkpoints[days] = _worth(run) - start_worth
 
 	return {
 		"checkpoints": checkpoints,
 		"ledger": _ledger,
 		"counts": _counts,
 		"lost": run.outcome == RunState.Outcome.LOST,
+		"lost_day": run.day if run.outcome == RunState.Outcome.LOST else 0,
+		"cleared_day": cleared_day,
+		"missed_weeks": missed_weeks,
+		"worst_streak": worst_streak,
 		"busts": run.busts,
 		"realized_profit": _realized,
 		"cred": run.street_cred,
@@ -71,23 +86,26 @@ func play(strategy: StringName, seed_value: int) -> Dictionary:
 	}
 
 
-func _play_route(run: RunState) -> void:
-	_trade_here(run)
-	if Loan.amount_due(run) > 0 and run.next_due_day - run.day <= 1:
-		if run.district_id == LOAN_DISTRICT:
-			if _game_state.repay_debt(mini(Loan.amount_due(run), Loan.max_repay(run))):
-				_count(&"loan payments")
-		else:
-			_pass_phase(run, LOAN_DISTRICT)
-			return
-	_pass_phase(run, _best_destination(run))
+## Covers the weekly minimum on its last day, and pays down the debt with anything above the trading float.
+func _pay_shark(run: RunState) -> void:
+	if run.debt <= 0 or Encounters.has_pending(run):
+		return
+	var amount := maxi(0, mini(run.cash - TRADING_FLOAT, run.debt))
+	if run.next_due_day - run.day <= 1:
+		amount = maxi(amount, mini(Loan.amount_due(run), Loan.max_repay(run)))
+	if amount > 0 and _game_state.repay_debt(amount):
+		_count(&"loan payments")
 
 
-## Sells what pays above cost here, then buys the cheapest goods if they are clearly under base price.
+## Sells what pays above cost here, pays the Shark, then buys the cheapest goods if they are clearly under base price.
 func _trade_here(run: RunState) -> void:
 	var dealers := _open_dealers(run, run.district_id, Calendar.stamp(run))
-	if dealers.is_empty():
-		return
+	_sell_here(run, dealers)
+	_pay_shark(run)
+	_buy_here(run, dealers)
+
+
+func _sell_here(run: RunState, dealers: Array[DealerDef]) -> void:
 	for item_id: StringName in run.inventory.keys():
 		var item: ItemDef = _content.item(item_id)
 		var best := _best_buyer(run, dealers, item)
@@ -102,6 +120,8 @@ func _trade_here(run: RunState) -> void:
 				_realized += run.profit - before
 				_count(&"sales")
 
+
+func _buy_here(run: RunState, dealers: Array[DealerDef]) -> void:
 	var pick := _cheapest_offer(run, dealers)
 	if pick.is_empty() or float(pick.price) / pick.item.base_price > BUY_BELOW_BASE:
 		return
@@ -163,7 +183,7 @@ func _pass_phase(run: RunState, destination_id: StringName) -> void:
 				_game_state.advance_phase()
 		else:
 			_game_state.advance_phase()
-	_add(&"loan interest", debt_before - run.debt)
+	_add(&"loan interest and late fees", debt_before - run.debt)
 	var label := &"daily income"
 	var type := str(run.pending_encounter.get("type", ""))
 	if type in [Encounters.RAID, Encounters.ENFORCERS]:

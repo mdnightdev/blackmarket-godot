@@ -6,8 +6,7 @@ enum Outcome { ONGOING, WON, LOST }
 
 const PHASE_NAMES: Array[String] = ["Morning", "Noon", "Evening", "Night"]
 const STARTING_CASH := 2000
-const STARTING_DEBT := 5000
-const CAMPAIGN_DAYS := 30
+const STARTING_DEBT := 100000
 const STARTING_DISTRICT: StringName = &"old_market"
 const DEFAULT_PLAYER: StringName = &"kade"
 const LEGACY_LOCKBOX: StringName = &"safehouse_lockbox"
@@ -20,7 +19,6 @@ var phase_seconds_left: float = Calendar.PHASE_SECONDS
 var cash: int = STARTING_CASH
 var debt: int = STARTING_DEBT
 var heat: int = 0
-var campaign_days: int = CAMPAIGN_DAYS
 var district_id: StringName = STARTING_DISTRICT
 ## Item id to units carried.
 var inventory: Dictionary = {}
@@ -81,7 +79,7 @@ var taken_favours: Array[String] = []
 var hack_stamp: int = -1
 ## The encounter waiting for the player's answer. Saved so closing the app cannot dodge it.
 var pending_encounter: Dictionary = {}
-## True once the Shark is paid off. The day limit is gone and crew, businesses and heists open up.
+## True once the Shark is paid off. Crew, businesses and heists open up.
 var career := false
 var street_cred: int = 0
 ## Day that trading_cred_today counts for.
@@ -109,9 +107,15 @@ var tasks_day: int = 0
 var heist_cooldowns: Dictionary = {}
 ## Day on which the lookout last turned a raid into a warning.
 var raid_warning_day: int = 0
+## Jobs offered to the player's phone and not yet answered. See Errands for the entry layout.
+var errand_offers: Array[Dictionary] = []
+## Accepted errands in progress. See Errands for the entry layout.
+var errands: Array[Dictionary] = []
+## Weekly payments to the Shark missed in a row. See Loan.
+var missed_weeks: int = 0
 
 var next_due_day: int = Loan.PAYMENT_PERIOD_DAYS + 1
-var period_minimum: int = Loan.minimum_payment(STARTING_DEBT)
+var period_minimum: int = Loan.FIRST_PAYMENT
 var paid_this_period: int = 0
 
 var outcome: Outcome = Outcome.ONGOING
@@ -137,7 +141,6 @@ func to_dict() -> Dictionary:
 		"cash": cash,
 		"debt": debt,
 		"heat": heat,
-		"campaign_days": campaign_days,
 		"district_id": String(district_id),
 		"inventory": _string_keys(inventory),
 		"stash": _string_keys(stash),
@@ -184,6 +187,9 @@ func to_dict() -> Dictionary:
 		"tasks_day": tasks_day,
 		"heist_cooldowns": _string_keys(heist_cooldowns),
 		"raid_warning_day": raid_warning_day,
+		"errand_offers": errand_offers,
+		"errands": errands,
+		"missed_weeks": missed_weeks,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
 		"paid_this_period": paid_this_period,
@@ -204,7 +210,6 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.cash = int(data.get("cash", state.cash))
 	state.debt = maxi(0, int(data.get("debt", state.debt)))
 	state.heat = clampi(int(data.get("heat", state.heat)), 0, 100)
-	state.campaign_days = maxi(1, int(data.get("campaign_days", state.campaign_days)))
 	state.district_id = StringName(str(data.get("district_id", state.district_id)))
 	state.inventory = _positive_counts(data.get("inventory"))
 	state.stash = _positive_counts(data.get("stash"))
@@ -303,6 +308,15 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.tasks_day = maxi(0, int(data.get("tasks_day", 0)))
 	state.heist_cooldowns = _positive_counts(data.get("heist_cooldowns"))
 	state.raid_warning_day = maxi(0, int(data.get("raid_warning_day", 0)))
+	for offer in _dictionaries(data.get("errand_offers")):
+		var clean := Errands.sanitize(offer)
+		if not clean.is_empty() and state.errand_offers.size() < Errands.MAX_OPEN_OFFERS:
+			state.errand_offers.append(clean)
+	for errand in _dictionaries(data.get("errands")):
+		var clean := Errands.sanitize(errand)
+		if not clean.is_empty() and state.errands.size() < Errands.MAX_ACTIVE:
+			state.errands.append(clean)
+	state.missed_weeks = maxi(0, int(data.get("missed_weeks", 0)))
 
 	state.next_due_day = maxi(2, int(data.get("next_due_day", state.next_due_day)))
 	state.period_minimum = maxi(0, int(data.get("period_minimum", state.period_minimum)))

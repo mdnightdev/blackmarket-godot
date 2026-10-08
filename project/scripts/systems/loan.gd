@@ -4,12 +4,16 @@ const VENUE: StringName = &"loan_shark"
 const LENDER: StringName = &"shark"
 const DAILY_INTEREST := 0.015
 const PAYMENT_PERIOD_DAYS := 7
-const MIN_PAYMENT := 500
-const MIN_PAYMENT_FRACTION := 0.2
-const MAX_DEBT := 15000
+const FIRST_PAYMENT := 5000
+const MIN_PAYMENT := 2500
+const MIN_PAYMENT_FRACTION := 0.06
+const MAX_MISSED_WEEKS := 3
+## Borrowing opens with the career, so this only caps career loans.
+const MAX_DEBT := 50000
 const ENFORCER_CASH_FRACTION := 0.15
 const MAX_ENFORCER_TAKE := 5000
-const ENFORCER_PENALTY_FRACTION := 0.1
+## Late fee as a share of the missed payment.
+const ENFORCER_PENALTY_FRACTION := 0.5
 
 
 static func minimum_payment(debt: int) -> int:
@@ -22,13 +26,15 @@ static func amount_due(run: RunState) -> int:
 	return mini(run.debt, maxi(0, run.period_minimum - run.paid_this_period))
 
 
+## The Shark charges no interest on the starting debt, only on career loans.
 static func daily_interest(run: RunState) -> int:
+	if not run.career:
+		return 0
 	return ceili(run.debt * DAILY_INTEREST)
 
 
 static func accrue_interest(run: RunState) -> void:
-	if run.debt > 0:
-		run.debt += daily_interest(run)
+	run.debt += daily_interest(run)
 
 
 static func max_repay(run: RunState) -> int:
@@ -36,12 +42,18 @@ static func max_repay(run: RunState) -> int:
 
 
 static func max_borrow(run: RunState) -> int:
+	if not run.career:
+		return 0
 	return maxi(0, MAX_DEBT - run.debt)
 
 
 static func can_visit(run: RunState) -> bool:
 	var district := Content.district(run.district_id)
 	return district != null and district.venues.has(VENUE)
+
+
+static func can_borrow(run: RunState) -> bool:
+	return run.career and can_visit(run)
 
 
 ## Repaying works from anywhere. Only borrowing needs a visit to The Shark.
@@ -55,7 +67,7 @@ static func repay(run: RunState, amount: int) -> bool:
 
 
 static func borrow(run: RunState, amount: int) -> bool:
-	if not can_visit(run) or amount <= 0 or amount > max_borrow(run):
+	if not can_borrow(run) or amount <= 0 or amount > max_borrow(run):
 		return false
 	run.cash += amount
 	run.debt += amount
@@ -77,4 +89,4 @@ static func enforcer_cash_take(run: RunState) -> int:
 
 
 static func enforcer_penalty(run: RunState) -> int:
-	return ceili(run.debt * ENFORCER_PENALTY_FRACTION)
+	return ceili(amount_due(run) * ENFORCER_PENALTY_FRACTION)

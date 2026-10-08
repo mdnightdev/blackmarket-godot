@@ -7,6 +7,7 @@ var _mode := Mode.REPAY
 var _amount := 0
 
 @onready var _debt_value: Label = %DebtValue
+@onready var _interest_caption: Label = %InterestCaption
 @onready var _interest_value: Label = %InterestValue
 @onready var _due_value: Label = %DueValue
 @onready var _owed_value: Label = %OwedValue
@@ -35,12 +36,12 @@ func _ready() -> void:
 	GameState.run_changed.connect(_on_run_changed)
 
 
-## Repayments work anywhere. Borrowing only happens at The Shark.
+## Repayments work anywhere. Borrowing only happens at The Shark, once the career has started.
 func open_loan(mode := Mode.REPAY) -> void:
 	if GameState.run == null:
 		return
-	_mode = mode
-	(_repay_tab if mode == Mode.REPAY else _borrow_tab).button_pressed = true
+	_mode = mode if GameState.run.career else Mode.REPAY
+	(_repay_tab if _mode == Mode.REPAY else _borrow_tab).button_pressed = true
 	_amount = _default_amount()
 	_refresh()
 	open_sheet()
@@ -60,11 +61,17 @@ func _select_mode(mode: Mode) -> void:
 func _refresh() -> void:
 	var run := GameState.run
 	_debt_value.text = Format.money(run.debt)
-	_interest_value.text = "+%s" % Format.money(Loan.daily_interest(run))
+	if run.career:
+		_interest_caption.text = "INTEREST / DAY"
+		_interest_value.text = "+%s" % Format.money(Loan.daily_interest(run))
+	else:
+		_interest_caption.text = "MISSED"
+		_interest_value.text = "%d of %d" % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
 	_due_value.text = "Day %d" % (run.next_due_day - 1)
 	_owed_value.text = Format.money(Loan.amount_due(run))
 	_note_label.text = _note(run)
-	_action_box.visible = _mode == Mode.REPAY or Loan.can_visit(run)
+	_borrow_tab.visible = run.career
+	_action_box.visible = _mode == Mode.REPAY or Loan.can_borrow(run)
 	if _action_box.visible:
 		_refresh_amount()
 
@@ -77,8 +84,8 @@ func _note(run: RunState) -> String:
 		lines.append("Pay %s by the end of day %d or his men come to collect." % [Format.money(Loan.amount_due(run)), run.next_due_day - 1])
 	else:
 		lines.append("This week is covered. The next payment is set on day %d." % (run.next_due_day - 1))
-	if run.debt > 0 and run.outcome == RunState.Outcome.ONGOING:
-		lines.append("Clear the debt by the end of day %d." % run.campaign_days)
+	if run.debt > 0 and not run.career and run.outcome == RunState.Outcome.ONGOING:
+		lines.append("Miss %d payments in a row and he stops waiting." % Loan.MAX_MISSED_WEEKS)
 	if _mode == Mode.BORROW and not Loan.can_visit(run):
 		lines.append("Borrow at The Shark in Downtown.")
 	return "\n".join(lines)

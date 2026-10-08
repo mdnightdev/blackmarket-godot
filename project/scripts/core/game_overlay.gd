@@ -6,6 +6,7 @@ const INVENTORY_SHEET := preload("res://ui/components/inventory_sheet.tscn")
 const TURF_SHEET := preload("res://ui/components/turf_sheet.tscn")
 const JOBS_SHEET := preload("res://ui/components/jobs_sheet.tscn")
 const JAIL_CARD := preload("res://ui/components/jail_card.tscn")
+const OFFER_BANNER := preload("res://ui/components/offer_banner.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -24,6 +25,7 @@ var _inventory_sheet: InventorySheet
 var _turf_sheet: TurfSheet
 var _jobs_sheet: JobsSheet
 var _jail_card: JailCard
+var _banner: OfferBanner
 var _lights: PoliceLights
 var _settled_for := 0.0
 var _shake_pixels := 0.0
@@ -32,6 +34,8 @@ var _missed_orders: Array[Dictionary] = []
 var _missed_favours: Array[Dictionary] = []
 var _lost_crates: Array[Dictionary] = []
 var _notices: Array[Dictionary] = []
+## Ids of new phone offers still waiting for their banner, oldest first. Answered or expired ones are skipped.
+var _offers: Array[String] = []
 
 
 func _ready() -> void:
@@ -42,14 +46,17 @@ func _ready() -> void:
 	_turf_sheet = TURF_SHEET.instantiate()
 	_jobs_sheet = JOBS_SHEET.instantiate()
 	_jail_card = JAIL_CARD.instantiate()
+	_banner = OFFER_BANNER.instantiate()
 	_lights = PoliceLights.new()
 	add_child(_inventory_sheet)
 	add_child(_turf_sheet)
 	add_child(_jobs_sheet)
 	add_child(_loan_sheet)
 	add_child(_jail_card)
+	add_child(_banner)
 	add_child(_dialogue)
 	_jail_card.visibility_changed.connect(_close_sheets_when_jailed)
+	_banner.opened.connect(OfferTalk.open)
 	_dialogue.add_backdrop_layer(_lights)
 	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
 		SceneRouter.transition_started.connect(sheet.close)
@@ -57,11 +64,18 @@ func _ready() -> void:
 	GameState.favours_missed.connect(func(favours: Array[Dictionary]) -> void: _missed_favours.append_array(favours))
 	GameState.crate_lost.connect(func(crate: Dictionary) -> void: _lost_crates.append(crate))
 	GameState.notices_posted.connect(func(notices: Array[Dictionary]) -> void: _notices.append_array(notices))
+	GameState.offers_posted.connect(func(offers: Array[Dictionary]) -> void:
+		for offer in offers:
+			_offers.append(str(offer.id))
+	)
+	GameState.run_changed.connect(_retract_answered_banner)
 	GameState.run_started.connect(func() -> void:
 		_missed_orders.clear()
 		_missed_favours.clear()
 		_lost_crates.clear()
 		_notices.clear()
+		_offers.clear()
+		_banner.retract()
 	)
 
 
@@ -70,6 +84,9 @@ func _process(delta: float) -> void:
 	_update_shake(delta)
 	if _lights.is_on() and not _dialogue.visible:
 		_stand_down()
+	if _banner.is_showing() and not _screen_is_free():
+		_offers.push_front(_banner.offer_id)
+		_banner.retract()
 	if not _can_present():
 		_settled_for = 0.0
 		return
@@ -84,8 +101,10 @@ func _process(delta: float) -> void:
 			_present_missed_favour(_missed_favours.pop_front())
 		elif not _lost_crates.is_empty():
 			_present_lost_crate(_lost_crates.pop_front())
-		else:
+		elif not _notices.is_empty():
 			_present_notice(_notices.pop_front())
+		else:
+			_show_next_offer()
 
 
 func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
@@ -152,15 +171,39 @@ func _close_sheets_when_jailed() -> void:
 		sheet.close()
 
 
+## Offer banners wait behind every card and never stack, so one shows at a time once the cards are done.
 func _can_present() -> bool:
 	if GameState.run == null:
 		return false
-	if not Encounters.has_pending(GameState.run) and _missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty() and _notices.is_empty():
+	if not _has_cards() and (_banner.is_showing() or _offers.is_empty()):
+		return false
+	return _screen_is_free()
+
+
+func _has_cards() -> bool:
+	return Encounters.has_pending(GameState.run) or not (_missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty() and _notices.is_empty())
+
+
+func _screen_is_free() -> bool:
+	if GameState.run == null:
 		return false
 	if _dialogue.visible or _loan_sheet.visible or _inventory_sheet.visible or _turf_sheet.visible or _jobs_sheet.visible or SceneRouter.is_transitioning():
 		return false
 	var screen := get_tree().current_scene
 	return screen != null and screen.has_method("can_present_encounter") and screen.can_present_encounter()
+
+
+func _show_next_offer() -> void:
+	while not _offers.is_empty():
+		var offer := Errands.find_offer(GameState.run, _offers.pop_front())
+		if not offer.is_empty():
+			_banner.show_offer(offer)
+			return
+
+
+func _retract_answered_banner() -> void:
+	if _banner.is_showing() and Errands.find_offer(GameState.run, _banner.offer_id).is_empty():
+		_banner.retract()
 
 
 func _present_encounter(encounter: Dictionary) -> void:

@@ -8,6 +8,7 @@ const DAILY_TRADING_CAP := 30
 const ORDER_DELIVERED := 8
 const FAVOUR_DONE := 10
 const CRATE_DELIVERED := 12
+const ERRAND_DONE := 12
 const HIJACK_SUCCESS := 10
 const FIGHT_WON := 6
 const TASK_DONE := 15

@@ -1,0 +1,92 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/components/offer_banner.gd" id="1_banner"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tap"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tap_pressed"]
+bg_color = Color(0.8706, 0.8392, 0.8078, 0.05)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="OfferBanner" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_banner")
+
+[node name="Card" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 16.0
+offset_right = -16.0
+grow_horizontal = 2
+theme_type_variation = &"Card"
+
+[node name="Row" type="HBoxContainer" parent="Card"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="PortraitFrame" type="PanelContainer" parent="Card/Row"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_type_variation = &"IconFrame"
+
+[node name="Portrait" type="TextureRect" parent="Card/Row/PortraitFrame"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Text" type="VBoxContainer" parent="Card/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="SenderLabel" type="Label" parent="Card/Row/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudStripValue"
+
+[node name="LineLabel" type="Label" parent="Card/Row/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
+[node name="PayLabel" type="Label" parent="Card/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"HudStripValue"
+theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
+horizontal_alignment = 2
+
+[node name="TapArea" type="Button" parent="Card"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tap")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_tap")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tap_pressed")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_tap")
+script = ExtResource("2_button")
+
+[node name="HideTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+one_shot = true

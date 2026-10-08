@@ -30,7 +30,7 @@ func _ready() -> void:
 	_busts_value.text = str(run.busts)
 
 	_headline_label.text = "THE SHARK TAKES EVERYTHING"
-	_summary_label.text = "Day %d came and went with %s still owed. His men took the cash, the goods and the stash." % [run.campaign_days, Format.money(run.debt)]
+	_summary_label.text = "You missed %d payments in a row with %s still owed. The Shark stopped waiting. His men took the cash, the goods and the stash." % [Loan.MAX_MISSED_WEEKS, Format.money(run.debt)]
 	_primary_button.text = "New game"
 	GameState.delete_run()
 

@@ -18,7 +18,7 @@ func test_round_trip_through_json_keeps_every_field() -> void:
 	state.cash = 48210
 	state.debt = 1200
 	state.heat = 35
-	state.campaign_days = 60
+	state.missed_weeks = 2
 	state.district_id = &"docks"
 	state.inventory = {&"burner_phone": 3, &"forged_passport": 1}
 	state.player_id = &"jin"
@@ -32,7 +32,7 @@ func test_round_trip_through_json_keeps_every_field() -> void:
 	assert_eq(restored.cash, 48210)
 	assert_eq(restored.debt, 1200)
 	assert_eq(restored.heat, 35)
-	assert_eq(restored.campaign_days, 60)
+	assert_eq(restored.missed_weeks, 2)
 	assert_eq(restored.district_id, &"docks")
 	assert_eq(restored.inventory, {&"burner_phone": 3, &"forged_passport": 1})
 

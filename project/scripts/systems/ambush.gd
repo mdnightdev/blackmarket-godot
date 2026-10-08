@@ -7,6 +7,8 @@ const TYPE := "ambush"
 const PAY: StringName = &"ambush_pay"
 const FIGHT: StringName = &"ambush_fight"
 const RUN: StringName = &"ambush_run"
+const NAME_VORONIN: StringName = &"ambush_name_voronin"
+const BACK_OFF: StringName = &"ambush_back_off"
 ## Toll as a share of the job pay: the floor, the usual ask and the rare steep one.
 const TOLL_LOW := 0.05
 const TOLL_USUAL := 0.1
@@ -19,6 +21,12 @@ const SKIM_HIGH := 0.3
 ## A family crew is tougher than a street crew.
 const FAMILY_EDGE := 0.1
 const ESCAPED_HEAT := 10
+## Talking works best on a street crew. Families answer to nobody and Vex hates Voronin.
+const NAME_EDGE := 0.05
+const BACK_OFF_EDGE := 0.15
+const THREAT_TALK_PENALTY := { Routes.Threat.FAMILY: 0.1, Routes.Threat.VEX: 0.25 }
+## A crew that laughed off Voronin's name asks for more.
+const PRESSED_TOLL_FACTOR := 1.5
 
 
 static func start(run: RunState) -> Dictionary:
@@ -62,6 +70,14 @@ static func escape_chance(run: RunState) -> float:
 	return Odds.contest(Police.ESCAPE_EDGE + Police.speed_bonus(run))
 
 
+static func name_chance(run: RunState, encounter: Dictionary) -> float:
+	return Odds.contest(NAME_EDGE + Talk.cred_edge(run) - _talk_penalty(encounter))
+
+
+static func back_off_chance(encounter: Dictionary) -> float:
+	return Odds.contest(BACK_OFF_EDGE - _talk_penalty(encounter))
+
+
 static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Choice]:
 	var fee := int(encounter.toll)
 	var list: Array[Encounters.Choice] = [
@@ -69,6 +85,9 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Ch
 		Encounters.Choice.new(FIGHT, "Fight (%s)" % Odds.reading(fight_chance(run, encounter))),
 		Encounters.Choice.new(RUN, "Run for it (%s)" % Odds.reading(escape_chance(run))),
 	]
+	if not bool(encounter.get("pressed", false)):
+		list.append(Encounters.Choice.new(NAME_VORONIN, "Say you move for Voronin"))
+		list.append(Encounters.Choice.new(BACK_OFF, "Back away slowly"))
 	return list
 
 
@@ -91,4 +110,27 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 				return "You lose them in the alleys with the crate under your arm."
 			Smuggling.skim(run, float(encounter.get("skim", SKIM_USUAL)))
 			return "They catch up and rip a few packages out of the crate before you shake them. The job will pay less."
+		NAME_VORONIN:
+			if roll < name_chance(run, encounter):
+				return "They trade a look and step aside. Nobody wants trouble with Voronin."
+			run.pending_encounter = _pressed(encounter)
+			return "They laugh. Voronin's name buys nothing here."
+		BACK_OFF:
+			if roll < back_off_chance(encounter):
+				StreetCred.add(run, StreetCred.BACKED_OFF)
+				return "You back out of the street with your hands in plain sight. Nobody follows, but word gets around."
+			Smuggling.skim(run, float(encounter.get("skim", SKIM_USUAL)))
+			return "They close in before you reach the corner and pull a few packages out of the crate. The job will pay less."
 	return ""
+
+
+static func _talk_penalty(encounter: Dictionary) -> float:
+	return float(THREAT_TALK_PENALTY.get(int(encounter.get("threat", Routes.Threat.QUIET)), 0.0))
+
+
+static func _pressed(encounter: Dictionary) -> Dictionary:
+	var pressed := encounter.duplicate()
+	pressed.toll = roundi(int(encounter.toll) * PRESSED_TOLL_FACTOR)
+	pressed.pressed = true
+	pressed.body = "The price just went up. Pay, or we take it out of the crate."
+	return pressed

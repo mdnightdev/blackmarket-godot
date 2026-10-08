@@ -18,9 +18,9 @@ func _ready() -> void:
 
 
 ## turf_cut is the money the player's corners paid this morning. 0 hides the line.
-func play(day: int, campaign_days: int, career := false, turf_cut := 0) -> void:
-	_number_label.text = str(day)
-	_remaining_label.text = StreetCred.rank_name(StreetCred.rank(GameState.run)) if career else _remaining_text(campaign_days - day)
+func play(run: RunState, turf_cut := 0) -> void:
+	_number_label.text = str(run.day)
+	_remaining_label.text = StreetCred.rank_name(StreetCred.rank(run)) if run.career else _payment_text(run)
 	_income_label.text = "Your corners paid %s" % Format.money(turf_cut)
 	_income_label.visible = turf_cut > 0
 	modulate.a = 0.0
@@ -41,12 +41,15 @@ func _fade_out() -> void:
 	_tween.tween_callback(hide)
 
 
-func _remaining_text(days_left: int) -> String:
+func _payment_text(run: RunState) -> String:
+	if Loan.amount_due(run) <= 0:
+		return "Shark paid this week"
+	var days_left := run.next_due_day - 1 - run.day
 	if days_left <= 0:
-		return "Final day"
+		return "Shark payment due today"
 	if days_left == 1:
-		return "1 day left"
-	return "%d days left" % days_left
+		return "Shark payment due tomorrow"
+	return "Shark payment in %d days" % days_left
 
 
 func _on_gui_input(event: InputEvent) -> void:
