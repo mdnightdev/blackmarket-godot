@@ -5,17 +5,19 @@ signal district_tapped(district: DistrictDef)
 
 const MIN_ZOOM := 1.0
 const MAX_ZOOM := 2.0
-const START_ZOOM := 1.4
+const START_ZOOM := 1.0
 const WHEEL_ZOOM_STEP := 1.1
 const PAN_GESTURE_SPEED := 8.0
 const TAP_SLOP := 18.0
 const FLING_FRICTION := 5.0
 const MIN_FLING_SPEED := 20.0
+const ROAD_WIDTH := 3.0
 
 @export var map_texture: Texture2D
 
 @onready var _map_image: TextureRect = %MapImage
 @onready var _pin_layer: Control = %PinLayer
+@onready var _road_layer: Control = %RoadLayer
 
 var _pins: Array[MapPin] = []
 var _zoom := START_ZOOM
@@ -25,10 +27,14 @@ var _touches := {}
 var _tap_start := Vector2.ZERO
 var _tap_possible := false
 var _fling_velocity := Vector2.ZERO
+## Road ends as normalized map points, two per road, with one color per road.
+var _road_ends := PackedVector2Array()
+var _road_colors := PackedColorArray()
 
 
 func _ready() -> void:
 	_map_image.texture = map_texture
+	_road_layer.draw.connect(_draw_roads)
 	resized.connect(_apply_camera)
 	set_process(false)
 	_apply_camera()
@@ -39,6 +45,12 @@ func add_pin(pin: MapPin) -> void:
 	_pin_layer.add_child(pin)
 	_pins.append(pin)
 	_place_pin(pin)
+
+
+func set_roads(ends: PackedVector2Array, colors: PackedColorArray) -> void:
+	_road_ends = ends
+	_road_colors = colors
+	_road_layer.queue_redraw()
 
 
 func focus_on(normalized: Vector2, zoom: float) -> void:
@@ -168,6 +180,16 @@ func _apply_camera() -> void:
 	_map_image.size = drawn
 	for pin in _pins:
 		_place_pin(pin)
+	_road_layer.queue_redraw()
+
+
+func _draw_roads() -> void:
+	if _road_ends.is_empty():
+		return
+	var points := PackedVector2Array()
+	for end in _road_ends:
+		points.append(map_to_view(end))
+	_road_layer.draw_multiline_colors(points, _road_colors, ROAD_WIDTH, true)
 
 
 func _place_pin(pin: MapPin) -> void:

@@ -7,6 +7,8 @@ const ROUTE_BEND := 0.22
 const CAMERA_GLIDE_SECONDS := 0.4
 const LOCKED_PIN_ALPHA := 0.45
 const BOOKED_TRIP_DELAY_SECONDS := 0.7
+const OPEN_ROAD_COLOR := Color(Palette.PEACH, 0.55)
+const LOCKED_ROAD_COLOR := Color(Palette.TEXT_MUTED, 0.2)
 
 @onready var _city_view: CityView = %CityView
 @onready var _route: Line2D = %Route
@@ -14,6 +16,7 @@ const BOOKED_TRIP_DELAY_SECONDS := 0.7
 @onready var _margin: MarginContainer = %Margin
 @onready var _input_blocker: Control = %InputBlocker
 @onready var _district_sheet: DistrictSheet = %DistrictSheet
+@onready var _location_label: Label = %LocationLabel
 
 var _pins: Array[MapPin] = []
 
@@ -31,6 +34,8 @@ func _ready() -> void:
 		pin.holder = Turf.holder(GameState.run, district.id)
 		_city_view.add_pin(pin)
 		_pins.append(pin)
+	_show_roads()
+	_location_label.text = "You are in %s" % GameState.current_district().display_name
 	_city_view.focus_on(GameState.current_district().map_position, CityView.START_ZOOM)
 	_city_view.district_tapped.connect(_on_district_selected)
 
@@ -44,6 +49,22 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	GameState.clock_active = false
+
+
+## Direct roads out of the current district.
+func _show_roads() -> void:
+	var run := GameState.run
+	var here := GameState.current_district()
+	var ends := PackedVector2Array()
+	var colors := PackedColorArray()
+	for road_id in here.roads:
+		var other := Content.district(road_id)
+		if other == null:
+			continue
+		ends.append(here.map_position)
+		ends.append(other.map_position)
+		colors.append(LOCKED_ROAD_COLOR if Travel.is_locked(run, other) else OPEN_ROAD_COLOR)
+	_city_view.set_roads(ends, colors)
 
 
 func can_present_encounter() -> bool:

@@ -39,3 +39,18 @@ func test_every_listed_venue_exists() -> void:
 	for district in Content.districts():
 		for venue_id in district.venues:
 			assert_not_null(Content.venue(venue_id), "%s lists %s" % [district.id, venue_id])
+
+
+func test_roads_run_both_ways() -> void:
+	for district in Content.districts():
+		for road_id in district.roads:
+			var other := Content.district(road_id)
+			assert_not_null(other, "%s road to %s" % [district.id, road_id])
+			if other != null:
+				assert_true(other.roads.has(district.id), "%s to %s has no road back" % [district.id, road_id])
+
+
+func test_pins_sit_on_the_map() -> void:
+	for district in Content.districts():
+		assert_between(district.map_position.x, 0.05, 0.95, String(district.id))
+		assert_between(district.map_position.y, 0.15, 0.88, String(district.id))
