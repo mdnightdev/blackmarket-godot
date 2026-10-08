@@ -85,7 +85,7 @@ func _test_buyer(temperament: CustomerDef.Temperament) -> CustomerDef:
 
 func test_pool_loads_and_every_customer_is_valid() -> void:
 	var customers := Content.customers()
-	assert_between(customers.size(), 18, 24)
+	assert_between(customers.size(), 36, 48)
 	var categories: Array[StringName] = []
 	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
 		categories.append(item.category)
@@ -193,7 +193,8 @@ func test_order_value_grows_with_rank_and_bulk() -> void:
 		fair_high += Customers.total(CustomerOffers.generate(_run, _test_buyer(CustomerDef.Temperament.FAIR)))
 	assert_gt(fair_high, fair_low)
 	assert_gt(bulk, fair_low)
-	assert_between(fair_low, roundi(CustomerOffers.TOTAL_LOW) * 10, roundi(CustomerOffers.TOTAL_HIGH) * 20)
+	var band: Array = PayScale.BANDS[Tiers.STREET]
+	assert_between(fair_low, roundi(band[0] * CustomerOffers.ORDER_VALUE_PER_PAY) * 10, roundi(band[2] * CustomerOffers.ORDER_VALUE_PER_PAY) * 20)
 
 
 func test_rank_and_phase_gate_customers() -> void:

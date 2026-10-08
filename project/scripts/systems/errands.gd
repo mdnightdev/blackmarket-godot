@@ -20,13 +20,6 @@ const OFFER_PHASES := 4
 const MIN_LEAD_PHASES := 3
 const MAX_LEAD_PHASES := 5
 const COLLECTION_CHANCE := 0.5
-## Pay for a finished errand at the lower ranks: the floor, the usual and the rare big job.
-const PAY_LOW := 2000
-const PAY_USUAL := 3500
-const PAY_HIGH := 9000
-## Pay grows by this share for every street cred rank above FLAT_PAY_RANKS.
-const RANK_PAY_GROWTH := 0.25
-const FLAT_PAY_RANKS := 2
 const PAY_ROUNDING := 100
 ## The player's cut of what a debtor hands over. The rest goes to the Shark.
 const COLLECTION_CUT := 0.4
@@ -42,6 +35,8 @@ static func post(run: RunState) -> Array[Dictionary]:
 	var posted: Array[Dictionary] = []
 	if Campaign.is_over(run) or not POSTING_PHASES.has(run.phase) or run.errand_offers.size() >= MAX_OPEN_OFFERS:
 		return posted
+	if PayScale.outgrown(run, Tiers.STREET):
+		return posted
 	var id := _id_for(Calendar.stamp(run))
 	if not find_offer(run, id).is_empty() or not find(run, id).is_empty():
 		return posted
@@ -54,13 +49,14 @@ static func post(run: RunState) -> Array[Dictionary]:
 
 
 ## The offer for this phase. It comes from the run seed, so a reload cannot reroll it. Empty when no districts fit.
+## The Shark only works the street, so errands stay in street districts.
 static func generate(run: RunState) -> Dictionary:
 	var rng := Odds.rng_for(run, &"errand")
 	var places := _open_districts(run)
 	if places.size() < 2:
 		return {}
 	var stamp := Calendar.stamp(run)
-	var pay := _round_pay(Odds.bell(rng, PAY_LOW, PAY_USUAL, PAY_HIGH) * pay_scale(StreetCred.rank(run)))
+	var pay := _round_pay(PayScale.roll(rng, run, Tiers.STREET))
 	var offer := {
 		"id": _id_for(stamp),
 		"kind": COLLECTION,
@@ -89,10 +85,6 @@ static func generate(run: RunState) -> Dictionary:
 		offer.pickup_district = String(pickup)
 		offer.drop_district = String(_pick(rng, places))
 	return offer
-
-
-static func pay_scale(rank: int) -> float:
-	return 1.0 + RANK_PAY_GROWTH * maxi(0, rank - FLAT_PAY_RANKS)
 
 
 static func can_accept(run: RunState) -> bool:
@@ -294,7 +286,7 @@ static func _id_for(stamp: int) -> String:
 static func _open_districts(run: RunState) -> Array[StringName]:
 	var list: Array[StringName] = []
 	for district in Content.districts():
-		if district.id != run.district_id and not Travel.is_locked(run, district):
+		if district.id != run.district_id and district.tier == Tiers.STREET and not Travel.is_locked(run, district):
 			list.append(district.id)
 	list.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	return list

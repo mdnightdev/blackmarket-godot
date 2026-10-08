@@ -41,7 +41,8 @@ func test_offers_stay_inside_the_pay_range_and_open_districts() -> void:
 	for run_seed in 40:
 		_run.price_seed = run_seed
 		var offer := Errands.generate(_run)
-		assert_between(int(offer.pay), Errands.PAY_LOW, Errands.PAY_HIGH)
+		var band: Array = PayScale.BANDS[Tiers.STREET]
+		assert_between(int(offer.pay), int(band[0]), int(band[2]))
 		assert_eq(int(offer.pay) % Errands.PAY_ROUNDING, 0)
 		assert_between(int(offer.lead), Errands.MIN_LEAD_PHASES, Errands.MAX_LEAD_PHASES)
 		assert_eq(str(offer.sender), String(Loan.LENDER))
@@ -49,13 +50,11 @@ func test_offers_stay_inside_the_pay_range_and_open_districts() -> void:
 		var first := Errands.target_district(offer)
 		assert_ne(first, _run.district_id)
 		assert_false(Travel.is_locked(_run, Content.district(first)))
+		assert_eq(Content.district(first).tier, Tiers.STREET, "the Shark works the street")
 	assert_eq(Errands.generate(_run), Errands.generate(_run), "same seed and phase give the same offer")
 
 
 func test_pay_grows_with_rank() -> void:
-	assert_eq(Errands.pay_scale(1), 1.0)
-	assert_eq(Errands.pay_scale(Errands.FLAT_PAY_RANKS), 1.0)
-	assert_gt(Errands.pay_scale(StreetCred.max_rank()), Errands.pay_scale(Errands.FLAT_PAY_RANKS))
 	var low := 0
 	var high := 0
 	for run_seed in 20:

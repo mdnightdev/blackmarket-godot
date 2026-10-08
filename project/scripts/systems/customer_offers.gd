@@ -12,13 +12,8 @@ const MIN_RUSH_PHASES := 1
 const MAX_RUSH_PHASES := 2
 ## Rush orders pay this much more per unit.
 const RUSH_BONUS := 1.15
-## Order value at the lower ranks before the temperament's size: the floor, the usual and the rare big one.
-const TOTAL_LOW := 3000.0
-const TOTAL_USUAL := 7000.0
-const TOTAL_HIGH := 22000.0
-## Order value grows by this share for every street cred rank above FLAT_SIZE_RANKS.
-const RANK_SIZE_GROWTH := 0.25
-const FLAT_SIZE_RANKS := 2
+## Order value as a multiple of the district's job pay, before the temperament's size. The player keeps the margin.
+const ORDER_VALUE_PER_PAY := 1.75
 const MIN_QUANTITY := 2
 ## Share a haggler knocks off the agreed price at the handover: the floor, the usual and the steep one.
 const HAGGLE_LOW := 0.08
@@ -73,7 +68,7 @@ static func eligible(run: RunState) -> Array[CustomerDef]:
 		var district := Content.district(customer.district_id)
 		if district == null or not customer.posts_in(run.phase) or rank < customer.min_rank or waiting.has(String(customer.id)):
 			continue
-		if Travel.is_locked(run, district):
+		if Travel.is_locked(run, district) or PayScale.outgrown(run, district.tier):
 			continue
 		if customer.temperament == CustomerDef.Temperament.STING and not sting_ready(run, district):
 			continue
@@ -90,15 +85,16 @@ static func sting_ready(run: RunState, district: DistrictDef) -> bool:
 ## Empty when none of the goods they want exist.
 static func generate(run: RunState, customer: CustomerDef) -> Dictionary:
 	var district := Content.district(customer.district_id)
+	var tier := district.tier if district != null else Tiers.STREET
 	var goods: Array[ItemDef] = []
-	for item in Tiers.goods(district.tier if district != null else Tiers.STREET):
+	for item in Tiers.goods(tier):
 		if customer.wants.has(item.category):
 			goods.append(item)
 	if goods.is_empty():
 		return {}
 	var rng := Odds.rng_for(run, StringName("customer:%s" % customer.id))
 	var profile: Dictionary = PROFILES[customer.temperament]
-	var target := Odds.bell(rng, TOTAL_LOW, TOTAL_USUAL, TOTAL_HIGH) * float(profile.size) * size_scale(StreetCred.rank(run))
+	var target := PayScale.roll(rng, run, tier) * ORDER_VALUE_PER_PAY * float(profile.size)
 	var item := _pick_goods(run, rng, goods, target)
 	var street := street_price(run, item)
 	var rush := rng.randf() < float(profile.rush)
@@ -146,10 +142,6 @@ static func street_price(run: RunState, item: ItemDef) -> int:
 ## The most bag slots an order can ask for: the bag now plus the next upgrade.
 static func max_slots(run: RunState) -> int:
 	return Inventory.capacity(run) + Gear.next_capacity_bonus(run)
-
-
-static func size_scale(rank: int) -> float:
-	return 1.0 + RANK_SIZE_GROWTH * maxi(0, rank - FLAT_SIZE_RANKS)
 
 
 ## A random pick among the goods the order value buys at least MIN_QUANTITY of and still fits in max_slots.

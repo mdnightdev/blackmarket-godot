@@ -11,27 +11,25 @@ const PREMIUM_MIN := 1.35
 const PREMIUM_MAX := 1.6
 const LEAD_MIN_PHASES := 2
 const LEAD_MAX_PHASES := 5
-const MIN_QUANTITY := 3
-const MAX_QUANTITY := 8
-## Goods at or above this base price are ordered in smaller lots.
-const EXPENSIVE_PRICE := 1000
-const MIN_EXPENSIVE_QUANTITY := 2
-const MAX_EXPENSIVE_QUANTITY := 4
+const MIN_QUANTITY := 1
+const MAX_QUANTITY := 12
+## Order value as a multiple of the client's district job pay. The player keeps the premium.
+const ORDER_VALUE_PER_PAY := 1.75
 
 
 ## Today's open offers at a bar. Offers come from the run seed, so a reload cannot reroll them.
-## Orders from dealers in districts the player cannot reach yet stay off the board.
+## Only dealers in districts the player can reach place orders.
 static func board(run: RunState, venue_id: StringName) -> Array[Dictionary]:
 	var day_index := run.day - 1
 	var stamp := Calendar.stamp(run)
-	var clients := _clients()
+	var clients := _clients(run)
 	var goods := Content.items(ItemDef.Kind.TRADE_GOOD)
 	var offers: Array[Dictionary] = []
 	if clients.is_empty() or goods.is_empty():
 		return offers
 	for index in POSTED_PER_DAY:
 		var offer := _post(run, venue_id, day_index, index, clients, goods)
-		if int(offer.due) > stamp and not run.taken_orders.has(offer.id) and _client_reachable(run, offer):
+		if int(offer.due) > stamp and not run.taken_orders.has(offer.id):
 			offers.append(offer)
 	return offers
 
@@ -131,17 +129,12 @@ static func sanitize(source: Dictionary) -> Dictionary:
 	}
 
 
-static func _client_reachable(run: RunState, offer: Dictionary) -> bool:
-	var dealer := Content.dealer(StringName(offer.dealer))
-	var district := Content.district(dealer.district_id) if dealer != null else null
-	return district != null and not Travel.is_locked(run, district)
-
-
 ## Resident dealers place orders, since they can always be found at home.
-static func _clients() -> Array[DealerDef]:
+static func _clients(run: RunState) -> Array[DealerDef]:
 	var list: Array[DealerDef] = []
 	for dealer in Content.dealers():
-		if dealer.is_resident():
+		var home := Content.district(dealer.district_id)
+		if dealer.is_resident() and home != null and not Travel.is_locked(run, home):
 			list.append(dealer)
 	list.sort_custom(func(a: DealerDef, b: DealerDef) -> bool: return String(a.id) < String(b.id))
 	return list
@@ -155,9 +148,8 @@ static func _post(run: RunState, venue_id: StringName, day_index: int, index: in
 	if wanted.is_empty():
 		wanted = goods.filter(dealer.deals_in)
 	var item: ItemDef = wanted[rng.randi_range(0, wanted.size() - 1)]
-	var expensive := item.base_price >= EXPENSIVE_PRICE
-	var quantity := rng.randi_range(MIN_EXPENSIVE_QUANTITY, MAX_EXPENSIVE_QUANTITY) if expensive else rng.randi_range(MIN_QUANTITY, MAX_QUANTITY)
 	var price := roundi(item.base_price * dealer.bias_for(item.category) * rng.randf_range(PREMIUM_MIN, PREMIUM_MAX))
+	var quantity := lot_size(PayScale.roll(rng, run, dealer.tier) * ORDER_VALUE_PER_PAY, price, MIN_QUANTITY, MAX_QUANTITY)
 	return {
 		"id": "%s:%d:%d" % [venue_id, day_index, index],
 		"venue": String(venue_id),
@@ -167,3 +159,8 @@ static func _post(run: RunState, venue_id: StringName, day_index: int, index: in
 		"price": maxi(1, price),
 		"due": day_index * RunState.Phase.size() + rng.randi_range(LEAD_MIN_PHASES, LEAD_MAX_PHASES),
 	}
+
+
+## How many units a job of this value asks for at the unit price.
+static func lot_size(value: float, unit_price: int, least: int, most: int) -> int:
+	return clampi(roundi(value / maxi(1, unit_price)), least, most)

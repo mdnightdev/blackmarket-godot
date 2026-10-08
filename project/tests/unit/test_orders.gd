@@ -24,6 +24,16 @@ func test_board_posts_offers_from_resident_dealers() -> void:
 		assert_gt(int(offer.due), Calendar.stamp(_run))
 
 
+func test_only_reachable_dealers_place_orders() -> void:
+	for seed in 20:
+		_run.price_seed = seed
+		var offers := Orders.board(_run, BAR)
+		assert_gt(offers.size(), 0, "seed %d leaves the board empty" % seed)
+		for offer in offers:
+			var dealer := Content.dealer(StringName(offer.dealer))
+			assert_false(Travel.is_locked(_run, Content.district(dealer.district_id)), offer.id)
+
+
 func test_board_is_stable_after_reload() -> void:
 	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
 	assert_eq(Orders.board(restored, BAR), Orders.board(_run, BAR))
