@@ -2,11 +2,12 @@ extends Control
 
 const MAP_PIN := preload("res://ui/components/map_pin.tscn")
 const ROUTE_SECONDS := 1.1
-const ROUTE_SAMPLES := 32
-const ROUTE_BEND := 0.22
+const EXTRA_ROAD_SECONDS := 0.45
 const CAMERA_GLIDE_SECONDS := 0.4
 const LOCKED_PIN_ALPHA := 0.45
 const BOOKED_TRIP_DELAY_SECONDS := 0.7
+const LAPSE_PHASE_SECONDS := 0.6
+const LAPSE_DIM := Color(0.45, 0.42, 0.5)
 const OPEN_ROAD_COLOR := Color(Palette.PEACH, 0.55)
 const LOCKED_ROAD_COLOR := Color(Palette.TEXT_MUTED, 0.2)
 
@@ -105,13 +106,13 @@ func _on_travel_requested(destination: DistrictDef, walking := false) -> void:
 	if Roadblocks.stops_crate(GameState.run, destination):
 		_input_blocker.hide()
 		_district_sheet.close()
-		RoadblockTalk.open(destination, _travel)
+		RoadblockTalk.open(destination, _travel, _wait_out_roadblock)
 		return
 	_travel(destination, false, walking)
 
 
 func _travel(destination: DistrictDef, through_roadblock: bool, walking := false) -> void:
-	var origin := GameState.current_district().map_position
+	var origin := GameState.current_district()
 	var result := GameState.push_through_roadblock(destination) if through_roadblock \
 		else GameState.travel_to(destination, walking)
 	if result != Travel.Check.OK:
@@ -121,28 +122,67 @@ func _travel(destination: DistrictDef, through_roadblock: bool, walking := false
 	GameState.clock_active = false
 	_input_blocker.show()
 	_district_sheet.close()
-	await _city_view.glide_to((origin + destination.map_position) / 2.0, CityView.MIN_ZOOM, CAMERA_GLIDE_SECONDS).finished
-	await _animate_route(_city_view.map_to_view(origin), _city_view.map_to_view(destination.map_position))
+	var middle := (origin.map_position + destination.map_position) / 2.0
+	await _city_view.glide_to(middle, CityView.MIN_ZOOM, CAMERA_GLIDE_SECONDS).finished
+	await _animate_route(_road_points(origin, destination))
 	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 
 
-func _animate_route(from: Vector2, to: Vector2) -> void:
-	var bend_point := (from + to) / 2.0 + (to - from).orthogonal() * ROUTE_BEND
+## Passes the time until the roadblock lifts while the map dims and brightens once for every phase.
+func _wait_out_roadblock(destination: DistrictDef) -> void:
+	var run := GameState.run
+	var start := Calendar.stamp(run)
+	_input_blocker.show()
+	var open := GameState.wait_out_roadblock(destination.id)
+	var tween := create_tween().set_trans(Tween.TRANS_SINE)
+	for stamp in range(start + 1, Calendar.stamp(run) + 1):
+		tween.tween_callback(_location_label.set_text.bind("Lying low. %s" % Calendar.describe(stamp)))
+		tween.tween_property(_city_view, "modulate", LAPSE_DIM, LAPSE_PHASE_SECONDS / 2.0)
+		tween.tween_property(_city_view, "modulate", Color.WHITE, LAPSE_PHASE_SECONDS / 2.0)
+	tween.tween_interval(0.0)
+	await tween.finished
+	_location_label.text = "You are in %s" % GameState.current_district().display_name
+	_input_blocker.hide()
+	if open and not Encounters.has_pending(run):
+		_travel(destination, false)
+
+
+## The shortest road path between the districts, or a straight line when no short road path exists.
+func _road_points(origin: DistrictDef, destination: DistrictDef) -> PackedVector2Array:
+	var shortest: Array = [destination.id]
+	for path in Routes.paths(origin.id, destination.id):
+		if shortest.size() == 1 or path.size() < shortest.size():
+			shortest = path
+	var points := PackedVector2Array([_city_view.map_to_view(origin.map_position)])
+	for stop: StringName in shortest:
+		points.append(_city_view.map_to_view(Content.district(stop).map_position))
+	return points
+
+
+func _animate_route(points: PackedVector2Array) -> void:
+	var length := 0.0
+	for index in range(1, points.size()):
+		length += points[index - 1].distance_to(points[index])
+	var roads := points.size() - 1
 	_route.clear_points()
 	_traveller.show()
 	var tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_method(_draw_route.bind(from, bend_point, to), 0.0, 1.0, ROUTE_SECONDS)
+	tween.tween_method(_draw_route.bind(points, length), 0.0, 1.0, ROUTE_SECONDS + EXTRA_ROAD_SECONDS * (roads - 1))
 	await tween.finished
 
 
-func _draw_route(progress: float, from: Vector2, bend_point: Vector2, to: Vector2) -> void:
-	var points := PackedVector2Array()
-	var steps := maxi(1, ceili(ROUTE_SAMPLES * progress))
-	for step in steps + 1:
-		var t := progress * step / steps
-		points.append(from.lerp(bend_point, t).lerp(bend_point.lerp(to, t), t))
-	_route.points = points
-	_traveller.position = points[points.size() - 1] - _traveller.size / 2.0
+func _draw_route(progress: float, points: PackedVector2Array, length: float) -> void:
+	var remaining := length * progress
+	var drawn := PackedVector2Array([points[0]])
+	for index in range(1, points.size()):
+		var leg := points[index - 1].distance_to(points[index])
+		if remaining < leg:
+			drawn.append(points[index - 1].lerp(points[index], remaining / leg))
+			break
+		remaining -= leg
+		drawn.append(points[index])
+	_route.points = drawn
+	_traveller.position = drawn[drawn.size() - 1] - _traveller.size / 2.0
 
 
 func _return_to_district() -> void:

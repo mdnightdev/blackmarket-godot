@@ -2,7 +2,7 @@ class_name RoadblockTalk
 
 ## Asks what to do about a roadblock on the way into a district while carrying a crate: risk the search,
 ## lie low until it lifts or take a detour. on_travel is called with the district to drive to and whether the
-## player is pushing through the roadblock.
+## player is pushing through the roadblock, on_wait with the blocked district.
 
 const PUSH: StringName = &"push"
 const WAIT: StringName = &"wait"
@@ -10,7 +10,7 @@ const DETOUR: StringName = &"detour"
 const BACK: StringName = &"back"
 
 
-static func open(destination: DistrictDef, on_travel: Callable) -> void:
+static func open(destination: DistrictDef, on_travel: Callable, on_wait: Callable) -> void:
 	var run := GameState.run
 	var player := Content.player(run.player_id)
 	var detour := Roadblocks.detour(run, destination)
@@ -25,17 +25,16 @@ static func open(destination: DistrictDef, on_travel: Callable) -> void:
 	var lifts := "It lifts at %s." % Roadblocks.clears_at(run, destination.id) if Routes.has_recon(run) \
 		else "Nobody knows how long it stays up."
 	var due := "The crate is due by %s." % Calendar.describe(int(run.crate.due)).to_lower()
-	GameOverlay.talk(player, line, choices, _on_choice.bind(destination, detour, on_travel), "%s %s" % [lifts, due])
+	GameOverlay.talk(player, line, choices, _on_choice.bind(destination, detour, on_travel, on_wait), "%s %s" % [lifts, due])
 
 
-static func _on_choice(choice: StringName, destination: DistrictDef, detour: Array[StringName], on_travel: Callable) -> void:
+static func _on_choice(choice: StringName, destination: DistrictDef, detour: Array[StringName], on_travel: Callable, on_wait: Callable) -> void:
 	GameOverlay.end_talk()
 	match choice:
 		PUSH:
 			on_travel.call(destination, true)
 		WAIT:
-			if GameState.wait_out_roadblock(destination.id) and not Encounters.has_pending(GameState.run):
-				on_travel.call(destination, false)
+			on_wait.call(destination)
 		DETOUR:
 			if Smuggling.reroute(GameState.run, detour):
 				on_travel.call(Content.district(detour[0]), false)
