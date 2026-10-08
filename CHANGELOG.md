@@ -2,6 +2,21 @@
 
 All notable changes to BLACK MARKET are listed here. Versions follow [Semantic Versioning](https://semver.org/), and the format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.17.0] - 2026-10-08
+
+### Added
+- Profile page under Menu: your portrait, rank, cash, debt, net worth, heat and progress to the next street cred rank, with links to the bag, journal and settings.
+- Journal: the Jobs page has Active, Completed and Failed tabs, so you can see every job you finished or lost.
+- Bag tabs for All, Goods and Gear, with a capacity bar.
+- Walking: when you can't afford the fare you can walk to a district for free. It uses most of the phase.
+- Sell from the bag: tap a good to sell it to the best paying dealer in your district.
+- Dealers talk before trading. Ask what they pay best for today, then trade or walk on.
+
+### Changed
+- Lighter buttons: smaller text, rounder corners and an outlined style for secondary actions.
+- Conversations put their choices in a compact column beside the portrait.
+- Settings is split into Audio and Gameplay and has a Done button.
+
 ## [0.16.0] - 2026-10-08
 
 ### Added
