@@ -2,6 +2,23 @@
 
 All notable changes to BLACK MARKET are listed here. Versions follow [Semantic Versioning](https://semver.org/), and the format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Money tiers. Goods, districts and dealers are street, middle class or wealthy. Dealers trade their own tier and the one below, and wealthy dealers turn down cheap goods.
+- Four new districts: West End and Riverside open at rank 4, The Heights and Golden Mile at rank 7 with power. Each has its own dealers, customers and venues.
+- Over 50 new middle class and wealthy goods, from ECU chips to old master paintings.
+- Military goods worth $650k to $3.5M, from fighter jets to a nuclear warhead. Only Hugo Lindqvist sells them, and only to a Boss or higher.
+- Phone jobs. Bar orders, family deliveries and Voronin's crates ring your phone, sometimes with a twist: rush, hot, fragile or a big client.
+- Buy out the Shark for $300,000 once your debt is clear. He walks with you as free muscle, and his desk becomes yours for lending to dealers.
+
+### Changed
+- Job pay follows the district's tier and your rank: street jobs pay $2k to $10k, middle class $10k to $40k, wealthy $50k to $250k. Street jobs stop calling once you outgrow them.
+- Dealers and job givers talk like their tier: rough on the street, polished and impatient uptown.
+
+### Fixed
+- Bar boards no longer come up empty when most clients live in districts you can't reach yet.
+
 ## [0.17.0] - 2026-10-08
 
 ### Added
