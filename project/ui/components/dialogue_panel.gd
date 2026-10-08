@@ -1,7 +1,7 @@
 class_name DialoguePanel
 extends Control
 
-const CHOICE_HEIGHT := 48
+const CHOICE_HEIGHT := 44
 const OPEN_SECONDS := 0.28
 const CLOSE_SECONDS := 0.18
 const SLIDE_PIXELS := 60.0

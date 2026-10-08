@@ -124,7 +124,7 @@ func _build_people_strip() -> void:
 	for dealer in Roster.dealers_at(run, run.district_id, stamp):
 		var role := "DEALER" if dealer.is_resident() else "VISITING"
 		var chip := _add_person_chip(dealer.portrait, dealer.display_name, role, Palette.RISK_LOW)
-		chip.pressed.connect(_trade_with.bind(dealer))
+		chip.pressed.connect(DealerTalk.talk_to.bind(dealer))
 	for character in Roster.characters_at(run, run.district_id, stamp):
 		var color: Color = ROLE_COLORS.get(character.role, Palette.TEXT_MUTED)
 		var chip := _add_person_chip(character.portrait, character.display_name, character.role_name().to_upper(), color)
@@ -137,11 +137,6 @@ func _add_person_chip(portrait: Texture2D, display_name: String, role: String, r
 	_people_list.add_child(chip)
 	chip.display(portrait, display_name, role, role_color)
 	return chip
-
-
-func _trade_with(dealer: DealerDef) -> void:
-	GameState.trading_with = dealer.id
-	SceneRouter.go_to(SceneRouter.MARKET_SCREEN)
 
 
 ## The market is left out because the nav bar already opens it.
