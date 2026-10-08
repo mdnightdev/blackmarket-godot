@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwn6rxyi06c27"
-path="res://.godot/imported/bar_tran.jpg-2a30fbba397f58598bf2c95366192515.ctex"
+path.s3tc="res://.godot/imported/bar_tran.jpg-2a30fbba397f58598bf2c95366192515.s3tc.ctex"
+path.etc2="res://.godot/imported/bar_tran.jpg-2a30fbba397f58598bf2c95366192515.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/backgrounds/venues/bar_tran.jpg"
-dest_files=["res://.godot/imported/bar_tran.jpg-2a30fbba397f58598bf2c95366192515.ctex"]
+dest_files=["res://.godot/imported/bar_tran.jpg-2a30fbba397f58598bf2c95366192515.s3tc.ctex", "res://.godot/imported/bar_tran.jpg-2a30fbba397f58598bf2c95366192515.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

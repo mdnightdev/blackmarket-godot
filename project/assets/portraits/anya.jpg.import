@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://xkj15s05a7lj"
-path="res://.godot/imported/anya.jpg-aa01f0ca73e2bf3c14e4b9e4ff58bc8a.ctex"
+path.s3tc="res://.godot/imported/anya.jpg-aa01f0ca73e2bf3c14e4b9e4ff58bc8a.s3tc.ctex"
+path.etc2="res://.godot/imported/anya.jpg-aa01f0ca73e2bf3c14e4b9e4ff58bc8a.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/portraits/anya.jpg"
-dest_files=["res://.godot/imported/anya.jpg-aa01f0ca73e2bf3c14e4b9e4ff58bc8a.ctex"]
+dest_files=["res://.godot/imported/anya.jpg-aa01f0ca73e2bf3c14e4b9e4ff58bc8a.s3tc.ctex", "res://.godot/imported/anya.jpg-aa01f0ca73e2bf3c14e4b9e4ff58bc8a.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

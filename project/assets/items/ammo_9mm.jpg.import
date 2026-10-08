@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://du6r0uns56ebc"
-path="res://.godot/imported/ammo_9mm.jpg-f2763d9101c12bebf8f4acdab116eeee.ctex"
+path.s3tc="res://.godot/imported/ammo_9mm.jpg-f2763d9101c12bebf8f4acdab116eeee.s3tc.ctex"
+path.etc2="res://.godot/imported/ammo_9mm.jpg-f2763d9101c12bebf8f4acdab116eeee.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/items/ammo_9mm.jpg"
-dest_files=["res://.godot/imported/ammo_9mm.jpg-f2763d9101c12bebf8f4acdab116eeee.ctex"]
+dest_files=["res://.godot/imported/ammo_9mm.jpg-f2763d9101c12bebf8f4acdab116eeee.s3tc.ctex", "res://.godot/imported/ammo_9mm.jpg-f2763d9101c12bebf8f4acdab116eeee.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

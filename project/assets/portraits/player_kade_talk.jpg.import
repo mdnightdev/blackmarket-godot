@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://y5jiasqcggja"
-path="res://.godot/imported/player_kade_talk.jpg-ad55b81087697d09b35b9ef3195db030.ctex"
+path.s3tc="res://.godot/imported/player_kade_talk.jpg-ad55b81087697d09b35b9ef3195db030.s3tc.ctex"
+path.etc2="res://.godot/imported/player_kade_talk.jpg-ad55b81087697d09b35b9ef3195db030.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/portraits/player_kade_talk.jpg"
-dest_files=["res://.godot/imported/player_kade_talk.jpg-ad55b81087697d09b35b9ef3195db030.ctex"]
+dest_files=["res://.godot/imported/player_kade_talk.jpg-ad55b81087697d09b35b9ef3195db030.s3tc.ctex", "res://.godot/imported/player_kade_talk.jpg-ad55b81087697d09b35b9ef3195db030.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

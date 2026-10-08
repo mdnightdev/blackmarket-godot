@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dd4pfka88mixy"
-path="res://.godot/imported/nadia_talk.jpg-3fc33435230ea7bed20b44662809e79a.ctex"
+path.s3tc="res://.godot/imported/nadia_talk.jpg-3fc33435230ea7bed20b44662809e79a.s3tc.ctex"
+path.etc2="res://.godot/imported/nadia_talk.jpg-3fc33435230ea7bed20b44662809e79a.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/portraits/nadia_talk.jpg"
-dest_files=["res://.godot/imported/nadia_talk.jpg-3fc33435230ea7bed20b44662809e79a.ctex"]
+dest_files=["res://.godot/imported/nadia_talk.jpg-3fc33435230ea7bed20b44662809e79a.s3tc.ctex", "res://.godot/imported/nadia_talk.jpg-3fc33435230ea7bed20b44662809e79a.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

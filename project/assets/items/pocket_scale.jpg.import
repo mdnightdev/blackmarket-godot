@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://06v7e2m0nbwh"
-path="res://.godot/imported/pocket_scale.jpg-388670a35b3aad366bd290b801cd4f8b.ctex"
+path.s3tc="res://.godot/imported/pocket_scale.jpg-388670a35b3aad366bd290b801cd4f8b.s3tc.ctex"
+path.etc2="res://.godot/imported/pocket_scale.jpg-388670a35b3aad366bd290b801cd4f8b.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/items/pocket_scale.jpg"
-dest_files=["res://.godot/imported/pocket_scale.jpg-388670a35b3aad366bd290b801cd4f8b.ctex"]
+dest_files=["res://.godot/imported/pocket_scale.jpg-388670a35b3aad366bd290b801cd4f8b.s3tc.ctex", "res://.godot/imported/pocket_scale.jpg-388670a35b3aad366bd290b801cd4f8b.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnsiticivjnr0"
-path="res://.godot/imported/player_sasha.jpg-776983b6e871f3e99ebf5f50bc5aea11.ctex"
+path.s3tc="res://.godot/imported/player_sasha.jpg-776983b6e871f3e99ebf5f50bc5aea11.s3tc.ctex"
+path.etc2="res://.godot/imported/player_sasha.jpg-776983b6e871f3e99ebf5f50bc5aea11.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/portraits/player_sasha.jpg"
-dest_files=["res://.godot/imported/player_sasha.jpg-776983b6e871f3e99ebf5f50bc5aea11.ctex"]
+dest_files=["res://.godot/imported/player_sasha.jpg-776983b6e871f3e99ebf5f50bc5aea11.s3tc.ctex", "res://.godot/imported/player_sasha.jpg-776983b6e871f3e99ebf5f50bc5aea11.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

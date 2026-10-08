@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hq80r1kbai1t"
-path="res://.godot/imported/rival_talk.jpg-4127220db4ea11360ea2f18a5e993511.ctex"
+path.s3tc="res://.godot/imported/rival_talk.jpg-4127220db4ea11360ea2f18a5e993511.s3tc.ctex"
+path.etc2="res://.godot/imported/rival_talk.jpg-4127220db4ea11360ea2f18a5e993511.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/portraits/rival_talk.jpg"
-dest_files=["res://.godot/imported/rival_talk.jpg-4127220db4ea11360ea2f18a5e993511.ctex"]
+dest_files=["res://.godot/imported/rival_talk.jpg-4127220db4ea11360ea2f18a5e993511.s3tc.ctex", "res://.godot/imported/rival_talk.jpg-4127220db4ea11360ea2f18a5e993511.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

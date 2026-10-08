@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d4h5bc386u1gr"
-path="res://.godot/imported/sealed_crate.jpg-a565a92cf9e870c752902aa31c1cd3df.ctex"
+path.s3tc="res://.godot/imported/sealed_crate.jpg-a565a92cf9e870c752902aa31c1cd3df.s3tc.ctex"
+path.etc2="res://.godot/imported/sealed_crate.jpg-a565a92cf9e870c752902aa31c1cd3df.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/items/sealed_crate.jpg"
-dest_files=["res://.godot/imported/sealed_crate.jpg-a565a92cf9e870c752902aa31c1cd3df.ctex"]
+dest_files=["res://.godot/imported/sealed_crate.jpg-a565a92cf9e870c752902aa31c1cd3df.s3tc.ctex", "res://.godot/imported/sealed_crate.jpg-a565a92cf9e870c752902aa31c1cd3df.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

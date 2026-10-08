@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://gwn8mrwviuuu"
-path="res://.godot/imported/informant.jpg-c659d305a28c4c04d251963f2708a0e8.ctex"
+path.s3tc="res://.godot/imported/informant.jpg-c659d305a28c4c04d251963f2708a0e8.s3tc.ctex"
+path.etc2="res://.godot/imported/informant.jpg-c659d305a28c4c04d251963f2708a0e8.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/portraits/informant.jpg"
-dest_files=["res://.godot/imported/informant.jpg-c659d305a28c4c04d251963f2708a0e8.ctex"]
+dest_files=["res://.godot/imported/informant.jpg-c659d305a28c4c04d251963f2708a0e8.s3tc.ctex", "res://.godot/imported/informant.jpg-c659d305a28c4c04d251963f2708a0e8.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
