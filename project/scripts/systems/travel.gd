@@ -2,6 +2,8 @@ class_name Travel
 
 enum Check { OK, ALREADY_HERE, NOT_ENOUGH_CASH, LOCKED }
 
+const TRIP_SECONDS := 60.0
+
 
 static func fare(run: RunState, destination: DistrictDef) -> int:
 	return roundi(destination.travel_cost * (1.0 - Gear.fare_discount(run)))
@@ -31,9 +33,15 @@ static func lock_reason(run: RunState, destination: DistrictDef) -> String:
 	return "Needs %s" % " and ".join(needs) if not needs.is_empty() else ""
 
 
-## Pays the fare, moves the player and spends one phase. Returns true when a new day started.
+## Pays the fare, moves the player and spends TRIP_SECONDS of the phase clock.
+## Returns the seconds the trip ran past the end of the phase, 0 when it did not.
 ## Callers must confirm check() returned OK first.
-static func travel(run: RunState, destination: DistrictDef) -> bool:
+static func travel(run: RunState, destination: DistrictDef) -> float:
 	run.cash -= fare(run, destination)
 	run.district_id = destination.id
-	return Calendar.advance_phase(run)
+	run.phase_seconds_left -= TRIP_SECONDS
+	if run.phase_seconds_left > 0.0:
+		return 0.0
+	var overrun := -run.phase_seconds_left
+	run.phase_seconds_left = 0.0
+	return overrun

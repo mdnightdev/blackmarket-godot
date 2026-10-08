@@ -20,6 +20,10 @@ func show_job(icon: Texture2D, title: String, pay: String, caption: String, hint
 	_title_label.text = title
 	_caption_label.text = caption
 	_pay_label.text = pay
+	set_hint(hint, hint_color)
+
+
+func set_hint(hint: String, hint_color := Color.TRANSPARENT) -> void:
 	_hint_label.text = hint
 	_hint_label.visible = not hint.is_empty()
 	if hint_color.a > 0.0:

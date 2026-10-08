@@ -22,6 +22,12 @@ static func money_short(amount: int) -> String:
 	return prefix + _one_decimal(size / 1_000_000.0) + "M"
 
 
+## Countdown form of a duration, for example 4:05.
+static func clock(seconds: float) -> String:
+	var whole := maxi(0, ceili(seconds))
+	return "%d:%02d" % [floori(whole / 60.0), whole % 60]
+
+
 static func _one_decimal(value: float) -> String:
 	var text := "%.1f" % (floorf(value * 10.0) / 10.0)
 	return text.trim_suffix(".0")

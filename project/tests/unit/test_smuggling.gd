@@ -90,7 +90,7 @@ func test_police_take_the_crate_first_when_you_comply() -> void:
 
 func test_a_raid_takes_the_crate_too() -> void:
 	Smuggling.accept(_run, _first_offer())
-	Police.raid(_run)
+	Police.arrest(_run)
 	assert_false(Smuggling.is_carrying(_run))
 
 

@@ -18,15 +18,35 @@ func _choice_ids() -> Array[StringName]:
 
 
 func test_max_heat_on_arrival_triggers_a_raid() -> void:
+	_run.day = Police.GRACE_DAYS + 1
 	Inventory.add_units(_run, _phones.id, 5)
 	_run.heat = Heat.MAX - 1
 	Encounters.after_time_passes(_run, false, true, RandomNumberGenerator.new(), _no_events)
 	assert_eq(_run.pending_encounter.type, Encounters.RAID)
-	assert_eq(Inventory.used(_run), 0)
-	assert_eq(_run.heat, Police.RAID_HEAT_AFTER)
+	assert_eq(Inventory.count(_run, _phones.id), 2)
+	assert_eq(_run.heat, Police.HEAT_AFTER_ARREST)
+
+
+func test_no_raid_or_stop_while_the_police_are_quiet() -> void:
+	Inventory.add_units(_run, _phones.id, 20)
+	_run.heat = Heat.MAX
+	Encounters.check_raid(_run)
+	assert_false(Encounters.has_pending(_run), "grace period")
+	_run.day = Police.GRACE_DAYS + 1
+	Police.arrest(_run)
+	_run.heat = Heat.MAX
+	var rng := RandomNumberGenerator.new()
+	for attempt in 50:
+		rng.seed = attempt
+		Encounters.after_time_passes(_run, false, true, rng, _no_events)
+		assert_ne(_run.pending_encounter.get("type"), Encounters.POLICE)
+		assert_ne(_run.pending_encounter.get("type"), Encounters.RAID)
+		_run.pending_encounter = {}
+		_run.heat = Heat.MAX
 
 
 func test_check_raid_only_at_max_heat() -> void:
+	_run.day = Police.GRACE_DAYS + 1
 	_run.heat = Heat.MAX - 1
 	Encounters.check_raid(_run)
 	assert_false(Encounters.has_pending(_run))
@@ -35,10 +55,43 @@ func test_check_raid_only_at_max_heat() -> void:
 	assert_eq(_run.pending_encounter.type, Encounters.RAID)
 
 
-func test_police_stop_offers_three_choices() -> void:
+func test_police_stop_offers_four_choices() -> void:
 	Inventory.add_units(_run, _phones.id, 5)
 	_run.pending_encounter = Encounters.police_stop(_run)
-	assert_eq(_choice_ids(), [Encounters.BRIBE, Encounters.RUN, Encounters.COMPLY])
+	assert_eq(_choice_ids(), [Encounters.BRIBE, Encounters.RUN, Encounters.COMPLY, Encounters.JAIL])
+
+
+func test_jail_keeps_everything_and_locks_the_player_up() -> void:
+	Inventory.add_units(_run, _phones.id, 5)
+	_run.heat = 70
+	_run.pending_encounter = Encounters.police_stop(_run)
+	assert_ne(Encounters.resolve(_run, Encounters.JAIL, 0.5), "")
+	assert_eq(Inventory.count(_run, _phones.id), 5)
+	assert_eq(_run.cash, RunState.STARTING_CASH)
+	assert_eq(_run.heat, 70)
+	assert_true(Police.is_jailed(_run))
+
+
+func test_jail_time_runs_out_and_survives_a_save() -> void:
+	Police.go_to_jail(_run)
+	assert_false(Police.serve_time(_run, Police.JAIL_SECONDS - 1.0))
+	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
+	assert_almost_eq(restored.jail_seconds_left, 1.0, 0.001)
+	assert_true(Police.serve_time(restored, 2.0))
+	assert_false(Police.is_jailed(restored))
+	assert_false(Police.serve_time(restored, 1.0), "only the release tick reports true")
+
+
+func test_nothing_finds_the_player_in_a_cell() -> void:
+	_run.day = Police.GRACE_DAYS + 1
+	Inventory.add_units(_run, _phones.id, 20)
+	Police.go_to_jail(_run)
+	var rng := RandomNumberGenerator.new()
+	for attempt in 50:
+		rng.seed = attempt
+		_run.heat = 90
+		Encounters.after_time_passes(_run, false, false, rng, Content.events())
+		assert_false(Encounters.has_pending(_run))
 
 
 func test_bribe_pays_and_clears_the_stop() -> void:

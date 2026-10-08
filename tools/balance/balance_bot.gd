@@ -152,11 +152,15 @@ func _pass_phase(run: RunState, destination_id: StringName) -> void:
 	else:
 		var destination: DistrictDef = _content.district(destination_id)
 		var fare := Travel.fare(run, destination)
+		var stamp_before := Calendar.stamp(run)
 		if _game_state.travel_to(destination) == Travel.Check.OK:
 			travelled = true
 			_add(&"travel fares", -fare)
 			cash_before -= fare
 			_count(&"trips")
+			if Calendar.stamp(run) == stamp_before:
+				_resolve_pending(run)
+				_game_state.advance_phase()
 		else:
 			_game_state.advance_phase()
 	_add(&"loan interest", debt_before - run.debt)

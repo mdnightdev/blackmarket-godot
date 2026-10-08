@@ -513,6 +513,18 @@ func _capture_phase_four(dealer: Resource) -> void:
 	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
 	await _wait(0.6)
 
+	run.stop_stamp = -1
+	run.pending_encounter = Encounters.police_stop(run)
+	await _wait(2.4)
+	dialogue.get_node("%ChoiceList").get_child(3).pressed.emit()
+	await _wait(3.2)
+	await _capture("14c_jail_result")
+	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
+	await _wait(1.0)
+	await _capture("14d_jail_card")
+	run.jail_seconds_left = 0.0
+	await _wait(0.4)
+
 	await _open(_router.MARKET_SCREEN, "15_market_news")
 
 	run.district_id = &"downtown"
@@ -559,6 +571,8 @@ func _capture_career() -> void:
 	_game_state.buy_business(_content.business(&"corner_shop"), &"old_market")
 	_game_state.buy(_content.item(&"burner_phones"), 10, 90)
 	_game_state.stock_business(run.businesses[0])
+	_game_state.buy(_content.item(&"burner_phones"), 4, 90)
+	run.orders.append({ "id": "capture:0:0", "venue": "tran_bar", "dealer": "wei", "item": "burner_phones", "quantity": 4, "price": 160, "due": Calendar.stamp(run) + 2 })
 	await _open(_router.DISTRICT_SCREEN, "96_career_district")
 
 	overlay.open_turf()

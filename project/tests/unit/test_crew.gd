@@ -243,3 +243,60 @@ func test_crew_survives_a_save() -> void:
 	assert_true(Crew.has(restored, LOOKOUT))
 	assert_eq(Crew.daily_wages(restored), Crew.daily_wages(_run))
 	assert_false(Crew.can_warn_of_raid(restored))
+
+
+func test_every_role_lists_its_effects_in_numbers() -> void:
+	assert_eq(Crew.effects(Content.crew_role(RUNNER)), "+15 bag slots, delivers 1 job a phase")
+	for role in Content.crew_roles():
+		assert_false(Crew.effects(role).is_empty(), String(role.id))
+
+
+func _take_order(quantity: int) -> Dictionary:
+	var order := {
+		"id": "test:0:0", "venue": "", "dealer": "wei", "item": "burner_phones",
+		"quantity": quantity, "price": 200, "due": Calendar.stamp(_run) + 2,
+	}
+	_run.orders.append(order)
+	Inventory.add_units(_run, &"burner_phones", quantity)
+	return order
+
+
+func test_runner_delivers_once_a_phase_without_heat() -> void:
+	var order := _take_order(4)
+	assert_eq(Crew.send_runner(_run, order), 0, "no runner hired yet")
+	Crew.hire(_run, RUNNER)
+	var cash := _run.cash
+	assert_eq(Crew.send_runner(_run, order), 800)
+	assert_eq(_run.cash, cash + 800)
+	assert_eq(_run.heat, 0)
+	assert_true(_run.orders.is_empty())
+	assert_false(Crew.runner_ready(_run))
+	var second := _take_order(2)
+	assert_eq(Crew.send_runner(_run, second), 0, "one run a phase")
+	Calendar.advance_phase(_run)
+	assert_eq(Crew.send_runner(_run, second), 400)
+
+
+func test_morning_report_counts_what_the_crew_did() -> void:
+	assert_eq(Crew.report_line(_run), "")
+	Crew.use_runner(_run, 900)
+	Crew.use_runner(_run, 300)
+	Crew.note(_run, Crew.HEAT_SAVED, 7)
+	assert_eq(Crew.report_line(_run), "Yesterday your runner made 2 deliveries worth $1,200, your driver kept 7 heat off you.")
+
+
+func test_driver_logs_the_travel_heat_saved() -> void:
+	Inventory.add_units(_run, &"street_meds", 15)
+	var heat := Heat.for_travel(_run)
+	Crew.hire(_run, DRIVER)
+	Heat.add_for_travel(_run)
+	assert_eq(_run.heat, 0)
+	assert_eq(int(_run.crew_report.get(Crew.HEAT_SAVED, 0)), heat)
+
+
+func test_crew_report_and_runner_survive_a_save() -> void:
+	Crew.hire(_run, RUNNER)
+	Crew.use_runner(_run, 500)
+	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
+	assert_eq(restored.crew_report, _run.crew_report)
+	assert_false(Crew.runner_ready(restored))

@@ -41,12 +41,14 @@ func test_escape_keeps_goods_and_adds_heat() -> void:
 	assert_eq(_run.heat, Police.ESCAPED_HEAT)
 
 
-func test_getting_caught_empties_the_bag() -> void:
-	Trade.buy(_run, _phones, 3, 100)
+func test_getting_caught_takes_half_the_bag_and_keeps_the_cash() -> void:
+	Trade.buy(_run, _phones, 4, 100)
+	var cash := _run.cash
+	_run.heat = 80
 	assert_false(Police.run_for_it(_run, 0.99))
-	assert_eq(Inventory.used(_run), 0)
-	assert_false(_run.cost_basis.has(_phones.id))
-	assert_eq(_run.heat, Police.CAUGHT_HEAT)
+	assert_eq(Inventory.count(_run, _phones.id), 2)
+	assert_eq(_run.cash, cash)
+	assert_eq(_run.heat, Police.HEAT_AFTER_ARREST)
 	assert_eq(_run.busts, 1)
 
 
@@ -93,12 +95,33 @@ func test_escape_odds_never_drop_below_the_floor() -> void:
 	assert_eq(Police.escape_chance(_run), Police.MIN_ESCAPE_CHANCE)
 
 
-func test_raid_takes_the_bag_but_not_the_stash() -> void:
+func test_arrest_takes_half_of_each_stack_rounded_up_but_not_the_stash() -> void:
 	_run.heat = Heat.MAX
 	Inventory.add_units(_run, _phones.id, 5)
+	Inventory.add_units(_run, _papers.id, 1)
 	_run.stash[_papers.id] = 2
-	Police.raid(_run)
-	assert_eq(Inventory.used(_run), 0)
+	_run.stashed_cash = 500
+	Police.arrest(_run)
+	assert_eq(Inventory.count(_run, _phones.id), 2)
+	assert_eq(Inventory.count(_run, _papers.id), 0)
 	assert_eq(Inventory.stashed(_run, _papers.id), 2)
-	assert_eq(_run.heat, Police.RAID_HEAT_AFTER)
+	assert_eq(_run.stashed_cash, 500)
+	assert_eq(_run.heat, Police.HEAT_AFTER_ARREST)
 	assert_eq(_run.busts, 1)
+
+
+func test_police_stay_away_during_the_first_days() -> void:
+	_run.day = Police.GRACE_DAYS
+	assert_true(Police.is_quiet(_run))
+	_run.day = Police.GRACE_DAYS + 1
+	assert_false(Police.is_quiet(_run))
+
+
+func test_police_stay_away_for_a_full_day_after_an_arrest() -> void:
+	_run.day = Police.GRACE_DAYS + 1
+	Police.arrest(_run)
+	for phase in Police.QUIET_PHASES_AFTER_ARREST:
+		Calendar.advance_phase(_run)
+		assert_true(Police.is_quiet(_run))
+	Calendar.advance_phase(_run)
+	assert_false(Police.is_quiet(_run))

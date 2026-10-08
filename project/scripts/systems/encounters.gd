@@ -11,6 +11,7 @@ const CONTINUE: StringName = &"continue"
 const BRIBE: StringName = &"bribe"
 const RUN: StringName = &"run"
 const COMPLY: StringName = &"comply"
+const JAIL: StringName = &"jail"
 const PAY: StringName = &"pay"
 const FIGHT: StringName = &"fight"
 const TAKE: StringName = &"take"
@@ -39,8 +40,9 @@ static func has_pending(run: RunState) -> bool:
 ## Runs everything that happens when a phase passes, and queues at most one encounter.
 static func after_time_passes(run: RunState, new_day_started: bool, travelled: bool, rng: RandomNumberGenerator, events: Array[EventDef]) -> void:
 	if travelled:
-		Heat.add(run, Heat.for_travel(run))
-	var raid_due := Heat.is_maxed(run)
+		Heat.add_for_travel(run)
+	var police_quiet := Police.is_quiet(run)
+	var raid_due := Heat.is_maxed(run) and not police_quiet
 	Heat.cool_down(run, new_day_started)
 	StreetEvents.prune(run)
 	Turf.vex_pushes(run)
@@ -58,11 +60,11 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	if has_pending(run):
 		return
 	Turf.check_victory(run)
-	if has_pending(run):
+	if has_pending(run) or Police.is_jailed(run):
 		return
 	if raid_due:
 		run.pending_encounter = raid_or_warning(run)
-	elif rng.randf() < Police.stop_chance(run):
+	elif not police_quiet and rng.randf() < Police.stop_chance(run):
 		run.pending_encounter = police_stop(run)
 	elif Vex.hunt_due(run, rng.randf()):
 		run.pending_encounter = Vex.hunt(run)
@@ -76,9 +78,21 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 			StreetEvents.apply_shift(run, run.pending_encounter)
 
 
+## A trip that ends inside the current phase. Vex, families and street events stay once per phase,
+## so only travel heat and the police can catch up with the player here.
+static func after_arrival(run: RunState, rng: RandomNumberGenerator) -> void:
+	Heat.add_for_travel(run)
+	if has_pending(run) or Police.is_quiet(run):
+		return
+	if Heat.is_maxed(run):
+		run.pending_encounter = raid_or_warning(run)
+	elif rng.randf() < Police.stop_chance(run):
+		run.pending_encounter = police_stop(run)
+
+
 ## Called after anything that raises heat outside of time passing.
 static func check_raid(run: RunState) -> void:
-	if Heat.is_maxed(run) and not has_pending(run):
+	if Heat.is_maxed(run) and not Police.is_quiet(run) and not has_pending(run):
 		run.pending_encounter = raid_or_warning(run)
 
 
@@ -110,12 +124,12 @@ static func police_stop(run: RunState) -> Dictionary:
 
 
 static func raid(run: RunState) -> Dictionary:
-	Police.raid(run)
+	Police.arrest(run)
 	return {
 		"type": RAID,
 		"speaker": String(RAID_LEAD),
 		"title": "Raid",
-		"body": "Your name kept coming up, so we came looking. Everything you were carrying is evidence now.",
+		"body": "Your name kept coming up, so we came looking. Half of what you were carrying is evidence now.",
 	}
 
 
@@ -152,6 +166,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			list.append(Choice.new(BRIBE, "Bribe %s" % Format.money(bribe), run.cash >= bribe))
 			list.append(Choice.new(RUN, "Run for it (%d%%)" % roundi(Police.escape_chance(run) * 100.0)))
 			list.append(Choice.new(COMPLY, "Comply"))
+			list.append(Choice.new(JAIL, "Go to jail (%d min)" % roundi(Police.JAIL_SECONDS / 60.0)))
 		Vex.GATE, Vex.HUNT:
 			list.append_array(Vex.choices(run, encounter))
 		Families.SHAKEDOWN:
@@ -193,7 +208,7 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		RUN:
 			if Police.run_for_it(run, roll):
 				return "You lose them in the alleys, but they will remember your face."
-			return "They catch you and empty your bag."
+			return "They catch you and take half of everything in your bag."
 		COMPLY:
 			var taken := Police.comply(run)
 			if taken.is_empty():
@@ -201,6 +216,9 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			if taken.has("crate"):
 				return "They pry open Voronin's crate and keep it. He will hear about this."
 			return "They take %d %s and let you go." % [taken.quantity, taken.item.display_name]
+		JAIL:
+			Police.go_to_jail(run)
+			return "They book you and lock the door. You keep everything, but you are not going anywhere for a while."
 		PAY:
 			var paid := mini(int(encounter.amount), maxi(0, run.cash))
 			run.cash -= paid

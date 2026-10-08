@@ -12,6 +12,7 @@ const LIE_LOW: StringName = &"lie_low"
 const LEAVE: StringName = &"leave"
 const DEPOSIT_PREFIX := "deposit:"
 const WITHDRAW_PREFIX := "withdraw:"
+const LOCKED := "LOCKED"
 
 
 func _ready() -> void:
@@ -23,18 +24,19 @@ func _build(run: RunState) -> void:
 	var open := Safehouse.is_open(run)
 	_add_heading("SAFEHOUSE")
 	if not open:
-		_add_note("Your safehouse opens in any district you hold.")
+		_add_note("Locked here. Your safehouse opens in any district you hold.")
 	_add_cash_box(run, open)
 	_add_stash(run, open)
 	_add_upgrade(run, open)
 	_add_row(Safehouse.LIE_LOW_ICON, "Lie low", "1 phase", "Skip a phase, lose %d extra heat" % Safehouse.LIE_LOW_HEAT,
-		"TAP TO REST" if open else "", _talk_about_lying_low if open else Callable())
+		"TAP TO REST" if open else LOCKED, _talk_about_lying_low if open else Callable())
 
 
 func _add_cash_box(run: RunState, open: bool) -> void:
 	var can_move := open and (run.cash > 0 or run.stashed_cash > 0)
+	var detail := "TAP TO MOVE CASH" if can_move else ("NO CASH" if open else LOCKED)
 	_add_row(CASH_ICON, "Cash box", Format.money(run.stashed_cash), "Nobody can take cash kept here",
-		"TAP TO MOVE CASH" if can_move else "", _talk_about_cash if can_move else Callable())
+		detail, _talk_about_cash if can_move else Callable())
 
 
 func _add_stash(run: RunState, open: bool) -> void:
@@ -48,7 +50,7 @@ func _add_stash(run: RunState, open: bool) -> void:
 		if item == null:
 			continue
 		var can_take := open and Inventory.max_from_stash(run, item) > 0
-		var detail := "TAP TO TAKE" if can_take else ("BAG FULL" if open else "")
+		var detail := "TAP TO TAKE" if can_take else ("BAG FULL" if open else LOCKED)
 		_add_item_row(item, "x%d" % Inventory.stashed(run, item_id), "Stored", detail, can_take, _ask_amount.bind(item, false))
 	if not open:
 		return
@@ -65,7 +67,7 @@ func _add_upgrade(run: RunState, open: bool) -> void:
 	if upgrade.is_empty():
 		return
 	var affordable := Safehouse.can_upgrade(run)
-	var detail := ""
+	var detail := LOCKED
 	if open:
 		detail = "TAP TO BUILD" if affordable else "NOT ENOUGH CASH"
 	_add_row(Safehouse.UPGRADE_ICON, str(upgrade.name), Format.money(int(upgrade.price)), "Room for %d slots and one more crew" % int(upgrade.capacity),

@@ -9,6 +9,12 @@ const BASE_CAP := 1
 const UNPAID_DAYS_TO_WALK := 2
 const MIN_STOP_FACTOR := 0.2
 
+## Keys of run.crew_report, cleared by each morning report.
+const DELIVERIES: StringName = &"deliveries"
+const DELIVERY_PAY: StringName = &"delivery_pay"
+const HEAT_SAVED: StringName = &"heat_saved"
+const RAIDS_WARNED: StringName = &"raids_warned"
+
 
 ## One crew slot, plus one for every safehouse upgrade.
 static func cap(run: RunState) -> int:
@@ -141,6 +147,90 @@ static func can_warn_of_raid(run: RunState) -> bool:
 
 static func use_raid_warning(run: RunState) -> void:
 	run.raid_warning_day = run.day
+	note(run, RAIDS_WARNED)
+
+
+## The hired role that runs deliveries, null when there is none.
+static func runner(run: RunState) -> CrewRoleDef:
+	for role in roles(run):
+		if role.delivers_jobs:
+			return role
+	return null
+
+
+static func runner_ready(run: RunState) -> bool:
+	return runner(run) != null and run.runner_stamp != Calendar.stamp(run)
+
+
+## Hands over a bar order or favour from the bag without the trip, so it adds no heat.
+## Returns the pay, 0 when it could not be done.
+static func send_runner(run: RunState, job: Dictionary) -> int:
+	if not runner_ready(run):
+		return 0
+	var pay := 0
+	if run.orders.has(job):
+		pay = Orders.total(job)
+		if not Orders.deliver(run, job):
+			return 0
+	elif run.favours.has(job):
+		pay = Favours.total(job)
+		if not Favours.deliver(run, job):
+			return 0
+	else:
+		return 0
+	use_runner(run, pay)
+	return pay
+
+
+static func use_runner(run: RunState, pay: int) -> void:
+	run.runner_stamp = Calendar.stamp(run)
+	note(run, DELIVERIES)
+	note(run, DELIVERY_PAY, pay)
+
+
+static func note(run: RunState, key: StringName, amount := 1) -> void:
+	if amount > 0:
+		run.crew_report[key] = int(run.crew_report.get(key, 0)) + amount
+
+
+## What the crew did since the last report, empty when there is nothing to tell.
+static func report_line(run: RunState) -> String:
+	var parts: PackedStringArray = []
+	var deliveries := int(run.crew_report.get(DELIVERIES, 0))
+	if deliveries > 0:
+		parts.append("your runner made %d %s worth %s" % [deliveries, "delivery" if deliveries == 1 else "deliveries", Format.money(int(run.crew_report.get(DELIVERY_PAY, 0)))])
+	var heat_saved := int(run.crew_report.get(HEAT_SAVED, 0))
+	if heat_saved > 0:
+		parts.append("your driver kept %d heat off you" % heat_saved)
+	var warned := int(run.crew_report.get(RAIDS_WARNED, 0))
+	if warned > 0:
+		parts.append("your lookout warned you of %d %s" % [warned, "raid" if warned == 1 else "raids"])
+	if parts.is_empty():
+		return ""
+	return "Yesterday %s." % ", ".join(parts)
+
+
+## The role's effects in numbers, for example "+15 bag slots, delivers 1 job a phase".
+static func effects(role: CrewRoleDef) -> String:
+	var parts: PackedStringArray = []
+	if role.capacity_bonus > 0:
+		parts.append("+%d bag slots" % role.capacity_bonus)
+	if role.delivers_jobs:
+		parts.append("delivers 1 job a phase")
+	if role.stop_reduction > 0.0:
+		parts.append("%d%% fewer police stops" % roundi(role.stop_reduction * 100.0))
+	if role.warns_of_raids:
+		parts.append("warns of 1 raid a day")
+	if role.escape_bonus > 0.0:
+		parts.append("+%d%% escape odds" % roundi(role.escape_bonus * 100.0))
+	if role.removes_travel_heat:
+		parts.append("no travel heat")
+	if role.fight_bonus > 0.0:
+		parts.append("+%d%% fight odds" % roundi(role.fight_bonus * 100.0))
+	if role.mugging_factor < 1.0:
+		parts.append("%d%% fewer muggings" % roundi((1.0 - role.mugging_factor) * 100.0))
+	var text := ", ".join(parts)
+	return text.left(1).to_upper() + text.substr(1)
 
 
 ## Empty when the role no longer exists.

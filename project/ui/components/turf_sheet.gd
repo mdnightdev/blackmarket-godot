@@ -19,6 +19,7 @@ const TIER_COLORS := {
 	Families.Tier.FAMILY: Palette.RISK_LOW,
 }
 const CAREER_LOCK := "Pay off the Shark to unlock"
+const LOCKED := "LOCKED"
 const STOCK: StringName = &"stock"
 const UNSTOCK: StringName = &"unstock"
 const LEAVE: StringName = &"leave"
@@ -115,9 +116,9 @@ func _add_block(run: RunState) -> void:
 	_list.add_child(scene)
 	scene.building_tapped.connect(_show_section)
 	scene.set_status(&"safehouse", "Open here" if Safehouse.is_open(run) else "Hold this district to open", Safehouse.is_open(run))
-	scene.set_status(&"crew", "%d/%d hired" % [run.crew.size(), Crew.cap(run)] if run.career else "Locked")
+	scene.set_status(&"crew", "%d/%d hired" % [run.crew.size(), Crew.cap(run)] if run.career else "Locked: pay the Shark")
 	scene.set_status(&"districts", "%d/%d held" % [Turf.held_count(run), Turf.CONTESTED.size()], _any_level_up(run))
-	scene.set_status(&"businesses", "%d open" % run.businesses.size() if run.career else "Locked")
+	scene.set_status(&"businesses", "%d open" % run.businesses.size() if run.career else "Locked: pay the Shark")
 	var points := Skills.points_free(run)
 	scene.set_status(&"skills", "%d %s to spend" % [points, "point" if points == 1 else "points"], points > 0)
 	var trusted := Content.families().filter(func(family: FamilyDef) -> bool: return Families.tier(run, family.id) >= Families.Tier.TRUSTED).size()
@@ -192,14 +193,14 @@ func _end_talk(_choice: StringName) -> void:
 func _add_crew(run: RunState) -> void:
 	_add_heading("CREW  %d/%d" % [run.crew.size(), Crew.cap(run)])
 	if not run.career:
-		_add_row(LOCK_ICON, "Crew", "", CAREER_LOCK)
+		_add_row(LOCK_ICON, "Crew", "", CAREER_LOCK, LOCKED)
 		return
 	var roles := Crew.roles(run)
 	if roles.is_empty():
 		_add_note("Auntie Tran knows people. Hire crew at her bar in Old Market.")
 		return
 	for role in roles:
-		_add_row(role.icon, role.display_name, "%s a day" % Format.money(role.daily_wage), role.description, "TAP TO LET GO", Palette.TEXT_MUTED,
+		_add_row(role.icon, role.display_name, "%s a day" % Format.money(role.daily_wage), Crew.effects(role), "TAP TO LET GO", Palette.TEXT_MUTED,
 			_ask.bind("Let %s go?" % role.display_name.to_lower(), "They walk away today. Hiring again costs %s." % Format.money(role.hire_cost), "Let go",
 				func() -> void: GameState.fire_crew(role.id), true))
 
@@ -207,7 +208,7 @@ func _add_crew(run: RunState) -> void:
 func _add_businesses(run: RunState) -> void:
 	_add_heading("BUSINESSES")
 	if not run.career:
-		_add_row(LOCK_ICON, "Businesses", "", CAREER_LOCK)
+		_add_row(LOCK_ICON, "Businesses", "", CAREER_LOCK, LOCKED)
 		return
 	for entry in run.businesses:
 		var business := Content.business(StringName(entry.business))
@@ -217,7 +218,7 @@ func _add_businesses(run: RunState) -> void:
 		var state := "Open" if Businesses.is_open(run, entry) else "Closed"
 		var caption := "%s, %d / %d stocked" % [district.display_name, Businesses.stock_used(entry), business.stock_capacity]
 		_add_row(business.icon, business.display_name, state, caption, "TAP TO MANAGE", Palette.TEXT_CREAM, _manage_business.bind(entry))
-	var offered := false
+	var offered: Array[StringName] = []
 	for district_id: StringName in Turf.CONTESTED:
 		if Businesses.slots_free(run, district_id) <= 0:
 			continue
@@ -226,7 +227,8 @@ func _add_businesses(run: RunState) -> void:
 			var result := Businesses.check_buy(run, business, district_id)
 			if result == Businesses.Result.TURF_TOO_LOW:
 				continue
-			offered = true
+			if not offered.has(business.id):
+				offered.append(business.id)
 			var can_buy := result == Businesses.Result.OK
 			var action := Callable()
 			if can_buy:
@@ -236,8 +238,11 @@ func _add_businesses(run: RunState) -> void:
 					func() -> void: GameState.buy_business(business, district_id))
 			_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), business.description,
 				"TAP TO OPEN" if can_buy else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_buy else Palette.TEXT_MUTED, action)
-	if run.businesses.is_empty() and not offered:
-		_add_note("Raise a district you hold to level 2 to open a business there.")
+	for business in Content.businesses():
+		var level_reached := Turf.CONTESTED.any(func(district_id: StringName) -> bool: return Turf.level(run, district_id) >= business.min_turf_level)
+		if not offered.has(business.id) and not level_reached:
+			_add_row(business.icon, business.display_name, Format.money(business.price), "Raise a district you hold to level %d to open one there" % business.min_turf_level,
+				"%s: TURF LEVEL %d" % [LOCKED, business.min_turf_level])
 
 
 func _add_skills(run: RunState) -> void:

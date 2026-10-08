@@ -5,6 +5,7 @@ const LOAN_SHEET := preload("res://ui/components/loan_sheet.tscn")
 const INVENTORY_SHEET := preload("res://ui/components/inventory_sheet.tscn")
 const TURF_SHEET := preload("res://ui/components/turf_sheet.tscn")
 const JOBS_SHEET := preload("res://ui/components/jobs_sheet.tscn")
+const JAIL_CARD := preload("res://ui/components/jail_card.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -22,6 +23,7 @@ var _loan_sheet: LoanSheet
 var _inventory_sheet: InventorySheet
 var _turf_sheet: TurfSheet
 var _jobs_sheet: JobsSheet
+var _jail_card: JailCard
 var _lights: PoliceLights
 var _settled_for := 0.0
 var _shake_pixels := 0.0
@@ -39,12 +41,15 @@ func _ready() -> void:
 	_inventory_sheet = INVENTORY_SHEET.instantiate()
 	_turf_sheet = TURF_SHEET.instantiate()
 	_jobs_sheet = JOBS_SHEET.instantiate()
+	_jail_card = JAIL_CARD.instantiate()
 	_lights = PoliceLights.new()
 	add_child(_inventory_sheet)
 	add_child(_turf_sheet)
 	add_child(_jobs_sheet)
 	add_child(_loan_sheet)
+	add_child(_jail_card)
 	add_child(_dialogue)
+	_jail_card.visibility_changed.connect(_close_sheets_when_jailed)
 	_dialogue.add_backdrop_layer(_lights)
 	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
 		SceneRouter.transition_started.connect(sheet.close)
@@ -127,6 +132,8 @@ func is_talking() -> bool:
 func handle_back() -> bool:
 	if _dialogue.visible:
 		return _dialogue.handle_back()
+	if _jail_card.visible:
+		return true
 	if _turf_sheet.visible and _turf_sheet.close_modal():
 		return true
 	if _jobs_sheet.visible and _jobs_sheet.close_modal():
@@ -136,6 +143,13 @@ func handle_back() -> bool:
 			sheet.close()
 			return true
 	return false
+
+
+func _close_sheets_when_jailed() -> void:
+	if not _jail_card.visible:
+		return
+	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
+		sheet.close()
 
 
 func _can_present() -> bool:

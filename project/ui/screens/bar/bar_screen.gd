@@ -159,15 +159,15 @@ func _add_crew_row(role: CrewRoleDef) -> void:
 			detail = "NOT ENOUGH CASH"
 	var row: ItemRow = ITEM_ROW.instantiate()
 	_list.add_child(row)
-	row.show_entry(role.icon, role.display_name, Format.money(role.hire_cost), "%s %s a day." % [role.description, Format.money(role.daily_wage)], detail, detail_color)
+	row.show_entry(role.icon, role.display_name, Format.money(role.hire_cost), "%s. %s a day." % [Crew.effects(role), Format.money(role.daily_wage)], detail, detail_color)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_crew(role))
 
 
 func _talk_about_crew(role: CrewRoleDef) -> void:
 	var run := GameState.run
 	var result := Crew.check_hire(run, role.id)
-	var line := "I know a %s who could use the work. %s up front, then %s every morning." % [role.display_name.to_lower(), Format.money(role.hire_cost), Format.money(role.daily_wage)]
-	var hint := "Miss two mornings of wages and they walk."
+	var line := "I know a %s who could use the work. %s %s up front, then %s every morning." % [role.display_name.to_lower(), role.description, Format.money(role.hire_cost), Format.money(role.daily_wage)]
+	var hint := "%s. Miss two mornings of wages and they walk." % Crew.effects(role)
 	match result:
 		Crew.Result.ALREADY_HIRED:
 			line = "Your %s is already working for you. Treat them well." % role.display_name.to_lower()

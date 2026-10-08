@@ -80,9 +80,17 @@ func test_travel_pays_fare_and_moves_player() -> void:
 	assert_eq(_run.district_id, &"docks")
 
 
-func test_travel_spends_one_phase() -> void:
-	assert_false(Travel.travel(_run, _destination))
-	assert_eq(_run.phase, RunState.Phase.NOON)
+func test_travel_spends_a_minute_of_the_phase() -> void:
+	assert_eq(Travel.travel(_run, _destination), 0.0)
+	assert_eq(_run.phase, RunState.Phase.MORNING)
+	assert_eq(_run.phase_seconds_left, Calendar.PHASE_SECONDS - Travel.TRIP_SECONDS)
+
+
+func test_travel_reports_time_past_the_end_of_the_phase() -> void:
+	_run.phase_seconds_left = 20.0
+	assert_eq(Travel.travel(_run, _destination), Travel.TRIP_SECONDS - 20.0)
+	assert_eq(_run.phase_seconds_left, 0.0)
+	assert_eq(_run.phase, RunState.Phase.MORNING, "the caller moves the phase on")
 
 
 func test_vehicles_discount_the_fare() -> void:
@@ -105,7 +113,8 @@ func test_check_uses_discounted_fare() -> void:
 	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
 
 
-func test_travel_at_night_starts_new_day() -> void:
-	_run.phase = RunState.Phase.NIGHT
-	assert_true(Travel.travel(_run, _destination))
-	assert_eq(_run.day, 2)
+func test_arrival_mid_phase_adds_travel_heat_only() -> void:
+	Inventory.add_units(_run, &"burner_phones", 10)
+	Encounters.after_arrival(_run, RandomNumberGenerator.new())
+	assert_eq(_run.heat, Heat.for_travel(_run))
+	assert_false(Encounters.has_pending(_run), "police stay away in the first days")

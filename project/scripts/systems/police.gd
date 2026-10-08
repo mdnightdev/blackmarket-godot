@@ -16,9 +16,20 @@ const MAX_ESCAPE_CHANCE := 0.75
 const VEHICLE_ESCAPE_BONUS := 0.1
 
 const ESCAPED_HEAT := 10
-const CAUGHT_HEAT := 15
 const COMPLY_HEAT_DROP := 15
-const RAID_HEAT_AFTER := 50
+
+const GRACE_DAYS := 3
+const QUIET_PHASES_AFTER_ARREST := 4
+const HEAT_AFTER_ARREST := 20
+const ARREST_SEIZED_SHARE := 0.5
+const JAIL_SECONDS := 300.0
+
+
+## No stops or raids in the first days of a run, or for a full day after an arrest.
+static func is_quiet(run: RunState) -> bool:
+	if run.day <= GRACE_DAYS:
+		return true
+	return run.arrest_stamp >= 0 and Calendar.stamp(run) - run.arrest_stamp <= QUIET_PHASES_AFTER_ARREST
 
 
 ## Police only bother players who are carrying goods. A patrol in the district raises the odds,
@@ -81,10 +92,7 @@ static func run_for_it(run: RunState, roll: float) -> bool:
 	if roll < escape_chance(run):
 		Heat.add(run, ESCAPED_HEAT)
 		return true
-	seize_bag(run)
-	Heat.add(run, CAUGHT_HEAT)
-	run.busts += 1
-	StreetCred.add(run, StreetCred.BUSTED)
+	arrest(run)
 	return false
 
 
@@ -102,14 +110,29 @@ static func comply(run: RunState) -> Dictionary:
 	return { "item": item, "quantity": quantity }
 
 
-static func raid(run: RunState) -> void:
-	seize_bag(run)
-	run.heat = RAID_HEAT_AFTER
-	run.busts += 1
-	StreetCred.add(run, StreetCred.BUSTED)
+static func is_jailed(run: RunState) -> bool:
+	return run.jail_seconds_left > 0.0
 
 
-static func seize_bag(run: RunState) -> void:
+## The player keeps everything and sits out JAIL_SECONDS of real time while the clock runs on.
+static func go_to_jail(run: RunState) -> void:
+	run.jail_seconds_left = JAIL_SECONDS
+
+
+## Counts the cell time down. Returns true on the tick that sets the player free.
+static func serve_time(run: RunState, seconds: float) -> bool:
+	if not is_jailed(run):
+		return false
+	run.jail_seconds_left = maxf(0.0, run.jail_seconds_left - seconds)
+	return not is_jailed(run)
+
+
+## Takes any crate and half of every stack in the bag, rounded up. Cash and the stash are left alone.
+static func arrest(run: RunState) -> void:
 	Smuggling.seize(run)
 	for item_id: StringName in run.inventory.keys():
-		Inventory.discard(run, item_id, Inventory.count(run, item_id))
+		Inventory.discard(run, item_id, ceili(Inventory.count(run, item_id) * ARREST_SEIZED_SHARE))
+	run.heat = HEAT_AFTER_ARREST
+	run.arrest_stamp = Calendar.stamp(run)
+	run.busts += 1
+	StreetCred.add(run, StreetCred.BUSTED)

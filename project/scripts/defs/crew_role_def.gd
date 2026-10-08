@@ -18,3 +18,5 @@ extends Resource
 @export var removes_travel_heat := false
 ## Once per day, turns a raid into a warning.
 @export var warns_of_raids := false
+## Once per phase, delivers a bar order or family favour from the player's bag without the trip.
+@export var delivers_jobs := false

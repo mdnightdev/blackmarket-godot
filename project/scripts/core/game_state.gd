@@ -39,6 +39,8 @@ func _process(delta: float) -> void:
 		return
 	if Encounters.has_pending(run) or Campaign.is_over(run):
 		return
+	if Police.serve_time(run, delta):
+		_commit(false)
 	run.phase_seconds_left -= delta
 	if run.phase_seconds_left <= 0.0:
 		advance_phase()
@@ -87,9 +89,16 @@ func advance_phase() -> void:
 
 func travel_to(destination: DistrictDef) -> Travel.Check:
 	var result := Travel.check(run, destination)
-	if result == Travel.Check.OK:
-		var finished := _close_day_if_night()
-		_pass_time(Travel.travel(run, destination), true, finished)
+	if result != Travel.Check.OK:
+		return result
+	var overrun := Travel.travel(run, destination)
+	if run.phase_seconds_left > 0.0:
+		_arrive()
+		return result
+	var finished := _close_day_if_night()
+	var new_day_started := Calendar.advance_phase(run)
+	run.phase_seconds_left -= overrun
+	_pass_time(new_day_started, true, finished)
 	return result
 
 
@@ -215,6 +224,17 @@ func deliver_order(order: Dictionary) -> bool:
 	_commit(false)
 	_report_tasks(finished)
 	return true
+
+
+## Returns the pay, 0 when the runner could not take the job.
+func send_runner(job: Dictionary) -> int:
+	var pay := Crew.send_runner(run, job)
+	if pay <= 0:
+		return 0
+	var finished := DailyTasks.record_delivery(run)
+	_commit(false)
+	_report_tasks(finished)
+	return pay
 
 
 func drop_order(order: Dictionary) -> void:
@@ -422,6 +442,15 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 	return result
 
 
+## A trip that ended inside the current phase: no time effects, only what can happen on arrival.
+func _arrive() -> void:
+	Encounters.after_arrival(run, _rng)
+	var notices := _task_notices(DailyTasks.record_arrival(run, run.district_id))
+	_commit(false)
+	if not notices.is_empty():
+		notices_posted.emit(notices)
+
+
 func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Dictionary] = []) -> void:
 	var missed := Orders.expire(run)
 	var missed_favours := Favours.expire(run)
@@ -457,6 +486,10 @@ func _close_day_if_night() -> Array[Dictionary]:
 func _start_morning() -> Array[Dictionary]:
 	var notices: Array[Dictionary] = []
 	DailyTasks.deal(run)
+	var report := Crew.report_line(run)
+	run.crew_report.clear()
+	if not report.is_empty():
+		notices.append({ "line": report, "hint": "Crew wages: %s a day." % Format.money(Crew.daily_wages(run)) })
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),

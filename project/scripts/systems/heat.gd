@@ -3,7 +3,7 @@ class_name Heat
 const MAX := 100
 const DECAY_PER_PHASE := 4
 const OVERNIGHT_DECAY := 6
-const TRADE_RISK_DIVISOR := 40.0
+const TRADE_RISK_DIVISOR := 80.0
 const TRAVEL_RISK_DIVISOR := 100.0
 
 
@@ -25,6 +25,18 @@ static func for_trade(run: RunState, item: ItemDef, quantity: int) -> int:
 static func for_travel(run: RunState) -> int:
 	if Crew.removes_travel_heat(run):
 		return 0
+	return _travel_heat(run)
+
+
+## A driver takes the travel heat instead, and the crew report counts what was saved.
+static func add_for_travel(run: RunState) -> void:
+	if Crew.removes_travel_heat(run):
+		Crew.note(run, Crew.HEAT_SAVED, _travel_heat(run))
+		return
+	add(run, _travel_heat(run))
+
+
+static func _travel_heat(run: RunState) -> int:
 	return maxi(0, ceili(carried_risk(run) / TRAVEL_RISK_DIVISOR) - Skills.travel_heat_reduction(run))
 
 

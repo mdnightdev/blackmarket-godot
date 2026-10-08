@@ -68,8 +68,7 @@ func refresh() -> void:
 func _update_clock() -> void:
 	if GameState.run == null:
 		return
-	var seconds := maxi(0, ceili(GameState.run.phase_seconds_left))
-	var text := "%s %d:%02d" % [_day_text, floori(seconds / 60.0), seconds % 60]
+	var text := "%s %s" % [_day_text, Format.clock(GameState.run.phase_seconds_left)]
 	if _day_label.text != text:
 		_day_label.text = text
 

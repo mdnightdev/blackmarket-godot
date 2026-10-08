@@ -52,7 +52,7 @@ func test_selling_goods_raises_cred() -> void:
 
 func test_getting_busted_costs_cred() -> void:
 	_run.street_cred = 100
-	Police.raid(_run)
+	Police.arrest(_run)
 	assert_eq(_run.street_cred, 100 + StreetCred.BUSTED)
 
 

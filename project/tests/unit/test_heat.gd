@@ -10,9 +10,9 @@ func before_each() -> void:
 
 
 func test_trade_heat_scales_with_risk_quantity_and_district() -> void:
-	assert_eq(Heat.for_trade(_run, _phones, 8), 3)
+	assert_eq(Heat.for_trade(_run, _phones, 16), 3)
 	_run.district_id = &"north_port"
-	assert_eq(Heat.for_trade(_run, _phones, 8), 5)
+	assert_eq(Heat.for_trade(_run, _phones, 16), 5)
 	_run.district_id = &"slums"
 	assert_eq(Heat.for_trade(_run, _phones, 1), 1)
 

@@ -12,13 +12,13 @@ const CONTINUE: StringName = &"continue"
 @onready var _list: VBoxContainer = %List
 @onready var _confirm: ConfirmDialog = %ConfirmDialog
 
-var _pending_heist: HeistDef
+var _pending_action := Callable()
 
 
 func _ready() -> void:
 	super()
 	GameState.run_changed.connect(_on_run_changed)
-	_confirm.confirmed.connect(_on_heist_confirmed)
+	_confirm.confirmed.connect(_on_confirmed)
 
 
 func open_jobs() -> void:
@@ -70,7 +70,8 @@ func _add_active(run: RunState) -> void:
 		var district := Content.district(dealer.district_id)
 		var place := " in %s" % district.display_name if district != null else ""
 		var caption := "Buy them, then deliver to %s%s by %s" % [dealer.display_name, place, Calendar.describe(int(order.due)).to_lower()]
-		_add_row(item.icon, "%d %s" % [int(order.quantity), item.display_name], Format.money(Orders.total(order)), caption, _goods_hint(run, item, int(order.quantity)))
+		var row := _add_row(item.icon, "%d %s" % [int(order.quantity), item.display_name], Format.money(Orders.total(order)), caption, "")
+		_offer_runner(run, row, order, item, dealer.display_name, Orders.can_deliver(run, order), Orders.total(order))
 
 	for favour in run.favours:
 		var item := Content.item(StringName(favour.item))
@@ -79,7 +80,8 @@ func _add_active(run: RunState) -> void:
 		if item == null or lieutenant == null:
 			continue
 		var caption := "Buy them, then hand them to %s by %s" % [lieutenant.display_name, Calendar.describe(int(favour.due)).to_lower()]
-		_add_row(item.icon, "%d %s" % [int(favour.quantity), item.display_name], Format.money(Favours.total(favour)), caption, _goods_hint(run, item, int(favour.quantity)))
+		var row := _add_row(item.icon, "%d %s" % [int(favour.quantity), item.display_name], Format.money(Favours.total(favour)), caption, "")
+		_offer_runner(run, row, favour, item, lieutenant.display_name, Favours.can_deliver(run, favour), Favours.total(favour))
 
 	if Smuggling.is_carrying(run):
 		var hint := "DELIVER HERE" if Smuggling.can_deliver(run) else ""
@@ -89,9 +91,33 @@ func _add_active(run: RunState) -> void:
 		_add_note("No jobs taken. Bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
 
 
-func _goods_hint(run: RunState, item: ItemDef, quantity: int) -> String:
+## Rows the runner can take become tappable. Otherwise the hint shows how much of the job is in the bag.
+func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, client: String, ready: bool, pay: int) -> void:
+	var quantity := int(job.quantity)
 	var held := Inventory.count(run, item.id)
-	return READY_HINT if held >= quantity else "HAVE %d/%d" % [held, quantity]
+	if not ready:
+		row.set_hint("HAVE %d/%d" % [held, quantity])
+		return
+	var runner := Crew.runner(run)
+	if runner == null:
+		row.set_hint(READY_HINT)
+		return
+	if not Crew.runner_ready(run):
+		row.set_hint("RUNNER BACK NEXT PHASE")
+		return
+	row.set_hint("SEND %s" % runner.display_name.to_upper(), Palette.TEXT_CREAM)
+	row.set_tappable(true)
+	row.pressed.connect(_ask.bind(
+		"Send your %s?" % runner.display_name.to_lower(),
+		"Your %s takes the %d %s to %s and brings back %s. No trip and no heat. One run a phase." % [runner.display_name.to_lower(), quantity, item.display_name, client, Format.money(pay)],
+		"Send",
+		_send_runner.bind(job)))
+
+
+func _send_runner(job: Dictionary) -> void:
+	var pay := GameState.send_runner(job)
+	if pay > 0:
+		AudioService.play_sfx(Sfx.FAVOUR_DONE)
 
 
 func _add_heists(run: RunState) -> void:
@@ -124,20 +150,27 @@ func _add_heists(run: RunState) -> void:
 			row.pressed.connect(_ask_heist.bind(heist))
 
 
+func _ask(title: String, message: String, confirm_label: String, action: Callable, dangerous := false) -> void:
+	_pending_action = action
+	_confirm.open(title, message, confirm_label, dangerous)
+
+
+func _on_confirmed() -> void:
+	var action := _pending_action
+	_pending_action = Callable()
+	if action.is_valid():
+		action.call()
+
+
 func _ask_heist(heist: HeistDef) -> void:
 	var run := GameState.run
-	_pending_heist = heist
 	var message := "%d%% chance. Success pays %s and adds %d heat. Failure adds %d heat, brings the police, and can cost you a crew member." % [
 		roundi(Heists.success_chance(run, heist) * 100.0), Format.money(heist.payout), heist.heat, Heists.FAILED_HEAT,
 	]
-	_confirm.open("Pull the %s?" % heist.display_name.to_lower(), message, "Pull it", true)
+	_ask("Pull the %s?" % heist.display_name.to_lower(), message, "Pull it", _pull_heist.bind(heist), true)
 
 
-func _on_heist_confirmed() -> void:
-	var heist := _pending_heist
-	_pending_heist = null
-	if heist == null:
-		return
+func _pull_heist(heist: HeistDef) -> void:
 	var outcome := GameState.pull_heist(heist)
 	if outcome.is_empty():
 		return
