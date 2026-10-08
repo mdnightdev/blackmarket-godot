@@ -19,12 +19,18 @@ func _ready() -> void:
 	_sheet.gui_input.connect(_on_sheet_input)
 
 
-## The sheet height depends on its new content, so it is measured one frame after showing.
+## The sheet height depends on its new content, so it is measured after showing. A Control never shrinks on its own,
+## and wrapped text measured before its width is known reports a huge height, so a sheet sized to its content is
+## collapsed back to fit and measured again a frame later.
 func open_sheet() -> void:
 	_sheet.modulate.a = 0.0
 	_dim.modulate.a = 0.0
 	show()
 	await get_tree().process_frame
+	if _fits_content():
+		_sheet.offset_bottom = 0.0
+		_sheet.offset_top = 0.0
+		await get_tree().process_frame
 	var rest_y := size.y - _sheet.size.y
 	_sheet.position.y = size.y
 	_sheet.modulate.a = 1.0
@@ -35,6 +41,11 @@ func close() -> void:
 	if not visible:
 		return
 	_animate(size.y, 0.0, CLOSE_SECONDS, Tween.EASE_IN).chain().tween_callback(hide)
+
+
+## Sheets anchored to the bottom edge take their height from their content. Full page sheets fill the screen.
+func _fits_content() -> bool:
+	return is_equal_approx(_sheet.anchor_top, 1.0)
 
 
 func _animate(sheet_y: float, dim_alpha: float, duration: float, easing: Tween.EaseType) -> Tween:
