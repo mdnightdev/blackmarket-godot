@@ -118,3 +118,20 @@ func test_arrival_mid_phase_adds_travel_heat_only() -> void:
 	Encounters.after_arrival(_run, RandomNumberGenerator.new())
 	assert_eq(_run.heat, Heat.for_travel(_run))
 	assert_false(Encounters.has_pending(_run), "police stay away in the first days")
+
+
+func test_walking_needs_no_cash_but_respects_locks() -> void:
+	_run.cash = 0
+	assert_eq(Travel.check(_run, _destination, true), Travel.Check.OK)
+	_destination.min_rank = StreetCred.rank(_run) + 1
+	assert_eq(Travel.check(_run, _destination, true), Travel.Check.LOCKED)
+
+
+func test_walking_is_free_and_slower_than_a_ride() -> void:
+	_run.cash = 0
+	_run.phase_seconds_left = Calendar.PHASE_SECONDS
+	Travel.travel(_run, _destination, true)
+	assert_eq(_run.cash, 0)
+	assert_eq(_run.district_id, &"docks")
+	assert_almost_eq(_run.phase_seconds_left, Calendar.PHASE_SECONDS - Travel.WALK_SECONDS, 0.01)
+	assert_gt(Travel.WALK_SECONDS, Travel.TRIP_SECONDS)

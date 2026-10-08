@@ -60,3 +60,20 @@ func test_dealer_closed_for_the_phase_they_walked_out() -> void:
 	assert_true(Market.is_open(_run, Content.dealer_in(&"old_market")), "other dealers in the district still trade")
 	Calendar.advance_phase(_run)
 	assert_true(Market.is_open(_run, _dealer))
+
+
+func test_best_local_buyer_pays_the_most_among_dealers_here() -> void:
+	var phones := Content.item(&"burner_phones")
+	var here := Roster.dealers_at(_run, _run.district_id, Calendar.stamp(_run))
+	var buyer := Market.best_local_buyer(_run, phones)
+	assert_not_null(buyer)
+	assert_has(here, buyer)
+	for dealer in here:
+		assert_true(Market.sell_price(_run, buyer, phones) >= Market.sell_price(_run, dealer, phones))
+
+
+func test_no_local_buyer_when_every_dealer_here_walked_out() -> void:
+	var phones := Content.item(&"burner_phones")
+	for dealer in Roster.dealers_at(_run, _run.district_id, Calendar.stamp(_run)):
+		_run.walked_out[dealer.id] = Calendar.stamp(_run)
+	assert_null(Market.best_local_buyer(_run, phones))

@@ -99,11 +99,11 @@ func advance_phase() -> void:
 	_pass_time(Calendar.advance_phase(run), false, finished)
 
 
-func travel_to(destination: DistrictDef) -> Travel.Check:
-	var result := Travel.check(run, destination)
+func travel_to(destination: DistrictDef, walking := false) -> Travel.Check:
+	var result := Travel.check(run, destination, walking)
 	if result != Travel.Check.OK:
 		return result
-	var overrun := Travel.travel(run, destination)
+	var overrun := Travel.travel(run, destination, walking)
 	Smuggling.record_stop(run)
 	if run.phase_seconds_left > 0.0:
 		_arrive()

@@ -1,7 +1,7 @@
 class_name DistrictSheet
 extends BottomSheet
 
-signal travel_requested(district: DistrictDef)
+signal travel_requested(district: DistrictDef, walking: bool)
 signal enter_requested
 
 @onready var _preview: TextureRect = %Preview
@@ -13,6 +13,7 @@ signal enter_requested
 
 var _district: DistrictDef
 var _is_here := false
+var _walking := false
 
 
 func _ready() -> void:
@@ -24,7 +25,7 @@ func _on_travel_pressed() -> void:
 	if _is_here:
 		enter_requested.emit()
 	else:
-		travel_requested.emit(_district)
+		travel_requested.emit(_district, _walking)
 
 
 func show_district(district: DistrictDef, travel_check: Travel.Check) -> void:
@@ -35,14 +36,15 @@ func show_district(district: DistrictDef, travel_check: Travel.Check) -> void:
 	_description_label.text = district.description
 	_fare_value.text = Format.money(Travel.fare(GameState.run, district))
 	_is_here = travel_check == Travel.Check.ALREADY_HERE
+	_walking = travel_check == Travel.Check.NOT_ENOUGH_CASH
 	match travel_check:
 		Travel.Check.OK:
 			_travel_button.text = "Travel"
 		Travel.Check.ALREADY_HERE:
 			_travel_button.text = "Enter"
 		Travel.Check.NOT_ENOUGH_CASH:
-			_travel_button.text = "Not enough cash"
+			_travel_button.text = "Walk there. Free, but slow"
 		Travel.Check.LOCKED:
 			_travel_button.text = Travel.lock_reason(GameState.run, district)
-	_travel_button.disabled = travel_check == Travel.Check.NOT_ENOUGH_CASH or travel_check == Travel.Check.LOCKED
+	_travel_button.disabled = travel_check == Travel.Check.LOCKED
 	open_sheet()

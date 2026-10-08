@@ -55,6 +55,15 @@ static func best_sale(run: RunState, dealer: DealerDef) -> ItemDef:
 	return best
 
 
+## The open dealer in the player's district who pays the most for the item. Null when nobody here will trade.
+static func best_local_buyer(run: RunState, item: ItemDef) -> DealerDef:
+	var best: DealerDef = null
+	for dealer in Roster.dealers_at(run, run.district_id, Calendar.stamp(run)):
+		if is_open(run, dealer) and (best == null or sell_price(run, dealer, item) > sell_price(run, best, item)):
+			best = dealer
+	return best
+
+
 static func is_open(run: RunState, dealer: DealerDef) -> bool:
 	return int(run.walked_out.get(dealer.id, -1)) != Calendar.stamp(run) and not Families.refuses(run, dealer)
 

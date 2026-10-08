@@ -198,6 +198,8 @@ func handle_back() -> bool:
 		return true
 	if _jobs_sheet.visible and _jobs_sheet.close_modal():
 		return true
+	if _inventory_sheet.visible and _inventory_sheet.close_modal():
+		return true
 	for sheet in _sheets():
 		if sheet.visible:
 			sheet.close()

@@ -80,9 +80,9 @@ func _start_booked_trip() -> void:
 	_on_travel_requested(destination)
 
 
-func _on_travel_requested(destination: DistrictDef) -> void:
+func _on_travel_requested(destination: DistrictDef, walking := false) -> void:
 	var origin := GameState.current_district().map_position
-	if GameState.travel_to(destination) != Travel.Check.OK:
+	if GameState.travel_to(destination, walking) != Travel.Check.OK:
 		return
 	GameState.clock_active = false
 	_input_blocker.show()
