@@ -9,6 +9,7 @@ const MAX_RANK := 3
 ## Street cred rank needed to buy each skill rank, indexed by skill rank minus one.
 const CRED_GATES: Array[int] = [1, 4, 7]
 const RESPEC_COST_PER_CRED_RANK := 5000
+const STRENGTH_WORDS: Array[String] = ["a little", "a lot", "far"]
 
 const SKILLS := {
 	&"haggler": {
@@ -67,16 +68,13 @@ static func describe(id: StringName, rank: int) -> String:
 		&"cool_head":
 			return "Heat cools %d more per phase" % int(_value_at(id, "cooling", rank))
 		&"wheelman":
-			return "Police escape +%d%%, travel heat -%d" % [
-				_percent(_value_at(id, "escape", rank)),
-				int(_value_at(id, "travel_heat", rank)),
-			]
+			return "Escapes %s easier, travel heat -%d" % [_strength(rank), int(_value_at(id, "travel_heat", rank))]
 		&"muscle":
-			return "Fight odds +%d%%" % _percent(_value_at(id, "fight", rank))
+			return "Fights %s easier" % _strength(rank)
 		&"smuggler":
-			return "Crate pay +%d%%, cargo risk -%d%%" % [
+			return "Crate pay +%d%%, crates draw %s less police attention" % [
 				_percent(_value_at(id, "crate_pay", rank)),
-				_percent(1.0 - _value_at(id, "crate_risk", rank)),
+				_strength(rank),
 			]
 	return ""
 
@@ -197,3 +195,8 @@ static func _value_at(id: StringName, key: String, rank: int) -> float:
 
 static func _percent(fraction: float) -> int:
 	return roundi(fraction * 100.0)
+
+
+## Odds-based perks grow by rank in words, since the odds themselves stay hidden.
+static func _strength(rank: int) -> String:
+	return STRENGTH_WORDS[clampi(rank, 1, MAX_RANK) - 1]

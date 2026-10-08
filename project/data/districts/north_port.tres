@@ -15,6 +15,7 @@ ambient_effect = ExtResource("3_effect")
 map_position = Vector2(0.4, 0.22)
 travel_cost = 200
 heat_multiplier = 1.6
+roads = Array[StringName]([&"warehouse_row", &"old_market"])
 venues = Array[StringName]([&"market", &"vip_casino"])
 min_rank = 4
 min_power = 2

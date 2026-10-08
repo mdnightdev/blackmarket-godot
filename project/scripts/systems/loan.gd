@@ -2,12 +2,13 @@ class_name Loan
 
 const VENUE: StringName = &"loan_shark"
 const LENDER: StringName = &"shark"
-const DAILY_INTEREST := 0.03
+const DAILY_INTEREST := 0.015
 const PAYMENT_PERIOD_DAYS := 7
 const MIN_PAYMENT := 500
 const MIN_PAYMENT_FRACTION := 0.2
 const MAX_DEBT := 15000
-const ENFORCER_CASH_FRACTION := 0.25
+const ENFORCER_CASH_FRACTION := 0.15
+const MAX_ENFORCER_TAKE := 5000
 const ENFORCER_PENALTY_FRACTION := 0.1
 
 
@@ -72,7 +73,7 @@ static func start_next_period(run: RunState) -> void:
 
 
 static func enforcer_cash_take(run: RunState) -> int:
-	return roundi(maxi(0, run.cash) * ENFORCER_CASH_FRACTION)
+	return mini(MAX_ENFORCER_TAKE, roundi(maxi(0, run.cash) * ENFORCER_CASH_FRACTION))
 
 
 static func enforcer_penalty(run: RunState) -> int:

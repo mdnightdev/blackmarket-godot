@@ -2,8 +2,12 @@ class_name StreetEvents
 
 const EVENT_CHANCE := 0.18
 const MIN_MUGGING_CASH := 100
-const FIGHT_CHANCE := 0.6
-const MAX_FIGHT_CHANCE := 0.9
+## A mugging takes the event's cash_fraction of the player's cash as the usual amount, within these bounds.
+const MUGGING_LOW := 0.02
+const MUGGING_HIGH := 0.12
+const MAX_MUGGING := 2500
+## Strength lead over a street crew before skills and crew.
+const FIGHT_EDGE := 0.05
 const FIGHT_LOSS_MULTIPLIER := 1.5
 const LUCKY_FIND_MAX_PRICE := 500
 
@@ -83,7 +87,7 @@ static func prepare(run: RunState, event: EventDef, rng: RandomNumberGenerator) 
 			details = _prepare_shift(run, event, rng)
 		EventDef.Effect.MUGGING:
 			if rng.randf() < Crew.mugging_factor(run):
-				details = _prepare_mugging(run, event)
+				details = _prepare_mugging(run, event, rng)
 		EventDef.Effect.LUCKY_FIND:
 			details = _prepare_find(run, event, rng)
 	if details.is_empty():
@@ -149,15 +153,21 @@ static func _carried_categories(run: RunState, dealer: DealerDef) -> Array[Strin
 
 
 ## Nobody mugs the player on corners their own crew runs.
-static func _prepare_mugging(run: RunState, event: EventDef) -> Dictionary:
+static func _prepare_mugging(run: RunState, event: EventDef, rng: RandomNumberGenerator) -> Dictionary:
 	if run.cash < MIN_MUGGING_CASH or Turf.holder(run, run.district_id) == Turf.Holder.PLAYER:
 		return {}
-	var amount := maxi(1, roundi(run.cash * event.cash_fraction))
+	var usual := clampf(event.cash_fraction, MUGGING_LOW, MUGGING_HIGH)
+	var amount := clampi(roundi(run.cash * Odds.bell(rng, MUGGING_LOW, usual, MUGGING_HIGH)), 1, MAX_MUGGING)
 	return { "amount": amount, "text": { "amount": Format.money(amount) } }
 
 
 static func fight_chance(run: RunState) -> float:
-	return minf(FIGHT_CHANCE + Skills.fight_bonus(run) + Crew.fight_bonus(run), MAX_FIGHT_CHANCE)
+	return Odds.contest(FIGHT_EDGE + fight_bonus(run))
+
+
+## What the player brings to any fight: the Muscle skill and crew.
+static func fight_bonus(run: RunState) -> float:
+	return Skills.fight_bonus(run) + Crew.fight_bonus(run)
 
 
 static func _prepare_find(run: RunState, event: EventDef, rng: RandomNumberGenerator) -> Dictionary:

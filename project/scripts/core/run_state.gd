@@ -55,6 +55,8 @@ var smuggling_ban_day: int = 0
 var stop_stamp: int = -1
 ## Phase stamp of the last raid or failed escape.
 var arrest_stamp: int = -1
+## Phase stamp of the last paid route recon.
+var recon_stamp: int = -1
 ## Real seconds left in a cell after choosing jail at a police stop.
 var jail_seconds_left: float = 0.0
 ## Phase stamp of the last hijack attempt.
@@ -95,6 +97,8 @@ var crew: Array[Dictionary] = []
 var crew_report: Dictionary = {}
 ## Phase stamp of the runner's last delivery.
 var runner_stamp: int = -1
+## Pay owed for jobs delivered on credit. See Invoices for the entry layout.
+var invoices: Array[Dictionary] = []
 ## Owned businesses. See Businesses for the entry layout.
 var businesses: Array[Dictionary] = []
 ## Today's tasks. See DailyTasks for the entry layout.
@@ -153,6 +157,7 @@ func to_dict() -> Dictionary:
 		"stop_stamp": stop_stamp,
 		"arrest_stamp": arrest_stamp,
 		"jail_seconds_left": jail_seconds_left,
+		"recon_stamp": recon_stamp,
 		"hijacked_stamp": hijacked_stamp,
 		"turf": _string_keys(turf),
 		"muscle_stamp": muscle_stamp,
@@ -173,6 +178,7 @@ func to_dict() -> Dictionary:
 		"crew": crew,
 		"crew_report": _string_keys(crew_report),
 		"runner_stamp": runner_stamp,
+		"invoices": invoices,
 		"businesses": businesses,
 		"daily_tasks": daily_tasks,
 		"tasks_day": tasks_day,
@@ -246,6 +252,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.smuggling_ban_day = maxi(0, int(data.get("smuggling_ban_day", 0)))
 	state.stop_stamp = int(data.get("stop_stamp", -1))
 	state.arrest_stamp = int(data.get("arrest_stamp", -1))
+	state.recon_stamp = int(data.get("recon_stamp", -1))
 	state.jail_seconds_left = clampf(float(data.get("jail_seconds_left", 0.0)), 0.0, Police.JAIL_SECONDS)
 	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
 	state.turf = Turf.sanitize(data.get("turf", {}))
@@ -281,6 +288,10 @@ static func from_dict(data: Dictionary) -> RunState:
 			state.crew.append(clean)
 	state.crew_report = _positive_counts(data.get("crew_report"))
 	state.runner_stamp = int(data.get("runner_stamp", -1))
+	for invoice in _dictionaries(data.get("invoices")):
+		var clean := Invoices.sanitize(invoice)
+		if not clean.is_empty():
+			state.invoices.append(clean)
 	for entry in _dictionaries(data.get("businesses")):
 		var clean := Businesses.sanitize(entry)
 		if not clean.is_empty():

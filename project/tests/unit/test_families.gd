@@ -107,7 +107,8 @@ func test_refusing_a_shakedown_costs_cash_and_standing() -> void:
 	_run.family_standing[WHITE_TIGER] = Families.HOSTILE_AT
 	_run.pending_encounter = Families.shakedown(_run)
 	Encounters.resolve(_run, Families.REFUSE, 0.0)
-	assert_eq(_run.cash, 5000 - floori(5000 * Families.BEATING_CASH_FRACTION))
+	var lost := 5000 - _run.cash
+	assert_between(lost, floori(5000 * Families.BEATING_LOW), ceili(5000 * Families.BEATING_HIGH))
 	assert_eq(Families.standing(_run, WHITE_TIGER), Families.HOSTILE_AT - Families.REFUSED_LOSS)
 
 

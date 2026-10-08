@@ -87,8 +87,18 @@ func test_fixed_category_needs_a_dealer_that_stocks_it() -> void:
 
 func test_mugging_takes_a_share_of_cash() -> void:
 	var mugging := _event(&"mugging")
-	var encounter := StreetEvents.prepare(_run, mugging, _rng)
-	assert_eq(encounter.amount, roundi(RunState.STARTING_CASH * mugging.cash_fraction))
+	var total := 0
+	for attempt in 200:
+		var encounter := StreetEvents.prepare(_run, mugging, _rng)
+		if encounter.is_empty():
+			continue
+		var amount := int(encounter.amount)
+		assert_between(amount, floori(_run.cash * StreetEvents.MUGGING_LOW), ceili(_run.cash * StreetEvents.MUGGING_HIGH))
+		total += amount
+	assert_gt(total, 0)
+	_run.cash = 1_000_000
+	var rich := StreetEvents.prepare(_run, mugging, _rng)
+	assert_lte(int(rich.amount), StreetEvents.MAX_MUGGING, "a dollar cap protects big savings")
 	_run.cash = StreetEvents.MIN_MUGGING_CASH - 1
 	assert_true(StreetEvents.prepare(_run, mugging, _rng).is_empty())
 

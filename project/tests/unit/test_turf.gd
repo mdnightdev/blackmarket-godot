@@ -100,19 +100,31 @@ func test_muscle_needs_the_cash() -> void:
 
 func test_vex_pushes_where_she_is() -> void:
 	_move_to_vex()
-	var before := Turf.share(_run, _run.district_id)
+	_run.turf[_run.district_id] = Turf.STARTING_SHARE
+	var push := Turf.vex_push(_run, _run.district_id)
+	assert_gt(push, 0)
 	Turf.vex_pushes(_run)
-	assert_eq(Turf.share(_run, _run.district_id), before - Turf.VEX_PUSH_PER_PHASE)
+	assert_eq(Turf.share(_run, _run.district_id), Turf.STARTING_SHARE - push)
 
 
-func test_fight_odds_grow_with_the_share() -> void:
-	_run.turf[&"docks"] = 50
-	var contested := Turf.fight_chance(_run, &"docks")
-	_run.turf[&"docks"] = Turf.HOLD_SHARE
-	assert_gt(Turf.fight_chance(_run, &"docks"), contested)
-	assert_almost_eq(Turf.fight_chance(_run, &"docks"), 0.7, 0.0001)
+func test_vex_barely_pushes_where_the_player_dominates() -> void:
+	_run.turf[&"docks"] = 10
+	var strong := Turf.vex_push(_run, &"docks")
+	_run.turf[&"docks"] = 90
+	assert_eq(Turf.vex_push(_run, &"docks"), 0)
+	assert_gt(strong, Turf.vex_push(_run, &"docks"))
+
+
+func test_fight_odds_follow_the_share() -> void:
+	_run.turf[&"docks"] = Turf.STARTING_SHARE
+	var even := Turf.fight_chance(_run, &"docks")
+	assert_between(even, 0.45, 0.65, "an even split is close to a coin flip")
+	_run.turf[&"docks"] = 90
+	assert_gte(Turf.fight_chance(_run, &"docks"), 0.9, "losing while holding most of it is rare")
+	_run.turf[&"docks"] = 10
+	assert_lte(Turf.fight_chance(_run, &"docks"), 0.2, "her stronghold is a long shot")
 	_run.turf[&"docks"] = 100
-	assert_eq(Turf.fight_chance(_run, &"docks"), Turf.MAX_FIGHT_CHANCE)
+	assert_lte(Turf.fight_chance(_run, &"docks"), Odds.MAX_CHANCE)
 
 
 func test_held_districts_pay_a_daily_cut() -> void:

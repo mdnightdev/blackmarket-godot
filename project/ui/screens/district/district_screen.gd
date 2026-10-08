@@ -193,19 +193,55 @@ func _refresh_turf_bar() -> void:
 
 func _refresh_crate_button() -> void:
 	var run := GameState.run
-	_crate_button.visible = Smuggling.can_deliver(run)
-	if _crate_button.visible:
+	var halfway := Smuggling.can_meet_halfway(run)
+	_crate_button.visible = Smuggling.can_deliver(run) or halfway
+	if halfway:
+		_crate_button.text = "Meet Voronin's buyer here for %s" % Format.money(Smuggling.payout(run, run.crate, true))
+	elif _crate_button.visible:
 		_crate_button.text = "Deliver Voronin's crate for %s" % Format.money(Smuggling.payout(run, run.crate))
 
 
 func _deliver_crate() -> void:
-	var pay := GameState.deliver_crate()
+	var run := GameState.run
+	if Smuggling.can_deliver(run):
+		var invoiced := Smuggling.is_invoiced(run.crate)
+		_hand_over_crate(GameState.deliver_crate(), invoiced)
+	elif Smuggling.can_meet_halfway(run):
+		_ask_buyer_to_meet()
+
+
+func _ask_buyer_to_meet() -> void:
+	var run := GameState.run
+	var full := Smuggling.payout(run, run.crate)
+	var cut := Smuggling.payout(run, run.crate, true)
+	var line := "I could call the buyer and have him meet me here instead of %s." % Smuggling.destination(run.crate).display_name
+	var choices: Array[DialogueChoice] = [
+		DialogueChoice.new(&"meet", "Meet here for %s" % Format.money(cut)),
+		DialogueChoice.new(&"continue", "Keep going for %s" % Format.money(full), true, true),
+	]
+	var hint := "The buyer pays less for coming to you."
+	GameOverlay.talk(Content.player(run.player_id), line, choices, _on_meet_choice, hint)
+
+
+func _on_meet_choice(choice: StringName) -> void:
+	if choice != &"meet":
+		GameOverlay.end_talk()
+		return
+	var invoiced := Smuggling.is_invoiced(GameState.run.crate)
+	_hand_over_crate(GameState.meet_crate_buyer(), invoiced)
+
+
+func _hand_over_crate(pay: int, invoiced: bool) -> void:
 	if pay <= 0:
+		GameOverlay.end_talk()
 		return
 	AudioService.play_sfx(Sfx.CRATE_DROP)
-	AudioService.play_sfx(Sfx.COINS_IN)
-	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"continue", "Continue", true, true)]
 	var line := "Voronin's contact checks the seals, loads the crate into a van and counts out %s." % Format.money(pay)
+	if invoiced:
+		line = "Voronin's contact checks the seals and loads the crate into a van. The buyer owes me %s, due in %d days." % [Format.money(pay), Invoices.DAYS_TO_PAY]
+	else:
+		AudioService.play_sfx(Sfx.COINS_IN)
+	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"continue", "Continue", true, true)]
 	GameOverlay.talk(Content.player(GameState.run.player_id), line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk())
 
 

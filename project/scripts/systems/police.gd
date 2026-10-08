@@ -4,15 +4,19 @@ const BASE_STOP_CHANCE := 0.02
 const HEAT_STOP_CHANCE := 0.25
 const CARGO_RISK_SCALE := 2000.0
 const MAX_CARGO_STOP_CHANCE := 0.08
-const MAX_STOP_CHANCE := 0.35
+const MAX_STOP_CHANCE := 0.25
 
 const MIN_BRIBE := 100
-const BRIBE_FRACTION := 0.15
+## Share of the carried value an officer asks for: the floor, the usual ask and the rare steep one.
+const BRIBE_LOW := 0.06
+const BRIBE_USUAL := 0.1
+const BRIBE_HIGH := 0.16
+## Officers who had to chase the player down ask for more.
+const CORNERED_BRIBE_FACTOR := 1.5
 
-const BASE_ESCAPE_CHANCE := 0.6
-const ESCAPE_HEAT_SCALE := 250.0
-const MIN_ESCAPE_CHANCE := 0.3
-const MAX_ESCAPE_CHANCE := 0.75
+## Strength lead in a chase on foot with no heat. Heat makes the police try harder.
+const ESCAPE_EDGE := 0.05
+const HEAT_ESCAPE_PENALTY := 0.0015
 const VEHICLE_ESCAPE_BONUS := 0.1
 
 const ESCAPED_HEAT := 10
@@ -60,15 +64,22 @@ static func carried_value(run: RunState) -> int:
 	return total
 
 
+## Rolled once per phase, so asking again in the same phase gets the same answer.
 static func bribe_cost(run: RunState) -> int:
-	return maxi(MIN_BRIBE, roundi(carried_value(run) * BRIBE_FRACTION))
+	var share := Odds.bell(Odds.rng_for(run, &"bribe"), BRIBE_LOW, BRIBE_USUAL, BRIBE_HIGH)
+	return maxi(MIN_BRIBE, roundi(carried_value(run) * share))
 
 
 static func escape_chance(run: RunState) -> float:
-	var chance := clampf(BASE_ESCAPE_CHANCE - run.heat / ESCAPE_HEAT_SCALE, MIN_ESCAPE_CHANCE, MAX_ESCAPE_CHANCE)
+	return Odds.contest(ESCAPE_EDGE + speed_bonus(run) - run.heat * HEAT_ESCAPE_PENALTY)
+
+
+## What the player brings to any chase: a vehicle, the Wheelman skill and a Driver.
+static func speed_bonus(run: RunState) -> float:
+	var bonus := Skills.escape_bonus(run) + Crew.escape_bonus(run)
 	if Gear.fare_discount(run) > 0.0:
-		chance += VEHICLE_ESCAPE_BONUS
-	return chance + Skills.escape_bonus(run) + Crew.escape_bonus(run)
+		bonus += VEHICLE_ESCAPE_BONUS
+	return bonus
 
 
 static func riskiest_item(run: RunState) -> ItemDef:
@@ -87,12 +98,11 @@ static func pay_bribe(run: RunState, cost: int) -> bool:
 	return true
 
 
-## Returns true when the player got away.
+## Returns true when the player got away. A caught player faces the stop again without the option to run.
 static func run_for_it(run: RunState, roll: float) -> bool:
 	if roll < escape_chance(run):
 		Heat.add(run, ESCAPED_HEAT)
 		return true
-	arrest(run)
 	return false
 
 

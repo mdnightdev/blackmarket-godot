@@ -92,6 +92,7 @@ func travel_to(destination: DistrictDef) -> Travel.Check:
 	if result != Travel.Check.OK:
 		return result
 	var overrun := Travel.travel(run, destination)
+	Smuggling.record_stop(run)
 	if run.phase_seconds_left > 0.0:
 		_arrive()
 		return result
@@ -269,16 +270,31 @@ func buy_rumor(venue_id: StringName) -> Dictionary:
 	return rumor
 
 
-func accept_crate(offer: Dictionary) -> Smuggling.Result:
-	var result := Smuggling.accept(run, offer)
+func accept_crate(offer: Dictionary, route: Array[StringName] = [], invoice := false) -> Smuggling.Result:
+	var result := Smuggling.accept(run, offer, route, invoice)
 	if result == Smuggling.Result.OK:
 		_commit(false)
 	return result
 
 
+func buy_recon() -> bool:
+	if not Routes.buy_recon(run):
+		return false
+	_commit(false)
+	return true
+
+
 ## Returns the pay, 0 when the crate cannot be delivered here.
 func deliver_crate() -> int:
-	var pay := Smuggling.deliver(run)
+	return _finish_crate(Smuggling.deliver(run))
+
+
+## Returns the pay, 0 when the buyer cannot meet here.
+func meet_crate_buyer() -> int:
+	return _finish_crate(Smuggling.meet_halfway(run))
+
+
+func _finish_crate(pay: int) -> int:
 	if pay > 0:
 		var finished := DailyTasks.record_delivery(run)
 		_commit(false)
@@ -490,6 +506,12 @@ func _start_morning() -> Array[Dictionary]:
 	run.crew_report.clear()
 	if not report.is_empty():
 		notices.append({ "line": report, "hint": "Crew wages: %s a day." % Format.money(Crew.daily_wages(run)) })
+	for invoice in Invoices.settle(run):
+		var amount := Format.money(int(invoice.amount))
+		if bool(invoice.paid):
+			notices.append({ "line": "%s paid the %s invoice." % [invoice.client, amount], "hint": "+%s cash" % amount })
+		else:
+			notices.append({ "line": "%s never paid the %s invoice. That money is gone." % [invoice.client, amount], "hint": "Higher street cred makes buyers less likely to skip out." })
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),

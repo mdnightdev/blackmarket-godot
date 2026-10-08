@@ -7,6 +7,9 @@ const TAKE: StringName = &"take"
 const QUIET: StringName = &"quiet"
 const LOUD: StringName = &"loud"
 const LEAVE: StringName = &"leave"
+const RECON: StringName = &"recon"
+const CASH: StringName = &"cash"
+const INVOICE: StringName = &"invoice"
 
 @onready var _background: TextureRect = %Background
 @onready var _margin: MarginContainer = %Margin
@@ -84,7 +87,7 @@ func _refresh() -> void:
 	_add_label("YOUR CRATE", &"ListHeading")
 	if Smuggling.is_carrying(run):
 		var row := _add_row()
-		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe(run.crate), "%d SLOTS" % Smuggling.slots_used(run), Palette.PRICE)
+		row.show_entry(Smuggling.CRATE_ICON, "Sealed crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe_route(run, run.crate), "%d SLOTS" % Smuggling.slots_used(run), Palette.PRICE)
 	else:
 		_add_label("You are not carrying a crate.", &"MutedLabel")
 
@@ -134,33 +137,84 @@ func _add_label(text: String, variation: StringName) -> void:
 
 
 func _talk_about_crate(offer: Dictionary) -> void:
+	var run := GameState.run
 	var place := Smuggling.destination(offer)
-	var line := "This one goes to %s. %d slots, and you have %d phases once you take it. %s when it arrives." % [
-		place.display_name if place != null else "the drop", int(offer.slots), int(offer.lead), Format.money(Smuggling.payout(GameState.run, offer)),
+	var line := "This one goes to %s. %d slots, and you have %d phases once you take it. %s when it arrives. Pick your road and stick to it, or I pay less." % [
+		place.display_name if place != null else "the drop", int(offer.slots), int(offer.lead), Format.money(Smuggling.payout(run, offer)),
 	]
-	var check := Smuggling.check_accept(GameState.run, offer)
-	var hint := "Police stops can take it. Lose it and I have no work for you for the rest of the day."
+	var check := Smuggling.check_accept(run, offer)
+	var routes := Routes.options(run, Smuggling.ORIGIN, StringName(str(offer.destination)))
+	var hint := _routes_hint(routes)
 	match check:
 		Smuggling.Result.CARRYING:
 			hint = "You are already carrying one of my crates."
 		Smuggling.Result.NO_ROOM:
 			hint = "You need %d free bag slots." % int(offer.slots)
-	var choices: Array[DialogueChoice] = [
-		DialogueChoice.new(TAKE, "Take the crate", check == Smuggling.Result.OK),
-		DialogueChoice.new(LEAVE, "Not now", true, true),
-	]
-	GameOverlay.talk(_host, line, choices, _on_crate_choice.bind(offer), hint)
+	var choices: Array[DialogueChoice] = []
+	for index in routes.size():
+		choices.append(DialogueChoice.new(_route_choice(index), _route_label(index, routes[index]), check == Smuggling.Result.OK))
+	if not Routes.has_recon(run):
+		choices.append(DialogueChoice.new(RECON, "Recon the roads (%s)" % Format.money(Routes.RECON_COST), run.cash >= Routes.RECON_COST))
+	choices.append(DialogueChoice.new(LEAVE, "Not now", true, true))
+	GameOverlay.talk(_host, line, choices, _on_crate_choice.bind(offer, routes), hint)
 
 
-func _on_crate_choice(choice: StringName, offer: Dictionary) -> void:
-	if choice != TAKE:
+func _on_crate_choice(choice: StringName, offer: Dictionary, routes: Array[Array]) -> void:
+	if choice == RECON:
+		if GameState.buy_recon():
+			AudioService.play_sfx(Sfx.COINS_OUT)
+		_talk_about_crate(offer)
+		return
+	var index := routes.size()
+	for candidate in routes.size():
+		if choice == _route_choice(candidate):
+			index = candidate
+	if index >= routes.size():
 		GameOverlay.end_talk()
 		return
-	var result := GameState.accept_crate(offer)
+	var route: Array[StringName] = []
+	route.assign(routes[index])
+	var run := GameState.run
+	var invoiced := offer.duplicate()
+	invoiced.invoice = true
+	var choices: Array[DialogueChoice] = [
+		DialogueChoice.new(CASH, "Cash on delivery, %s" % Format.money(Smuggling.payout(run, offer))),
+		DialogueChoice.new(INVOICE, "Invoice, %s in %d days" % [Format.money(Smuggling.payout(run, invoiced)), Invoices.DAYS_TO_PAY]),
+		DialogueChoice.new(LEAVE, "Not now", true, true),
+	]
+	var hint := "Some buyers never pay a bill. They skip out less on a bigger name."
+	GameOverlay.say("Cash when it lands, or I bill the buyer? A bill pays more, if he pays.", choices, _on_terms_choice.bind(offer, route), true, hint)
+
+
+func _on_terms_choice(choice: StringName, offer: Dictionary, route: Array[StringName]) -> void:
+	if choice != CASH and choice != INVOICE:
+		GameOverlay.end_talk()
+		return
+	var result := GameState.accept_crate(offer, route, choice == INVOICE)
 	var reply := "Good. Do not open it, and do not get stopped." if result == Smuggling.Result.OK else "Not this one. Ask me again."
 	if result == Smuggling.Result.OK:
 		AudioService.play_sfx(Sfx.CRATE_LIFT)
 	GameOverlay.say(reply, _leave_choice(), _end_talk)
+
+
+func _route_choice(index: int) -> StringName:
+	return StringName("route_%d" % index)
+
+
+func _route_label(index: int, route: Array) -> String:
+	var kind := "Shortest" if index == 0 else "Safest"
+	var stops := "%d stop" % route.size() if route.size() == 1 else "%d stops" % route.size()
+	return "%s, %s, %s" % [kind, stops, Routes.describe_risk(GameState.run, route)]
+
+
+func _routes_hint(routes: Array[Array]) -> String:
+	var lines: PackedStringArray = []
+	for index in routes.size():
+		var stops: PackedStringArray = []
+		for stop: StringName in routes[index]:
+			stops.append(Routes.describe_stop(GameState.run, stop))
+		lines.append("%s: %s" % ["Shortest" if index == 0 else "Safest", ", ".join(stops)])
+	return "\n".join(lines)
 
 
 func _talk_about_shipment(shipment: Dictionary) -> void:
@@ -177,8 +231,8 @@ func _talk_about_shipment(shipment: Dictionary) -> void:
 	var quiet := Hijacks.Approach.QUIET
 	var loud := Hijacks.Approach.LOUD
 	var choices: Array[DialogueChoice] = [
-		DialogueChoice.new(QUIET, "Quiet, %d%% chance" % roundi(Hijacks.SUCCESS_CHANCE[quiet] * 100.0)),
-		DialogueChoice.new(LOUD, "Loud, %d%% chance" % roundi(Hijacks.SUCCESS_CHANCE[loud] * 100.0)),
+		DialogueChoice.new(QUIET, "Quiet, %s" % Odds.reading(Hijacks.SUCCESS_CHANCE[quiet])),
+		DialogueChoice.new(LOUD, "Loud, %s" % Odds.reading(Hijacks.SUCCESS_CHANCE[loud])),
 		DialogueChoice.new(LEAVE, "Not now", true, true),
 	]
 	var hint := "Quiet adds %d heat, loud adds %d. If it fails, %d more and the police arrive." % [Hijacks.HEAT[quiet], Hijacks.HEAT[loud], Hijacks.FAILED_HEAT]

@@ -1,0 +1,94 @@
+class_name Ambush
+
+## Trouble waiting at a stop on a hot run. Police make a normal stop; anyone else wants a cut of the crate.
+## Losing a fight or a chase costs part of the cargo, never the whole crate.
+
+const TYPE := "ambush"
+const PAY: StringName = &"ambush_pay"
+const FIGHT: StringName = &"ambush_fight"
+const RUN: StringName = &"ambush_run"
+## Toll as a share of the job pay: the floor, the usual ask and the rare steep one.
+const TOLL_LOW := 0.05
+const TOLL_USUAL := 0.1
+const TOLL_HIGH := 0.2
+const MIN_TOLL := 100
+## Share of the cargo taken after a lost fight or chase.
+const SKIM_LOW := 0.1
+const SKIM_USUAL := 0.2
+const SKIM_HIGH := 0.3
+## A family crew is tougher than a street crew.
+const FAMILY_EDGE := 0.1
+const ESCAPED_HEAT := 10
+
+
+static func start(run: RunState) -> Dictionary:
+	var threat := Routes.threat(run, run.district_id, Calendar.stamp(run))
+	if threat == Routes.Threat.POLICE:
+		return Encounters.police_stop(run)
+	var speaker := String(run.player_id)
+	var body := "A crew I have never seen steps out of a doorway. Somebody talked about my crate."
+	match threat:
+		Routes.Threat.VEX:
+			speaker = String(Turf.RIVAL)
+			body = "Heard you were moving something for Voronin. Hand some of it over, or make it worth my while."
+		Routes.Threat.FAMILY:
+			var family := Families.hostile_family_in(run, run.district_id)
+			speaker = String(family.lieutenant)
+			body = "This is %s ground. Nothing crosses it without paying the family." % family.english_name
+	var rng := Odds.rng_for(run, &"ambush")
+	return {
+		"type": TYPE,
+		"speaker": speaker,
+		"title": "Ambush",
+		"body": body,
+		"threat": threat,
+		"toll": maxi(MIN_TOLL, roundi(int(run.crate.get("pay", 0)) * Odds.bell(rng, TOLL_LOW, TOLL_USUAL, TOLL_HIGH))),
+		"skim": Odds.bell(rng, SKIM_LOW, SKIM_USUAL, SKIM_HIGH),
+	}
+
+
+static func fight_chance(run: RunState, encounter: Dictionary) -> float:
+	match int(encounter.get("threat", Routes.Threat.QUIET)):
+		Routes.Threat.VEX:
+			if Turf.is_contested(run.district_id):
+				return Turf.fight_chance(run, run.district_id)
+		Routes.Threat.FAMILY:
+			return Odds.contest(StreetEvents.FIGHT_EDGE - FAMILY_EDGE + StreetEvents.fight_bonus(run))
+	return StreetEvents.fight_chance(run)
+
+
+## Gangs do not chase harder because of police heat, so only speed counts.
+static func escape_chance(run: RunState) -> float:
+	return Odds.contest(Police.ESCAPE_EDGE + Police.speed_bonus(run))
+
+
+static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Choice]:
+	var fee := int(encounter.toll)
+	var list: Array[Encounters.Choice] = [
+		Encounters.Choice.new(PAY, "Pay %s" % Format.money(fee), run.cash >= fee),
+		Encounters.Choice.new(FIGHT, "Fight (%s)" % Odds.reading(fight_chance(run, encounter))),
+		Encounters.Choice.new(RUN, "Run for it (%s)" % Odds.reading(escape_chance(run))),
+	]
+	return list
+
+
+## Applies the answer. The roll decides a fight or an escape and must be in the range [0, 1).
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float) -> String:
+	match choice:
+		PAY:
+			var paid := mini(int(encounter.toll), maxi(0, run.cash))
+			run.cash -= paid
+			return "You pay %s and they let the crate through." % Format.money(paid)
+		FIGHT:
+			if roll < fight_chance(run, encounter):
+				StreetCred.add(run, StreetCred.FIGHT_WON)
+				return "You fight them off. The crate is still yours."
+			Smuggling.skim(run, float(encounter.get("skim", SKIM_USUAL)))
+			return "They beat you down and pull a few packages out of the crate. The job will pay less."
+		RUN:
+			if roll < escape_chance(run):
+				Heat.add(run, ESCAPED_HEAT)
+				return "You lose them in the alleys with the crate under your arm."
+			Smuggling.skim(run, float(encounter.get("skim", SKIM_USUAL)))
+			return "They catch up and rip a few packages out of the crate before you shake them. The job will pay less."
+	return ""

@@ -25,6 +25,7 @@ enum Scope { HERE, ELSEWHERE, CARRIED_HERE }
 @export var starts_next_day := false
 
 @export_group("Mugging")
+## The usual share of the player's cash taken. The actual share is rolled around it within StreetEvents limits.
 @export_range(0.0, 1.0, 0.01) var cash_fraction: float = 0.0
 
 @export_group("Lucky find")

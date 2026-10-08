@@ -117,8 +117,8 @@ func talk(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_
 	_dialogue.open(speaker, line, choices, on_choice, hint)
 
 
-func say(line: String, choices: Array[DialogueChoice], on_choice: Callable, talking := true) -> void:
-	_dialogue.say(line, choices, on_choice, talking)
+func say(line: String, choices: Array[DialogueChoice], on_choice: Callable, talking := true, hint := "") -> void:
+	_dialogue.say(line, choices, on_choice, talking, hint)
 
 
 func end_talk() -> void:
@@ -236,7 +236,7 @@ func _raise_alarm(type: String) -> void:
 		Encounters.ENFORCERS:
 			AudioService.play_sfx(Sfx.CAUGHT)
 			_shake(HIT_SHAKE_PIXELS, POLICE_VIBRATE_MS)
-		Vex.GATE, Vex.HUNT:
+		Vex.GATE, Vex.HUNT, Ambush.TYPE:
 			AudioService.play_sfx(Sfx.TURF_CLASH)
 			_shake(POLICE_SHAKE_PIXELS, POLICE_VIBRATE_MS)
 		Turf.VICTORY, Campaign.CAREER_START:
@@ -268,7 +268,7 @@ func _resolve_encounter(choice: StringName) -> void:
 
 
 func _play_outcome(choice: StringName, lost_something: bool) -> void:
-	if choice in [Encounters.BRIBE, Encounters.PAY, Vex.BRIBE, Vex.PAY, Families.PAY_UP]:
+	if choice in [Encounters.BRIBE, Encounters.PAY, Vex.BRIBE, Vex.PAY, Families.PAY_UP, Ambush.PAY]:
 		AudioService.play_sfx(Sfx.COINS_OUT)
 	elif lost_something:
 		AudioService.play_sfx(Sfx.CAUGHT)

@@ -32,15 +32,31 @@ func _ids(encounter: Dictionary) -> Array:
 	return Encounters.choices(_run, encounter).map(func(choice: Encounters.Choice) -> StringName: return choice.id)
 
 
-func test_gate_only_where_vex_is_and_the_player_holds() -> void:
-	assert_false(Vex.gate_due(_run, 0.0), "Vex's district is not held yet")
-	_run.turf[_vex_at] = Turf.HOLD_SHARE
+func test_vex_only_taxes_where_she_holds_more_and_the_player_stands() -> void:
+	_run.turf[_vex_at] = 20
+	_run.district_id = &"warehouse_row"
+	assert_false(Vex.gate_due(_run, 0.0), "the player is somewhere else")
+	_run.district_id = _vex_at
 	assert_true(Vex.gate_due(_run, 0.0))
 	assert_false(Vex.gate_due(_run, 0.99))
+	_run.turf[_vex_at] = Turf.STARTING_SHARE
+	assert_false(Vex.gate_due(_run, 0.0), "no tax at an even split")
+	_run.turf[_vex_at] = Turf.HOLD_SHARE
+	assert_eq(Vex.gate_chance(_run), 0.0, "never where the player holds more")
+
+
+func test_her_tax_comes_more_often_the_stronger_her_hold() -> void:
+	_run.district_id = _vex_at
+	_run.turf[_vex_at] = 40
+	var weak := Vex.gate_chance(_run)
+	_run.turf[_vex_at] = 10
+	assert_gt(Vex.gate_chance(_run), weak)
+	assert_lte(Vex.gate_chance(_run), Vex.MAX_GATE_CHANCE)
 
 
 func test_no_gate_while_vex_is_hunting_or_gone() -> void:
-	_run.turf[_vex_at] = Turf.HOLD_SHARE
+	_run.district_id = _vex_at
+	_run.turf[_vex_at] = 20
 	_run.vex_anger = Vex.MAX_ANGER
 	assert_false(Vex.gate_due(_run, 0.0))
 	_run.vex_anger = 0

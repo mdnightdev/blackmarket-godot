@@ -36,7 +36,8 @@ const TRUSTED_LEVEL := 4
 
 const SALE_VALUE_PER_POINT := 600
 const MAX_SALE_GAIN := 4
-const VEX_PUSH_PER_PHASE := 4
+## Share Vex takes in a phase where she holds the whole district. She takes less the less she holds.
+const MAX_VEX_PUSH := 6
 
 const MUSCLE_GAIN := 12
 const MUSCLE_HEAT := 8
@@ -44,9 +45,9 @@ const MUSCLE_BASE_COST := 500
 const MUSCLE_COST_PER_SHARE := 10
 
 const VICTORY := "turf_won"
-const FIGHT_BASE_CHANCE := 0.4
-const FIGHT_CHANCE_PER_SHARE := 0.005
-const MAX_FIGHT_CHANCE := 0.85
+## Strength lead against Vex's crew at an even split, and what each point of share adds to it.
+const FIGHT_EDGE := 0.05
+const FIGHT_EDGE_PER_SHARE := 0.008
 const VICTORY_REWARD := 5000
 
 const RIVAL: StringName = &"rival"
@@ -194,10 +195,11 @@ static func collect_daily_cut(run: RunState) -> int:
 	return cut
 
 
-## The more of the district the player runs, the more people stand with them in a fight.
+## The more of the district the player runs, the more people stand with them in a fight against Vex.
+## Holding most of a district makes losing rare, and fighting in her stronghold is a long shot.
 static func fight_chance(run: RunState, district_id: StringName) -> float:
-	var bonus := Skills.fight_bonus(run) + Crew.fight_bonus(run)
-	return minf(FIGHT_BASE_CHANCE + share(run, district_id) * FIGHT_CHANCE_PER_SHARE + bonus, MAX_FIGHT_CHANCE)
+	var edge := FIGHT_EDGE + (share(run, district_id) - STARTING_SHARE) * FIGHT_EDGE_PER_SHARE
+	return Odds.contest(edge + StreetEvents.fight_bonus(run))
 
 
 ## Moves the player's share and returns the change actually applied.
@@ -237,10 +239,14 @@ static func send_muscle(run: RunState) -> bool:
 	return true
 
 
-## Vex gains ground wherever she spends the phase.
+## Vex gains ground wherever she spends the phase, hard where she is strong and barely where the player dominates.
 static func vex_pushes(run: RunState) -> void:
 	var location := Roster.rival_location(run, Calendar.stamp(run))
-	shift(run, location, -VEX_PUSH_PER_PHASE)
+	shift(run, location, -vex_push(run, location))
+
+
+static func vex_push(run: RunState, district_id: StringName) -> int:
+	return floori(MAX_VEX_PUSH * (100 - share(run, district_id)) / 100.0)
 
 
 ## Vex leaves once the player holds every contested district. Waits while another encounter is pending.

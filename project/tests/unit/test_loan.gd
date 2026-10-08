@@ -25,9 +25,9 @@ func test_minimum_payment() -> void:
 
 func test_interest_compounds_daily() -> void:
 	Loan.accrue_interest(_run)
-	assert_eq(_run.debt, 5150)
+	assert_eq(_run.debt, 5075)
 	Loan.accrue_interest(_run)
-	assert_eq(_run.debt, 5305)
+	assert_eq(_run.debt, 5152)
 
 
 func test_repay_anywhere_but_borrow_only_at_the_shark() -> void:
@@ -59,18 +59,24 @@ func test_missed_payment_sends_enforcers() -> void:
 	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
 	assert_eq(_run.pending_encounter.type, Encounters.ENFORCERS)
 	assert_eq(_run.cash, cash_after_cut - roundi(cash_after_cut * Loan.ENFORCER_CASH_FRACTION))
-	assert_eq(_run.debt, 5150 + 515)
+	assert_eq(_run.debt, 5075 + 508)
 	assert_eq(_run.next_due_day, Loan.PAYMENT_PERIOD_DAYS * 2 + 1)
 	assert_eq(_run.paid_this_period, 0)
 	assert_eq(_run.period_minimum, Loan.minimum_payment(_run.debt))
 
 
-func test_enforcers_take_goods_when_cash_falls_short() -> void:
+func test_enforcers_take_no_more_than_the_cap() -> void:
+	_run.cash = 500000
+	assert_eq(Loan.enforcer_cash_take(_run), Loan.MAX_ENFORCER_TAKE)
+
+
+func test_enforcers_never_take_goods() -> void:
 	_run.cash = 0
 	Inventory.add_units(_run, &"burner_sims", 4)
 	Inventory.add_units(_run, &"forged_papers", 2)
 	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
-	assert_eq(Inventory.count(_run, &"forged_papers"), 0)
+	assert_eq(_run.pending_encounter.type, Encounters.ENFORCERS)
+	assert_eq(Inventory.count(_run, &"forged_papers"), 2)
 	assert_eq(Inventory.count(_run, &"burner_sims"), 4)
 
 

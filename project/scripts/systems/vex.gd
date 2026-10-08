@@ -1,13 +1,14 @@
 class_name Vex
 
-## Vex's crew never ambushes the player at random. They turn up at the gate of a district the
-## player holds, and the player decides how to send them off. Ignoring them makes Vex angrier,
+## Vex only taxes the player on her own side of town: in the district she is working, when she holds the
+## bigger share of it. The stronger her hold, the more often her crew asks. Refusing makes Vex angrier,
 ## and at full anger her crew hunts the player down wherever they are.
 
 const GATE := "vex_gate"
 const HUNT := "vex_hunt"
 
-const GATE_CHANCE := 0.3
+## Chance per phase when Vex holds the whole district. It falls to nothing at an even split.
+const MAX_GATE_CHANCE := 0.35
 const HUNT_CHANCE := 0.5
 ## Vex hunts the player at this anger.
 const MAX_ANGER := 3
@@ -29,12 +30,18 @@ const PAY: StringName = &"vex_pay"
 const FIGHT: StringName = &"vex_fight"
 
 
-## Vex's crew calls when she is in a district the player holds and she is not already hunting them.
 static func gate_due(run: RunState, roll: float) -> bool:
 	if run.vex_gone or run.vex_anger >= MAX_ANGER:
 		return false
+	return roll < gate_chance(run)
+
+
+static func gate_chance(run: RunState) -> float:
 	var location := Roster.rival_location(run, Calendar.stamp(run))
-	return Turf.holder(run, location) == Turf.Holder.PLAYER and roll < GATE_CHANCE
+	if location != run.district_id or not Turf.is_contested(location):
+		return 0.0
+	var her_lead := Turf.STARTING_SHARE - Turf.share(run, location)
+	return MAX_GATE_CHANCE * maxf(0.0, her_lead) / Turf.STARTING_SHARE
 
 
 static func hunt_due(run: RunState, roll: float) -> bool:
@@ -47,8 +54,8 @@ static func gate(run: RunState) -> Dictionary:
 	return {
 		"type": GATE,
 		"speaker": String(Turf.RIVAL),
-		"title": "Vex at your gate",
-		"body": "My crew is parked outside your place in %s. Give me a reason to move them along." % (district.display_name if district != null else "town"),
+		"title": "Vex's corner tax",
+		"body": "This side of %s is mine. You work my corners, you pay my crew." % (district.display_name if district != null else "town"),
 		"district": String(location),
 		"bribe": bribe_cost(run),
 	}
@@ -96,18 +103,18 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Ch
 	match encounter.get("type"):
 		GATE:
 			var bribe := int(encounter.bribe)
-			list.append(Encounters.Choice.new(BRIBE, "Pay %s to leave" % Format.money(bribe), run.cash >= bribe))
+			list.append(Encounters.Choice.new(BRIBE, "Pay %s" % Format.money(bribe), run.cash >= bribe))
 			var family := backer(run)
 			if family != null:
 				list.append(Encounters.Choice.new(THREATEN, "Threaten with the %s" % family.english_name))
 			else:
 				list.append(Encounters.Choice.new(THREATEN, "Threaten (needs a triad's trust)", false))
-			list.append(Encounters.Choice.new(IGNORE, "Ignore them"))
+			list.append(Encounters.Choice.new(IGNORE, "Refuse"))
 		HUNT:
 			var fee := int(encounter.fee)
 			list.append(Encounters.Choice.new(PAY, "Pay %s" % Format.money(fee), run.cash >= fee))
 			var district_id := StringName(str(encounter.district))
-			list.append(Encounters.Choice.new(FIGHT, "Fight (%d%%)" % roundi(Turf.fight_chance(run, district_id) * 100.0)))
+			list.append(Encounters.Choice.new(FIGHT, "Fight (%s)" % Odds.reading(Turf.fight_chance(run, district_id))))
 	return list
 
 
@@ -120,7 +127,7 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 		BRIBE:
 			var paid := mini(int(encounter.bribe), maxi(0, run.cash))
 			run.cash -= paid
-			return "You send %s out to the gate. Her crew takes it and drives off." % Format.money(paid)
+			return "You hand over %s. Her crew counts it and lets you work." % Format.money(paid)
 		THREATEN:
 			var family := backer(run)
 			if family == null:
@@ -133,8 +140,8 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 			StreetCred.add(run, StreetCred.BACKED_OFF)
 			run.vex_anger = mini(MAX_ANGER, run.vex_anger + 1)
 			if run.vex_anger >= MAX_ANGER:
-				return "They work your corners in %s while you stay inside. Vex is done waiting. She is coming for you." % place
-			return "They work your corners in %s while you stay inside. Vex will remember this." % place
+				return "You walk off. Her crew leans on your people in %s. Vex is done waiting. She is coming for you." % place
+			return "You walk off. Her crew leans on your people in %s. Vex will remember this." % place
 		PAY:
 			var paid := mini(int(encounter.fee), maxi(0, run.cash))
 			run.cash -= paid

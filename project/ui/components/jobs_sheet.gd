@@ -5,6 +5,7 @@ const JOB_ROW := preload("res://ui/components/job_row.tscn")
 const READY_HINT := "IN BAG"
 const TASK_ICON: Texture2D = preload("res://assets/icons/hud/list-checks.svg")
 const LOCK_ICON: Texture2D = preload("res://assets/icons/hud/lock.svg")
+const INVOICE_ICON: Texture2D = preload("res://assets/icons/hud/clipboard-list.svg")
 const HEADING_INDENT := 24
 const CONTINUE: StringName = &"continue"
 
@@ -47,6 +48,7 @@ func _rebuild() -> void:
 		child.queue_free()
 	_add_tasks(run)
 	_add_active(run)
+	_add_owed(run)
 	_add_heists(run)
 
 
@@ -84,8 +86,7 @@ func _add_active(run: RunState) -> void:
 		_offer_runner(run, row, favour, item, lieutenant.display_name, Favours.can_deliver(run, favour), Favours.total(favour))
 
 	if Smuggling.is_carrying(run):
-		var hint := "DELIVER HERE" if Smuggling.can_deliver(run) else ""
-		_add_row(Smuggling.CRATE_ICON, "Voronin's crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe(run.crate), hint)
+		_add_crate(run)
 
 	if _list.get_child_count() == count:
 		_add_note("No jobs taken. Bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
@@ -114,6 +115,39 @@ func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, c
 		_send_runner.bind(job)))
 
 
+func _add_owed(run: RunState) -> void:
+	if run.invoices.is_empty():
+		return
+	_add_heading("OWED")
+	for invoice in run.invoices:
+		var due := "Due the morning of day %d. Some buyers never pay" % int(invoice.due_day)
+		_add_row(INVOICE_ICON, "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day))
+
+
+## Tapping the crate buys recon for this phase when the player has no eyes on the road yet.
+func _add_crate(run: RunState) -> void:
+	var row := _add_row(Smuggling.CRATE_ICON, "Voronin's crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe_route(run, run.crate), "")
+	if Smuggling.can_deliver(run):
+		row.set_hint("DELIVER HERE", Palette.TEXT_CREAM)
+	elif bool(run.crate.get("off_route", false)):
+		row.set_hint("OFF ROUTE", Palette.RISK_HIGH)
+	elif not Routes.has_recon(run) and run.cash >= Routes.RECON_COST:
+		row.set_hint("RECON %s" % Format.money(Routes.RECON_COST), Palette.TEXT_CREAM)
+		row.set_tappable(true)
+		row.pressed.connect(_ask.bind(
+			"Recon the road?",
+			"Spotters walk the stops ahead for %s. You see the exact danger at each one and the risk of an ambush is halved until the phase ends." % Format.money(Routes.RECON_COST),
+			"Pay",
+			_buy_recon))
+	elif Smuggling.can_meet_halfway(run):
+		row.set_hint("BUYER CAN MEET HERE", Palette.TEXT_CREAM)
+
+
+func _buy_recon() -> void:
+	if GameState.buy_recon():
+		AudioService.play_sfx(Sfx.COINS_OUT)
+
+
 func _send_runner(job: Dictionary) -> void:
 	var pay := GameState.send_runner(job)
 	if pay > 0:
@@ -133,7 +167,7 @@ func _add_heists(run: RunState) -> void:
 		var hint_color := Palette.TEXT_MUTED
 		match result:
 			Heists.Result.OK:
-				hint = "PULL IT %d%%" % roundi(Heists.success_chance(run, heist) * 100.0)
+				hint = "PULL IT, %s" % Odds.reading(Heists.success_chance(run, heist)).to_upper()
 				hint_color = Palette.TEXT_CREAM
 			Heists.Result.RANK_TOO_LOW:
 				hint = "NEEDS %s" % StreetCred.rank_name(heist.min_rank).to_upper()
@@ -164,8 +198,8 @@ func _on_confirmed() -> void:
 
 func _ask_heist(heist: HeistDef) -> void:
 	var run := GameState.run
-	var message := "%d%% chance. Success pays %s and adds %d heat. Failure adds %d heat, brings the police, and can cost you a crew member." % [
-		roundi(Heists.success_chance(run, heist) * 100.0), Format.money(heist.payout), heist.heat, Heists.FAILED_HEAT,
+	var message := "You have %s. Success pays %s and adds %d heat. Failure adds %d heat, brings the police, and can cost you a crew member." % [
+		Odds.reading(Heists.success_chance(run, heist)), Format.money(heist.payout), heist.heat, Heists.FAILED_HEAT,
 	]
 	_ask("Pull the %s?" % heist.display_name.to_lower(), message, "Pull it", _pull_heist.bind(heist), true)
 

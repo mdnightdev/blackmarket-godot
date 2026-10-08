@@ -20,3 +20,5 @@ extends Resource
 @export var warns_of_raids := false
 ## Once per phase, delivers a bar order or family favour from the player's bag without the trip.
 @export var delivers_jobs := false
+## Gives free recon on every hot run route.
+@export var scouts_routes := false

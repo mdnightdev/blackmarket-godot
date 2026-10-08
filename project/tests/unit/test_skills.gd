@@ -26,9 +26,9 @@ func test_describe_shows_the_effect_at_that_rank() -> void:
 	assert_eq(Skills.describe(&"haggler", 2), "Buy prices -6%")
 	assert_eq(Skills.describe(&"pack_mule", 3), "Bag +35 slots")
 	assert_eq(Skills.describe(&"cool_head", 1), "Heat cools 1 more per phase")
-	assert_eq(Skills.describe(&"wheelman", 2), "Police escape +10%, travel heat -2")
-	assert_eq(Skills.describe(&"muscle", 3), "Fight odds +15%")
-	assert_eq(Skills.describe(&"smuggler", 1), "Crate pay +10%, cargo risk -15%")
+	assert_eq(Skills.describe(&"wheelman", 2), "Escapes a lot easier, travel heat -2")
+	assert_eq(Skills.describe(&"muscle", 3), "Fights far easier")
+	assert_eq(Skills.describe(&"smuggler", 1), "Crate pay +10%, crates draw a little less police attention")
 
 
 func test_describe_handles_bad_input() -> void:

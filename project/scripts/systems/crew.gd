@@ -139,6 +139,10 @@ static func removes_travel_heat(run: RunState) -> bool:
 	return roles(run).any(func(role: CrewRoleDef) -> bool: return role.removes_travel_heat)
 
 
+static func scouts_routes(run: RunState) -> bool:
+	return roles(run).any(func(role: CrewRoleDef) -> bool: return role.scouts_routes)
+
+
 static func can_warn_of_raid(run: RunState) -> bool:
 	if run.raid_warning_day == run.day:
 		return false
@@ -210,7 +214,7 @@ static func report_line(run: RunState) -> String:
 	return "Yesterday %s." % ", ".join(parts)
 
 
-## The role's effects in numbers, for example "+15 bag slots, delivers 1 job a phase".
+## The role's effects, for example "+15 bag slots, delivers 1 job a phase". Odds are described, never quoted.
 static func effects(role: CrewRoleDef) -> String:
 	var parts: PackedStringArray = []
 	if role.capacity_bonus > 0:
@@ -218,17 +222,19 @@ static func effects(role: CrewRoleDef) -> String:
 	if role.delivers_jobs:
 		parts.append("delivers 1 job a phase")
 	if role.stop_reduction > 0.0:
-		parts.append("%d%% fewer police stops" % roundi(role.stop_reduction * 100.0))
+		parts.append("fewer police stops")
 	if role.warns_of_raids:
 		parts.append("warns of 1 raid a day")
+	if role.scouts_routes:
+		parts.append("free route recon")
 	if role.escape_bonus > 0.0:
-		parts.append("+%d%% escape odds" % roundi(role.escape_bonus * 100.0))
+		parts.append("better escapes")
 	if role.removes_travel_heat:
 		parts.append("no travel heat")
 	if role.fight_bonus > 0.0:
-		parts.append("+%d%% fight odds" % roundi(role.fight_bonus * 100.0))
+		parts.append("wins more fights")
 	if role.mugging_factor < 1.0:
-		parts.append("%d%% fewer muggings" % roundi((1.0 - role.mugging_factor) * 100.0))
+		parts.append("fewer muggings")
 	var text := ", ".join(parts)
 	return text.left(1).to_upper() + text.substr(1)
 

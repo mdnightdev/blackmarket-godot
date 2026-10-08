@@ -11,4 +11,4 @@ speaker = &"rival"
 effect = 1
 weight = 8
 min_day = 2
-cash_fraction = 0.15
+cash_fraction = 0.05

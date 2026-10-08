@@ -17,12 +17,18 @@ const SELL_FACTORS := { Tier.TRUSTED: 1.05, Tier.FAMILY: 1.1 }
 
 const SHAKEDOWN := "shakedown"
 const SHAKEDOWN_CHANCE := 0.2
+## The usual demand grows by the day. The actual demand lands between the low and high factors of it.
 const SHAKEDOWN_BASE := 400
 const SHAKEDOWN_PER_DAY := 40
+const SHAKEDOWN_LOW_FACTOR := 0.6
+const SHAKEDOWN_HIGH_FACTOR := 1.5
 const PAID_GAIN := 10
 const REFUSED_LOSS := 5
-## Share of carried cash taken when the player refuses to pay.
-const BEATING_CASH_FRACTION := 0.15
+## Share of the player's cash taken when they refuse to pay: the floor, the usual and the rare worst case.
+const BEATING_LOW := 0.03
+const BEATING_USUAL := 0.06
+const BEATING_HIGH := 0.1
+const MAX_BEATING := 2500
 
 const PAY_UP: StringName = &"pay_up"
 const REFUSE: StringName = &"refuse"
@@ -88,7 +94,14 @@ static func hostile_family_in(run: RunState, district_id: StringName) -> FamilyD
 
 
 static func shakedown_cost(run: RunState) -> int:
-	return SHAKEDOWN_BASE + run.day * SHAKEDOWN_PER_DAY
+	var usual := float(SHAKEDOWN_BASE + run.day * SHAKEDOWN_PER_DAY)
+	var rng := Odds.rng_for(run, &"shakedown")
+	return roundi(Odds.bell(rng, usual * SHAKEDOWN_LOW_FACTOR, usual, usual * SHAKEDOWN_HIGH_FACTOR))
+
+
+static func beating_cost(run: RunState) -> int:
+	var share := Odds.bell(Odds.rng_for(run, &"beating"), BEATING_LOW, BEATING_USUAL, BEATING_HIGH)
+	return clampi(roundi(maxi(0, run.cash) * share), 0, MAX_BEATING)
 
 
 static func shakedown(run: RunState) -> Dictionary:
@@ -102,6 +115,7 @@ static func shakedown(run: RunState) -> Dictionary:
 		"body": "The %s has not forgotten you. Walking our streets costs money now. Pay, or my people take it." % family.english_name,
 		"family": String(family.id),
 		"demand": shakedown_cost(run),
+		"beating": beating_cost(run),
 	}
 
 
@@ -114,7 +128,7 @@ static func resolve_shakedown(run: RunState, encounter: Dictionary, choice: Stri
 			shift(run, family_id, PAID_GAIN)
 			return "You pay %s. The family takes note." % Format.money(paid)
 		REFUSE:
-			var lost := floori(maxi(0, run.cash) * BEATING_CASH_FRACTION)
+			var lost := mini(int(encounter.get("beating", beating_cost(run))), maxi(0, run.cash))
 			run.cash -= lost
 			shift(run, family_id, -REFUSED_LOSS)
 			return "Her people hold you against a wall and take %s." % Format.money(lost)

@@ -62,7 +62,9 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	Turf.check_victory(run)
 	if has_pending(run) or Police.is_jailed(run):
 		return
-	if raid_due:
+	if travelled and Smuggling.is_carrying(run) and Routes.ambush_due(run, rng.randf()):
+		run.pending_encounter = Ambush.start(run)
+	elif raid_due:
 		run.pending_encounter = raid_or_warning(run)
 	elif not police_quiet and rng.randf() < Police.stop_chance(run):
 		run.pending_encounter = police_stop(run)
@@ -79,10 +81,15 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 
 
 ## A trip that ends inside the current phase. Vex, families and street events stay once per phase,
-## so only travel heat and the police can catch up with the player here.
+## so only travel heat, an ambush on a hot run and the police can catch up with the player here.
 static func after_arrival(run: RunState, rng: RandomNumberGenerator) -> void:
 	Heat.add_for_travel(run)
-	if has_pending(run) or Police.is_quiet(run):
+	if has_pending(run):
+		return
+	if Smuggling.is_carrying(run) and Routes.ambush_due(run, rng.randf()):
+		run.pending_encounter = Ambush.start(run)
+		return
+	if Police.is_quiet(run):
 		return
 	if Heat.is_maxed(run):
 		run.pending_encounter = raid_or_warning(run)
@@ -111,15 +118,18 @@ static func raid_or_warning(run: RunState) -> Dictionary:
 
 
 ## The patrol working the district makes the stop, otherwise the beat officer.
-static func police_stop(run: RunState) -> Dictionary:
+## A cornered player already ran once: running is off the table and the bribe goes up.
+static func police_stop(run: RunState, cornered := false) -> Dictionary:
 	var patrol := Roster.strongest_patrol(run, run.district_id, Calendar.stamp(run))
 	run.stop_stamp = Calendar.stamp(run)
+	var bribe := Police.bribe_cost(run)
 	return {
 		"type": POLICE,
 		"speaker": String(patrol.id if patrol != null else BEAT_OFFICER),
 		"title": "Police stop",
-		"body": "Hold it right there. Open the bag, nice and slow.",
-		"bribe": Police.bribe_cost(run),
+		"body": "Nice try. Hands on the wall and open the bag." if cornered else "Hold it right there. Open the bag, nice and slow.",
+		"bribe": roundi(bribe * Police.CORNERED_BRIBE_FACTOR) if cornered else bribe,
+		"cornered": cornered,
 	}
 
 
@@ -136,20 +146,9 @@ static func raid(run: RunState) -> Dictionary:
 static func send_enforcers(run: RunState) -> Dictionary:
 	var cash_taken := Loan.enforcer_cash_take(run)
 	var penalty := Loan.enforcer_penalty(run)
-	var losses: Array[String] = []
-	if cash_taken > 0:
-		losses.append(Format.money(cash_taken))
 	run.cash -= cash_taken
-
-	if cash_taken < Loan.amount_due(run):
-		var stack := _most_valuable_stack(run)
-		if stack != null:
-			var quantity := Inventory.count(run, stack.id)
-			Inventory.discard(run, stack.id, quantity)
-			losses.append("%d %s" % [quantity, stack.display_name])
 	run.debt += penalty
-
-	var taken := "nothing worth taking" if losses.is_empty() else " and ".join(losses)
+	var taken := Format.money(cash_taken) if cash_taken > 0 else "nothing worth taking"
 	return {
 		"type": ENFORCERS,
 		"speaker": String(COLLECTOR),
@@ -164,11 +163,14 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 		POLICE:
 			var bribe := int(encounter.bribe)
 			list.append(Choice.new(BRIBE, "Bribe %s" % Format.money(bribe), run.cash >= bribe))
-			list.append(Choice.new(RUN, "Run for it (%d%%)" % roundi(Police.escape_chance(run) * 100.0)))
+			if not bool(encounter.get("cornered", false)):
+				list.append(Choice.new(RUN, "Run for it (%s)" % Odds.reading(Police.escape_chance(run))))
 			list.append(Choice.new(COMPLY, "Comply"))
 			list.append(Choice.new(JAIL, "Go to jail (%d min)" % roundi(Police.JAIL_SECONDS / 60.0)))
 		Vex.GATE, Vex.HUNT:
 			list.append_array(Vex.choices(run, encounter))
+		Ambush.TYPE:
+			list.append_array(Ambush.choices(run, encounter))
 		Families.SHAKEDOWN:
 			var demand := int(encounter.demand)
 			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
@@ -177,7 +179,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			match int(encounter.effect):
 				EventDef.Effect.MUGGING:
 					list.append(Choice.new(PAY, "Hand over %s" % Format.money(int(encounter.amount))))
-					list.append(Choice.new(FIGHT, "Fight back (%d%%)" % roundi(StreetEvents.fight_chance(run) * 100.0)))
+					list.append(Choice.new(FIGHT, "Fight back (%s)" % Odds.reading(StreetEvents.fight_chance(run))))
 				EventDef.Effect.LUCKY_FIND:
 					list.append(Choice.new(TAKE, "Take it"))
 					list.append(Choice.new(LEAVE, "Leave it"))
@@ -199,6 +201,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 	match encounter.get("type"):
 		Vex.GATE, Vex.HUNT:
 			return Vex.resolve(run, encounter, choice, roll)
+		Ambush.TYPE:
+			return Ambush.resolve(run, encounter, choice, roll)
 		Families.SHAKEDOWN:
 			return Families.resolve_shakedown(run, encounter, choice)
 	match choice:
@@ -208,7 +212,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		RUN:
 			if Police.run_for_it(run, roll):
 				return "You lose them in the alleys, but they will remember your face."
-			return "They catch you and take half of everything in your bag."
+			run.pending_encounter = police_stop(run, true)
+			return "They cut you off at the end of the alley. No more running."
 		COMPLY:
 			var taken := Police.comply(run)
 			if taken.is_empty():
@@ -242,17 +247,3 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		LEAVE:
 			return "You walk away. Not worth the risk."
 	return ""
-
-
-static func _most_valuable_stack(run: RunState) -> ItemDef:
-	var best: ItemDef = null
-	var best_value := 0
-	for item_id: StringName in run.inventory:
-		var item := Content.item(item_id)
-		if item == null:
-			continue
-		var value := item.base_price * Inventory.count(run, item_id)
-		if value > best_value:
-			best = item
-			best_value = value
-	return best
