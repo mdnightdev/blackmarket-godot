@@ -6,7 +6,10 @@ const REPAY: StringName = &"repay"
 const BORROW: StringName = &"borrow"
 const PAY: StringName = &"pay"
 const MUSCLE: StringName = &"muscle"
+const BUY_OUT: StringName = &"buy_out"
+const DEAL: StringName = &"deal"
 const LEAVE: StringName = &"leave"
+const LENDING_HINT := "Due back in %d days. Street dealers skip out 1 in 4, middle class 1 in 8, wealthy 1 in 20. The Shark collects half of a skipped loan."
 
 
 static func talk_to(character: CharacterDef) -> void:
@@ -28,6 +31,9 @@ static func talk_to(character: CharacterDef) -> void:
 
 static func _talk_to_lender(shark: CharacterDef) -> void:
 	var run := GameState.run
+	if run.shark_bought:
+		_talk_lending(shark)
+		return
 	var due_day := run.next_due_day - 1
 	var line: String
 	var choices: Array[DialogueChoice] = []
@@ -43,16 +49,67 @@ static func _talk_to_lender(shark: CharacterDef) -> void:
 		line += " Missed %d of %d in a row. Then we're done." % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
 	if run.career:
 		choices.append(DialogueChoice.new(BORROW, "Borrow"))
+	if Lending.can_buy_out(run):
+		line += " Or buy me out. %s and the whole book is yours." % Format.money(Lending.BUYOUT_PRICE)
+		choices.append(DialogueChoice.new(BUY_OUT, "Buy him out (%s)" % Format.money(Lending.BUYOUT_PRICE), run.cash >= Lending.BUYOUT_PRICE))
 	choices.append(_leave())
-	GameOverlay.talk(shark, line, choices, _on_lender_choice)
+	GameOverlay.talk(shark, line, choices, _on_lender_choice.bind(shark))
 
 
-static func _on_lender_choice(choice: StringName) -> void:
+static func _on_lender_choice(choice: StringName, shark: CharacterDef) -> void:
+	if choice == BUY_OUT:
+		var choices: Array[DialogueChoice] = [DialogueChoice.new(DEAL, "Deal"), DialogueChoice.new(LEAVE, "Not now", true, true)]
+		var line := "%s and I retire from the desk. I'll walk a step behind you, no wage. Dealers come to you for money after that." % Format.money(Lending.BUYOUT_PRICE)
+		GameOverlay.talk(shark, line, choices, _on_buy_out_choice.bind(shark), "Borrowing ends. Lending to dealers opens here.")
+		return
 	GameOverlay.end_talk()
 	if choice == REPAY:
 		GameOverlay.open_loan(LoanSheet.Mode.REPAY)
 	elif choice == BORROW:
 		GameOverlay.open_loan(LoanSheet.Mode.BORROW)
+
+
+static func _on_buy_out_choice(choice: StringName, shark: CharacterDef) -> void:
+	if choice != DEAL:
+		GameOverlay.end_talk()
+		return
+	if not GameState.buy_out_shark():
+		GameOverlay.say("Come back with the money.", TripTalk.continue_only(), TripTalk.end)
+		return
+	AudioService.play_sfx(Sfx.FAVOUR_TAKEN)
+	GameOverlay.talk(shark, "Pleasure doing business, boss. The book is yours.", TripTalk.continue_only(), func(_choice: StringName) -> void: _talk_lending(shark))
+
+
+static func _talk_lending(shark: CharacterDef) -> void:
+	var run := GameState.run
+	var requests := Lending.requests(run)
+	var line := "Your desk, boss. Nobody wants money today."
+	if not requests.is_empty():
+		line = "Your desk, boss. %d dealers want money today." % requests.size()
+	if not run.dealer_loans.is_empty():
+		line += " %s is out on the street right now." % Format.money(Lending.outstanding(run))
+	var choices: Array[DialogueChoice] = []
+	for request in requests:
+		var dealer := Content.dealer(StringName(str(request.dealer)))
+		var amount := int(request.amount)
+		var label := "Lend %s %s, back %s" % [dealer.display_name, Format.money(amount), Format.money(Lending.repayment(dealer, amount))]
+		choices.append(DialogueChoice.new(StringName(str(request.id)), label, run.cash >= amount))
+	choices.append(_leave())
+	GameOverlay.talk(shark, line, choices, _on_lending_choice.bind(shark), LENDING_HINT % Lending.TERM_DAYS)
+
+
+static func _on_lending_choice(choice: StringName, shark: CharacterDef) -> void:
+	if choice == LEAVE:
+		GameOverlay.end_talk()
+		return
+	match GameState.lend_to_dealer(String(choice)):
+		Lending.Result.OK:
+			AudioService.play_sfx(Sfx.FAVOUR_TAKEN)
+			_talk_lending(shark)
+		Lending.Result.NOT_ENOUGH_CASH:
+			GameOverlay.say("You don't have that much on you.", TripTalk.continue_only(), TripTalk.end)
+		_:
+			GameOverlay.say("That one already found the money somewhere else.", TripTalk.continue_only(), TripTalk.end)
 
 
 static func _talk_to_informant(informant: CharacterDef) -> void:

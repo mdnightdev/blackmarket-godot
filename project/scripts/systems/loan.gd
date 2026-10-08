@@ -42,7 +42,7 @@ static func max_repay(run: RunState) -> int:
 
 
 static func max_borrow(run: RunState) -> int:
-	if not run.career:
+	if not run.career or run.shark_bought:
 		return 0
 	return maxi(0, MAX_DEBT - run.debt)
 
@@ -53,7 +53,7 @@ static func can_visit(run: RunState) -> bool:
 
 
 static func can_borrow(run: RunState) -> bool:
-	return run.career and can_visit(run)
+	return run.career and not run.shark_bought and can_visit(run)
 
 
 ## Repaying works from anywhere. Only borrowing needs a visit to The Shark.

@@ -1,7 +1,8 @@
 class_name Crew
 
-## Hired help, opened up by a career run. run.crew holds { role, hired_day, unpaid_days },
+## Hired help, opened up by a career run. run.crew holds { role, hired_day, unpaid_days, free },
 ## at most one entry per role. Wages are paid each morning and unpaid crew walk out.
+## Free members, like the Shark after the buyout, draw no wage and take no crew slot.
 
 enum Result { OK, NOT_CAREER, UNKNOWN, RANK_TOO_LOW, CREW_FULL, ALREADY_HIRED, NOT_ENOUGH_CASH, NOT_HIRED }
 
@@ -21,6 +22,29 @@ static func cap(run: RunState) -> int:
 	return BASE_CAP + run.stash_level
 
 
+static func hired_count(run: RunState) -> int:
+	return run.crew.filter(func(member: Dictionary) -> bool: return not is_free(member)).size()
+
+
+static func is_free(member: Dictionary) -> bool:
+	return bool(member.get("free", false))
+
+
+static func is_free_role(run: RunState, role_id: StringName) -> bool:
+	var index := _index_of(run, role_id)
+	return index >= 0 and is_free(run.crew[index])
+
+
+## Takes someone on for nothing. A paid member in the same role stops drawing a wage.
+static func join_free(run: RunState, role_id: StringName) -> void:
+	var index := _index_of(run, role_id)
+	if index >= 0:
+		run.crew[index]["free"] = true
+		run.crew[index]["unpaid_days"] = 0
+		return
+	run.crew.append({ "role": String(role_id), "hired_day": run.day, "unpaid_days": 0, "free": true })
+
+
 static func has(run: RunState, role_id: StringName) -> bool:
 	return _index_of(run, role_id) >= 0
 
@@ -37,8 +61,10 @@ static func roles(run: RunState) -> Array[CrewRoleDef]:
 
 static func daily_wages(run: RunState) -> int:
 	var total := 0
-	for role in roles(run):
-		total += role.daily_wage
+	for member in run.crew:
+		var role := Content.crew_role(StringName(str(member.get("role", ""))))
+		if role != null and not is_free(member):
+			total += role.daily_wage
 	return total
 
 
@@ -52,7 +78,7 @@ static func check_hire(run: RunState, role_id: StringName) -> Result:
 		return Result.ALREADY_HIRED
 	if StreetCred.rank(run) < role.min_rank:
 		return Result.RANK_TOO_LOW
-	if run.crew.size() >= cap(run):
+	if hired_count(run) >= cap(run):
 		return Result.CREW_FULL
 	if run.cash < role.hire_cost:
 		return Result.NOT_ENOUGH_CASH
@@ -83,6 +109,9 @@ static func pay_wages(run: RunState) -> Array[CrewRoleDef]:
 	for member in run.crew:
 		var role := Content.crew_role(StringName(str(member.get("role", ""))))
 		if role == null:
+			continue
+		if is_free(member):
+			staying.append(member)
 			continue
 		if run.cash >= role.daily_wage:
 			run.cash -= role.daily_wage
@@ -244,11 +273,14 @@ static func sanitize(entry: Dictionary) -> Dictionary:
 	var role_id := StringName(str(entry.get("role", "")))
 	if Content.crew_role(role_id) == null:
 		return {}
-	return {
+	var clean := {
 		"role": String(role_id),
 		"hired_day": maxi(1, int(entry.get("hired_day", 1))),
 		"unpaid_days": clampi(int(entry.get("unpaid_days", 0)), 0, UNPAID_DAYS_TO_WALK - 1),
 	}
+	if is_free(entry):
+		clean["free"] = true
+	return clean
 
 
 static func _index_of(run: RunState, role_id: StringName) -> int:

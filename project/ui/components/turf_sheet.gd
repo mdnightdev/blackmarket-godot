@@ -116,7 +116,7 @@ func _add_block(run: RunState) -> void:
 	_list.add_child(scene)
 	scene.building_tapped.connect(_show_section)
 	scene.set_status(&"safehouse", "Open here" if Safehouse.is_open(run) else "Hold this district to open", Safehouse.is_open(run))
-	scene.set_status(&"crew", "%d/%d hired" % [run.crew.size(), Crew.cap(run)] if run.career else "Locked: pay the Shark")
+	scene.set_status(&"crew", "%d/%d hired" % [Crew.hired_count(run), Crew.cap(run)] if run.career else "Locked: pay the Shark")
 	scene.set_status(&"districts", "%d/%d held" % [Turf.held_count(run), Turf.CONTESTED.size()], _any_level_up(run))
 	scene.set_status(&"businesses", "%d open" % run.businesses.size() if run.career else "Locked: pay the Shark")
 	var points := Skills.points_free(run)
@@ -191,7 +191,7 @@ func _end_talk(_choice: StringName) -> void:
 
 
 func _add_crew(run: RunState) -> void:
-	_add_heading("CREW  %d/%d" % [run.crew.size(), Crew.cap(run)])
+	_add_heading("CREW  %d/%d" % [Crew.hired_count(run), Crew.cap(run)])
 	if not run.career:
 		_add_row(LOCK_ICON, "Crew", "", CAREER_LOCK, LOCKED)
 		return
@@ -200,6 +200,9 @@ func _add_crew(run: RunState) -> void:
 		_add_note("Auntie Tran knows people. Hire crew at her bar in Old Market.")
 		return
 	for role in roles:
+		if Crew.is_free_role(run, role.id):
+			_add_row(role.icon, "%s, the Shark" % role.display_name, "Free", Crew.effects(role))
+			continue
 		_add_row(role.icon, role.display_name, "%s a day" % Format.money(role.daily_wage), Crew.effects(role), "TAP TO LET GO", Palette.TEXT_MUTED,
 			_ask.bind("Let %s go?" % role.display_name.to_lower(), "They walk away today. Hiring again costs %s." % Format.money(role.hire_cost), "Let go",
 				func() -> void: GameState.fire_crew(role.id), true))

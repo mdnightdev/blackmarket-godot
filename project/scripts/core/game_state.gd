@@ -150,6 +150,20 @@ func repay_debt(amount: int) -> bool:
 	return true
 
 
+func buy_out_shark() -> bool:
+	if not Lending.buy_out(run):
+		return false
+	_commit(false)
+	return true
+
+
+func lend_to_dealer(request_id: String) -> Lending.Result:
+	var result := Lending.lend(run, request_id)
+	if result == Lending.Result.OK:
+		_commit(false)
+	return result
+
+
 func borrow(amount: int) -> bool:
 	if not Loan.borrow(run, amount):
 		return false
@@ -630,6 +644,7 @@ func _start_morning() -> Array[Dictionary]:
 			notices.append({ "line": "%s paid the %s invoice." % [invoice.client, amount], "hint": "+%s cash" % amount })
 		else:
 			notices.append({ "line": "%s never paid the %s invoice. That money is gone." % [invoice.client, amount], "hint": "Higher street cred makes buyers less likely to skip out." })
+	notices.append_array(Lending.settle(run))
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),

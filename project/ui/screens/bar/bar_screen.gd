@@ -94,7 +94,7 @@ func _refresh() -> void:
 		_add_label("No orders taken. Deliver at the dealer's market before the deadline.", &"MutedLabel")
 
 	if _venue.id == HIRING_VENUE and run.career:
-		_add_label("HIRE CREW %d/%d" % [run.crew.size(), Crew.cap(run)], &"ListHeading")
+		_add_label("HIRE CREW %d/%d" % [Crew.hired_count(run), Crew.cap(run)], &"ListHeading")
 		for role in Content.crew_roles():
 			_add_crew_row(role)
 

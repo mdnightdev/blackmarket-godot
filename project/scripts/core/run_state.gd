@@ -83,6 +83,10 @@ var hack_stamp: int = -1
 var pending_encounter: Dictionary = {}
 ## True once the Shark is paid off. Crew, businesses and heists open up.
 var career := false
+## The player bought the Shark's business. Borrowing ends and lending to dealers opens.
+var shark_bought := false
+## Money lent to dealers. See Lending for the entry layout.
+var dealer_loans: Array[Dictionary] = []
 var street_cred: int = 0
 ## Day that trading_cred_today counts for.
 var cred_day: int = 0
@@ -187,6 +191,8 @@ func to_dict() -> Dictionary:
 		"hack_stamp": hack_stamp,
 		"pending_encounter": pending_encounter,
 		"career": career,
+		"shark_bought": shark_bought,
+		"dealer_loans": dealer_loans,
 		"street_cred": street_cred,
 		"cred_day": cred_day,
 		"trading_cred_today": trading_cred_today,
@@ -303,6 +309,11 @@ static func from_dict(data: Dictionary) -> RunState:
 	if saved_encounter is Dictionary:
 		state.pending_encounter = saved_encounter
 	state.career = bool(data.get("career", false)) or bool(data.get("endless", false))
+	state.shark_bought = state.career and bool(data.get("shark_bought", false))
+	for loan in _dictionaries(data.get("dealer_loans")):
+		var clean := Lending.sanitize(loan)
+		if not clean.is_empty() and not Lending.has_loan(state, StringName(clean.dealer)):
+			state.dealer_loans.append(clean)
 	state.street_cred = clampi(int(data.get("street_cred", 0)), 0, StreetCred.MAX)
 	state.cred_day = maxi(0, int(data.get("cred_day", 0)))
 	state.trading_cred_today = clampi(int(data.get("trading_cred_today", 0)), 0, StreetCred.DAILY_TRADING_CAP)
@@ -312,7 +323,8 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.turf_levels = _positive_counts(data.get("turf_levels"))
 	for member in _dictionaries(data.get("crew")):
 		var clean := Crew.sanitize(member)
-		if not clean.is_empty() and state.crew.size() < Crew.cap(state) and not Crew.has(state, StringName(clean.role)):
+		var has_room := Crew.is_free(clean) or Crew.hired_count(state) < Crew.cap(state)
+		if not clean.is_empty() and has_room and not Crew.has(state, StringName(clean.role)):
 			state.crew.append(clean)
 	state.crew_report = _positive_counts(data.get("crew_report"))
 	state.runner_stamp = int(data.get("runner_stamp", -1))
