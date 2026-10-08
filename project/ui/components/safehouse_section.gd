@@ -83,7 +83,7 @@ func _talk_about_cash() -> void:
 		choices.append(DialogueChoice.new(StringName(WITHDRAW_PREFIX + str(amount)), "Take out %s" % Format.money(amount)))
 	choices.append(DialogueChoice.new(LEAVE, "Cancel", true, true))
 	var line := "%s on me, %s in the cash box." % [Format.money(run.cash), Format.money(run.stashed_cash)]
-	GameOverlay.talk(_player(), line, choices, _on_cash_choice, "Muggers, raids, Vex and the Shark's men only take what you carry.")
+	GameOverlay.talk(_player(), line, choices, _on_cash_choice, "Muggers, raids, gangs and the Shark's men only take what you carry.")
 
 
 func _on_cash_choice(choice: StringName) -> void:

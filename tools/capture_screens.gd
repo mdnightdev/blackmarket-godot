@@ -334,7 +334,8 @@ func _capture_turf() -> void:
 	await _wait(0.4)
 
 	run.turf[&"old_market"] = 72
-	run.pending_encounter = Vex.gate(run)
+	var vex: GangDef = _content.gang(&"vex")
+	run.pending_encounter = Gangs.gate(run, vex)
 	_game_state.run_changed.emit()
 	await _wait(2.6)
 	await _capture("53_vex_gate")
@@ -343,8 +344,8 @@ func _capture_turf() -> void:
 	await _capture("54_vex_gate_ignored")
 	dialogue.get_node("%ChoiceList").get_child(0).pressed.emit()
 	await _wait(0.6)
-	run.vex_anger = Vex.MAX_ANGER
-	run.pending_encounter = Vex.hunt(run)
+	Gangs.set_anger(run, vex, Gangs.MAX_ANGER)
+	run.pending_encounter = Gangs.hunt(run, vex)
 	_game_state.run_changed.emit()
 	await _wait(2.6)
 	await _capture("54b_vex_hunt")
@@ -361,7 +362,7 @@ func _capture_turf() -> void:
 
 	run.district_id = &"old_market"
 	await _open(_router.DISTRICT_SCREEN, "57_district_before_win")
-	for district_id in Turf.CONTESTED:
+	for district_id in Turf.contested():
 		run.turf[district_id] = Turf.HOLD_SHARE
 	Turf.check_victory(run)
 	_game_state.run_changed.emit()

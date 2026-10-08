@@ -8,6 +8,7 @@ const EVENTS_FOLDER := "res://data/events"
 const CHARACTERS_FOLDER := "res://data/characters"
 const PLAYERS_FOLDER := "res://data/players"
 const FAMILIES_FOLDER := "res://data/families"
+const GANGS_FOLDER := "res://data/gangs"
 const CREW_FOLDER := "res://data/crew"
 const BUSINESSES_FOLDER := "res://data/businesses"
 const HEISTS_FOLDER := "res://data/heists"
@@ -21,6 +22,7 @@ var _residents_by_district: Dictionary = {}
 var _characters: Dictionary = {}
 var _players: Dictionary = {}
 var _families: Dictionary = {}
+var _gangs: Dictionary = {}
 var _crew_roles: Dictionary = {}
 var _businesses: Dictionary = {}
 var _heists: Dictionary = {}
@@ -39,6 +41,7 @@ func _ready() -> void:
 	_characters = Catalog.index_by_id(Catalog.load_folder(CHARACTERS_FOLDER))
 	_players = Catalog.index_by_id(Catalog.load_folder(PLAYERS_FOLDER))
 	_families = Catalog.index_by_id(Catalog.load_folder(FAMILIES_FOLDER))
+	_gangs = Catalog.index_by_id(Catalog.load_folder(GANGS_FOLDER))
 	_crew_roles = Catalog.index_by_id(Catalog.load_folder(CREW_FOLDER))
 	_businesses = Catalog.index_by_id(Catalog.load_folder(BUSINESSES_FOLDER))
 	_heists = Catalog.index_by_id(Catalog.load_folder(HEISTS_FOLDER))
@@ -125,6 +128,16 @@ func speaker(id: StringName) -> SpeakerDef:
 
 func events() -> Array[EventDef]:
 	return _events
+
+
+func gang(id: StringName) -> GangDef:
+	return _gangs.get(id)
+
+
+func gangs() -> Array[GangDef]:
+	var list: Array[GangDef] = []
+	list.assign(_gangs.values())
+	return list
 
 
 func family(id: StringName) -> FamilyDef:

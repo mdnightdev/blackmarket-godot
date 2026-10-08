@@ -7,7 +7,7 @@ var _no_events: Array[EventDef] = []
 func before_each() -> void:
 	_run = RunState.new()
 	# Vex's crew rolls on the same unseeded rng and would make the quiet-day checks flaky.
-	_run.vex_gone = true
+	_run.gangs_gone.append(&"vex")
 
 
 func _start_day(day: int) -> void:

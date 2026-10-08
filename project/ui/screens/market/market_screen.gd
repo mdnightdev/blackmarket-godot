@@ -6,7 +6,6 @@ const ITEM_ROW := preload("res://ui/components/item_row.tscn")
 const STEADY_CHANGE := 0.005
 const TOAST_HOLD_SECONDS := 1.8
 const GREETING_DELAY := 0.35
-const VEX_TURF_LINE := "Vex runs these corners. I pay her cut first, so I can't pay you full price."
 const PLAYER_TURF_LINE := "Your people run this block now. You get the best price in town."
 const FAMILY_LINES := {
 	Families.Tier.HOSTILE: "You made enemies of my family. I have nothing to sell you.",
@@ -104,8 +103,8 @@ func _greet() -> void:
 		_dealer_says(FAMILY_LINES[Families.tier(GameState.run, family.id)])
 		return
 	match Turf.holder(GameState.run, GameState.run.district_id):
-		Turf.Holder.VEX:
-			_dealer_says(VEX_TURF_LINE)
+		Turf.Holder.GANG:
+			_dealer_says(Gangs.owner(GameState.run.district_id).dealer_line)
 		Turf.Holder.PLAYER:
 			_dealer_says(PLAYER_TURF_LINE)
 		_:

@@ -3,12 +3,12 @@ class_name Routes
 ## Roads between districts and the danger waiting at each stop of a hot run.
 ## Danger depends on who is where this phase, so it is read from the Roster and never saved.
 
-enum Threat { QUIET, POLICE, FAMILY, VEX }
+enum Threat { QUIET, POLICE, FAMILY, GANG }
 
-const THREAT_NAMES: Array[String] = ["quiet", "police", "family crew", "Vex's crew"]
+const THREAT_NAMES: Array[String] = ["quiet", "police", "family crew", "gang crew"]
 const MAX_STOPS := 4
 const STREET_RISK := 0.04
-const THREAT_RISK := { Threat.POLICE: 0.12, Threat.FAMILY: 0.15, Threat.VEX: 0.18 }
+const THREAT_RISK := { Threat.POLICE: 0.12, Threat.FAMILY: 0.15, Threat.GANG: 0.18 }
 const HELD_FACTOR := 0.5
 const RECON_FACTOR := 0.5
 const MIN_RISK := 0.03
@@ -63,8 +63,8 @@ static func route_risk(run: RunState, path: Array, stamp: int) -> float:
 
 
 static func threat(run: RunState, district_id: StringName, stamp: int) -> Threat:
-	if Roster.rival_in(run, district_id, stamp):
-		return Threat.VEX
+	if Gangs.in_district(run, district_id, stamp) != null:
+		return Threat.GANG
 	if Families.hostile_family_in(run, district_id) != null:
 		return Threat.FAMILY
 	if Roster.strongest_patrol(run, district_id, stamp) != null and not Police.is_quiet(run) and not Police.just_stopped(run):
@@ -114,10 +114,18 @@ static func describe_stop(run: RunState, district_id: StringName) -> String:
 	var stamp := Calendar.stamp(run)
 	var text := "%s %s" % [place, band(stop_risk(run, district_id, stamp))]
 	if has_recon(run):
-		text += ", %s" % THREAT_NAMES[threat(run, district_id, stamp)]
+		text += ", %s" % threat_name(run, district_id, stamp)
 	if Roadblocks.blocks(run, district_id) and Roadblocks.is_known(run, district_id):
 		text += ", roadblock until %s" % Roadblocks.clears_at(run, district_id) if has_recon(run) else ", roadblock"
 	return text
+
+
+## Who is waiting there, naming the gang when it is a gang crew.
+static func threat_name(run: RunState, district_id: StringName, stamp: int) -> String:
+	var found := threat(run, district_id, stamp)
+	if found == Threat.GANG:
+		return Gangs.in_district(run, district_id, stamp).crew_name
+	return THREAT_NAMES[found]
 
 
 static func describe_risk(run: RunState, path: Array) -> String:

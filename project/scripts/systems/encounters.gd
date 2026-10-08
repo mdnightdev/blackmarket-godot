@@ -45,7 +45,7 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	var raid_due := Heat.is_maxed(run) and not police_quiet
 	Heat.cool_down(run, new_day_started)
 	StreetEvents.prune(run)
-	Turf.vex_pushes(run)
+	Turf.gangs_push(run)
 
 	if new_day_started:
 		Turf.collect_daily_cut(run)
@@ -71,10 +71,8 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 		run.pending_encounter = raid_or_warning(run)
 	elif not police_quiet and rng.randf() < Police.stop_chance(run):
 		run.pending_encounter = police_stop(run)
-	elif Vex.hunt_due(run, rng.randf()):
-		run.pending_encounter = Vex.hunt(run)
-	elif Vex.gate_due(run, rng.randf()):
-		run.pending_encounter = Vex.gate(run)
+	elif Gangs.queue_encounter(run, rng):
+		pass
 	elif Families.hostile_family_in(run, run.district_id) != null and rng.randf() < Families.SHAKEDOWN_CHANCE:
 		run.pending_encounter = Families.shakedown(run)
 	elif rng.randf() < StreetEvents.EVENT_CHANCE:
@@ -83,7 +81,7 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 			StreetEvents.apply_shift(run, run.pending_encounter)
 
 
-## A trip that ends inside the current phase. Vex, families and street events stay once per phase,
+## A trip that ends inside the current phase. Gangs, families and street events stay once per phase,
 ## so only travel heat, an ambush on a hot run and the police can catch up with the player here.
 static func after_arrival(run: RunState, rng: RandomNumberGenerator) -> void:
 	Heat.add_for_travel(run)
@@ -175,8 +173,8 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 				list.append(Choice.new(line, Talk.police_label(run, line)))
 			list.append(Choice.new(COMPLY, "Comply"))
 			list.append(Choice.new(JAIL, "Go to jail (%d min)" % roundi(Police.JAIL_SECONDS / 60.0)))
-		Vex.GATE, Vex.HUNT:
-			list.append_array(Vex.choices(run, encounter))
+		Gangs.GATE, Gangs.HUNT:
+			list.append_array(Gangs.choices(run, encounter))
 		Ambush.TYPE:
 			list.append_array(Ambush.choices(run, encounter))
 		Collections.TYPE:
@@ -211,8 +209,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		return ""
 	run.pending_encounter = {}
 	match encounter.get("type"):
-		Vex.GATE, Vex.HUNT:
-			return Vex.resolve(run, encounter, choice, roll)
+		Gangs.GATE, Gangs.HUNT:
+			return Gangs.resolve(run, encounter, choice, roll)
 		Ambush.TYPE:
 			return Ambush.resolve(run, encounter, choice, roll)
 		Collections.TYPE:
@@ -222,7 +220,7 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		Families.SHAKEDOWN:
 			return Families.resolve_shakedown(run, encounter, choice)
 		Turf.VICTORY:
-			return Turf.victory_summary()
+			return Turf.victory_summary(Gangs.of_encounter(encounter))
 	match choice:
 		BRIBE:
 			Police.pay_bribe(run, int(encounter.bribe))

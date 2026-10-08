@@ -17,7 +17,7 @@ static func dealer_location(run: RunState, dealer: DealerDef, phase_stamp: int) 
 
 ## Characters with a route pick a new district every phase. Police favour districts with more heat.
 static func character_location(run: RunState, character: CharacterDef, phase_stamp: int) -> StringName:
-	if character.role == CharacterDef.Role.RIVAL and run.vex_gone:
+	if character.role == CharacterDef.Role.RIVAL and Gangs.is_gone(run, Gangs.for_boss(character.id)):
 		return &""
 	if character.route.is_empty():
 		return character.district_id
@@ -59,18 +59,6 @@ static func strongest_patrol(run: RunState, district_id: StringName, phase_stamp
 static func patrol_multiplier(run: RunState, district_id: StringName, phase_stamp: int) -> float:
 	var patrol := strongest_patrol(run, district_id, phase_stamp)
 	return patrol.stop_multiplier if patrol != null else 1.0
-
-
-static func rival_in(run: RunState, district_id: StringName, phase_stamp: int) -> bool:
-	return not district_id.is_empty() and rival_location(run, phase_stamp) == district_id
-
-
-## Where the rival crew boss is this phase, empty once she has left the city.
-static func rival_location(run: RunState, phase_stamp: int) -> StringName:
-	for character in Content.characters():
-		if character.role == CharacterDef.Role.RIVAL:
-			return character_location(run, character, phase_stamp)
-	return &""
 
 
 static func _pick(run: RunState, districts: Array[StringName], seed_parts: Array, weight_by_heat: bool) -> StringName:

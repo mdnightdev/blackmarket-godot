@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="GangDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/gang_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"vex"
+display_name = "Vex"
+crew_name = "Vex's crew"
+boss = &"rival"
+turf = Array[StringName]([&"old_market", &"slums", &"docks", &"north_port", &"downtown"])
+strongholds = {
+&"north_port": 25,
+&"slums": 25
+}
+color = Color(0.7176, 0.4549, 0.4902, 1)
+gate_title = "Vex's corner tax"
+gate_line = "This side of %s is mine. You work my corners, you pay my crew."
+hunt_title = "Vex found you"
+hunt_line = "You kept leaving my crew out in the cold, so I came to you. Pay for my trouble or settle it here."
+ambush_line = "Heard you were moving something for Voronin. Hand some of it over, or make it worth my while."
+dealer_line = "Vex runs these corners. I pay her cut first, so I can't pay you full price."
+victory_title = "Vex is out"
+victory_line = "Fine. The city is yours. I'm taking my crew somewhere the rent is cheaper. My stash house comes with the corners, %s inside."
+max_gate_chance = 0.35
+bribe_base = 200
+bribe_per_anger = 100
+hunt_fee = 500
+max_push = 6
+victory_reward = 5000

@@ -12,7 +12,7 @@ const ERRAND_DONE := 12
 const HIJACK_SUCCESS := 10
 const FIGHT_WON := 6
 const TASK_DONE := 15
-const VEX_BEATEN := 100
+const GANG_BEATEN := 100
 
 const BUSTED := -25
 const JOB_MISSED := -10

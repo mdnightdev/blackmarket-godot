@@ -19,11 +19,6 @@ const NAME_FONT_SIZE := 17
 const STATUS_FONT_SIZE := 14
 const LABEL_OUTLINE := 6
 const TAP_SLOP := 18.0
-const HOLDER_COLORS := {
-	Turf.Holder.NOBODY: Palette.TEXT_MUTED,
-	Turf.Holder.PLAYER: TurfBar.PLAYER_COLOR,
-	Turf.Holder.VEX: TurfBar.VEX_COLOR,
-}
 const OPEN_CITY_COLOR := Palette.LINE_MUTED
 
 var _region := Rect2()
@@ -143,7 +138,7 @@ func _district_at(point: Vector2) -> DistrictDef:
 func _zone_color(district: DistrictDef) -> Color:
 	if not Turf.is_contested(district.id):
 		return OPEN_CITY_COLOR
-	return HOLDER_COLORS[Turf.holder(GameState.run, district.id)]
+	return TurfBar.holder_color(Turf.holder(GameState.run, district.id), district.id)
 
 
 func _status_text(district: DistrictDef) -> String:
@@ -154,6 +149,6 @@ func _status_text(district: DistrictDef) -> String:
 	match Turf.holder(run, district.id):
 		Turf.Holder.PLAYER:
 			return "Yours %d%%  Lv %d" % [share, Turf.level(run, district.id)]
-		Turf.Holder.VEX:
-			return "Vex %d%%" % (100 - share)
+		Turf.Holder.GANG:
+			return "%s %d%%" % [Gangs.owner(district.id).display_name, 100 - share]
 	return "Contested %d%%" % share

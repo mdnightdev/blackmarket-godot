@@ -1,18 +1,17 @@
 class_name Turf
 
-## The turf war with Vex. Each contested district stores the player's share from 0 to 100; Vex holds the rest.
+## The turf war with the gangs. Each district of a gang's turf stores the player's share from 0 to 100, and the
+## gang holds the rest. See GangDef.
 
-enum Holder { NOBODY, PLAYER, VEX }
+enum Holder { NOBODY, PLAYER, GANG }
 enum LevelResult { OK, NOT_CONTESTED, NOT_HELD, MAX_LEVEL, RANK_TOO_LOW, NEEDS_TRUST, NOT_ENOUGH_CASH }
 
-const CONTESTED: Array[StringName] = [&"old_market", &"slums", &"docks", &"north_port", &"downtown"]
 const STARTING_SHARE := 50
-const VEX_STRONGHOLDS := { &"slums": 25, &"north_port": 25 }
 const HOLD_SHARE := 60
-const VEX_HOLD_SHARE := 40
+const GANG_HOLD_SHARE := 40
 
 const HELD_SELL_FACTOR := 1.1
-const VEX_SELL_FACTOR := 0.9
+const GANG_SELL_FACTOR := 0.9
 ## Lookouts on the player's own corners keep the police away.
 const HELD_STOP_FACTOR := 0.7
 const STOP_FACTOR_PER_LEVEL := 0.05
@@ -22,8 +21,6 @@ const DAILY_CUT := 150
 const CUT_PER_LEVEL := 100
 
 const MAX_LEVEL := 5
-## Must equal CONTESTED.size() * MAX_LEVEL.
-const MAX_POWER := 25
 ## Entry n is the upgrade to level n + 2.
 const LEVEL_UPS: Array[Dictionary] = [
 	{ "cost": 2000, "rank": 3 },
@@ -36,8 +33,6 @@ const TRUSTED_LEVEL := 4
 
 const SALE_VALUE_PER_POINT := 600
 const MAX_SALE_GAIN := 4
-## Share Vex takes in a phase where she holds the whole district. She takes less the less she holds.
-const MAX_VEX_PUSH := 6
 
 const MUSCLE_GAIN := 12
 const MUSCLE_HEAT := 8
@@ -45,37 +40,44 @@ const MUSCLE_BASE_COST := 500
 const MUSCLE_COST_PER_SHARE := 10
 
 const VICTORY := "turf_won"
-## Strength lead against Vex's crew at an even split, and what each point of share adds to it.
+## Strength lead against a gang's crew at an even split, and what each point of share adds to it.
 const FIGHT_EDGE := 0.05
 const FIGHT_EDGE_PER_SHARE := 0.008
-const VICTORY_REWARD := 5000
 
-const RIVAL: StringName = &"rival"
+
+## Every district some gang fights over, in catalog order.
+static func contested() -> Array[StringName]:
+	var districts: Array[StringName] = []
+	for gang in Content.gangs():
+		districts.append_array(gang.turf)
+	return districts
 
 
 static func is_contested(district_id: StringName) -> bool:
-	return CONTESTED.has(district_id)
+	return Gangs.owner(district_id) != null
 
 
 static func share(run: RunState, district_id: StringName) -> int:
-	if not is_contested(district_id):
+	var gang := Gangs.owner(district_id)
+	if gang == null:
 		return 0
-	return int(run.turf.get(district_id, VEX_STRONGHOLDS.get(district_id, STARTING_SHARE)))
+	return int(run.turf.get(district_id, gang.strongholds.get(district_id, STARTING_SHARE)))
 
 
 static func holder(run: RunState, district_id: StringName) -> Holder:
-	if not is_contested(district_id):
+	var gang := Gangs.owner(district_id)
+	if gang == null:
 		return Holder.NOBODY
 	var player_share := share(run, district_id)
-	if player_share >= HOLD_SHARE or run.vex_gone:
+	if player_share >= HOLD_SHARE or Gangs.is_gone(run, gang):
 		return Holder.PLAYER
-	if player_share <= VEX_HOLD_SHARE:
-		return Holder.VEX
+	if player_share <= GANG_HOLD_SHARE:
+		return Holder.GANG
 	return Holder.NOBODY
 
 
 static func held_count(run: RunState) -> int:
-	return CONTESTED.filter(func(district_id: StringName) -> bool: return holder(run, district_id) == Holder.PLAYER).size()
+	return contested().filter(func(district_id: StringName) -> bool: return holder(run, district_id) == Holder.PLAYER).size()
 
 
 ## The level paid for in a district. It is kept while the hold is lost.
@@ -88,12 +90,16 @@ static func level(run: RunState, district_id: StringName) -> int:
 	return bought_level(run, district_id) if holder(run, district_id) == Holder.PLAYER else 0
 
 
-## Summed turf levels across the contested districts, from 0 to MAX_POWER.
+## Summed turf levels across the contested districts, from 0 to max_power.
 static func power(run: RunState) -> int:
 	var total := 0
-	for district_id in CONTESTED:
+	for district_id in contested():
 		total += level(run, district_id)
 	return total
+
+
+static func max_power() -> int:
+	return contested().size() * MAX_LEVEL
 
 
 static func business_slots(run: RunState, district_id: StringName) -> int:
@@ -161,8 +167,8 @@ static func sell_factor(run: RunState, district_id: StringName) -> float:
 	match holder(run, district_id):
 		Holder.PLAYER:
 			return HELD_SELL_FACTOR
-		Holder.VEX:
-			return VEX_SELL_FACTOR
+		Holder.GANG:
+			return GANG_SELL_FACTOR
 	return 1.0
 
 
@@ -183,7 +189,7 @@ static func district_cut(run: RunState, district_id: StringName) -> int:
 
 static func daily_cut(run: RunState) -> int:
 	var total := 0
-	for district_id in CONTESTED:
+	for district_id in contested():
 		total += district_cut(run, district_id)
 	return total
 
@@ -195,8 +201,8 @@ static func collect_daily_cut(run: RunState) -> int:
 	return cut
 
 
-## The more of the district the player runs, the more people stand with them in a fight against Vex.
-## Holding most of a district makes losing rare, and fighting in her stronghold is a long shot.
+## The more of the district the player runs, the more people stand with them in a fight against its gang.
+## Holding most of a district makes losing rare, and fighting in a gang stronghold is a long shot.
 static func fight_chance(run: RunState, district_id: StringName) -> float:
 	var edge := FIGHT_EDGE + (share(run, district_id) - STARTING_SHARE) * FIGHT_EDGE_PER_SHARE
 	return Odds.contest(edge + StreetEvents.fight_bonus(run))
@@ -204,7 +210,7 @@ static func fight_chance(run: RunState, district_id: StringName) -> float:
 
 ## Moves the player's share and returns the change actually applied.
 static func shift(run: RunState, district_id: StringName, amount: int) -> int:
-	if not is_contested(district_id) or run.vex_gone:
+	if Gangs.is_gone(run, Gangs.owner(district_id)):
 		return 0
 	var before := share(run, district_id)
 	var after := clampi(before + amount, 0, 100)
@@ -222,8 +228,7 @@ static func muscle_cost(run: RunState) -> int:
 
 
 static func can_send_muscle(run: RunState) -> bool:
-	return is_contested(run.district_id) \
-		and not run.vex_gone \
+	return not Gangs.is_gone(run, Gangs.owner(run.district_id)) \
 		and share(run, run.district_id) < 100 \
 		and run.muscle_stamp != Calendar.stamp(run) \
 		and run.cash >= muscle_cost(run)
@@ -239,36 +244,43 @@ static func send_muscle(run: RunState) -> bool:
 	return true
 
 
-## Vex gains ground wherever she spends the phase, hard where she is strong and barely where the player dominates.
-static func vex_pushes(run: RunState) -> void:
-	var location := Roster.rival_location(run, Calendar.stamp(run))
-	shift(run, location, -vex_push(run, location))
+## Each gang gains ground wherever its boss spends the phase, hard where it is strong and barely where the player
+## dominates.
+static func gangs_push(run: RunState) -> void:
+	var stamp := Calendar.stamp(run)
+	for gang in Gangs.active(run):
+		var location := Gangs.boss_location(run, gang, stamp)
+		if Gangs.owner(location) == gang:
+			shift(run, location, -gang_push(run, gang, location))
 
 
-static func vex_push(run: RunState, district_id: StringName) -> int:
-	return floori(MAX_VEX_PUSH * (100 - share(run, district_id)) / 100.0)
+static func gang_push(run: RunState, gang: GangDef, district_id: StringName) -> int:
+	return floori(gang.max_push * (100 - share(run, district_id)) / 100.0)
 
 
-## Vex leaves once the player holds every contested district. Waits while another encounter is pending.
+## A gang leaves once the player holds every district of its turf. Waits while another encounter is pending.
 static func check_victory(run: RunState) -> void:
-	if run.vex_gone or not run.pending_encounter.is_empty():
+	if not run.pending_encounter.is_empty():
 		return
-	for district_id in CONTESTED:
-		if share(run, district_id) < HOLD_SHARE:
+	for gang in Gangs.active(run):
+		if gang.turf.all(func(district_id: StringName) -> bool: return share(run, district_id) >= HOLD_SHARE):
+			run.gangs_gone.append(gang.id)
+			run.cash += gang.victory_reward
+			StreetCred.add(run, StreetCred.GANG_BEATEN)
+			run.pending_encounter = {
+				"type": VICTORY,
+				"gang": String(gang.id),
+				"speaker": String(gang.boss),
+				"title": gang.victory_title,
+				"body": gang.victory_line % Format.money(gang.victory_reward),
+			}
 			return
-	run.vex_gone = true
-	run.cash += VICTORY_REWARD
-	StreetCred.add(run, StreetCred.VEX_BEATEN)
-	run.pending_encounter = {
-		"type": VICTORY,
-		"speaker": String(RIVAL),
-		"title": "Vex is out",
-		"body": "Fine. The city is yours. I'm taking my crew somewhere the rent is cheaper. My stash house comes with the corners, %s inside." % Format.money(VICTORY_REWARD),
-	}
 
 
-static func victory_summary() -> String:
-	return "Count it, %s in the stash. The whole street watched you push me out, that buys you %d cred. No more gates, no more hunts. Every corner is yours." % [Format.money(VICTORY_REWARD), StreetCred.VEX_BEATEN]
+static func victory_summary(gang: GangDef) -> String:
+	return "Count it, %s in the stash. The whole street watched you push me out, that buys you %d cred. No more gates, no more hunts. My corners are yours." % [
+		Format.money(gang.victory_reward), StreetCred.GANG_BEATEN,
+	]
 
 
 static func sanitize(source: Variant) -> Dictionary:

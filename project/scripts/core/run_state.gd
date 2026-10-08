@@ -65,10 +65,11 @@ var hijacked_stamp: int = -1
 var turf: Dictionary = {}
 ## Phase stamp in which muscle was last sent.
 var muscle_stamp: int = -1
-## True once Vex has been driven out of the city.
-var vex_gone := false
-## Rises each time the player ignores Vex's crew. At Vex.MAX_ANGER she hunts the player.
-var vex_anger: int = 0
+## Gangs driven out of the city.
+var gangs_gone: Array[StringName] = []
+## Gang id to how angry its boss is. It rises each time the player refuses the crew, and at Gangs.MAX_ANGER
+## the crew hunts the player.
+var gang_anger: Dictionary = {}
 ## Phase stamp in which the Fixer last cleaned up the player's heat.
 var cleanup_stamp: int = -1
 ## Family id to the player's standing. See Families.
@@ -182,8 +183,8 @@ func to_dict() -> Dictionary:
 		"hijacked_stamp": hijacked_stamp,
 		"turf": _string_keys(turf),
 		"muscle_stamp": muscle_stamp,
-		"vex_gone": vex_gone,
-		"vex_anger": vex_anger,
+		"gangs_gone": Array(gangs_gone).map(func(gang_id: StringName) -> String: return String(gang_id)),
+		"gang_anger": _string_keys(gang_anger),
 		"cleanup_stamp": cleanup_stamp,
 		"family_standing": _string_keys(family_standing),
 		"favours": favours,
@@ -289,8 +290,9 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
 	state.turf = Turf.sanitize(data.get("turf", {}))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
-	state.vex_gone = bool(data.get("vex_gone", false))
-	state.vex_anger = clampi(int(data.get("vex_anger", 0)), 0, Vex.MAX_ANGER)
+	var legacy_gone: Array = [Gangs.LEGACY_GANG] if bool(data.get("vex_gone", false)) else []
+	state.gangs_gone = Gangs.sanitize_gone(data.get("gangs_gone", legacy_gone))
+	state.gang_anger = Gangs.sanitize_anger(data.get("gang_anger", { Gangs.LEGACY_GANG: data.get("vex_anger", 0) }))
 	state.cleanup_stamp = int(data.get("cleanup_stamp", -1))
 	state.family_standing = Families.sanitize(data.get("family_standing", {}))
 	var saved_favours: Variant = data.get("favours", [])
@@ -307,7 +309,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.hack_stamp = int(data.get("hack_stamp", -1))
 	var saved_encounter: Variant = data.get("pending_encounter", {})
 	if saved_encounter is Dictionary:
-		state.pending_encounter = saved_encounter
+		state.pending_encounter = Gangs.migrate_encounter(saved_encounter)
 	state.career = bool(data.get("career", false)) or bool(data.get("endless", false))
 	state.shark_bought = state.career and bool(data.get("shark_bought", false))
 	for loan in _dictionaries(data.get("dealer_loans")):

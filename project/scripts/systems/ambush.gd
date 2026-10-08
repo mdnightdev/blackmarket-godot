@@ -22,10 +22,10 @@ const SKIM_HIGH := 0.3
 ## A family crew is tougher than a street crew.
 const FAMILY_EDGE := 0.1
 const ESCAPED_HEAT := 10
-## Talking works best on a street crew. Families answer to nobody and Vex hates Voronin.
+## Talking works best on a street crew. Families answer to nobody and gangs hate Voronin.
 const NAME_EDGE := 0.05
 const BACK_OFF_EDGE := 0.15
-const THREAT_TALK_PENALTY := { Routes.Threat.FAMILY: 0.1, Routes.Threat.VEX: 0.25 }
+const THREAT_TALK_PENALTY := { Routes.Threat.FAMILY: 0.1, Routes.Threat.GANG: 0.25 }
 ## A crew that laughed off Voronin's name asks for more.
 const PRESSED_TOLL_FACTOR := 1.5
 
@@ -37,9 +37,10 @@ static func start(run: RunState) -> Dictionary:
 	var speaker := String(run.player_id)
 	var body := "A crew I have never seen steps out of a doorway. Somebody talked about my crate."
 	match threat:
-		Routes.Threat.VEX:
-			speaker = String(Turf.RIVAL)
-			body = "Heard you were moving something for Voronin. Hand some of it over, or make it worth my while."
+		Routes.Threat.GANG:
+			var gang := Gangs.in_district(run, run.district_id, Calendar.stamp(run))
+			speaker = String(gang.boss)
+			body = gang.ambush_line
 		Routes.Threat.FAMILY:
 			var family := Families.hostile_family_in(run, run.district_id)
 			speaker = String(family.lieutenant)
@@ -58,7 +59,7 @@ static func start(run: RunState) -> Dictionary:
 
 static func fight_chance(run: RunState, encounter: Dictionary) -> float:
 	match int(encounter.get("threat", Routes.Threat.QUIET)):
-		Routes.Threat.VEX:
+		Routes.Threat.GANG:
 			if Turf.is_contested(run.district_id):
 				return Turf.fight_chance(run, run.district_id)
 		Routes.Threat.FAMILY:

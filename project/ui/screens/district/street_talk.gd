@@ -175,13 +175,15 @@ static func _on_hacker_choice(choice: StringName) -> void:
 	GameOverlay.say(reply, done, _end)
 
 
-## The turf summary for the current district, spoken by the player when Vex is not around.
+## The turf summary for the current district, spoken by the player when the gang boss is not around.
 static func talk_about_turf() -> void:
 	var run := GameState.run
 	var district := Content.district(run.district_id)
+	var gang := Gangs.owner(run.district_id)
 	var share := Turf.share(run, run.district_id)
-	var line := "I run %d%% of the corners in %s. Vex has the rest. I hold %d of %d districts." % [
-		share, district.display_name if district != null else "town", Turf.held_count(run), Turf.CONTESTED.size(),
+	var line := "I run %d%% of the corners in %s. %s has the rest. I hold %d of %d districts." % [
+		share, district.display_name if district != null else "town", gang.display_name if gang != null else "Nobody",
+		Turf.held_count(run), Turf.contested().size(),
 	]
 	_talk_turf(Content.player(run.player_id), line)
 
@@ -190,7 +192,7 @@ static func _talk_turf(speaker: SpeakerDef, line: String) -> void:
 	var run := GameState.run
 	var choices: Array[DialogueChoice] = []
 	var hint := "Selling here gains you ground. Held districts pay from %s each morning, more as you level them, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
-	if Turf.is_contested(run.district_id) and not run.vex_gone:
+	if not Gangs.is_gone(run, Gangs.owner(run.district_id)):
 		var cost := Turf.muscle_cost(run)
 		choices.append(DialogueChoice.new(MUSCLE, "Send muscle %s" % Format.money(cost), Turf.can_send_muscle(run)))
 		hint = "Muscle adds %d%% here and %d heat. Once per phase. %s" % [Turf.MUSCLE_GAIN, Turf.MUSCLE_HEAT, hint]

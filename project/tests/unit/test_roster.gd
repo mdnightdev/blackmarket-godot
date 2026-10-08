@@ -107,17 +107,17 @@ func test_patrols_raise_stop_odds() -> void:
 func test_rival_presence_alone_does_not_change_prices() -> void:
 	var dealer := Content.dealer_in(&"old_market")
 	var phones := Content.item(&"burner_phones")
-	var with_rival := _find_stamp(func(at: int) -> bool: return Roster.rival_in(_run, &"old_market", at))
+	var with_rival := _find_stamp(func(at: int) -> bool: return (Gangs.in_district(_run, &"old_market", at) != null))
 	_set_stamp(with_rival)
 	assert_eq(Turf.holder(_run, &"old_market"), Turf.Holder.NOBODY)
 	assert_eq(Market.sell_price(_run, dealer, phones), maxi(1, floori(Market.buy_price(_run, dealer, phones) * Market.SELL_SPREAD)))
 
 
 func test_rival_leaves_the_roster_once_driven_out() -> void:
-	var with_rival := _find_stamp(func(at: int) -> bool: return Roster.rival_in(_run, &"old_market", at))
-	_run.vex_gone = true
-	assert_eq(Roster.rival_location(_run, with_rival), &"")
-	assert_false(Roster.rival_in(_run, &"old_market", with_rival))
+	var with_rival := _find_stamp(func(at: int) -> bool: return (Gangs.in_district(_run, &"old_market", at) != null))
+	_run.gangs_gone.append(&"vex")
+	assert_eq(Gangs.boss_location(_run, _vex(), with_rival), &"")
+	assert_false((Gangs.in_district(_run, &"old_market", with_rival) != null))
 
 
 func _residents() -> Array[DealerDef]:
@@ -152,3 +152,7 @@ func _find_stamp(matches: Callable) -> int:
 func _set_stamp(stamp: int) -> void:
 	_run.day = floori(float(stamp) / RunState.Phase.size()) + 1
 	_run.phase = (stamp % RunState.Phase.size()) as RunState.Phase
+
+
+func _vex() -> GangDef:
+	return Content.gang(&"vex")

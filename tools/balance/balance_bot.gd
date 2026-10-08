@@ -17,7 +17,7 @@ const ROUTE_MIN_MARGIN := 0.15
 const CASH_RESERVE := 150
 const TRADING_FLOAT := 4000
 const BRIBE_SHARE_OF_CASH := 0.25
-const VEX_BRIBE_SHARE_OF_CASH := 0.2
+const GANG_BRIBE_SHARE_OF_CASH := 0.2
 ## The broker keeps more cash on hand, since orders are paid for up front.
 const BROKER_FLOAT := 12000
 ## Least profit, as a share of the goods cost, for the broker to take an order.
@@ -449,14 +449,14 @@ func _choose(run: RunState, encounter: Dictionary) -> StringName:
 			if enabled.has(Encounters.BRIBE) and int(encounter.bribe) <= run.cash * BRIBE_SHARE_OF_CASH:
 				return Encounters.BRIBE
 			return Encounters.COMPLY
-		Vex.GATE:
-			if enabled.has(Vex.THREATEN):
-				return Vex.THREATEN
-			if enabled.has(Vex.BRIBE) and int(encounter.bribe) <= run.cash * VEX_BRIBE_SHARE_OF_CASH:
-				return Vex.BRIBE
-			return Vex.IGNORE
-		Vex.HUNT:
-			return Vex.PAY if enabled.has(Vex.PAY) else Vex.FIGHT
+		Gangs.GATE:
+			if enabled.has(Gangs.THREATEN):
+				return Gangs.THREATEN
+			if enabled.has(Gangs.BRIBE) and int(encounter.bribe) <= run.cash * GANG_BRIBE_SHARE_OF_CASH:
+				return Gangs.BRIBE
+			return Gangs.IGNORE
+		Gangs.HUNT:
+			return Gangs.PAY if enabled.has(Gangs.PAY) else Gangs.FIGHT
 		Families.SHAKEDOWN:
 			return Families.PAY_UP if enabled.has(Families.PAY_UP) else Families.REFUSE
 		Collections.TYPE:

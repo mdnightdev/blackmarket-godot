@@ -3,11 +3,6 @@ extends GameButton
 
 const MARKER_CENTER := Vector2(100, 34)
 const PULSE_SECONDS := 1.4
-const HOLDER_COLORS := {
-	Turf.Holder.NOBODY: Palette.TEXT_MUTED,
-	Turf.Holder.PLAYER: TurfBar.PLAYER_COLOR,
-	Turf.Holder.VEX: TurfBar.VEX_COLOR,
-}
 
 var district: DistrictDef
 var is_current := false
@@ -21,7 +16,7 @@ var holder := Turf.Holder.NOBODY
 func _ready() -> void:
 	super()
 	_name_label.text = district.display_name
-	_tint_marker(HOLDER_COLORS[holder])
+	_tint_marker(TurfBar.holder_color(holder, district.id))
 	_ring.visible = is_current
 	if is_current:
 		_pulse_ring()

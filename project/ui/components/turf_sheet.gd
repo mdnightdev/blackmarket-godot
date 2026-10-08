@@ -91,7 +91,7 @@ func _rebuild() -> void:
 	for child in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
-	_power_label.text = "Power %d/%d" % [Turf.power(run), Turf.MAX_POWER]
+	_power_label.text = "Power %d/%d" % [Turf.power(run), Turf.max_power()]
 	_title.text = SECTION_TITLES.get(_section, "Turf")
 	match _section:
 		&"safehouse":
@@ -117,7 +117,7 @@ func _add_block(run: RunState) -> void:
 	scene.building_tapped.connect(_show_section)
 	scene.set_status(&"safehouse", "Open here" if Safehouse.is_open(run) else "Hold this district to open", Safehouse.is_open(run))
 	scene.set_status(&"crew", "%d/%d hired" % [Crew.hired_count(run), Crew.cap(run)] if run.career else "Locked: pay the Shark")
-	scene.set_status(&"districts", "%d/%d held" % [Turf.held_count(run), Turf.CONTESTED.size()], _any_level_up(run))
+	scene.set_status(&"districts", "%d/%d held" % [Turf.held_count(run), Turf.contested().size()], _any_level_up(run))
 	scene.set_status(&"businesses", "%d open" % run.businesses.size() if run.career else "Locked: pay the Shark")
 	var points := Skills.points_free(run)
 	scene.set_status(&"skills", "%d %s to spend" % [points, "point" if points == 1 else "points"], points > 0)
@@ -126,7 +126,7 @@ func _add_block(run: RunState) -> void:
 
 
 func _any_level_up(run: RunState) -> bool:
-	return Turf.CONTESTED.any(func(district_id: StringName) -> bool: return Turf.check_level_up(run, district_id) == Turf.LevelResult.OK)
+	return Turf.contested().any(func(district_id: StringName) -> bool: return Turf.check_level_up(run, district_id) == Turf.LevelResult.OK)
 
 
 func _add_cred(run: RunState) -> void:
@@ -142,7 +142,7 @@ func _add_districts(run: RunState) -> void:
 	var map := TurfMap.new()
 	map.district_tapped.connect(_talk_about_district)
 	_list.add_child(map)
-	_add_note("Green is yours, pink is Vex's, grey is still in play. Tap a district for its details.")
+	_add_note("Green is yours, gang colours are theirs, grey is still in play. Tap a district for its details.")
 
 
 func _talk_about_district(district: DistrictDef) -> void:
@@ -152,7 +152,7 @@ func _talk_about_district(district: DistrictDef) -> void:
 		GameOverlay.talk(Content.player(run.player_id), "%s is open city. Nobody runs these streets." % district.display_name, [_close_choice()], _end_talk)
 		return
 	var share := Turf.share(run, district.id)
-	var line := "I run %d%% of %s. Vex has the rest." % [share, district.display_name]
+	var line := "I run %d%% of %s. %s has the rest." % [share, district.display_name, Gangs.owner(district.id).display_name]
 	var result := Turf.check_level_up(run, district.id)
 	var cost := Turf.next_level_cost(run, district.id)
 	var hint := ""
@@ -222,7 +222,7 @@ func _add_businesses(run: RunState) -> void:
 		var caption := "%s, %d / %d stocked" % [district.display_name, Businesses.stock_used(entry), business.stock_capacity]
 		_add_row(business.icon, business.display_name, state, caption, "TAP TO MANAGE", Palette.TEXT_CREAM, _manage_business.bind(entry))
 	var offered: Array[StringName] = []
-	for district_id: StringName in Turf.CONTESTED:
+	for district_id: StringName in Turf.contested():
 		if Businesses.slots_free(run, district_id) <= 0:
 			continue
 		var district := Content.district(district_id)
@@ -242,7 +242,7 @@ func _add_businesses(run: RunState) -> void:
 			_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), business.description,
 				"TAP TO OPEN" if can_buy else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_buy else Palette.TEXT_MUTED, action)
 	for business in Content.businesses():
-		var level_reached := Turf.CONTESTED.any(func(district_id: StringName) -> bool: return Turf.level(run, district_id) >= business.min_turf_level)
+		var level_reached := Turf.contested().any(func(district_id: StringName) -> bool: return Turf.level(run, district_id) >= business.min_turf_level)
 		if not offered.has(business.id) and not level_reached:
 			_add_row(business.icon, business.display_name, Format.money(business.price), "Raise a district you hold to level %d to open one there" % business.min_turf_level,
 				"%s: TURF LEVEL %d" % [LOCKED, business.min_turf_level])

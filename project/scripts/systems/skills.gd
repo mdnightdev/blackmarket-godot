@@ -170,7 +170,7 @@ static func travel_heat_reduction(run: RunState) -> int:
 	return int(_effect(run, &"wheelman", "travel_heat", 0.0))
 
 
-## Added to the win chance of muggings, Vex fights and heists.
+## Added to the win chance of muggings, gang fights and heists.
 static func fight_bonus(run: RunState) -> float:
 	return _effect(run, &"muscle", "fight", 0.0)
 

@@ -252,7 +252,7 @@ func test_talk_lands_best_on_a_street_crew_and_worst_on_vex() -> void:
 	var family := _crew_ambush()
 	family.threat = Routes.Threat.FAMILY
 	var vex := _crew_ambush()
-	vex.threat = Routes.Threat.VEX
+	vex.threat = Routes.Threat.GANG
 	assert_gt(Ambush.name_chance(_run, crew), Ambush.name_chance(_run, family))
 	assert_gt(Ambush.name_chance(_run, family), Ambush.name_chance(_run, vex))
 	assert_gt(Ambush.back_off_chance(crew), Ambush.back_off_chance(vex))
@@ -313,3 +313,7 @@ func test_a_clean_run_reports_only_the_pay() -> void:
 	var lines := Smuggling.report(_run, _run.crate)
 	assert_eq(lines.size(), 1)
 	assert_eq(Smuggling.describe_report(lines), "Pay %s. Take-home %s." % [Format.money(int(offer.pay)), Format.money(int(offer.pay))])
+
+
+func _vex() -> GangDef:
+	return Content.gang(&"vex")
