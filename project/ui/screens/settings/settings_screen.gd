@@ -4,9 +4,13 @@ extends Control
 @onready var _sfx_slider: HSlider = %SfxSlider
 @onready var _vibration_toggle: CheckButton = %VibrationToggle
 @onready var _shake_toggle: CheckButton = %ShakeToggle
+@onready var _version_label: Label = %VersionLabel
 
 
 func _ready() -> void:
+	SafeArea.apply_top_margin(%Margin, 48)
+	_version_label.text = "v%s" % ProjectSettings.get_setting("application/config/version")
+	%DoneButton.pressed.connect(_leave)
 	_music_slider.value = Settings.music_volume
 	_sfx_slider.value = Settings.sfx_volume
 	_vibration_toggle.button_pressed = Settings.vibration

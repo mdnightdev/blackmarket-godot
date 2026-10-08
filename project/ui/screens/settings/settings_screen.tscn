@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/settings/settings_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
@@ -22,6 +23,7 @@ mouse_filter = 2
 color = Color(0.0471, 0.0549, 0.0706, 1)
 
 [node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,68 +33,103 @@ grow_vertical = 2
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 56
+theme_override_constants/margin_bottom = 40
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="Header" type="Label" parent="Margin/Layout"]
 layout_mode = 2
 theme_type_variation = &"HeaderLabel"
 text = "Settings"
 
-[node name="Card" type="PanelContainer" parent="Margin/Layout"]
+[node name="AudioHeading" type="Label" parent="Margin/Layout"]
+layout_mode = 2
+theme_type_variation = &"ListHeading"
+text = "AUDIO"
+
+[node name="AudioCard" type="PanelContainer" parent="Margin/Layout"]
 layout_mode = 2
 theme_type_variation = &"Card"
 
-[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Card"]
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/AudioCard"]
 layout_mode = 2
-theme_override_constants/separation = 21
+theme_override_constants/separation = 16
 
-[node name="MusicRow" type="VBoxContainer" parent="Margin/Layout/Card/Rows"]
+[node name="MusicRow" type="VBoxContainer" parent="Margin/Layout/AudioCard/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
-[node name="MusicLabel" type="Label" parent="Margin/Layout/Card/Rows/MusicRow"]
+[node name="MusicLabel" type="Label" parent="Margin/Layout/AudioCard/Rows/MusicRow"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "MUSIC"
 
-[node name="MusicSlider" type="HSlider" parent="Margin/Layout/Card/Rows/MusicRow"]
+[node name="MusicSlider" type="HSlider" parent="Margin/Layout/AudioCard/Rows/MusicRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 max_value = 1.0
 step = 0.05
 
-[node name="SfxRow" type="VBoxContainer" parent="Margin/Layout/Card/Rows"]
+[node name="SfxRow" type="VBoxContainer" parent="Margin/Layout/AudioCard/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
-[node name="SfxLabel" type="Label" parent="Margin/Layout/Card/Rows/SfxRow"]
+[node name="SfxLabel" type="Label" parent="Margin/Layout/AudioCard/Rows/SfxRow"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "SOUND EFFECTS"
 
-[node name="SfxSlider" type="HSlider" parent="Margin/Layout/Card/Rows/SfxRow"]
+[node name="SfxSlider" type="HSlider" parent="Margin/Layout/AudioCard/Rows/SfxRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 max_value = 1.0
 step = 0.05
 
-[node name="Separator" type="HSeparator" parent="Margin/Layout/Card/Rows"]
+[node name="GameplayHeading" type="Label" parent="Margin/Layout"]
 layout_mode = 2
+theme_type_variation = &"ListHeading"
+text = "GAMEPLAY"
 
-[node name="VibrationToggle" type="CheckButton" parent="Margin/Layout/Card/Rows"]
+[node name="GameplayCard" type="PanelContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_type_variation = &"Card"
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/GameplayCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="VibrationToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "Vibration"
 
-[node name="ShakeToggle" type="CheckButton" parent="Margin/Layout/Card/Rows"]
+[node name="ShakeToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "Screen shake"
+
+[node name="Spacer" type="Control" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="VersionLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+
+[node name="DoneButton" type="Button" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"SecondaryButton"
+text = "Done"
+script = ExtResource("2_button")

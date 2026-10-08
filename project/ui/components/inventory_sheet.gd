@@ -3,8 +3,14 @@ extends BottomSheet
 
 const BAG_TILE := preload("res://ui/components/bag_tile.tscn")
 
+enum Filter { ALL, GOODS, GEAR }
+
 @onready var _margin: MarginContainer = %Margin
 @onready var _capacity_label: Label = %CapacityLabel
+@onready var _capacity_bar: ProgressBar = %CapacityBar
+@onready var _all_tab: Button = %AllTab
+@onready var _goods_tab: Button = %GoodsTab
+@onready var _gear_tab: Button = %GearTab
 @onready var _grid: GridContainer = %Grid
 @onready var _empty_label: Label = %EmptyLabel
 @onready var _detail: Control = %Detail
@@ -19,12 +25,19 @@ var _selected_title := ""
 ## Tile title to the trade good it shows. Gear and the crate are not listed, so they cannot be sold from here.
 var _goods_by_title: Dictionary = {}
 var _buyer: DealerDef
+var _filter := Filter.ALL
 
 
 func _ready() -> void:
 	super()
 	GameState.run_changed.connect(_on_run_changed)
 	_sell_button.pressed.connect(_on_sell_pressed)
+	var tabs := ButtonGroup.new()
+	for tab_button: Button in [_all_tab, _goods_tab, _gear_tab]:
+		tab_button.button_group = tabs
+	_all_tab.pressed.connect(_select_filter.bind(Filter.ALL))
+	_goods_tab.pressed.connect(_select_filter.bind(Filter.GOODS))
+	_gear_tab.pressed.connect(_select_filter.bind(Filter.GEAR))
 
 
 func close_modal() -> bool:
@@ -37,8 +50,16 @@ func close_modal() -> bool:
 func open_inventory() -> void:
 	SafeArea.apply_top_margin(_margin, 24)
 	_selected_title = ""
+	_filter = Filter.ALL
+	_all_tab.button_pressed = true
 	_rebuild()
 	open_sheet()
+
+
+func _select_filter(filter: Filter) -> void:
+	_filter = filter
+	_selected_title = ""
+	_rebuild()
 
 
 func _on_run_changed() -> void:
@@ -54,10 +75,23 @@ func _rebuild() -> void:
 	_goods_by_title.clear()
 
 	_capacity_label.text = "%d / %d" % [Inventory.used(run), Inventory.capacity(run)]
+	_capacity_bar.max_value = maxi(1, Inventory.capacity(run))
+	_capacity_bar.value = mini(Inventory.used(run), Inventory.capacity(run))
 	if Inventory.over_capacity(run) > 0:
 		_capacity_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
 	else:
 		_capacity_label.remove_theme_color_override("font_color")
+	if _filter != Filter.GEAR:
+		_add_goods(run)
+	if _filter != Filter.GOODS:
+		for item in Gear.owned_items(run):
+			_add_tile(item.icon, "", item.display_name, Gear.describe(item), item.description)
+
+	_empty_label.visible = _grid.get_child_count() == 0
+	_select_tile(_find_tile(_selected_title))
+
+
+func _add_goods(run: RunState) -> void:
 	if Smuggling.is_carrying(run):
 		_add_tile(Smuggling.CRATE_ICON, "", "Voronin's crate", "%d slots. Do not open." % Smuggling.slots_used(run), Smuggling.describe(run.crate))
 	for item_id: StringName in run.inventory:
@@ -65,11 +99,6 @@ func _rebuild() -> void:
 		var paid := Format.money(int(run.cost_basis.get(item_id, 0)))
 		_add_tile(item.icon, "x%d" % run.inventory[item_id], item.display_name, "Paid %s each" % paid, item.description)
 		_goods_by_title[item.display_name] = item
-	for item in Gear.owned_items(run):
-		_add_tile(item.icon, "", item.display_name, Gear.describe(item), item.description)
-
-	_empty_label.visible = _grid.get_child_count() == 0
-	_select_tile(_find_tile(_selected_title))
 
 
 func _add_tile(icon: Texture2D, count_text: String, title: String, meta: String, description: String) -> void:

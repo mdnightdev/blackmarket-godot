@@ -1,0 +1,265 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://ui/components/profile_sheet.gd" id="1_sheet"]
+[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/backpack.svg" id="5_bag"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/clipboard-list.svg" id="6_jobs"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/wrench.svg" id="7_settings"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/rotate-ccw.svg" id="8_quit"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
+bg_color = Color(0.0471, 0.0549, 0.0706, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track"]
+bg_color = Color(0.1333, 0.149, 0.1804, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
+bg_color = Color(0.7176, 0.4549, 0.4902, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="ProfileSheet" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sheet")
+
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0314, 0.0353, 0.0471, 0.6)
+
+[node name="Sheet" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page")
+
+[node name="Page" type="VBoxContainer" parent="Sheet"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Margin" type="MarginContainer" parent="Sheet/Page"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 4
+
+[node name="Top" type="VBoxContainer" parent="Sheet/Page/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Sheet/Page/Margin/Top"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Profile"
+
+[node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+scroll_deadzone = 12
+
+[node name="Body" type="MarginContainer" parent="Sheet/Page/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="Sheet/Page/Scroll/Body"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Identity" type="PanelContainer" parent="Sheet/Page/Scroll/Body/Content"]
+layout_mode = 2
+theme_type_variation = &"Card"
+
+[node name="Row" type="HBoxContainer" parent="Sheet/Page/Scroll/Body/Content/Identity"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Frame" type="PanelContainer" parent="Sheet/Page/Scroll/Body/Content/Identity/Row"]
+layout_mode = 2
+theme_type_variation = &"IconFrame"
+
+[node name="Portrait" type="TextureRect" parent="Sheet/Page/Scroll/Body/Content/Identity/Row/Frame"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 112)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Text" type="VBoxContainer" parent="Sheet/Page/Scroll/Body/Content/Identity/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="NameLabel" type="Label" parent="Sheet/Page/Scroll/Body/Content/Identity/Row/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"NameLabel"
+
+[node name="RankLabel" type="Label" parent="Sheet/Page/Scroll/Body/Content/Identity/Row/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PillLabel"
+size_flags_horizontal = 0
+
+[node name="WhereLabel" type="Label" parent="Sheet/Page/Scroll/Body/Content/Identity/Row/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
+[node name="Stats" type="PanelContainer" parent="Sheet/Page/Scroll/Body/Content"]
+layout_mode = 2
+theme_type_variation = &"Card"
+
+[node name="Rows" type="VBoxContainer" parent="Sheet/Page/Scroll/Body/Content/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Meters" type="PanelContainer" parent="Sheet/Page/Scroll/Body/Content"]
+layout_mode = 2
+theme_type_variation = &"Card"
+
+[node name="Bars" type="VBoxContainer" parent="Sheet/Page/Scroll/Body/Content/Meters"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeatRow" type="HBoxContainer" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars"]
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars/HeatRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SectionLabel"
+text = "HEAT"
+
+[node name="HeatValue" type="Label" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars/HeatRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+
+[node name="HeatBar" type="ProgressBar" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+show_percentage = false
+
+[node name="CredRow" type="HBoxContainer" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars"]
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars/CredRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SectionLabel"
+text = "STREET CRED"
+
+[node name="CredValue" type="Label" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars/CredRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+
+[node name="CredBar" type="ProgressBar" parent="Sheet/Page/Scroll/Body/Content/Meters/Bars"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+show_percentage = false
+
+[node name="Links" type="VBoxContainer" parent="Sheet/Page/Scroll/Body/Content"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="BagLink" type="Button" parent="Sheet/Page/Scroll/Body/Content/Links"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"ListRow"
+theme_override_constants/h_separation = 14
+theme_override_constants/icon_max_width = 22
+text = "Bag"
+icon = ExtResource("5_bag")
+alignment = 0
+script = ExtResource("4_button")
+
+[node name="JobsLink" type="Button" parent="Sheet/Page/Scroll/Body/Content/Links"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"ListRow"
+theme_override_constants/h_separation = 14
+theme_override_constants/icon_max_width = 22
+text = "Journal"
+icon = ExtResource("6_jobs")
+alignment = 0
+script = ExtResource("4_button")
+
+[node name="SettingsLink" type="Button" parent="Sheet/Page/Scroll/Body/Content/Links"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"ListRow"
+theme_override_constants/h_separation = 14
+theme_override_constants/icon_max_width = 22
+text = "Settings"
+icon = ExtResource("7_settings")
+alignment = 0
+script = ExtResource("4_button")
+
+[node name="QuitLink" type="Button" parent="Sheet/Page/Scroll/Body/Content/Links"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"ListRow"
+theme_override_constants/h_separation = 14
+theme_override_constants/icon_max_width = 22
+text = "Save and quit to title"
+icon = ExtResource("8_quit")
+alignment = 0
+script = ExtResource("4_button")
+
+[node name="Motto" type="Label" parent="Sheet/Page/Scroll/Body/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
+layout_mode = 2

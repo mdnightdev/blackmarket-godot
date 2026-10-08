@@ -227,6 +227,7 @@ static func skim(run: RunState, share: float) -> void:
 static func seize(run: RunState) -> bool:
 	if not is_carrying(run):
 		return false
+	Journal.mark_failed(run, str(run.crate.id))
 	run.crate = {}
 	run.smuggling_ban_day = run.day
 	StreetCred.add(run, StreetCred.CRATE_LOST)

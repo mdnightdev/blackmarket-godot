@@ -34,6 +34,8 @@ var travelling_to: StringName = &""
 
 var _store := SaveStore.new(SAVE_PATH)
 var _rng := RandomNumberGenerator.new()
+## Jobs active at the last commit, so the journal can log the ones that closed since.
+var _active_jobs: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -62,6 +64,7 @@ func start_new_run(player_id := RunState.DEFAULT_PLAYER) -> void:
 	DailyTasks.deal(run)
 	var offers := Errands.post(run)
 	var customer_offers := CustomerOffers.post(run)
+	_active_jobs = Jobs.deadlines(run)
 	has_unseen_new_day = true
 	save_run()
 	run_started.emit()
@@ -79,6 +82,7 @@ func load_saved_run() -> bool:
 	if Content.district(run.district_id) == null:
 		run.district_id = RunState.STARTING_DISTRICT
 	DailyTasks.deal(run)
+	_active_jobs = Jobs.deadlines(run)
 	run_loaded.emit()
 	return true
 
@@ -677,6 +681,8 @@ func _by_value(a: ItemDef, b: ItemDef) -> bool:
 func _commit(new_day_started: bool) -> void:
 	if new_day_started:
 		has_unseen_new_day = true
+	Journal.record_finished(run, _active_jobs)
+	_active_jobs = Jobs.deadlines(run)
 	save_run()
 	run_changed.emit()
 	if Campaign.is_over(run):

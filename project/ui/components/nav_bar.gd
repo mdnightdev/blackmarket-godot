@@ -13,7 +13,7 @@ func _ready() -> void:
 	_market_tab.pressed.connect(_open_market)
 	_bag_tab.pressed.connect(GameOverlay.open_bag)
 	_jobs_tab.pressed.connect(GameOverlay.open_jobs)
-	_menu_tab.pressed.connect(SceneRouter.go_to.bind(SceneRouter.SETTINGS_SCREEN))
+	_menu_tab.pressed.connect(GameOverlay.open_profile)
 	GameState.run_changed.connect(_refresh_tabs)
 	visibility_changed.connect(_refresh_tabs)
 	_refresh_tabs()

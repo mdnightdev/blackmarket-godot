@@ -8,6 +8,7 @@ const JOBS_SHEET := preload("res://ui/components/jobs_sheet.tscn")
 const JAIL_CARD := preload("res://ui/components/jail_card.tscn")
 const OFFER_BANNER := preload("res://ui/components/offer_banner.tscn")
 const QUOTE_SHEET := preload("res://ui/components/quote_sheet.tscn")
+const PROFILE_SHEET := preload("res://ui/components/profile_sheet.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -26,6 +27,7 @@ var _inventory_sheet: InventorySheet
 var _turf_sheet: TurfSheet
 var _jobs_sheet: JobsSheet
 var _quote_sheet: QuoteSheet
+var _profile_sheet: ProfileSheet
 var _jail_card: JailCard
 var _banner: OfferBanner
 var _lights: PoliceLights
@@ -52,12 +54,14 @@ func _ready() -> void:
 	_turf_sheet = TURF_SHEET.instantiate()
 	_jobs_sheet = JOBS_SHEET.instantiate()
 	_quote_sheet = QUOTE_SHEET.instantiate()
+	_profile_sheet = PROFILE_SHEET.instantiate()
 	_jail_card = JAIL_CARD.instantiate()
 	_banner = OFFER_BANNER.instantiate()
 	_lights = PoliceLights.new()
 	add_child(_inventory_sheet)
 	add_child(_turf_sheet)
 	add_child(_jobs_sheet)
+	add_child(_profile_sheet)
 	add_child(_quote_sheet)
 	add_child(_loan_sheet)
 	add_child(_jail_card)
@@ -122,34 +126,38 @@ func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
 
 
 func open_bag() -> void:
-	_jobs_sheet.close()
-	_turf_sheet.close()
-	_quote_sheet.close()
+	_close_pages_except(_inventory_sheet)
 	if not _inventory_sheet.visible:
 		_inventory_sheet.open_inventory()
 
 
 func open_turf() -> void:
-	_inventory_sheet.close()
-	_jobs_sheet.close()
-	_quote_sheet.close()
+	_close_pages_except(_turf_sheet)
 	_turf_sheet.open_turf()
 
 
 func open_jobs() -> void:
-	_inventory_sheet.close()
-	_turf_sheet.close()
-	_quote_sheet.close()
+	_close_pages_except(_jobs_sheet)
 	if not _jobs_sheet.visible:
 		_jobs_sheet.open_jobs()
 
 
+func open_profile() -> void:
+	_close_pages_except(_profile_sheet)
+	if not _profile_sheet.visible:
+		_profile_sheet.open_profile()
+
+
 ## Where to buy the goods for an accepted customer order.
 func open_quotes(order_id: String) -> void:
-	_inventory_sheet.close()
-	_turf_sheet.close()
-	_jobs_sheet.close()
+	_close_pages_except(_quote_sheet)
 	_quote_sheet.open_quotes(order_id)
+
+
+func _close_pages_except(keep: BottomSheet) -> void:
+	for page: BottomSheet in [_inventory_sheet, _turf_sheet, _jobs_sheet, _quote_sheet, _profile_sheet]:
+		if page != keep:
+			page.close()
 
 
 ## Opens a conversation that is not an encounter. See DialoguePanel.open for the callback contract.
@@ -208,7 +216,7 @@ func handle_back() -> bool:
 
 
 func _sheets() -> Array[BottomSheet]:
-	var sheets: Array[BottomSheet] = [_quote_sheet, _loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]
+	var sheets: Array[BottomSheet] = [_quote_sheet, _loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet, _profile_sheet]
 	return sheets
 
 

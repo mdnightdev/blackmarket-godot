@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://ui/components/jobs_sheet.gd" id="1_sheet"]
 [ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
 [ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
 [ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="4_confirm"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="5_button"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
 bg_color = Color(0.0471, 0.0549, 0.0706, 1)
@@ -60,6 +61,40 @@ layout_mode = 2
 layout_mode = 2
 theme_type_variation = &"HeaderLabel"
 text = "Jobs"
+
+[node name="Tabs" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="ActiveTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"LineTab"
+toggle_mode = true
+text = "Active"
+script = ExtResource("5_button")
+
+[node name="CompletedTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"LineTab"
+toggle_mode = true
+text = "Completed"
+script = ExtResource("5_button")
+
+[node name="FailedTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"LineTab"
+toggle_mode = true
+text = "Failed"
+script = ExtResource("5_button")
 
 [node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]
 layout_mode = 2

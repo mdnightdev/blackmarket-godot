@@ -119,6 +119,10 @@ var customer_offers: Array[Dictionary] = []
 var customer_orders: Array[Dictionary] = []
 ## Weekly payments to the Shark missed in a row. See Loan.
 var missed_weeks: int = 0
+## Finished jobs, newest first. See Journal for the entry layout.
+var journal: Array[Dictionary] = []
+## Jobs closed early as failures since the last commit. Never saved. See Journal.mark_failed.
+var failed_job_ids: Array[String] = []
 
 var next_due_day: int = Loan.PAYMENT_PERIOD_DAYS + 1
 var period_minimum: int = Loan.FIRST_PAYMENT
@@ -198,6 +202,7 @@ func to_dict() -> Dictionary:
 		"customer_offers": customer_offers,
 		"customer_orders": customer_orders,
 		"missed_weeks": missed_weeks,
+		"journal": journal,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
 		"paid_this_period": paid_this_period,
@@ -337,6 +342,10 @@ static func from_dict(data: Dictionary) -> RunState:
 		if not clean.is_empty() and state.customer_orders.size() < Customers.MAX_ACTIVE:
 			state.customer_orders.append(clean)
 	state.missed_weeks = maxi(0, int(data.get("missed_weeks", 0)))
+	for entry in _dictionaries(data.get("journal")):
+		var clean := Journal.sanitize(entry)
+		if not clean.is_empty() and state.journal.size() < Journal.MAX_ENTRIES:
+			state.journal.append(clean)
 
 	state.next_due_day = maxi(2, int(data.get("next_due_day", state.next_due_day)))
 	state.period_minimum = maxi(0, int(data.get("period_minimum", state.period_minimum)))

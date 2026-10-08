@@ -96,6 +96,7 @@ static func hand_over(run: RunState, order: Dictionary, roll: float) -> Dictiona
 	match int(order.temperament):
 		CustomerDef.Temperament.STING:
 			run.customer_orders.erase(order)
+			Journal.mark_failed(run, str(order.id))
 			run.pending_encounter = Encounters.police_stop(run)
 			var sting := _result("%s takes one look at the goods and flashes a badge. It was a setup." % name)
 			sting.sting = true
@@ -121,6 +122,7 @@ static func answer_haggle(run: RunState, order: Dictionary, accept_counter: bool
 	if roll < hold_firm_chance(run):
 		return _complete(run, order, int(order.unit_price), "%s holds your stare, then pays the full %s." % [name, Format.money(total(order))])
 	run.customer_orders.erase(order)
+	Journal.mark_failed(run, str(order.id))
 	var walked := _result("%s shrugs and walks off. The deal is dead and the goods stay in your bag." % name)
 	walked.walked = true
 	return walked
@@ -146,6 +148,7 @@ static func expire(run: RunState) -> Array[Dictionary]:
 			})
 		elif flakes(run, order):
 			run.customer_orders.erase(order)
+			Journal.mark_failed(run, str(order.id))
 			notices.append({
 				"line": "%s called off the order for %s." % [customer_name(order), goods_label(order)],
 				"hint": "Nothing to deliver. No cred lost.",

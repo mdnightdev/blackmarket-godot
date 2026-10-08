@@ -9,23 +9,42 @@ const INVOICE_ICON: Texture2D = preload("res://assets/icons/hud/clipboard-list.s
 const HEADING_INDENT := 24
 const CONTINUE: StringName = &"continue"
 
+enum Tab { ACTIVE, COMPLETED, FAILED }
+
 @onready var _margin: MarginContainer = %Margin
 @onready var _list: VBoxContainer = %List
 @onready var _confirm: ConfirmDialog = %ConfirmDialog
+@onready var _active_tab: Button = %ActiveTab
+@onready var _completed_tab: Button = %CompletedTab
+@onready var _failed_tab: Button = %FailedTab
 
 var _pending_action := Callable()
+var _tab := Tab.ACTIVE
 
 
 func _ready() -> void:
 	super()
 	GameState.run_changed.connect(_on_run_changed)
 	_confirm.confirmed.connect(_on_confirmed)
+	var tabs := ButtonGroup.new()
+	for tab_button: Button in [_active_tab, _completed_tab, _failed_tab]:
+		tab_button.button_group = tabs
+	_active_tab.pressed.connect(_select_tab.bind(Tab.ACTIVE))
+	_completed_tab.pressed.connect(_select_tab.bind(Tab.COMPLETED))
+	_failed_tab.pressed.connect(_select_tab.bind(Tab.FAILED))
 
 
 func open_jobs() -> void:
 	SafeArea.apply_top_margin(_margin, 24)
+	_tab = Tab.ACTIVE
+	_active_tab.button_pressed = true
 	_rebuild()
 	open_sheet()
+
+
+func _select_tab(tab: Tab) -> void:
+	_tab = tab
+	_rebuild()
 
 
 ## Back closes an open confirmation before the page itself.
@@ -46,11 +65,31 @@ func _rebuild() -> void:
 	for child in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
-	_add_tasks(run)
-	_add_offers(run)
-	_add_active(run)
-	_add_owed(run)
-	_add_heists(run)
+	match _tab:
+		Tab.COMPLETED:
+			_add_history(run, false)
+		Tab.FAILED:
+			_add_history(run, true)
+		_:
+			_add_tasks(run)
+			_add_offers(run)
+			_add_active(run)
+			_add_owed(run)
+			_add_heists(run)
+
+
+func _add_history(run: RunState, failed: bool) -> void:
+	var entries := Journal.entries(run, failed)
+	if entries.is_empty():
+		_add_note("No failed jobs. Keep it that way." if failed else "Nothing finished yet. Delivered orders, errands and crates show up here.")
+		return
+	for entry in entries:
+		var place := str(entry.place)
+		var caption := Calendar.describe(int(entry.stamp))
+		if not place.is_empty():
+			caption = "%s. %s" % [place, caption]
+		var hint := "FAILED" if failed else "DONE"
+		_add_row(LOCK_ICON if failed else TASK_ICON, str(entry.title), "", caption, hint, Palette.RISK_HIGH if failed else Palette.RISK_LOW)
 
 
 func _add_tasks(run: RunState) -> void:

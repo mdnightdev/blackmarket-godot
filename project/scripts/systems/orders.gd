@@ -85,6 +85,7 @@ static func deliver(run: RunState, order: Dictionary) -> bool:
 ## Giving up an order costs the same as missing it: the dealer refuses to trade for the rest of the phase.
 static func drop(run: RunState, order: Dictionary) -> void:
 	run.orders.erase(order)
+	Journal.mark_failed(run, str(order.id))
 	run.walked_out[StringName(order.dealer)] = Calendar.stamp(run)
 	StreetCred.add(run, StreetCred.JOB_MISSED)
 

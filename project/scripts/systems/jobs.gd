@@ -1,7 +1,7 @@
 class_name Jobs
 
 ## Deadlines across bar orders, family favours, Voronin's crate, the Shark's errands and customer orders, for reminders.
-## Each entry is { "title": String, "place": String, "due": int } with due as the last phase stamp.
+## Each entry is { "id": String, "title": String, "place": String, "due": int } with due as the last phase stamp.
 
 ## Jobs whose last phase is this one or the next.
 const SOON_PHASES := 1
@@ -16,6 +16,7 @@ static func deadlines(run: RunState) -> Array[Dictionary]:
 			continue
 		var district := Content.district(dealer.district_id)
 		list.append({
+			"id": str(order.id),
 			"title": "%d %s for %s" % [int(order.quantity), item.display_name, dealer.display_name],
 			"place": district.display_name if district != null else "",
 			"due": int(order.due),
@@ -27,6 +28,7 @@ static func deadlines(run: RunState) -> Array[Dictionary]:
 		if item == null or lieutenant == null:
 			continue
 		list.append({
+			"id": str(favour.id),
 			"title": "%d %s for %s" % [int(favour.quantity), item.display_name, lieutenant.display_name],
 			"place": "",
 			"due": int(favour.due),
@@ -34,6 +36,7 @@ static func deadlines(run: RunState) -> Array[Dictionary]:
 	if Smuggling.is_carrying(run):
 		var destination := Smuggling.destination(run.crate)
 		list.append({
+			"id": str(run.crate.get("id", "crate")),
 			"title": "Voronin's crate",
 			"place": destination.display_name if destination != null else "",
 			"due": int(run.crate.get("due", -1)),
@@ -41,6 +44,7 @@ static func deadlines(run: RunState) -> Array[Dictionary]:
 	for errand in run.errands:
 		var place := Content.district(Errands.target_district(errand))
 		list.append({
+			"id": str(errand.id),
 			"title": Errands.job_title(errand),
 			"place": place.display_name if place != null else "",
 			"due": int(errand.due_stamp),
@@ -48,6 +52,7 @@ static func deadlines(run: RunState) -> Array[Dictionary]:
 	for order in run.customer_orders:
 		var place := Content.district(StringName(str(order.district)))
 		list.append({
+			"id": str(order.id),
 			"title": Customers.job_title(order),
 			"place": place.display_name if place != null else "",
 			"due": int(order.due_stamp),
