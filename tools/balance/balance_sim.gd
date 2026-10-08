@@ -1,12 +1,13 @@
 extends SceneTree
 
 ## Headless balance report. Run from project/:
-## ../Godot_v4.3-stable_linux.arm64 --headless -s "$(realpath ../tools/balance/balance_sim.gd)" -- [days] [runs]
+## ../Godot_v4.3-stable_linux.arm64 --headless -s "$(realpath ../tools/balance/balance_sim.gd)" -- [days] [runs] [strategies]
+## strategies is an optional comma separated subset, for example local,broker.
 ## The bot is loaded after the autoloads exist, since the game systems reference them.
 
 const DEFAULT_DAYS := 60
 const DEFAULT_RUNS := 20
-const STRATEGIES: Array[StringName] = [&"idle", &"local", &"route"]
+const STRATEGIES: Array[StringName] = [&"idle", &"local", &"route", &"broker"]
 const REPORT_PATH := "/tmp/balance_report.txt"
 const SAVE_PATH := "/tmp/balance_sim_run.json"
 
@@ -19,6 +20,9 @@ func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	var days := _int_arg(args, 0, DEFAULT_DAYS)
 	var runs := _int_arg(args, 1, DEFAULT_RUNS)
+	var strategies := STRATEGIES
+	if args.size() > 2:
+		strategies = STRATEGIES.filter(func(strategy: StringName) -> bool: return args[2].split(",").has(String(strategy)))
 
 	var game_state := root.get_node("GameState")
 	game_state.set("_store", load("res://scripts/core/save_store.gd").new(SAVE_PATH))
@@ -26,7 +30,7 @@ func _run() -> void:
 	var bot: RefCounted = bot_script.new(game_state, root.get_node("Content"))
 
 	var lines: PackedStringArray = ["BLACK MARKET balance report, %d runs per strategy, %d days" % [runs, days]]
-	for strategy in STRATEGIES:
+	for strategy in strategies:
 		var results: Array[Dictionary] = []
 		for index in runs:
 			results.append(bot.play(strategy, 1000 + index, days))
@@ -83,12 +87,38 @@ func _summarize(strategy: StringName, results: Array[Dictionary], checkpoint_day
 		float(busts) / results.size(), realized / results.size(),
 	])
 
+	lines.append_array(_order_lines(results))
 	lines.append("average per run, by source:")
 	for entry in _averaged(results, "ledger"):
 		lines.append("  %-28s %+8d" % [entry.label, entry.value])
 	lines.append("average count per run:")
 	for entry in _averaged(results, "counts"):
 		lines.append("  %-40s %6.1f" % [entry.label, entry.exact])
+	return lines
+
+
+## Customer orders handed over, by temperament: how many per run and the average profit over the goods cost, before fares.
+func _order_lines(results: Array[Dictionary]) -> PackedStringArray:
+	var totals := {}
+	for result in results:
+		var orders: Dictionary = result.get("orders", {})
+		for temperament: String in orders:
+			var total: Dictionary = totals.get(temperament, { "count": 0, "profit": 0, "cost": 0, "walked": 0 })
+			total.count += int(orders[temperament].count)
+			total.profit += int(orders[temperament].profit)
+			total.cost += int(orders[temperament].cost)
+			total.walked += int(orders[temperament].walked)
+			totals[temperament] = total
+	var lines: PackedStringArray = []
+	if totals.is_empty():
+		return lines
+	lines.append("customer orders handed over, by temperament:")
+	for temperament: String in totals:
+		var total: Dictionary = totals[temperament]
+		lines.append("  %-10s %5.1f per run, average profit %+6d (%+.0f%% of goods cost), walked off %d" % [
+			temperament, float(total.count) / results.size(), roundi(float(total.profit) / maxi(1, int(total.count) - int(total.walked))),
+			100.0 * total.profit / maxi(1, int(total.cost)), int(total.walked),
+		])
 	return lines
 
 

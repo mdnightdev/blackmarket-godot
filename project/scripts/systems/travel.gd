@@ -9,6 +9,11 @@ static func fare(run: RunState, destination: DistrictDef) -> int:
 	return roundi(destination.travel_cost * (1.0 - Gear.fare_discount(run)))
 
 
+## The fare for a trip between any two districts. Fares depend only on where the trip ends, and staying put is free.
+static func trip_fare(run: RunState, from_id: StringName, destination: DistrictDef) -> int:
+	return 0 if destination.id == from_id else fare(run, destination)
+
+
 static func check(run: RunState, destination: DistrictDef) -> Check:
 	if run.district_id == destination.id:
 		return Check.ALREADY_HERE

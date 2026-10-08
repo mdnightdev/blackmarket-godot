@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lena_marsh"
+display_name = "Lena Marsh"
+district_id = &"docks"
+line = "I keep a phone for every name I use. Running low on both."
+wants = Array[StringName]([&"comms", &"tech"])
+temperament = 4
+active_phases = Array[int]([1, 2])

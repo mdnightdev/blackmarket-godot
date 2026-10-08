@@ -15,6 +15,8 @@ signal favours_missed(favours: Array[Dictionary])
 signal notices_posted(notices: Array[Dictionary])
 ## New errand offers landed on the player's phone.
 signal offers_posted(offers: Array[Dictionary])
+## New customer orders landed on the player's phone. See Customers for the entry layout.
+signal customer_offers_posted(offers: Array[Dictionary])
 
 const SAVE_PATH := "user://run.json"
 
@@ -59,11 +61,14 @@ func start_new_run(player_id := RunState.DEFAULT_PLAYER) -> void:
 	run.player_id = player_id
 	DailyTasks.deal(run)
 	var offers := Errands.post(run)
+	var customer_offers := CustomerOffers.post(run)
 	has_unseen_new_day = true
 	save_run()
 	run_started.emit()
 	if not offers.is_empty():
 		offers_posted.emit(offers)
+	if not customer_offers.is_empty():
+		customer_offers_posted.emit(customer_offers)
 
 
 func load_saved_run() -> bool:
@@ -300,6 +305,64 @@ func decline_offer(id: String) -> void:
 		_commit(false)
 
 
+## Takes a customer order off the phone. Accepting where the customer waits with the goods in the bag queues the handover.
+func accept_customer_offer(id: String) -> bool:
+	if not Customers.accept(run, id):
+		return false
+	Customers.visit(run)
+	_commit(false)
+	return true
+
+
+func decline_customer_offer(id: String) -> void:
+	if Customers.decline(run, id):
+		_commit(false)
+
+
+## Queues the handover card for an order that can be handed over where the player stands.
+func queue_handover(id: String) -> bool:
+	var order := Customers.find(run, id)
+	if order.is_empty() or Encounters.has_pending(run) or not Customers.can_hand_over(run, order):
+		return false
+	run.pending_encounter = CustomerHandover.start(run, order)
+	_commit(false)
+	return true
+
+
+## Returns the Customers.hand_over result, empty when the handover cannot happen now. An undercover buyer leaves a
+## police stop pending. A haggler's counter offer waits for answer_haggle.
+func hand_over_customer_order(id: String) -> Dictionary:
+	var order := Customers.find(run, id)
+	if order.is_empty():
+		return {}
+	CustomerHandover.dismiss(run, id)
+	if Encounters.has_pending(run):
+		return {}
+	return _finish_handover(Customers.hand_over(run, order, _rng.randf()))
+
+
+## Takes the haggler's lower price, or holds firm when accept is false. Returns the same layout as hand_over_customer_order.
+func answer_haggle(id: String, accept: bool) -> Dictionary:
+	var order := Customers.find(run, id)
+	if order.is_empty():
+		return {}
+	CustomerHandover.dismiss(run, id)
+	if Encounters.has_pending(run):
+		return {}
+	return _finish_handover(Customers.answer_haggle(run, order, accept, _rng.randf()))
+
+
+func _finish_handover(result: Dictionary) -> Dictionary:
+	if result.is_empty():
+		return result
+	Encounters.check_raid(run)
+	_commit(false)
+	var finished: Array[Dictionary] = []
+	finished.assign(result.get("tasks", []))
+	_report_tasks(finished)
+	return result
+
+
 func buy_recon() -> bool:
 	if not Routes.buy_recon(run):
 		return false
@@ -485,6 +548,7 @@ func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -
 func _arrive() -> void:
 	Encounters.after_arrival(run, _rng)
 	var notices := Errands.visit(run)
+	Customers.visit(run)
 	notices.append_array(_task_notices(DailyTasks.record_arrival(run, run.district_id)))
 	_commit(false)
 	if not notices.is_empty():
@@ -497,13 +561,17 @@ func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Di
 	var lost_crate := Smuggling.expire(run)
 	var notices := _task_notices(finished_tasks)
 	notices.append_array(Errands.expire(run))
+	notices.append_array(Customers.expire(run))
 	Encounters.after_time_passes(run, new_day_started, travelled, _rng, Content.events())
 	if new_day_started and not Campaign.is_over(run):
 		notices.append_array(_start_morning())
 	Businesses.sell_phase(run)
 	if not Campaign.is_over(run) and not Police.is_jailed(run):
 		notices.append_array(Errands.visit(run))
+		if travelled:
+			Customers.visit(run)
 	var offers := Errands.post(run)
+	var customer_offers := CustomerOffers.post(run)
 	if travelled:
 		finished_tasks = DailyTasks.record_arrival(run, run.district_id)
 		notices.append_array(_task_notices(finished_tasks))
@@ -513,6 +581,8 @@ func _pass_time(new_day_started: bool, travelled: bool, finished_tasks: Array[Di
 		notices_posted.emit(notices)
 	if not offers.is_empty():
 		offers_posted.emit(offers)
+	if not customer_offers.is_empty():
+		customer_offers_posted.emit(customer_offers)
 	if not missed.is_empty():
 		orders_missed.emit(missed)
 	if not missed_favours.is_empty():

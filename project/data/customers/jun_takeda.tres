@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"jun_takeda"
+display_name = "Jun Takeda"
+district_id = &"downtown"
+line = "Good hardware at a fair price. I decide what fair means."
+wants = Array[StringName]([&"tech"])
+temperament = 4
+active_phases = Array[int]([0, 1, 2])
+min_rank = 2

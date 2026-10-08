@@ -1,7 +1,7 @@
 class_name OfferBanner
 extends Control
 
-## Phone-style notice for a new errand offer. Slides down under the top bar and slides back up on its own.
+## Phone-style notice for a new offer. Slides down under the top bar and slides back up on its own.
 
 signal opened(offer_id: String)
 
@@ -17,7 +17,8 @@ const BUZZ_MS := 40
 @onready var _portrait: TextureRect = %Portrait
 @onready var _sender_label: Label = %SenderLabel
 @onready var _line_label: Label = %LineLabel
-@onready var _pay_label: Label = %PayLabel
+@onready var _place_label: Label = %PlaceLabel
+@onready var _detail_label: Label = %DetailLabel
 @onready var _tap_area: Button = %TapArea
 @onready var _hide_timer: Timer = %HideTimer
 
@@ -36,13 +37,16 @@ func is_showing() -> bool:
 	return not offer_id.is_empty()
 
 
-func show_offer(offer: Dictionary) -> void:
-	var sender := Content.character(StringName(str(offer.get("sender", Errands.SENDER))))
-	offer_id = str(offer.id)
-	_portrait.texture = sender.portrait if sender != null else null
-	_sender_label.text = sender.display_name if sender != null else ""
-	_line_label.text = Errands.describe(offer)
-	_pay_label.text = Format.money(int(offer.pay))
+## detail sits on the right, for example the pay. place is a small caption under the line. Both hide when empty.
+func show_offer(id: String, portrait: Texture2D, sender: String, line: String, detail := "", place := "") -> void:
+	offer_id = id
+	_portrait.texture = portrait
+	_sender_label.text = sender
+	_line_label.text = line
+	_detail_label.text = detail
+	_detail_label.visible = not detail.is_empty()
+	_place_label.text = place
+	_place_label.visible = not place.is_empty()
 	_card.position.y = -size.y
 	show()
 	await get_tree().process_frame

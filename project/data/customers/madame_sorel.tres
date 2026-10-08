@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"madame_sorel"
+display_name = "Madame Sorel"
+district_id = &"north_port"
+line = "Only pieces with a story. I pay for the story."
+wants = Array[StringName]([&"luxury"])
+temperament = 2
+active_phases = Array[int]([2, 3])
+min_rank = 5

@@ -14,11 +14,11 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 stock_categories = Array[StringName]([&"comms", &"meds", &"arms"])
 price_bias = {
-&"meds": 0.8,
-&"arms": 0.85,
-&"comms": 0.9,
-&"papers": 1.1,
-&"tech": 1.2,
-&"luxury": 1.3
+&"meds": 0.92,
+&"arms": 0.95,
+&"comms": 0.95,
+&"papers": 1.05,
+&"tech": 1.1,
+&"luxury": 1.15
 }
 haggle_tolerance = 0.16

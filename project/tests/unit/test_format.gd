@@ -15,6 +15,12 @@ func test_money_negative_values() -> void:
 	assert_eq(Format.money(-2500), "-$2,500")
 
 
+func test_signed_money_marks_gains() -> void:
+	assert_eq(Format.signed_money(1200), "+$1,200")
+	assert_eq(Format.signed_money(-300), "-$300")
+	assert_eq(Format.signed_money(0), "$0")
+
+
 func test_money_short_keeps_small_amounts_exact() -> void:
 	assert_eq(Format.money_short(9850), "$9,850")
 	assert_eq(Format.money_short(-450), "-$450")

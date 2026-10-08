@@ -5,8 +5,6 @@ class_name OfferTalk
 const ACCEPT: StringName = &"accept"
 const DECLINE: StringName = &"decline"
 const LATER: StringName = &"later"
-const TRAVEL: StringName = &"travel"
-const CONTINUE: StringName = &"continue"
 
 
 static func open(offer_id: String) -> void:
@@ -50,7 +48,7 @@ static func _on_offer_choice(choice: StringName, offer_id: String) -> void:
 
 static func _accept(offer_id: String) -> void:
 	if not GameState.accept_offer(offer_id):
-		GameOverlay.say("Too slow. That job is gone.", _continue_only(), _end)
+		GameOverlay.say("Too slow. That job is gone.", TripTalk.continue_only(), TripTalk.end)
 		return
 	AudioService.play_sfx(Sfx.FAVOUR_TAKEN)
 	var errand := Errands.find(GameState.run, offer_id)
@@ -60,47 +58,7 @@ static func _accept(offer_id: String) -> void:
 	if destination == null:
 		GameOverlay.end_talk()
 		return
-	_offer_trip(destination)
-
-
-## Asks to travel now. A trip that cannot go ahead says why, and the job keeps running either way.
-static func _offer_trip(destination: DistrictDef) -> void:
-	var run := GameState.run
-	var player := Content.player(run.player_id)
-	var fare := Format.money(Travel.fare(run, destination))
-	match Travel.check(run, destination):
-		Travel.Check.OK:
-			var choices: Array[DialogueChoice] = [
-				DialogueChoice.new(TRAVEL, "Travel"),
-				DialogueChoice.new(LATER, "Later", true, true),
-			]
-			var line := "Head to %s now?" % destination.display_name
-			GameOverlay.talk(player, line, choices, _on_trip_choice.bind(destination.id), "Fare %s" % fare)
-		Travel.Check.NOT_ENOUGH_CASH:
-			var line := "The fare to %s is %s and I am short. I will go when I have it." % [destination.display_name, fare]
-			GameOverlay.talk(player, line, _continue_only(), _end, "The job stays in your Jobs tab.")
-		Travel.Check.LOCKED:
-			var line := "%s is closed to me for now." % destination.display_name
-			GameOverlay.talk(player, line, _continue_only(), _end, Travel.lock_reason(run, destination))
-		_:
-			GameOverlay.end_talk()
-
-
-static func _on_trip_choice(choice: StringName, district_id: StringName) -> void:
-	GameOverlay.end_talk()
-	if choice != TRAVEL:
-		return
-	GameState.travelling_to = district_id
-	SceneRouter.go_to(SceneRouter.MAP_SCREEN)
-
-
-static func _continue_only() -> Array[DialogueChoice]:
-	var choices: Array[DialogueChoice] = [DialogueChoice.new(CONTINUE, "Continue", true, true)]
-	return choices
-
-
-static func _end(_choice: StringName) -> void:
-	GameOverlay.end_talk()
+	TripTalk.offer(destination)
 
 
 static func _place_name(district_id: Variant) -> String:

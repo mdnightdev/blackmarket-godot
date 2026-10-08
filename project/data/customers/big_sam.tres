@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"big_sam"
+display_name = "Big Sam"
+district_id = &"warehouse_row"
+line = "I resell what you bring me. So we both know I am not paying retail."
+wants = Array[StringName]([&"arms", &"tech"])
+temperament = 0
+active_phases = Array[int]([2, 3])

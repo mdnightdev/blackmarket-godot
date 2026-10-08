@@ -19,6 +19,7 @@ const JOB_MISSED := -10
 const CRATE_LOST := -15
 const BACKED_OFF := -5
 const CREW_WALKED := -10
+const CUSTOMER_MISSED := -5
 
 const RANKS: Array[Dictionary] = [
 	{ "name": "Nobody", "cred": 0 },

@@ -2,10 +2,10 @@ class_name Market
 
 ## Dealers buy back at this fraction of their asking price.
 const SELL_SPREAD := 0.9
-const DAY_SWING_MIN := 0.7
-const DAY_SWING_MAX := 1.3
-const PHASE_SWING_MIN := 0.94
-const PHASE_SWING_MAX := 1.06
+const DAY_SWING_MIN := 0.85
+const DAY_SWING_MAX := 1.15
+const PHASE_SWING_MIN := 0.96
+const PHASE_SWING_MAX := 1.04
 
 ## Prices are derived from the run seed instead of stored, so every phase is reproducible after a reload.
 static func asking_price_at(run: RunState, dealer: DealerDef, item: ItemDef, phase_stamp: int) -> int:

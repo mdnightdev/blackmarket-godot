@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"ottilie_brandt"
+display_name = "Ottilie Brandt"
+district_id = &"warehouse_row"
+line = "Small repair shop. The parts I need do not come with receipts."
+wants = Array[StringName]([&"tech", &"comms"])
+temperament = 1
+active_phases = Array[int]([0, 1])

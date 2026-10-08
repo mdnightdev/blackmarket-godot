@@ -11,6 +11,7 @@ const FAMILIES_FOLDER := "res://data/families"
 const CREW_FOLDER := "res://data/crew"
 const BUSINESSES_FOLDER := "res://data/businesses"
 const HEISTS_FOLDER := "res://data/heists"
+const CUSTOMERS_FOLDER := "res://data/customers"
 
 var _districts: Dictionary = {}
 var _venues: Dictionary = {}
@@ -23,6 +24,7 @@ var _families: Dictionary = {}
 var _crew_roles: Dictionary = {}
 var _businesses: Dictionary = {}
 var _heists: Dictionary = {}
+var _customers: Dictionary = {}
 var _events: Array[EventDef] = []
 
 
@@ -40,6 +42,7 @@ func _ready() -> void:
 	_crew_roles = Catalog.index_by_id(Catalog.load_folder(CREW_FOLDER))
 	_businesses = Catalog.index_by_id(Catalog.load_folder(BUSINESSES_FOLDER))
 	_heists = Catalog.index_by_id(Catalog.load_folder(HEISTS_FOLDER))
+	_customers = Catalog.index_by_id(Catalog.load_folder(CUSTOMERS_FOLDER))
 	_events.assign(Catalog.load_folder(EVENTS_FOLDER))
 
 
@@ -167,4 +170,16 @@ func heists() -> Array[HeistDef]:
 	var list: Array[HeistDef] = []
 	list.assign(_heists.values())
 	list.sort_custom(func(a: HeistDef, b: HeistDef) -> bool: return a.min_rank < b.min_rank)
+	return list
+
+
+func customer(id: StringName) -> CustomerDef:
+	return _customers.get(id)
+
+
+## Sorted by id, so seeded picks stay stable when files are added.
+func customers() -> Array[CustomerDef]:
+	var list: Array[CustomerDef] = []
+	list.assign(_customers.values())
+	list.sort_custom(func(a: CustomerDef, b: CustomerDef) -> bool: return String(a.id) < String(b.id))
 	return list

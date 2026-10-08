@@ -267,6 +267,10 @@ static func check_victory(run: RunState) -> void:
 	}
 
 
+static func victory_summary() -> String:
+	return "Count it, %s in the stash. The whole street watched you push me out, that buys you %d cred. No more gates, no more hunts. Every corner is yours." % [Format.money(VICTORY_REWARD), StreetCred.VEX_BEATEN]
+
+
 static func sanitize(source: Variant) -> Dictionary:
 	var result := {}
 	if source is Dictionary:

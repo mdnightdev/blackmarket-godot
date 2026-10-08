@@ -7,6 +7,7 @@ const TURF_SHEET := preload("res://ui/components/turf_sheet.tscn")
 const JOBS_SHEET := preload("res://ui/components/jobs_sheet.tscn")
 const JAIL_CARD := preload("res://ui/components/jail_card.tscn")
 const OFFER_BANNER := preload("res://ui/components/offer_banner.tscn")
+const QUOTE_SHEET := preload("res://ui/components/quote_sheet.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -24,6 +25,7 @@ var _loan_sheet: LoanSheet
 var _inventory_sheet: InventorySheet
 var _turf_sheet: TurfSheet
 var _jobs_sheet: JobsSheet
+var _quote_sheet: QuoteSheet
 var _jail_card: JailCard
 var _banner: OfferBanner
 var _lights: PoliceLights
@@ -34,8 +36,12 @@ var _missed_orders: Array[Dictionary] = []
 var _missed_favours: Array[Dictionary] = []
 var _lost_crates: Array[Dictionary] = []
 var _notices: Array[Dictionary] = []
-## Ids of new phone offers still waiting for their banner, oldest first. Answered or expired ones are skipped.
+## Ids of new phone offers, errands and customer orders, still waiting for their banner, oldest first.
+## Answered or expired ones are skipped.
 var _offers: Array[String] = []
+## Customer orders whose goods just came together, waiting to ask about the trip to the customer.
+var _filled_orders: Array[String] = []
+var _stocked_orders := StockedOrders.new()
 
 
 func _ready() -> void:
@@ -45,36 +51,38 @@ func _ready() -> void:
 	_inventory_sheet = INVENTORY_SHEET.instantiate()
 	_turf_sheet = TURF_SHEET.instantiate()
 	_jobs_sheet = JOBS_SHEET.instantiate()
+	_quote_sheet = QUOTE_SHEET.instantiate()
 	_jail_card = JAIL_CARD.instantiate()
 	_banner = OFFER_BANNER.instantiate()
 	_lights = PoliceLights.new()
 	add_child(_inventory_sheet)
 	add_child(_turf_sheet)
 	add_child(_jobs_sheet)
+	add_child(_quote_sheet)
 	add_child(_loan_sheet)
 	add_child(_jail_card)
 	add_child(_banner)
 	add_child(_dialogue)
 	_jail_card.visibility_changed.connect(_close_sheets_when_jailed)
-	_banner.opened.connect(OfferTalk.open)
+	_banner.opened.connect(_open_offer)
 	_dialogue.add_backdrop_layer(_lights)
-	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
+	for sheet in _sheets():
 		SceneRouter.transition_started.connect(sheet.close)
 	GameState.orders_missed.connect(func(orders: Array[Dictionary]) -> void: _missed_orders.append_array(orders))
 	GameState.favours_missed.connect(func(favours: Array[Dictionary]) -> void: _missed_favours.append_array(favours))
 	GameState.crate_lost.connect(func(crate: Dictionary) -> void: _lost_crates.append(crate))
 	GameState.notices_posted.connect(func(notices: Array[Dictionary]) -> void: _notices.append_array(notices))
-	GameState.offers_posted.connect(func(offers: Array[Dictionary]) -> void:
-		for offer in offers:
-			_offers.append(str(offer.id))
-	)
-	GameState.run_changed.connect(_retract_answered_banner)
+	GameState.offers_posted.connect(_queue_offers)
+	GameState.customer_offers_posted.connect(_queue_offers)
+	GameState.run_changed.connect(_on_run_changed)
+	GameState.run_loaded.connect(_forget_filled_orders)
 	GameState.run_started.connect(func() -> void:
 		_missed_orders.clear()
 		_missed_favours.clear()
 		_lost_crates.clear()
 		_notices.clear()
 		_offers.clear()
+		_forget_filled_orders()
 		_banner.retract()
 	)
 
@@ -103,6 +111,8 @@ func _process(delta: float) -> void:
 			_present_lost_crate(_lost_crates.pop_front())
 		elif not _notices.is_empty():
 			_present_notice(_notices.pop_front())
+		elif not _filled_orders.is_empty():
+			CustomerTalk.announce_stocked(_filled_orders.pop_front())
 		else:
 			_show_next_offer()
 
@@ -114,6 +124,7 @@ func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
 func open_bag() -> void:
 	_jobs_sheet.close()
 	_turf_sheet.close()
+	_quote_sheet.close()
 	if not _inventory_sheet.visible:
 		_inventory_sheet.open_inventory()
 
@@ -121,14 +132,24 @@ func open_bag() -> void:
 func open_turf() -> void:
 	_inventory_sheet.close()
 	_jobs_sheet.close()
+	_quote_sheet.close()
 	_turf_sheet.open_turf()
 
 
 func open_jobs() -> void:
 	_inventory_sheet.close()
 	_turf_sheet.close()
+	_quote_sheet.close()
 	if not _jobs_sheet.visible:
 		_jobs_sheet.open_jobs()
+
+
+## Where to buy the goods for an accepted customer order.
+func open_quotes(order_id: String) -> void:
+	_inventory_sheet.close()
+	_turf_sheet.close()
+	_jobs_sheet.close()
+	_quote_sheet.open_quotes(order_id)
 
 
 ## Opens a conversation that is not an encounter. See DialoguePanel.open for the callback contract.
@@ -144,6 +165,26 @@ func end_talk() -> void:
 	_dialogue.close()
 
 
+func open_tutorial() -> void:
+	var run := GameState.run
+	var page := Tutorial.page(run)
+	talk(Content.speaker(Tutorial.SPEAKER), page.line, Tutorial.choices(run), _on_tutorial_choice, page.hint)
+
+
+func _on_tutorial_choice(choice: StringName) -> void:
+	var run := GameState.run
+	if choice == Tutorial.SKIP:
+		Tutorial.finish(run)
+	else:
+		Tutorial.advance(run)
+	GameState.save_run()
+	if not Tutorial.should_show(run):
+		end_talk()
+		return
+	var page := Tutorial.page(run)
+	say(page.line, Tutorial.choices(run), _on_tutorial_choice, true, page.hint)
+
+
 func is_talking() -> bool:
 	return _dialogue.visible
 
@@ -157,17 +198,22 @@ func handle_back() -> bool:
 		return true
 	if _jobs_sheet.visible and _jobs_sheet.close_modal():
 		return true
-	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
+	for sheet in _sheets():
 		if sheet.visible:
 			sheet.close()
 			return true
 	return false
 
 
+func _sheets() -> Array[BottomSheet]:
+	var sheets: Array[BottomSheet] = [_quote_sheet, _loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]
+	return sheets
+
+
 func _close_sheets_when_jailed() -> void:
 	if not _jail_card.visible:
 		return
-	for sheet: BottomSheet in [_loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet]:
+	for sheet in _sheets():
 		sheet.close()
 
 
@@ -181,29 +227,57 @@ func _can_present() -> bool:
 
 
 func _has_cards() -> bool:
-	return Encounters.has_pending(GameState.run) or not (_missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty() and _notices.is_empty())
+	if Encounters.has_pending(GameState.run) or not _filled_orders.is_empty():
+		return true
+	return not (_missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty() and _notices.is_empty())
 
 
 func _screen_is_free() -> bool:
-	if GameState.run == null:
+	if GameState.run == null or _dialogue.visible or SceneRouter.is_transitioning():
 		return false
-	if _dialogue.visible or _loan_sheet.visible or _inventory_sheet.visible or _turf_sheet.visible or _jobs_sheet.visible or SceneRouter.is_transitioning():
+	if _sheets().any(func(sheet: BottomSheet) -> bool: return sheet.visible):
 		return false
 	var screen := get_tree().current_scene
 	return screen != null and screen.has_method("can_present_encounter") and screen.can_present_encounter()
 
 
+func _queue_offers(offers: Array[Dictionary]) -> void:
+	for offer in offers:
+		_offers.append(str(offer.id))
+
+
 func _show_next_offer() -> void:
+	var run := GameState.run
 	while not _offers.is_empty():
-		var offer := Errands.find_offer(GameState.run, _offers.pop_front())
-		if not offer.is_empty():
-			_banner.show_offer(offer)
+		var offer_id: String = _offers.pop_front()
+		var errand := Errands.find_offer(run, offer_id)
+		var sender := Content.character(StringName(str(errand.get("sender", Errands.SENDER))))
+		if not errand.is_empty() and sender != null:
+			_banner.show_offer(offer_id, sender.portrait, sender.display_name, Errands.describe(errand), Format.money(int(errand.pay)))
+			return
+		var order := Customers.find_offer(run, offer_id)
+		if not order.is_empty():
+			_banner.show_offer(offer_id, CustomerTalk.PORTRAIT, Customers.customer_name(order), Customers.headline(order), "", Customers.district_name(order).to_upper())
 			return
 
 
-func _retract_answered_banner() -> void:
-	if _banner.is_showing() and Errands.find_offer(GameState.run, _banner.offer_id).is_empty():
+func _open_offer(offer_id: String) -> void:
+	if Customers.find_offer(GameState.run, offer_id).is_empty():
+		OfferTalk.open(offer_id)
+	else:
+		CustomerTalk.open(offer_id)
+
+
+func _on_run_changed() -> void:
+	var run := GameState.run
+	if _banner.is_showing() and Errands.find_offer(run, _banner.offer_id).is_empty() and Customers.find_offer(run, _banner.offer_id).is_empty():
 		_banner.retract()
+	_filled_orders.append_array(_stocked_orders.check(run))
+
+
+func _forget_filled_orders() -> void:
+	_filled_orders.clear()
+	_stocked_orders.clear()
 
 
 func _present_encounter(encounter: Dictionary) -> void:

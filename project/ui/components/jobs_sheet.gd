@@ -64,25 +64,39 @@ func _add_tasks(run: RunState) -> void:
 
 ## Unanswered phone offers. Tapping one opens the same prompt as the banner.
 func _add_offers(run: RunState) -> void:
-	if run.errand_offers.is_empty():
+	if run.errand_offers.is_empty() and run.customer_offers.is_empty():
 		return
 	_add_heading("OFFERS")
 	for offer in run.errand_offers:
 		var sender := Content.character(StringName(str(offer.sender)))
 		if sender == null:
 			continue
-		var left := Errands.phases_left(run, offer)
 		var caption := "From %s. %d phases to finish once taken" % [sender.display_name, int(offer.lead)]
-		var hint := "LAST PHASE" if left <= 1 else "%d PHASES LEFT" % left
-		var hint_color := Palette.RISK_HIGH if left <= 1 else Palette.TEXT_CREAM
-		var row := _add_row(sender.portrait, Errands.describe(offer), Format.money(int(offer.pay)), caption, hint, hint_color)
-		row.set_tappable(true)
+		var row := _add_offer_row(sender.portrait, Errands.describe(offer), Format.money(int(offer.pay)), caption, Errands.phases_left(run, offer))
 		row.pressed.connect(_open_offer.bind(str(offer.id)))
+	for offer in run.customer_offers:
+		var caption := "In %s. %s each, street %s" % [Customers.district_name(offer), Format.money(int(offer.unit_price)), Format.money(int(offer.street_price))]
+		if bool(offer.rush):
+			caption += ". Rush"
+		var row := _add_offer_row(CustomerTalk.PORTRAIT, Customers.job_title(offer), Format.money(Customers.total(offer)), caption, Customers.phases_left(run, offer))
+		row.pressed.connect(_open_customer_offer.bind(str(offer.id)))
+
+
+func _add_offer_row(icon: Texture2D, title: String, pay: String, caption: String, phases_left: int) -> JobRow:
+	var hint := "LAST PHASE" if phases_left <= 1 else "%d PHASES LEFT" % phases_left
+	var row := _add_row(icon, title, pay, caption, hint, Palette.RISK_HIGH if phases_left <= 1 else Palette.TEXT_CREAM)
+	row.set_tappable(true)
+	return row
 
 
 func _open_offer(offer_id: String) -> void:
 	close()
 	OfferTalk.open(offer_id)
+
+
+func _open_customer_offer(offer_id: String) -> void:
+	close()
+	CustomerTalk.open(offer_id)
 
 
 func _add_active(run: RunState) -> void:
@@ -113,9 +127,10 @@ func _add_active(run: RunState) -> void:
 		_add_crate(run)
 
 	_add_errands(run)
+	_add_customer_orders(run)
 
 	if _list.get_child_count() == count:
-		_add_note("No jobs taken. Bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
+		_add_note("No jobs taken. Customers order by phone, bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
 
 
 ## Rows the runner can take become tappable. Otherwise the hint shows how much of the job is in the bag.
@@ -176,6 +191,36 @@ func _add_errands(run: RunState) -> void:
 		var place := Content.district(Errands.target_district(errand))
 		var hint := "GO TO %s" % place.display_name.to_upper() if place != null else ""
 		_add_row(sender.portrait, Errands.describe(errand), Format.money(int(errand.pay)), caption, hint)
+
+
+## Short of goods the row opens where to buy them. With the goods it heads to the customer or hands over here.
+func _add_customer_orders(run: RunState) -> void:
+	for order in run.customer_orders:
+		var place := Customers.district_name(order)
+		var stocked := Customers.is_stocked(run, order)
+		var caption := "Hand over in %s by %s" % [place, Calendar.describe(int(order.due_stamp)).to_lower()]
+		if not stocked:
+			caption += ". Tap to see where to buy"
+		var row := _add_row(CustomerTalk.PORTRAIT, Customers.job_title(order), Format.money(Customers.total(order)), caption, "")
+		row.set_tappable(true)
+		if not stocked:
+			row.set_hint("HAVE %d/%d" % [Inventory.count(run, StringName(str(order.item))), int(order.quantity)])
+			row.pressed.connect(_open_quotes.bind(str(order.id)))
+		elif Customers.can_hand_over(run, order):
+			row.set_hint("HAND OVER HERE", Palette.TEXT_CREAM)
+			row.pressed.connect(_head_to_customer.bind(order))
+		else:
+			row.set_hint("GO TO %s" % place.to_upper(), Palette.TEXT_CREAM)
+			row.pressed.connect(_head_to_customer.bind(order))
+
+
+func _open_quotes(order_id: String) -> void:
+	GameOverlay.open_quotes(order_id)
+
+
+func _head_to_customer(order: Dictionary) -> void:
+	close()
+	CustomerTalk.head_to_customer(order)
 
 
 func _buy_recon() -> void:

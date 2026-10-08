@@ -30,5 +30,9 @@ func set_hint(hint: String, hint_color := Color.TRANSPARENT) -> void:
 		_hint_label.add_theme_color_override("font_color", hint_color)
 
 
+func set_pay_color(color: Color) -> void:
+	_pay_label.add_theme_color_override("font_color", color)
+
+
 func set_tappable(tappable: bool) -> void:
 	_tap_area.visible = tappable

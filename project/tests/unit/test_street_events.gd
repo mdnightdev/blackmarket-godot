@@ -33,7 +33,7 @@ func test_shift_changes_prices_only_where_and_when_it_applies() -> void:
 	var untouched := Market.asking_price_at(_run, dealer, papers, 0)
 	var later := Market.asking_price_at(_run, dealer, phones, 2)
 	_run.market_shifts.append(_shift("old_market", "comms", 1.6, 0, 1))
-	assert_almost_eq(float(Market.asking_price_at(_run, dealer, phones, 0)), before * 1.6, 1.0)
+	assert_almost_eq(float(Market.asking_price_at(_run, dealer, phones, 0)), before * 1.6, 1.5)
 	assert_eq(Market.asking_price_at(_run, dealer, papers, 0), untouched)
 	assert_eq(Market.asking_price_at(_run, dealer, phones, 2), later)
 

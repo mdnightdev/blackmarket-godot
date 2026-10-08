@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"mo_benali"
+display_name = "Mo Benali"
+district_id = &"slums"
+line = "Everybody here is broke, me included. Price it like you know that."
+wants = Array[StringName]([&"arms", &"meds"])
+temperament = 0
+active_phases = Array[int]([0, 3])

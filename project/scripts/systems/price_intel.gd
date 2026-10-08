@@ -47,6 +47,16 @@ static func best_purchase(run: RunState, item: ItemDef, excluded_dealer: DealerD
 	return best
 
 
+## The latest fresh sighting of the item at one dealer. Empty when it was not seen there recently.
+static func sighting_at(run: RunState, item: ItemDef, dealer: DealerDef) -> Dictionary:
+	var dealer_id := String(dealer.id)
+	var latest := {}
+	for sighting in _fresh_sightings(run, item, null):
+		if sighting.dealer == dealer_id and (latest.is_empty() or int(sighting.stamp) > int(latest.stamp)):
+			latest = sighting
+	return latest
+
+
 static func age_text(run: RunState, sighting: Dictionary) -> String:
 	var age := Calendar.stamp(run) - int(sighting.stamp)
 	if age <= 0:

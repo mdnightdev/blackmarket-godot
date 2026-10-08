@@ -13,7 +13,7 @@ const COLLECTION := "collection"
 const DELIVERY := "delivery"
 const SENDER: StringName = Loan.LENDER
 ## Phases that start with a new offer from the Shark.
-const POSTING_PHASES: Array[RunState.Phase] = [RunState.Phase.MORNING, RunState.Phase.EVENING]
+const POSTING_PHASES: Array[RunState.Phase] = [RunState.Phase.MORNING]
 const MAX_OPEN_OFFERS := 3
 const MAX_ACTIVE := 2
 const OFFER_PHASES := 4
@@ -21,9 +21,9 @@ const MIN_LEAD_PHASES := 3
 const MAX_LEAD_PHASES := 5
 const COLLECTION_CHANCE := 0.5
 ## Pay for a finished errand at the lower ranks: the floor, the usual and the rare big job.
-const PAY_LOW := 3000
-const PAY_USUAL := 6000
-const PAY_HIGH := 15000
+const PAY_LOW := 2000
+const PAY_USUAL := 3500
+const PAY_HIGH := 9000
 ## Pay grows by this share for every street cred rank above FLAT_PAY_RANKS.
 const RANK_PAY_GROWTH := 0.25
 const FLAT_PAY_RANKS := 2

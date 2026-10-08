@@ -181,6 +181,8 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			list.append_array(Ambush.choices(run, encounter))
 		Collections.TYPE:
 			list.append_array(Collections.choices(run, encounter))
+		CustomerHandover.TYPE:
+			list.append_array(CustomerHandover.choices(run, encounter))
 		Families.SHAKEDOWN:
 			var demand := int(encounter.demand)
 			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
@@ -215,8 +217,12 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			return Ambush.resolve(run, encounter, choice, roll)
 		Collections.TYPE:
 			return Collections.resolve(run, encounter, choice, roll)
+		CustomerHandover.TYPE:
+			return CustomerHandover.resolve(run, encounter, choice, roll)
 		Families.SHAKEDOWN:
 			return Families.resolve_shakedown(run, encounter, choice)
+		Turf.VICTORY:
+			return Turf.victory_summary()
 	match choice:
 		BRIBE:
 			Police.pay_bribe(run, int(encounter.bribe))

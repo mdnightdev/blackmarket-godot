@@ -20,6 +20,8 @@ var cash: int = STARTING_CASH
 var debt: int = STARTING_DEBT
 var heat: int = 0
 var district_id: StringName = STARTING_DISTRICT
+var tutorial_step: int = 0
+var tutorial_completed := false
 ## Item id to units carried.
 var inventory: Dictionary = {}
 ## Item id to units stored in the safehouse stash.
@@ -111,6 +113,10 @@ var raid_warning_day: int = 0
 var errand_offers: Array[Dictionary] = []
 ## Accepted errands in progress. See Errands for the entry layout.
 var errands: Array[Dictionary] = []
+## Customer orders on the player's phone and not yet answered. See Customers for the entry layout.
+var customer_offers: Array[Dictionary] = []
+## Accepted customer orders waiting for the handover. See Customers for the entry layout.
+var customer_orders: Array[Dictionary] = []
 ## Weekly payments to the Shark missed in a row. See Loan.
 var missed_weeks: int = 0
 
@@ -189,6 +195,8 @@ func to_dict() -> Dictionary:
 		"raid_warning_day": raid_warning_day,
 		"errand_offers": errand_offers,
 		"errands": errands,
+		"customer_offers": customer_offers,
+		"customer_orders": customer_orders,
 		"missed_weeks": missed_weeks,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -197,6 +205,8 @@ func to_dict() -> Dictionary:
 		"trades": trades,
 		"profit": profit,
 		"busts": busts,
+		"tutorial_step": tutorial_step,
+		"tutorial_completed": tutorial_completed,
 	}
 
 
@@ -285,6 +295,8 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.street_cred = clampi(int(data.get("street_cred", 0)), 0, StreetCred.MAX)
 	state.cred_day = maxi(0, int(data.get("cred_day", 0)))
 	state.trading_cred_today = clampi(int(data.get("trading_cred_today", 0)), 0, StreetCred.DAILY_TRADING_CAP)
+	state.tutorial_step = maxi(0, int(data.get("tutorial_step", 0)))
+	state.tutorial_completed = bool(data.get("tutorial_completed", false))
 	state.skills = _positive_counts(data.get("skills"))
 	state.turf_levels = _positive_counts(data.get("turf_levels"))
 	for member in _dictionaries(data.get("crew")):
@@ -316,6 +328,14 @@ static func from_dict(data: Dictionary) -> RunState:
 		var clean := Errands.sanitize(errand)
 		if not clean.is_empty() and state.errands.size() < Errands.MAX_ACTIVE:
 			state.errands.append(clean)
+	for offer in _dictionaries(data.get("customer_offers")):
+		var clean := Customers.sanitize(offer)
+		if not clean.is_empty() and state.customer_offers.size() < Customers.MAX_OPEN_OFFERS:
+			state.customer_offers.append(clean)
+	for order in _dictionaries(data.get("customer_orders")):
+		var clean := Customers.sanitize(order)
+		if not clean.is_empty() and state.customer_orders.size() < Customers.MAX_ACTIVE:
+			state.customer_orders.append(clean)
 	state.missed_weeks = maxi(0, int(data.get("missed_weeks", 0)))
 
 	state.next_due_day = maxi(2, int(data.get("next_due_day", state.next_due_day)))

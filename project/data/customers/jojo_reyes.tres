@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"jojo_reyes"
+display_name = "Jojo Reyes"
+district_id = &"slums"
+line = "Half the block needs a phone. Bring a box, not a handful."
+wants = Array[StringName]([&"comms"])
+temperament = 3
+active_phases = Array[int]([1, 2, 3])

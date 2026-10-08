@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"marek_hollis"
+display_name = "Marek Hollis"
+district_id = &"old_market"
+line = "Bring the watches. We talk numbers when I can see them."
+wants = Array[StringName]([&"luxury"])
+temperament = 4
+active_phases = Array[int]([1, 2])
+min_rank = 2

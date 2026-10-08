@@ -75,6 +75,8 @@ func test_the_shark_posts_on_posting_phases_up_to_the_cap() -> void:
 	_go_to_stamp(RunState.Phase.NOON)
 	assert_true(Errands.post(_run).is_empty(), "noon is not a posting phase")
 	_go_to_stamp(RunState.Phase.EVENING)
+	assert_true(Errands.post(_run).is_empty(), "the Shark posts once a day")
+	_go_to_stamp(RunState.Phase.size())
 	while _run.errand_offers.size() < Errands.MAX_OPEN_OFFERS:
 		var filler := Errands.generate(_run)
 		filler.id = "errand:filler:%d" % _run.errand_offers.size()
@@ -122,7 +124,7 @@ func test_accept_starts_the_clock_and_decline_removes_the_offer() -> void:
 	assert_true(_run.errand_offers.is_empty())
 	assert_eq(int(_run.errands[0].due_stamp), Calendar.stamp(_run) + int(offer.lead))
 	assert_false(Errands.accept(_run, str(offer.id)), "cannot take it twice")
-	_go_to_stamp(RunState.Phase.EVENING)
+	_go_to_stamp(RunState.Phase.size())
 	Errands.post(_run)
 	var second: Dictionary = _run.errand_offers[0]
 	assert_true(Errands.decline(_run, str(second.id)))

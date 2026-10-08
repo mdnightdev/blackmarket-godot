@@ -16,10 +16,10 @@ stock_categories = Array[StringName]([&"luxury", &"papers"])
 price_bias = {
 &"luxury": 0.8,
 &"papers": 0.85,
-&"tech": 1.05,
-&"comms": 1.1,
-&"meds": 1.2,
-&"arms": 1.3
+&"tech": 1.02,
+&"comms": 1.05,
+&"meds": 1.1,
+&"arms": 1.15
 }
 haggle_tolerance = 0.1
 route = Array[StringName]([&"north_port", &"old_market", &"slums"])

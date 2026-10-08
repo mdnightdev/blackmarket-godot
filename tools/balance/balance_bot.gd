@@ -3,10 +3,12 @@ extends RefCounted
 ## Plays one run through GameState with a fixed strategy and records where the money went.
 ## Net worth counts cash, plus carried goods at base price, minus debt.
 ## Every strategy pays the Shark's weekly minimum when it falls due and puts cash above a trading float into the debt.
+## The broker fills customer orders from the best known source and runs the Shark's errands, without speculating.
 
 const IDLE: StringName = &"idle"
 const LOCAL: StringName = &"local"
 const ROUTE: StringName = &"route"
+const BROKER: StringName = &"broker"
 
 const CHECKPOINT_DAYS: Array[int] = [7, 14, 30, 60]
 const BUY_BELOW_BASE := 0.92
@@ -16,12 +18,25 @@ const CASH_RESERVE := 150
 const TRADING_FLOAT := 4000
 const BRIBE_SHARE_OF_CASH := 0.25
 const VEX_BRIBE_SHARE_OF_CASH := 0.2
+## The broker keeps more cash on hand, since orders are paid for up front.
+const BROKER_FLOAT := 12000
+## Least profit, as a share of the goods cost, for the broker to take an order.
+const BROKER_MIN_MARGIN := 0.08
+## Least margin left when buying an order's goods from whoever is here.
+const STOCK_MIN_MARGIN := 0.03
+const SPARE_SELL_FLOOR := 0.95
+const HOLD_FIRM_FROM := 0.6
+## Bags the broker buys once its cash reaches this many times the price.
+const BAG_IDS: Array[StringName] = [&"messenger_bag", &"duffel_bag"]
+const BAG_CASH_MULTIPLE := 4
 
 var _game_state: Node
 var _content: Node
 var _ledger: Dictionary = {}
 var _counts: Dictionary = {}
 var _realized := 0
+var _order_results: Dictionary = {}
+var _errands_taken: Dictionary = {}
 
 
 func _init(game_state: Node, content: Node) -> void:
@@ -37,6 +52,8 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 	_ledger = {}
 	_counts = {}
 	_realized = 0
+	_order_results = {}
+	_errands_taken = {}
 	var start_worth := _worth(run)
 	var checkpoints := {}
 	var phases_left := days * RunState.Phase.size()
@@ -56,6 +73,10 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 			ROUTE:
 				_trade_here(run)
 				_pass_phase(run, _best_destination(run))
+			BROKER:
+				_broker_turn(run)
+				_pass_phase(run, _broker_destination(run))
+				_track_errands(run)
 			_:
 				_pay_shark(run)
 				_pass_phase(run, &"")
@@ -73,6 +94,7 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 		"checkpoints": checkpoints,
 		"ledger": _ledger,
 		"counts": _counts,
+		"orders": _order_results,
 		"lost": run.outcome == RunState.Outcome.LOST,
 		"lost_day": run.day if run.outcome == RunState.Outcome.LOST else 0,
 		"cleared_day": cleared_day,
@@ -86,11 +108,11 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 	}
 
 
-## Covers the weekly minimum on its last day, and pays down the debt with anything above the trading float.
-func _pay_shark(run: RunState) -> void:
+## Covers the weekly minimum on its last day, and pays down the debt with anything above the float.
+func _pay_shark(run: RunState, cash_float := TRADING_FLOAT) -> void:
 	if run.debt <= 0 or Encounters.has_pending(run):
 		return
-	var amount := maxi(0, mini(run.cash - TRADING_FLOAT, run.debt))
+	var amount := maxi(0, mini(run.cash - cash_float, run.debt))
 	if run.next_due_day - run.day <= 1:
 		amount = maxi(amount, mini(Loan.amount_due(run), Loan.max_repay(run)))
 	if amount > 0 and _game_state.repay_debt(amount):
@@ -162,6 +184,212 @@ func _carried_sale_value(run: RunState, district_id: StringName, stamp: int) -> 
 	return total
 
 
+func _broker_turn(run: RunState) -> void:
+	var dealers := _open_dealers(run, run.district_id, Calendar.stamp(run))
+	for dealer in dealers:
+		_game_state.remember_prices(dealer)
+	for order in run.customer_orders.duplicate():
+		if Customers.can_hand_over(run, order):
+			_hand_over(run, str(order.id))
+	_resolve_pending(run)
+	_sell_spare(run, dealers)
+	_buy_bags(run)
+	_pay_shark(run, BROKER_FLOAT + _reserved_cash(run))
+	for offer in run.errand_offers.duplicate():
+		if Errands.can_accept(run) and _game_state.accept_offer(str(offer.id)):
+			_errands_taken[str(offer.id)] = Errands.find(run, str(offer.id))
+			_count(&"errands taken")
+	for offer in run.customer_offers.duplicate():
+		if Customers.can_accept(run) and _worth_taking(run, offer) and _game_state.accept_customer_offer(str(offer.id)):
+			_count(StringName("orders taken: %s" % _temperament_name(int(offer.temperament))))
+	_resolve_pending(run)
+	_stock_orders(run, dealers)
+
+
+## Takes an order when its best known source clears the margin after fares and the cash and bag can carry it.
+## Lowballers are only served from goods already in the bag, and undercover buyers are left alone.
+func _worth_taking(run: RunState, offer: Dictionary) -> bool:
+	var temperament := int(offer.temperament)
+	var item: ItemDef = _content.item(StringName(str(offer.item)))
+	var quantity := int(offer.quantity)
+	if temperament == CustomerDef.Temperament.STING or item == null or item.slots * quantity > Inventory.capacity(run):
+		return false
+	var pay := _expected_unit_pay(offer) * quantity
+	for quote in CustomerQuotes.quotes(run, offer):
+		if not bool(quote.known) or bool(quote.locked):
+			continue
+		if str(quote.source) == CustomerQuotes.BAG:
+			if int(quote.basis_profit) > 0:
+				return true
+			continue
+		if temperament == CustomerDef.Temperament.LOWBALLER:
+			continue
+		var cost := int(quote.unit_cost) * quantity
+		var room := Inventory.free_space(run) - _reserved_slots(run)
+		if pay - cost - int(quote.fares) < cost * BROKER_MIN_MARGIN or item.slots * quantity > room:
+			continue
+		if cost + int(quote.fares) <= run.cash - CASH_RESERVE - _reserved_cash(run):
+			return true
+	return false
+
+
+## A haggler is counted at his lower price, since he usually asks for it.
+func _expected_unit_pay(order: Dictionary) -> int:
+	if int(order.temperament) == CustomerDef.Temperament.HAGGLER:
+		return int(order.counter_price)
+	return int(order.unit_price)
+
+
+## Buys what the accepted orders still miss from the cheapest dealer here, all at once and only while the order pays.
+func _stock_orders(run: RunState, dealers: Array[DealerDef]) -> void:
+	for order in run.customer_orders:
+		var item: ItemDef = _content.item(StringName(str(order.item)))
+		var missing := int(order.quantity) - Inventory.count(run, item.id)
+		var price := _cheapest_price(run, dealers, item)
+		if missing <= 0 or price <= 0 or price * (1.0 + STOCK_MIN_MARGIN) > _expected_unit_pay(order):
+			continue
+		if price * missing > run.cash - CASH_RESERVE or item.slots * missing > Inventory.free_space(run):
+			continue
+		if _game_state.buy(item, missing, price) == Trade.Result.OK:
+			_add(&"customer orders", (item.base_price - price) * missing)
+			_count(&"order buys")
+
+
+func _cheapest_price(run: RunState, dealers: Array[DealerDef], item: ItemDef) -> int:
+	var best := 0
+	for dealer in dealers:
+		if dealer.sells(item):
+			var price := Market.buy_price(run, dealer, item)
+			if best == 0 or price < best:
+				best = price
+	return best
+
+
+## Hands the order over, holding firm against a haggler when the odds are good. False when it could not happen.
+func _hand_over(run: RunState, order_id: String) -> bool:
+	var order := Customers.find(run, order_id)
+	if order.is_empty():
+		CustomerHandover.dismiss(run, order_id)
+		return false
+	var temperament := int(order.temperament)
+	var cost := int(run.cost_basis.get(StringName(str(order.item)), 0)) * int(order.quantity)
+	var worth_before := run.cash + _goods_value(run)
+	var result: Dictionary = _game_state.hand_over_customer_order(order_id)
+	if bool(result.get("haggled", false)):
+		result = _game_state.answer_haggle(order_id, Customers.hold_firm_chance(run) < HOLD_FIRM_FROM)
+	if result.is_empty():
+		CustomerHandover.dismiss(run, order_id)
+		return false
+	_add(&"customer orders", run.cash + _goods_value(run) - worth_before)
+	var entry: Dictionary = _order_results.get(_temperament_name(temperament), { "count": 0, "profit": 0, "cost": 0, "walked": 0 })
+	entry.count += 1
+	if int(result.get("paid", 0)) > 0:
+		entry.profit += int(result.paid) - cost
+		entry.cost += cost
+	elif bool(result.get("walked", false)):
+		entry.walked += 1
+	_order_results[_temperament_name(temperament)] = entry
+	return true
+
+
+## Sells goods no accepted order needs, unless they would go well under what they cost.
+func _sell_spare(run: RunState, dealers: Array[DealerDef]) -> void:
+	for item_id: StringName in run.inventory.keys():
+		var item: ItemDef = _content.item(item_id)
+		var spare := Inventory.count(run, item_id) - _units_promised(run, item_id)
+		var best := _best_buyer(run, dealers, item)
+		if spare <= 0 or best.is_empty():
+			continue
+		if int(best.price) < int(run.cost_basis.get(item_id, item.base_price)) * SPARE_SELL_FLOOR:
+			continue
+		if _game_state.sell(item, spare, int(best.price)) == Trade.Result.OK:
+			_add(&"spare goods", (int(best.price) - item.base_price) * spare)
+
+
+func _buy_bags(run: RunState) -> void:
+	for bag_id in BAG_IDS:
+		var bag: ItemDef = _content.item(bag_id)
+		if bag != null and not Gear.owns(run, bag_id) and run.cash >= bag.base_price * BAG_CASH_MULTIPLE:
+			if _game_state.buy_gear(bag) == Trade.Result.OK:
+				_add(&"bags", -bag.base_price)
+				_count(&"bags bought")
+
+
+## Heads for the most urgent stop: the customer once the goods are in the bag, otherwise the best known source,
+## or the next stop of an errand. Work that is already here is skipped.
+func _broker_destination(run: RunState) -> StringName:
+	var stops: Array[Dictionary] = []
+	for order in run.customer_orders:
+		var target := StringName(str(order.district)) if Customers.is_stocked(run, order) else _source_district(run, order)
+		stops.append({ "district": target, "due": int(order.due_stamp) })
+	for errand in run.errands:
+		stops.append({ "district": Errands.target_district(errand), "due": int(errand.due_stamp) })
+	stops.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.due) < int(b.due))
+	for stop in stops:
+		var district: DistrictDef = _content.district(stop.district)
+		if district != null and district.id != run.district_id and Travel.check(run, district) == Travel.Check.OK:
+			return district.id
+	return &""
+
+
+## Where the best known dealer for the order trades now. Without a known price, the cheapest stockist on paper.
+func _source_district(run: RunState, order: Dictionary) -> StringName:
+	for quote in CustomerQuotes.quotes(run, order):
+		if bool(quote.known) and not bool(quote.locked) and str(quote.source) != CustomerQuotes.BAG:
+			return StringName(str(quote.district))
+	var item: ItemDef = _content.item(StringName(str(order.item)))
+	var stamp := Calendar.stamp(run)
+	var best_id: StringName = &""
+	var best_bias := 0.0
+	for dealer: DealerDef in _content.dealers():
+		var location := Roster.dealer_location(run, dealer, stamp)
+		if not dealer.sells(item) or location.is_empty() or Travel.is_locked(run, _content.district(location)):
+			continue
+		if best_id.is_empty() or dealer.bias_for(item.category) < best_bias:
+			best_id = location
+			best_bias = dealer.bias_for(item.category)
+	return best_id
+
+
+## Counts errands as they close. One that left before its deadline, or while standing at its last stop, was finished.
+func _track_errands(run: RunState) -> void:
+	var stamp := Calendar.stamp(run)
+	for id: String in _errands_taken.keys():
+		if not Errands.find(run, id).is_empty():
+			continue
+		var errand: Dictionary = _errands_taken[id]
+		var finished := errand.is_empty() or stamp <= int(errand.due_stamp) or Errands.target_district(errand) == run.district_id
+		_count(&"errands done" if finished else &"errands missed")
+		_errands_taken.erase(id)
+
+
+func _reserved_cash(run: RunState) -> int:
+	var total := 0
+	for order in run.customer_orders:
+		total += int(order.street_price) * maxi(0, int(order.quantity) - Inventory.count(run, StringName(str(order.item))))
+	return total
+
+
+func _reserved_slots(run: RunState) -> int:
+	var total := 0
+	for order in run.customer_orders:
+		var item: ItemDef = _content.item(StringName(str(order.item)))
+		total += item.slots * maxi(0, int(order.quantity) - Inventory.count(run, item.id))
+	return total
+
+
+func _units_promised(run: RunState, item_id: StringName) -> int:
+	var total := 0
+	for order in run.customer_orders:
+		if StringName(str(order.item)) == item_id:
+			total += int(order.quantity)
+	return total
+
+
+func _temperament_name(temperament: int) -> String:
+	return String(CustomerDef.Temperament.find_key(temperament)).to_lower()
+
+
 func _pass_phase(run: RunState, destination_id: StringName) -> void:
 	var cash_before := run.cash
 	var debt_before := run.debt
@@ -198,6 +426,9 @@ func _resolve_pending(run: RunState) -> void:
 	while Encounters.has_pending(run) and guard < 5:
 		guard += 1
 		var encounter := run.pending_encounter
+		if str(encounter.get("type", "")) == CustomerHandover.TYPE:
+			_hand_over(run, str(encounter.get("order", "")))
+			continue
 		var label := _encounter_label(encounter)
 		var choice := _choose(run, encounter)
 		_count(StringName("%s -> %s" % [label, choice]))
@@ -228,6 +459,8 @@ func _choose(run: RunState, encounter: Dictionary) -> StringName:
 			return Vex.PAY if enabled.has(Vex.PAY) else Vex.FIGHT
 		Families.SHAKEDOWN:
 			return Families.PAY_UP if enabled.has(Families.PAY_UP) else Families.REFUSE
+		Collections.TYPE:
+			return Collections.LEAN
 	if enabled.has(Encounters.PAY):
 		return Encounters.PAY
 	if enabled.has(Encounters.TAKE):

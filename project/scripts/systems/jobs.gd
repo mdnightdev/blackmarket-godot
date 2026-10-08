@@ -1,6 +1,6 @@
 class_name Jobs
 
-## Deadlines across bar orders, family favours, Voronin's crate and the Shark's errands, for reminders.
+## Deadlines across bar orders, family favours, Voronin's crate, the Shark's errands and customer orders, for reminders.
 ## Each entry is { "title": String, "place": String, "due": int } with due as the last phase stamp.
 
 ## Jobs whose last phase is this one or the next.
@@ -44,6 +44,13 @@ static func deadlines(run: RunState) -> Array[Dictionary]:
 			"title": Errands.job_title(errand),
 			"place": place.display_name if place != null else "",
 			"due": int(errand.due_stamp),
+		})
+	for order in run.customer_orders:
+		var place := Content.district(StringName(str(order.district)))
+		list.append({
+			"title": Customers.job_title(order),
+			"place": place.display_name if place != null else "",
+			"due": int(order.due_stamp),
 		})
 	return list
 

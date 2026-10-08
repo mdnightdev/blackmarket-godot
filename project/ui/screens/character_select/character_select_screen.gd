@@ -51,4 +51,6 @@ func _start_run() -> void:
 	if _selected == null:
 		return
 	GameState.start_new_run(_selected.id)
+	if Tutorial.should_show(GameState.run):
+		GameOverlay.open_tutorial()
 	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)

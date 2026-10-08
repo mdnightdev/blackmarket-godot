@@ -11,6 +11,11 @@ static func money(amount: int) -> String:
 	return prefix + digits + grouped
 
 
+## Gains carry a plus sign, for example +$1,200, -$300 and $0.
+static func signed_money(amount: int) -> String:
+	return "+%s" % money(amount) if amount > 0 else money(amount)
+
+
 ## Keeps big amounts short enough for the top bar: $9,850, $12.4k, $1.2M.
 static func money_short(amount: int) -> String:
 	var size := absi(amount)

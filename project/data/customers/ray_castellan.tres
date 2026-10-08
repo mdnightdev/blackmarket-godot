@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CustomerDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/customer_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"ray_castellan"
+display_name = "Ray Castellan"
+district_id = &"warehouse_row"
+line = "I am filling a room with machines nobody can trace."
+wants = Array[StringName]([&"tech"])
+temperament = 3
+active_phases = Array[int]([1, 2])
+min_rank = 3

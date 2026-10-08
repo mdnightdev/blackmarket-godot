@@ -24,6 +24,15 @@ static func capacity_bonus(run: RunState) -> int:
 	return total
 
 
+## Slots the smallest bag upgrade the player does not own yet would add, 0 once every one is owned.
+static func next_capacity_bonus(run: RunState) -> int:
+	var smallest := 0
+	for item in Content.items(ItemDef.Kind.EQUIPMENT):
+		if item.capacity_bonus > 0 and not owns(run, item.id) and (smallest == 0 or item.capacity_bonus < smallest):
+			smallest = item.capacity_bonus
+	return smallest
+
+
 static func fare_discount(run: RunState) -> float:
 	var total := 0.0
 	for item in owned_items(run):

@@ -287,6 +287,15 @@ func test_taking_every_district_drives_vex_out() -> void:
 	assert_eq(Turf.held_count(_run), Turf.CONTESTED.size())
 
 
+func test_victory_ends_with_a_summary_of_what_was_won() -> void:
+	_set_all_shares(Turf.HOLD_SHARE)
+	Turf.check_victory(_run)
+	var summary := Encounters.resolve(_run, Encounters.CONTINUE, 0.0)
+	assert_string_contains(summary, Format.money(Turf.VICTORY_REWARD))
+	assert_string_contains(summary, str(StreetCred.VEX_BEATEN))
+	assert_true(_run.pending_encounter.is_empty())
+
+
 func test_victory_waits_for_the_pending_encounter() -> void:
 	_set_all_shares(Turf.HOLD_SHARE)
 	_run.pending_encounter = {"type": Encounters.RAID}

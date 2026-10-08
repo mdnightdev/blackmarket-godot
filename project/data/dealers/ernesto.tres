@@ -16,9 +16,9 @@ stock_categories = Array[StringName]([&"papers", &"comms"])
 price_bias = {
 &"papers": 0.85,
 &"comms": 0.95,
-&"tech": 1.25,
-&"meds": 1.3,
-&"luxury": 1.35,
-&"arms": 1.4
+&"tech": 1.12,
+&"meds": 1.15,
+&"luxury": 1.18,
+&"arms": 1.2
 }
 haggle_tolerance = 0.07
