@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_def")
 id = &"felix_moreau"
-display_name = "Felix Moreau"
+display_name = "Felix Achterberg"
 district_id = &"west_end"
 greeting = "Hardware is hardware. Who owned it before is not my problem."
 portrait = ExtResource("2_portrait")

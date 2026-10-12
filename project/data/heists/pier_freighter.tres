@@ -13,6 +13,6 @@ district_id = &"docks"
 min_rank = 6
 required_roles = Array[StringName]([&"driver", &"muscle", &"lookout"])
 base_chance = 0.45
-payout = 15000
+payout = 200000
 heat = 40
 cred = 40

@@ -13,6 +13,6 @@ district_id = &"old_market"
 min_rank = 4
 required_roles = Array[StringName]([&"driver", &"muscle"])
 base_chance = 0.5
-payout = 6000
+payout = 80000
 heat = 30
 cred = 25

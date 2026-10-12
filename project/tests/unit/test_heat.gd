@@ -6,22 +6,39 @@ var _phones: ItemDef
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 	_phones = Content.item(&"burner_phones")
 
 
-func test_trade_heat_scales_with_risk_quantity_and_district() -> void:
-	assert_eq(Heat.for_trade(_run, _phones, 16), 3)
-	_run.district_id = &"north_port"
-	assert_eq(Heat.for_trade(_run, _phones, 16), 5)
-	_run.district_id = &"slums"
-	assert_eq(Heat.for_trade(_run, _phones, 1), 1)
+func test_heat_levels() -> void:
+	assert_eq(Heat.level(_run), Heat.Level.CALM)
+	_run.heat = Heat.NOTICED
+	assert_eq(Heat.level(_run), Heat.Level.NOTICED)
+	_run.heat = Heat.WATCHED
+	assert_eq(Heat.level(_run), Heat.Level.WATCHED)
+	_run.heat = Heat.MAX
+	assert_eq(Heat.level_name(_run), "Wanted")
 
 
-func test_travel_heat_comes_from_carried_goods() -> void:
-	assert_eq(Heat.for_travel(_run), 0)
+func test_brandt_follows_a_watched_player() -> void:
+	var brandt := Content.character(Police.BRANDT)
+	var visits := func() -> int:
+		var count := 0
+		for stamp in 200:
+			if Roster.character_location(_run, brandt, stamp) == _run.district_id:
+				count += 1
+		return count
+	_run.district_id = &"docks"
+	var calm: int = visits.call()
+	_run.heat = Heat.WATCHED
+	assert_gt(visits.call(), calm * 2)
+
+
+func test_trips_with_goods_add_no_heat() -> void:
 	Inventory.add_units(_run, _phones.id, 10)
 	assert_eq(Heat.carried_risk(_run), 150)
-	assert_eq(Heat.for_travel(_run), 2)
+	Encounters.after_arrival(_run, RandomNumberGenerator.new())
+	assert_eq(_run.heat, 0)
 
 
 func test_heat_cools_faster_overnight() -> void:

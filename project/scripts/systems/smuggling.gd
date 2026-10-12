@@ -18,7 +18,8 @@ const MIN_SLOTS := 4
 const MAX_SLOTS := 8
 ## A sealed crate draws police attention like a bag of risky goods.
 const RISK_PER_SLOT := 60
-## Crates pay the destination district's job rate, more for a long haul across the map.
+## Crates pay the destination district's job rate times the risk premium, more for a long haul across the map.
+const RISK_PREMIUM := 2.5
 const DISTANCE_BONUS := 0.8
 const PAY_ROUNDING := 10
 const MIN_LEAD_PHASES := 2
@@ -30,6 +31,10 @@ const HALFWAY_PAY := 0.7
 ## Most of a job's pay ambushes can take, skimmed cargo and tolls together, however many times the run goes wrong.
 const MAX_LOSS := 0.35
 const CLIENT := "Voronin's buyer"
+## Voronin pays a runner who does not vanish a little more for every crate delivered in a row.
+const STREAK_BONUS := 0.02
+const MAX_STREAK_BONUS := 10
+const RELIABLE_STREAK := 10
 const FRAGILE_SKIM := 2.0
 
 
@@ -210,7 +215,7 @@ static func meet_halfway(run: RunState) -> int:
 
 ## What the crate pays, after the Smuggler skill, any cut for straying or meeting halfway, and the invoice bonus.
 static func payout(run: RunState, crate: Dictionary, halfway := false) -> int:
-	var pay := int(crate.get("pay", 0)) * (1.0 + Skills.crate_pay_bonus(run))
+	var pay := int(crate.get("pay", 0)) * (1.0 + Skills.crate_pay_bonus(run)) * (1.0 + streak_bonus(run))
 	if bool(crate.get("off_route", false)):
 		pay *= OFF_ROUTE_PAY
 	if halfway:
@@ -229,6 +234,7 @@ static func report(run: RunState, crate: Dictionary, halfway := false) -> Array[
 	lines.append({ "label": "Pay", "amount": roundi(value) })
 	var steps: Array = [
 		["Smuggler skill", 1.0 + Skills.crate_pay_bonus(run)],
+		["Reliable runner", 1.0 + streak_bonus(run)],
 		["Off route", OFF_ROUTE_PAY if bool(crate.get("off_route", false)) else 1.0],
 		["Met halfway", HALFWAY_PAY if halfway else 1.0],
 		["Cargo skimmed", 1.0 - float(crate.get("skimmed", 0.0))],
@@ -267,8 +273,13 @@ static func _hand_over(run: RunState, pay: int) -> int:
 		run.cash += pay
 		run.profit += pay
 	run.crate = {}
+	run.crate_streak += 1
 	StreetCred.add(run, StreetCred.CRATE_DELIVERED)
 	return pay
+
+
+static func streak_bonus(run: RunState) -> float:
+	return mini(run.crate_streak, MAX_STREAK_BONUS) * STREAK_BONUS
 
 
 ## The share of the pay ambushes can still take from this crate before MAX_LOSS is reached.
@@ -302,6 +313,7 @@ static func seize(run: RunState) -> bool:
 	Journal.mark_failed(run, str(run.crate.id))
 	run.crate = {}
 	run.smuggling_ban_day = run.day
+	run.crate_streak = 0
 	StreetCred.add(run, StreetCred.CRATE_LOST)
 	return true
 
@@ -315,6 +327,7 @@ static func expire(run: RunState) -> Dictionary:
 	var lost := run.crate
 	run.crate = {}
 	run.smuggling_ban_day = run.day
+	run.crate_streak = 0
 	StreetCred.add(run, StreetCred.CRATE_LOST)
 	return lost
 
@@ -368,7 +381,7 @@ static func _post(run: RunState, day_index: int, index: int, origin: DistrictDef
 	var target: DistrictDef = pool[rng.randi_range(0, pool.size() - 1)]
 	var slots := rng.randi_range(MIN_SLOTS, MAX_SLOTS)
 	var distance := origin.map_position.distance_to(target.map_position)
-	var pay := PayScale.roll(rng, run, target.tier) * (1.0 + distance * DISTANCE_BONUS)
+	var pay := PayScale.roll(rng, run, target.tier) * RISK_PREMIUM * (1.0 + distance * DISTANCE_BONUS)
 	return {
 		"id": "crate:%d:%d" % [day_index, index],
 		"destination": String(target.id),

@@ -91,13 +91,21 @@ static func in_district(run: RunState, district_id: StringName, stamp: int) -> G
 	return null
 
 
+## Gangs that stop the player in the street. In Act 1 only Vex does; the others stay in the background.
+static func confronting(run: RunState) -> Array[GangDef]:
+	if Campaign.is_act_two(run):
+		return active(run)
+	return active(run).filter(func(gang: GangDef) -> bool: return gang.id == War.VEX_GANG)
+
+
 ## Queues a hunt or a corner tax when one is due. One roll per gang for each, in catalog order.
 static func queue_encounter(run: RunState, rng: RandomNumberGenerator) -> bool:
-	for gang in active(run):
+	var gangs := confronting(run)
+	for gang in gangs:
 		if hunt_due(run, gang, rng.randf()):
 			run.pending_encounter = hunt(run, gang)
 			return true
-	for gang in active(run):
+	for gang in gangs:
 		if gate_due(run, gang, rng.randf()):
 			run.pending_encounter = gate(run, gang)
 			return true

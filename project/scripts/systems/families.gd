@@ -49,6 +49,10 @@ static func tier(run: RunState, family_id: StringName) -> Tier:
 	return Tier.NEUTRAL
 
 
+static func trusted_count(run: RunState) -> int:
+	return Content.families().filter(func(family: FamilyDef) -> bool: return tier(run, family.id) >= Tier.TRUSTED).size()
+
+
 static func tier_name(value: Tier) -> String:
 	return TIER_NAMES[value]
 

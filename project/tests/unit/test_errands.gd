@@ -144,7 +144,7 @@ func test_package_is_picked_up_then_dropped_for_pay() -> void:
 	_run.career = true
 	var errand := _take(Errands.DELIVERY)
 	assert_eq(Errands.target_district(errand), StringName(PICKUP))
-	assert_string_contains(Errands.describe(errand), "Pick up a package in")
+	assert_string_contains(Errands.describe(errand), "Pick up the package in")
 	_run.district_id = StringName(DROP)
 	assert_true(Errands.visit(_run).is_empty(), "nothing to drop before the pickup")
 	_run.district_id = StringName(PICKUP)
@@ -158,6 +158,50 @@ func test_package_is_picked_up_then_dropped_for_pay() -> void:
 	assert_true(_run.errands.is_empty())
 	assert_eq(_run.cash, cash + PAY)
 	assert_eq(_run.street_cred, cred + StreetCred.ERRAND_DONE)
+
+
+func test_envelope_lands_with_ramos() -> void:
+	var errand := _take(Errands.DELIVERY, { "flavor": Errands.ENVELOPE })
+	assert_eq(Errands.noun(errand), "envelope")
+	_run.district_id = StringName(PICKUP)
+	Errands.visit(_run)
+	_run.district_id = StringName(DROP)
+	var notices := Errands.visit(_run)
+	assert_eq(str(notices[0].speaker), String(Errands.RAMOS))
+
+
+func test_pier_pickup_comes_with_a_word_from_voronin() -> void:
+	var errand := _take(Errands.DELIVERY, { "flavor": Errands.PIER })
+	assert_eq(Errands.noun(errand), "crate")
+	_run.district_id = StringName(PICKUP)
+	var notices := Errands.visit(_run)
+	assert_eq(str(notices[0].speaker), String(Errands.VORONIN))
+
+
+func test_shark_delivery_from_the_docks_is_a_pier_run() -> void:
+	var found := false
+	for run_seed in 60:
+		_run.price_seed = run_seed
+		var offer := Errands.generate(_run)
+		if str(offer.kind) == Errands.DELIVERY and StringName(str(offer.pickup_district)) == Errands.PIER_DISTRICT:
+			assert_eq(str(offer.flavor), Errands.PIER)
+			found = true
+	assert_true(found, "some seed posts a pickup at the docks")
+
+
+func test_sanitize_keeps_known_flavors_only() -> void:
+	var source := { "id": "x", "kind": Errands.DELIVERY, "pay": PAY, "pickup_district": PICKUP, "drop_district": DROP }
+	source.flavor = Errands.ENVELOPE
+	assert_eq(str(Errands.sanitize(source).flavor), Errands.ENVELOPE)
+	source.flavor = "bomb"
+	assert_eq(str(Errands.sanitize(source).flavor), Errands.PACKAGE)
+
+
+func test_missing_a_shark_deadline_gets_his_word() -> void:
+	_take(Errands.DELIVERY)
+	_go_to_stamp(Calendar.stamp(_run) + Errands.MIN_LEAD_PHASES + 1)
+	var notices := Errands.expire(_run)
+	assert_eq(str(notices[0].speaker), String(Errands.SENDER))
 
 
 func test_act_one_pay_is_split_between_the_debt_and_cash() -> void:
@@ -270,6 +314,11 @@ func test_sanitize_rejects_junk() -> void:
 	assert_true(Errands.sanitize({ "id": "x", "kind": Errands.COLLECTION, "pay": PAY, "district": "nowhere", "debtor": "A", "owed": 5 }).is_empty())
 	assert_true(Errands.sanitize({ "id": "x", "kind": Errands.COLLECTION, "pay": 0, "district": DEBTOR_DISTRICT, "debtor": "A", "owed": 5 }).is_empty())
 	assert_true(Errands.sanitize({ "id": "x", "kind": Errands.DELIVERY, "pay": PAY, "pickup_district": PICKUP, "drop_district": PICKUP }).is_empty())
+
+
+func test_sanitize_keeps_unpaid_errands_from_vex() -> void:
+	var errand := { "id": "x", "kind": Errands.COLLECTION, "pay": 0, "district": DEBTOR_DISTRICT, "debtor": "A", "owed": 5, "sender": String(Loan.VEX_LENDER) }
+	assert_false(Errands.sanitize(errand).is_empty())
 
 
 func test_saved_errands_survive_a_reload_and_junk_is_dropped() -> void:

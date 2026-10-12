@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_def")
 id = &"vera_lind"
-display_name = "Vera Lind"
+display_name = "Vera Novak"
 district_id = &"west_end"
 line = "I'm with a consultancy. We pay cash, no receipts. Totally normal."
 wants = Array[StringName]([&"computing", &"biotech"])

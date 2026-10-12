@@ -18,15 +18,20 @@ const TIER_COLORS := {
 	Families.Tier.TRUSTED: Palette.RISK_LOW,
 	Families.Tier.FAMILY: Palette.RISK_LOW,
 }
-const CAREER_LOCK := "Pay off the Shark to unlock"
+const CAREER_LOCK := "Take Old Market from Vex to unlock"
+const ACT_ONE_STATUS := "Locked: take Old Market"
 const LOCKED := "LOCKED"
 const STOCK: StringName = &"stock"
 const UNSTOCK: StringName = &"unstock"
 const LEAVE: StringName = &"leave"
-const LEVEL_UP: StringName = &"level_up"
 const BLOCK: StringName = &"block"
+const HEADQUARTERS: StringName = &"headquarters"
 const SECTION_TITLES := {
 	BLOCK: "Turf",
+	HEADQUARTERS: "Holdings",
+	&"armory": "Armory",
+	&"hospital": "Hospital",
+	&"gym": "Gym",
 	&"safehouse": "Safehouse",
 	&"crew": "Crew",
 	&"districts": "Districts",
@@ -34,16 +39,23 @@ const SECTION_TITLES := {
 	&"skills": "Skills",
 	&"families": "Families",
 }
+## Pages opened from the holdings go back to the holdings.
+const SECTION_PARENTS := {
+	&"districts": HEADQUARTERS,
+	&"crew": HEADQUARTERS,
+	&"skills": HEADQUARTERS,
+}
 
 @onready var _margin: MarginContainer = %Margin
 @onready var _list: VBoxContainer = %List
-@onready var _power_label: Label = %PowerLabel
+@onready var _list_margin: MarginContainer = %ListMargin
+@onready var _headquarters: TurfScene = %Headquarters
+@onready var _cred_label: Label = %CredLabel
 @onready var _title: Label = %Title
 @onready var _confirm: ConfirmDialog = %ConfirmDialog
 
 var _pending_action := Callable()
 var _managed_business: Dictionary = {}
-var _managed_district: StringName
 var _section := BLOCK
 
 
@@ -51,6 +63,7 @@ func _ready() -> void:
 	super()
 	GameState.run_changed.connect(_on_run_changed)
 	_confirm.confirmed.connect(_on_confirmed)
+	_headquarters.building_tapped.connect(_show_section)
 
 
 ## Opens on the block, or returns to it when a building's section is showing.
@@ -70,7 +83,7 @@ func close_modal() -> bool:
 		_confirm.close()
 		return true
 	if _section != BLOCK:
-		_show_section(BLOCK)
+		_show_section(SECTION_PARENTS.get(_section, BLOCK))
 		return true
 	return false
 
@@ -91,9 +104,21 @@ func _rebuild() -> void:
 	for child in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
-	_power_label.text = "Power %d/%d" % [Turf.power(run), Turf.max_power()]
+	_cred_label.text = "%s  %d cred" % [StreetCred.rank_name(StreetCred.rank(run)), run.street_cred]
 	_title.text = SECTION_TITLES.get(_section, "Turf")
+	_headquarters.visible = _section == BLOCK
+	_list_margin.visible = _section != BLOCK
 	match _section:
+		HEADQUARTERS:
+			var holdings := HoldingsSection.new()
+			holdings.section_requested.connect(_show_section)
+			_list.add_child(holdings)
+		&"armory":
+			_list.add_child(ArmorySection.new())
+		&"hospital":
+			_list.add_child(HospitalSection.new())
+		&"gym":
+			_list.add_child(GymSection.new())
 		&"safehouse":
 			_list.add_child(SafehouseSection.new())
 		&"crew":
@@ -107,34 +132,33 @@ func _rebuild() -> void:
 		&"families":
 			_add_families(run)
 		_:
-			_add_block(run)
+			_update_headquarters(run)
 
 
-func _add_block(run: RunState) -> void:
-	_add_cred(run)
-	var scene := TurfScene.new()
-	_list.add_child(scene)
-	scene.building_tapped.connect(_show_section)
-	scene.set_status(&"safehouse", "Open here" if Safehouse.is_open(run) else "Hold this district to open", Safehouse.is_open(run))
-	scene.set_status(&"crew", "%d/%d hired" % [Crew.hired_count(run), Crew.cap(run)] if run.career else "Locked: pay the Shark")
-	scene.set_status(&"districts", "%d/%d held" % [Turf.held_count(run), Turf.contested().size()], _any_level_up(run))
-	scene.set_status(&"businesses", "%d open" % run.businesses.size() if run.career else "Locked: pay the Shark")
-	var points := Skills.points_free(run)
-	scene.set_status(&"skills", "%d %s to spend" % [points, "point" if points == 1 else "points"], points > 0)
-	var trusted := Content.families().filter(func(family: FamilyDef) -> bool: return Families.tier(run, family.id) >= Families.Tier.TRUSTED).size()
-	scene.set_status(&"families", "%d trust you" % trusted, trusted > 0)
-
-
-func _any_level_up(run: RunState) -> bool:
-	return Turf.contested().any(func(district_id: StringName) -> bool: return Turf.check_level_up(run, district_id) == Turf.LevelResult.OK)
-
-
-func _add_cred(run: RunState) -> void:
-	_add_heading("STREET CRED")
-	var rank := StreetCred.rank(run)
-	var next_cred := StreetCred.next_rank_cred(rank)
-	var caption := "Top rank" if next_cred < 0 else "%s at %d cred" % [StreetCred.rank_name(rank + 1), next_cred]
-	_add_row(CRED_ICON, StreetCred.rank_name(rank), "%d cred" % run.street_cred, caption)
+func _update_headquarters(run: RunState) -> void:
+	_headquarters.set_status(HEADQUARTERS, "+%s a day" % Format.money(Turf.daily_cut(run)),
+		TurfScene.Status.NEEDS_YOU if HoldingsSection.needs_attention(run) else TurfScene.Status.OPEN)
+	var safehouse_open := Safehouse.is_open(run)
+	_headquarters.set_status(&"safehouse", "Open here" if safehouse_open else "Hold this district to open", TurfScene.Status.OPEN if safehouse_open else TurfScene.Status.LOCKED)
+	if Armory.unlocked(run):
+		_headquarters.set_status(&"armory", "%d men, %d weapons" % [Army.total(run), Armory.total(run)], TurfScene.Status.OPEN)
+		var wounded := Army.wounded(run)
+		if wounded > 0:
+			_headquarters.set_status(&"hospital", "%d wounded" % wounded, TurfScene.Status.NEEDS_YOU)
+		else:
+			_headquarters.set_status(&"hospital", "%d beds" % Hospital.beds(run), TurfScene.Status.OPEN)
+	else:
+		_headquarters.set_status(&"armory", "Locked: buy a corner", TurfScene.Status.LOCKED)
+		_headquarters.set_status(&"hospital", "Locked: buy a corner", TurfScene.Status.LOCKED)
+	if Gym.is_open(run):
+		_headquarters.set_status(&"gym", "Next session day %d" % Gym.next_session_day(run), TurfScene.Status.OPEN)
+	else:
+		_headquarters.set_status(&"gym", "Locked: 午夜兔子 runs it", TurfScene.Status.LOCKED)
+	if Campaign.is_act_two(run):
+		_headquarters.set_status(&"businesses", "%d open" % run.businesses.size(), TurfScene.Status.OPEN)
+	else:
+		_headquarters.set_status(&"businesses", ACT_ONE_STATUS, TurfScene.Status.LOCKED)
+	_headquarters.set_status(&"families", "%d trust you" % Families.trusted_count(run), TurfScene.Status.OPEN)
 
 
 func _add_districts(run: RunState) -> void:
@@ -147,39 +171,16 @@ func _add_districts(run: RunState) -> void:
 
 func _talk_about_district(district: DistrictDef) -> void:
 	var run := GameState.run
-	_managed_district = district.id
 	if not Turf.is_contested(district.id):
 		GameOverlay.talk(Content.player(run.player_id), "%s is open city. Nobody runs these streets." % district.display_name, [_close_choice()], _end_talk)
 		return
 	var share := Turf.share(run, district.id)
 	var line := "I run %d%% of %s. %s has the rest." % [share, district.display_name, Gangs.owner(district.id).display_name]
-	var result := Turf.check_level_up(run, district.id)
-	var cost := Turf.next_level_cost(run, district.id)
-	var hint := ""
-	match result:
-		Turf.LevelResult.OK:
-			hint = "Level %d costs %s. Your corners pay more each morning and the police stop you less." % [Turf.bought_level(run, district.id) + 1, Format.money(cost)]
-		Turf.LevelResult.NOT_HELD:
-			hint = "Get to %d%% to hold it. Sell there or send muscle from the district screen." % Turf.HOLD_SHARE
-		Turf.LevelResult.MAX_LEVEL:
-			hint = "Level %d. It cannot go any higher." % Turf.MAX_LEVEL
-		Turf.LevelResult.RANK_TOO_LOW:
-			hint = "The next level needs the %s rank." % StreetCred.rank_name(Turf.next_level_rank(run, district.id))
-		Turf.LevelResult.NEEDS_TRUST:
-			hint = "The next level needs the trust of the family whose home this is."
-		Turf.LevelResult.NOT_ENOUGH_CASH:
-			hint = "The next level costs %s." % Format.money(cost)
-	var choices: Array[DialogueChoice] = []
-	if result in [Turf.LevelResult.OK, Turf.LevelResult.NOT_ENOUGH_CASH]:
-		choices.append(DialogueChoice.new(LEVEL_UP, "Level up for %s" % Format.money(cost), result == Turf.LevelResult.OK))
-	choices.append(_close_choice())
-	GameOverlay.talk(Content.player(run.player_id), line, choices, _on_district_choice, hint)
-
-
-func _on_district_choice(choice: StringName) -> void:
-	GameOverlay.end_talk()
-	if choice == LEVEL_UP:
-		GameState.level_up_turf(_managed_district)
+	var hint := "Get to %d%% to hold it. Sell there or send muscle from the district screen." % Turf.HOLD_SHARE
+	if Turf.holds(run, district.id):
+		hint = "Yours. It pays %s each morning, the police stop you less and there is room for %d business%s." % [
+			Format.money(Turf.DAILY_CUT), Turf.business_slots(run, district.id), "" if Turf.business_slots(run, district.id) == 1 else "es"]
+	GameOverlay.talk(Content.player(run.player_id), line, [_close_choice()], _end_talk, hint)
 
 
 func _close_choice() -> DialogueChoice:
@@ -192,7 +193,7 @@ func _end_talk(_choice: StringName) -> void:
 
 func _add_crew(run: RunState) -> void:
 	_add_heading("CREW  %d/%d" % [Crew.hired_count(run), Crew.cap(run)])
-	if not run.career:
+	if not Campaign.is_act_two(run) and run.crew.is_empty():
 		_add_row(LOCK_ICON, "Crew", "", CAREER_LOCK, LOCKED)
 		return
 	var roles := Crew.roles(run)
@@ -201,7 +202,7 @@ func _add_crew(run: RunState) -> void:
 		return
 	for role in roles:
 		if Crew.is_free_role(run, role.id):
-			_add_row(role.icon, "%s, the Shark" % role.display_name, "Free", Crew.effects(role))
+			_add_row(role.icon, "%s, %s" % [role.display_name, "the Shark" if run.shark_bought else "午夜兔子"], "Free", Crew.effects(role))
 			continue
 		_add_row(role.icon, role.display_name, "%s a day" % Format.money(role.daily_wage), Crew.effects(role), "TAP TO LET GO", Palette.TEXT_MUTED,
 			_ask.bind("Let %s go?" % role.display_name.to_lower(), "They walk away today. Hiring again costs %s." % Format.money(role.hire_cost), "Let go",
@@ -210,7 +211,7 @@ func _add_crew(run: RunState) -> void:
 
 func _add_businesses(run: RunState) -> void:
 	_add_heading("BUSINESSES")
-	if not run.career:
+	if not Campaign.is_act_two(run):
 		_add_row(LOCK_ICON, "Businesses", "", CAREER_LOCK, LOCKED)
 		return
 	for entry in run.businesses:
@@ -228,7 +229,7 @@ func _add_businesses(run: RunState) -> void:
 		var district := Content.district(district_id)
 		for business in Content.businesses():
 			var result := Businesses.check_buy(run, business, district_id)
-			if result == Businesses.Result.TURF_TOO_LOW:
+			if result in [Businesses.Result.NOT_HELD, Businesses.Result.RANK_TOO_LOW]:
 				continue
 			if not offered.has(business.id):
 				offered.append(business.id)
@@ -242,10 +243,9 @@ func _add_businesses(run: RunState) -> void:
 			_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), business.description,
 				"TAP TO OPEN" if can_buy else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_buy else Palette.TEXT_MUTED, action)
 	for business in Content.businesses():
-		var level_reached := Turf.contested().any(func(district_id: StringName) -> bool: return Turf.level(run, district_id) >= business.min_turf_level)
-		if not offered.has(business.id) and not level_reached:
-			_add_row(business.icon, business.display_name, Format.money(business.price), "Raise a district you hold to level %d to open one there" % business.min_turf_level,
-				"%s: TURF LEVEL %d" % [LOCKED, business.min_turf_level])
+		if not offered.has(business.id) and StreetCred.rank(run) < business.min_rank:
+			_add_row(business.icon, business.display_name, Format.money(business.price), "Opens in a district you hold once you reach %s" % StreetCred.rank_name(business.min_rank),
+				"%s: %s" % [LOCKED, StreetCred.rank_name(business.min_rank).to_upper()])
 
 
 func _add_skills(run: RunState) -> void:

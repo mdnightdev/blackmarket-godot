@@ -80,6 +80,13 @@ func _refresh() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 
+	if _venue.id == HIRING_VENUE and Corners.is_for_sale(run):
+		_add_label("FOR SALE", &"ListHeading")
+		_add_corner_sale_row()
+	if _venue.id == HIRING_VENUE and War.unit_on_offer(run):
+		_add_label("FOR THE WAR", &"ListHeading")
+		_add_unit_row()
+
 	_add_label("ORDER BOARD", &"ListHeading")
 	var offers := Orders.board(run, _venue.id)
 	for offer in offers:
@@ -93,7 +100,7 @@ func _refresh() -> void:
 	if run.orders.is_empty():
 		_add_label("No orders taken. Deliver at the dealer's market before the deadline.", &"MutedLabel")
 
-	if _venue.id == HIRING_VENUE and run.career:
+	if _venue.id == HIRING_VENUE and Campaign.is_act_two(run):
 		_add_label("HIRE CREW %d/%d" % [Crew.hired_count(run), Crew.cap(run)], &"ListHeading")
 		for role in Content.crew_roles():
 			_add_crew_row(role)
@@ -138,6 +145,23 @@ func _add_order_row(order: Dictionary, taken: bool) -> void:
 	_list.add_child(row)
 	row.display(item, Format.money(Orders.total(order)), caption, detail, detail_color)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_order(order, taken))
+
+
+func _add_corner_sale_row() -> void:
+	var seller := Content.dealer(CornerTalk.MAMA_LIN)
+	var affordable := GameState.run.cash >= Corners.MAMA_LIN_PRICE
+	var row: ItemRow = ITEM_ROW.instantiate()
+	_list.add_child(row)
+	row.show_entry(seller.portrait if seller != null else null, "Mama Lin's corner", Format.money(Corners.MAMA_LIN_PRICE), "Vex squeezed her dry. She wants out.", "TAP TO TALK" if affordable else "NOT ENOUGH CASH", Palette.TEXT_CREAM if affordable else Palette.TEXT_MUTED)
+	row.item_selected.connect(func(_item: ItemDef) -> void: CornerTalk.offer_mama_lin(_host))
+
+
+func _add_unit_row() -> void:
+	var rabbit := Content.speaker(WarTalk.RABBIT)
+	var row: ItemRow = ITEM_ROW.instantiate()
+	_list.add_child(row)
+	row.show_entry(rabbit.portrait if rabbit != null else null, "Rabbit's unit", Format.money(War.RABBIT_UNIT_PRICE), "%d of his friends from the army. The first of the Black Hand." % War.RABBIT_UNIT_SIZE, "TAP TO TALK", Palette.TEXT_CREAM)
+	row.item_selected.connect(func(_item: ItemDef) -> void: WarTalk.offer_unit())
 
 
 func _add_crew_row(role: CrewRoleDef) -> void:

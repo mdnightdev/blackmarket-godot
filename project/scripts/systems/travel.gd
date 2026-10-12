@@ -27,17 +27,14 @@ static func check(run: RunState, destination: DistrictDef, walking := false) -> 
 
 
 static func is_locked(run: RunState, destination: DistrictDef) -> bool:
-	return StreetCred.rank(run) < destination.min_rank or Turf.power(run) < destination.min_power
+	return StreetCred.rank(run) < destination.min_rank
 
 
 ## What the player still needs to reach the destination, empty when it is open.
 static func lock_reason(run: RunState, destination: DistrictDef) -> String:
-	var needs: Array[String] = []
 	if StreetCred.rank(run) < destination.min_rank:
-		needs.append("%s rank" % StreetCred.rank_name(destination.min_rank))
-	if Turf.power(run) < destination.min_power:
-		needs.append("Power %d" % destination.min_power)
-	return "Needs %s" % " and ".join(needs) if not needs.is_empty() else ""
+		return "Needs %s rank" % StreetCred.rank_name(destination.min_rank)
+	return ""
 
 
 ## Pays the fare, moves the player and spends TRIP_SECONDS of the phase clock. Walking pays nothing and spends WALK_SECONDS.
@@ -47,7 +44,7 @@ static func travel(run: RunState, destination: DistrictDef, walking := false) ->
 	if not walking:
 		run.cash -= fare(run, destination)
 	run.district_id = destination.id
-	run.phase_seconds_left -= WALK_SECONDS if walking else TRIP_SECONDS
+	run.phase_seconds_left -= (WALK_SECONDS if walking else TRIP_SECONDS) * Edges.trip_factor(run)
 	if run.phase_seconds_left > 0.0:
 		return 0.0
 	var overrun := -run.phase_seconds_left

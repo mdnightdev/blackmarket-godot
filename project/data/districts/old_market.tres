@@ -1,8 +1,53 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/old_market.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/rain.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_old_market.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_mama_lin"]
+script = ExtResource("4_corner")
+id = &"mama_lin_corner"
+display_name = "Noodle Alley"
+map_position = Vector2(0.24, 0.66)
+moves = "Meds and papers"
+seller = &"mama_lin"
+rent = 1500
+protection = 1000
+
+[sub_resource type="Resource" id="Corner_tran_steps"]
+script = ExtResource("4_corner")
+id = &"tran_steps"
+display_name = "Temple Steps"
+map_position = Vector2(0.78, 0.7)
+moves = "Phones, SIM cards and gossip"
+seller = &"nadia"
+rent = 2000
+protection = 1500
+defenders = 800
+
+[sub_resource type="Resource" id="Corner_fish_row"]
+script = ExtResource("4_corner")
+id = &"fish_row"
+display_name = "Ice House Wharf"
+map_position = Vector2(0.33, 0.3)
+moves = "Whatever comes off the boats"
+seller = &"anya"
+rent = 2500
+protection = 2000
+defenders = 1200
+
+[sub_resource type="Resource" id="Corner_lantern"]
+script = ExtResource("4_corner")
+id = &"lantern"
+display_name = "Red Lantern Hall"
+map_position = Vector2(0.74, 0.27)
+moves = "Vex's own stock"
+stronghold = true
+rent = 0
+protection = 6000
+defenders = 2000
 
 [resource]
 script = ExtResource("1_def")
@@ -17,3 +62,5 @@ travel_cost = 40
 heat_multiplier = 1.0
 roads = Array[StringName]([&"north_port", &"warehouse_row", &"slums", &"downtown", &"west_end"])
 venues = Array[StringName]([&"market", &"tran_bar"])
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_mama_lin"), SubResource("Corner_tran_steps"), SubResource("Corner_fish_row"), SubResource("Corner_lantern")])

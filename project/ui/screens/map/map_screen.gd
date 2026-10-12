@@ -2,14 +2,12 @@ extends Control
 
 const MAP_PIN := preload("res://ui/components/map_pin.tscn")
 const ROUTE_SECONDS := 1.1
-const EXTRA_ROAD_SECONDS := 0.45
 const CAMERA_GLIDE_SECONDS := 0.4
 const LOCKED_PIN_ALPHA := 0.45
 const BOOKED_TRIP_DELAY_SECONDS := 0.7
 const LAPSE_PHASE_SECONDS := 0.6
 const LAPSE_DIM := Color(0.45, 0.42, 0.5)
-const OPEN_ROAD_COLOR := Color(Palette.PEACH, 0.55)
-const LOCKED_ROAD_COLOR := Color(Palette.TEXT_MUTED, 0.2)
+const CRATE_ROUTE_COLOR := Color(Palette.PEACH, 0.55)
 
 @onready var _city_view: CityView = %CityView
 @onready var _route: Line2D = %Route
@@ -35,7 +33,7 @@ func _ready() -> void:
 		pin.holder = Turf.holder(GameState.run, district.id)
 		_city_view.add_pin(pin)
 		_pins.append(pin)
-	_show_roads()
+	_show_crate_route()
 	_location_label.text = "You are in %s" % GameState.current_district().display_name
 	_city_view.focus_on(GameState.current_district().map_position, CityView.START_ZOOM)
 	_city_view.district_tapped.connect(_on_district_selected)
@@ -52,19 +50,22 @@ func _exit_tree() -> void:
 	GameState.clock_active = false
 
 
-## Direct roads out of the current district.
-func _show_roads() -> void:
+## Only a crate run follows the roads, so the map draws the stops still ahead of the crate and nothing else.
+func _show_crate_route() -> void:
 	var run := GameState.run
-	var here := GameState.current_district()
 	var ends := PackedVector2Array()
 	var colors := PackedColorArray()
-	for road_id in here.roads:
-		var other := Content.district(road_id)
-		if other == null:
-			continue
-		ends.append(here.map_position)
-		ends.append(other.map_position)
-		colors.append(LOCKED_ROAD_COLOR if Travel.is_locked(run, other) else OPEN_ROAD_COLOR)
+	if Smuggling.is_carrying(run):
+		var route: Array = run.crate.get("route", [])
+		var from := GameState.current_district()
+		for index in range(int(run.crate.get("stop", 0)), route.size()):
+			var stop := Content.district(StringName(str(route[index])))
+			if stop == null:
+				break
+			ends.append(from.map_position)
+			ends.append(stop.map_position)
+			colors.append(CRATE_ROUTE_COLOR)
+			from = stop
 	_city_view.set_roads(ends, colors)
 
 
@@ -124,7 +125,7 @@ func _travel(destination: DistrictDef, through_roadblock: bool, walking := false
 	_district_sheet.close()
 	var middle := (origin.map_position + destination.map_position) / 2.0
 	await _city_view.glide_to(middle, CityView.MIN_ZOOM, CAMERA_GLIDE_SECONDS).finished
-	await _animate_route(_road_points(origin, destination))
+	await _animate_route(PackedVector2Array([_city_view.map_to_view(origin.map_position), _city_view.map_to_view(destination.map_position)]))
 	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 
 
@@ -147,27 +148,14 @@ func _wait_out_roadblock(destination: DistrictDef) -> void:
 		_travel(destination, false)
 
 
-## The shortest road path between the districts, or a straight line when no short road path exists.
-func _road_points(origin: DistrictDef, destination: DistrictDef) -> PackedVector2Array:
-	var shortest: Array = [destination.id]
-	for path in Routes.paths(origin.id, destination.id):
-		if shortest.size() == 1 or path.size() < shortest.size():
-			shortest = path
-	var points := PackedVector2Array([_city_view.map_to_view(origin.map_position)])
-	for stop: StringName in shortest:
-		points.append(_city_view.map_to_view(Content.district(stop).map_position))
-	return points
-
-
 func _animate_route(points: PackedVector2Array) -> void:
 	var length := 0.0
 	for index in range(1, points.size()):
 		length += points[index - 1].distance_to(points[index])
-	var roads := points.size() - 1
 	_route.clear_points()
 	_traveller.show()
 	var tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_method(_draw_route.bind(points, length), 0.0, 1.0, ROUTE_SECONDS + EXTRA_ROAD_SECONDS * (roads - 1))
+	tween.tween_method(_draw_route.bind(points, length), 0.0, 1.0, ROUTE_SECONDS)
 	await tween.finished
 
 

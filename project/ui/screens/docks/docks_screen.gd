@@ -50,7 +50,8 @@ func _ready() -> void:
 	_refresh()
 	_play_entrance()
 	AudioService.play_sfx(Sfx.SHIP_HORN, 0.05, HORN_DB)
-	var greeting := "No work for you today. You know why." if Smuggling.is_banned(GameState.run) else _host.line
+	var greeting := VoroninTalk.greeting(GameState.run, _host)
+	GameState.save_run()
 	get_tree().create_timer(GREETING_DELAY).timeout.connect(_host_says.bind(greeting))
 
 

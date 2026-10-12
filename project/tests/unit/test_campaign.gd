@@ -53,13 +53,15 @@ func test_missing_a_week_while_under_the_limit_keeps_the_run() -> void:
 	assert_eq(_run.pending_encounter.type, Encounters.ENFORCERS)
 
 
-func test_third_missed_week_in_a_row_loses() -> void:
+func test_third_missed_week_in_a_row_sells_the_debt() -> void:
 	_run.missed_weeks = Loan.MAX_MISSED_WEEKS - 1
 	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
-	assert_eq(_run.missed_weeks, Loan.MAX_MISSED_WEEKS)
-	assert_eq(_run.outcome, RunState.Outcome.LOST)
-	assert_true(Campaign.is_over(_run))
-	assert_true(_run.pending_encounter.is_empty())
+	assert_eq(_run.lender, Loan.VEX_LENDER)
+	assert_eq(_run.debt, RunState.STARTING_DEBT * DebtSale.DEBT_MULTIPLIER)
+	assert_eq(_run.missed_weeks, 0)
+	assert_eq(str(_run.pending_encounter.type), DebtSale.DEBT_SOLD)
+	assert_eq(_run.outcome, RunState.Outcome.ONGOING)
+	assert_false(Campaign.is_over(_run))
 
 
 func test_debt_still_owed_does_not_start_the_career() -> void:

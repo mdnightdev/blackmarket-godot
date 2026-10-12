@@ -16,6 +16,7 @@ const RULES := {
 	Game.BLACKJACK: "Blackjack pays 3 to 2. Dealer stands on 17. Double down on your first two cards.",
 	Game.SLOTS: "Three alike pays the multiple shown. Pairs of SIMs, keys or drives pay 1x, 2x and 3x.",
 }
+const DEALER_FRIEND_BLACKJACK_RULES := "The dealer knows you. Blackjack pays you 2 to 1. Dealer stands on 17. Double down on your first two cards."
 
 @onready var _background: TextureRect = %Background
 @onready var _margin: MarginContainer = %Margin
@@ -171,7 +172,8 @@ func _build_paytable() -> void:
 func _select_game(game: Game) -> void:
 	_game = game
 	[_sic_bo_tab, _blackjack_tab, _slots_tab][game].button_pressed = true
-	_rules_label.text = RULES[game]
+	var friend_of_the_house := game == Game.BLACKJACK and Edges.has(GameState.run, PlayerDef.Edge.VENUES)
+	_rules_label.text = DEALER_FRIEND_BLACKJACK_RULES if friend_of_the_house else RULES[game]
 	_result_label.text = ""
 	var cards := game == Game.BLACKJACK
 	_dealer_label.visible = cards
@@ -335,7 +337,7 @@ func _finish_hand() -> void:
 	if player_total <= Casino.BLACKJACK and not player_natural:
 		while Casino.dealer_should_hit(_dealer):
 			await _deal_card(false)
-	_pending_payout = Casino.blackjack_payout(_player, _dealer, _stake)
+	_pending_payout = Casino.blackjack_payout(_player, _dealer, _stake, Edges.natural_payout(GameState.run))
 	var dealer_total := Casino.hand_value(_dealer)
 	var lead := ""
 	if player_total > Casino.BLACKJACK:

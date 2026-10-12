@@ -11,13 +11,13 @@ const FACE_WIDTH := 0.8
 
 
 func display(portrait: Texture2D, display_name: String, role: String, role_color: Color) -> void:
-	_portrait.texture = _face_of(portrait)
+	_portrait.texture = face_of(portrait)
 	_name_label.text = display_name
 	_role_label.text = role
 	_role_label.add_theme_color_override("font_color", role_color)
 
 
-func _face_of(portrait: Texture2D) -> Texture2D:
+static func face_of(portrait: Texture2D) -> Texture2D:
 	if portrait == null:
 		return null
 	var size := portrait.get_size()

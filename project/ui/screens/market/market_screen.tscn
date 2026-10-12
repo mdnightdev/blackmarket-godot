@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
 [ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="3_hud"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
-[ext_resource type="PackedScene" path="res://ui/components/trade_sheet.tscn" id="5_trade_sheet"]
+[ext_resource type="PackedScene" path="res://ui/components/trade_form.tscn" id="5_trade_form"]
 [ext_resource type="Script" path="res://ui/components/news_line.gd" id="7_news_line"]
 [ext_resource type="Script" path="res://ui/components/talking_portrait.gd" id="8_portrait"]
 [ext_resource type="Script" path="res://ui/components/typewriter.gd" id="9_typewriter"]
@@ -84,7 +84,7 @@ theme_override_constants/separation = 10
 
 [node name="PortraitFrame" type="PanelContainer" parent="Margin/Layout/Panel/Content/Header"]
 clip_children = 1
-custom_minimum_size = Vector2(168, 212)
+custom_minimum_size = Vector2(196, 236)
 layout_mode = 2
 size_flags_vertical = 0
 mouse_filter = 2
@@ -113,16 +113,26 @@ size_flags_horizontal = 3
 theme_type_variation = &"PlaceLabel"
 text = "MARKET"
 
-[node name="MoodLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/TopRow"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"PillLabel"
-text = "WARY"
-
 [node name="DealerLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"NameLabel"
+
+[node name="Pills" type="HBoxContainer" parent="Margin/Layout/Panel/Content/Header/Text"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="DistrictPill" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/Pills"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PillLabel"
+
+[node name="MoodLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/Pills"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PillLabel"
+text = "WARY"
 
 [node name="FamilyLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text"]
 unique_name_in_owner = true
@@ -131,16 +141,22 @@ layout_mode = 2
 theme_type_variation = &"MutedLabel"
 autowrap_mode = 3
 
-[node name="Speech" type="Label" parent="Margin/Layout/Panel/Content/Header/Text"]
+[node name="SpeechBubble" type="PanelContainer" parent="Margin/Layout/Panel/Content/Header/Text"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_type_variation = &"SpeechBubble"
+
+[node name="Speech" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/SpeechBubble"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 19
 autowrap_mode = 3
 script = ExtResource("9_typewriter")
 
-[node name="NewsLine" type="Label" parent="Margin/Layout/Panel/Content/Header/Text"]
+[node name="NewsLine" type="Label" parent="Margin/Layout/Panel/Content"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -198,20 +214,46 @@ scroll_deadzone = 12
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 0
+theme_override_constants/separation = 10
+
+[node name="TradePanel" type="PanelContainer" parent="Margin/Layout/Panel/Content/Scroll/List"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"TradePanel"
+
+[node name="TradeForm" parent="Margin/Layout/Panel/Content/Scroll/List/TradePanel" instance=ExtResource("5_trade_form")]
+unique_name_in_owner = true
+layout_mode = 2
+compact = true
+closable = true
 
 [node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="BagButton" type="Button" parent="Margin/Layout/Actions"]
+[node name="Bag" type="VBoxContainer" parent="Margin/Layout/Actions"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="BagButton" type="Button" parent="Margin/Layout/Actions/Bag"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 theme_type_variation = &"GhostButton"
 text = "Bag"
 script = ExtResource("4_button")
+
+[node name="BagBar" type="ProgressBar" parent="Margin/Layout/Actions/Bag"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"ThinBar"
+show_percentage = false
 
 [node name="BackButton" type="Button" parent="Margin/Layout/Actions"]
 unique_name_in_owner = true
@@ -238,11 +280,6 @@ theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 theme_override_font_sizes/font_size = 19
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="TradeSheet" parent="." instance=ExtResource("5_trade_sheet")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
 
 [node name="DealFlash" parent="." instance=ExtResource("10_deal_flash")]
 unique_name_in_owner = true

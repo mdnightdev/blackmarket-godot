@@ -4,7 +4,7 @@ class_name Businesses
 ## Entry layout: { "business": id, "district": id, "stock": { item id: units }, "closed_until": day }.
 ## Ids are stored as String so entries look the same before and after a save.
 
-enum Result { OK, NOT_CAREER, UNKNOWN, TURF_TOO_LOW, NO_SLOT, NOT_ENOUGH_CASH, NO_STOCK, NO_ROOM, CLOSED }
+enum Result { OK, NOT_CAREER, UNKNOWN, NOT_HELD, RANK_TOO_LOW, NO_SLOT, NOT_ENOUGH_CASH, NO_STOCK, NO_ROOM, CLOSED }
 
 ## Fraction of the local sell price a business gets for its goods.
 const SALE_FACTOR := 0.9
@@ -12,7 +12,8 @@ const SALE_FACTOR := 0.9
 const PROTECTION_CUT := 0.1
 const BASE_RAID_CHANCE := 0.04
 const RAID_PER_HEAT := 0.0005
-const RAID_TURF_REDUCTION := 0.01
+## Lookouts in a held district keep raids on its businesses down.
+const RAID_HELD_REDUCTION := 0.02
 const MIN_RAID_CHANCE := 0.01
 const HOSTILE_RAID_FACTOR := 2.0
 const LUXURY: StringName = &"luxury"
@@ -60,12 +61,14 @@ static func slots_free(run: RunState, district_id: StringName) -> int:
 
 
 static func check_buy(run: RunState, business: BusinessDef, district_id: StringName) -> Result:
-	if not run.career:
+	if not Campaign.is_act_two(run):
 		return Result.NOT_CAREER
 	if business == null:
 		return Result.UNKNOWN
-	if Turf.level(run, district_id) < business.min_turf_level:
-		return Result.TURF_TOO_LOW
+	if not Turf.holds(run, district_id):
+		return Result.NOT_HELD
+	if StreetCred.rank(run) < business.min_rank:
+		return Result.RANK_TOO_LOW
 	if slots_free(run, district_id) <= 0:
 		return Result.NO_SLOT
 	if run.cash < business.price:
@@ -150,7 +153,7 @@ static func unload_stock(run: RunState, entry: Dictionary, item: ItemDef, quanti
 
 
 static func is_open(run: RunState, entry: Dictionary) -> bool:
-	return run.day >= int(entry.get("closed_until", 0)) and Turf.level(run, district_of(entry)) >= 1
+	return run.day >= int(entry.get("closed_until", 0)) and Turf.holds(run, district_of(entry))
 
 
 ## What the business gets for one unit before the protection cut. Uses the district's resident
@@ -201,7 +204,7 @@ static func sell_phase(run: RunState) -> int:
 
 static func raid_chance(run: RunState, entry: Dictionary) -> float:
 	var district_id := district_of(entry)
-	var chance := BASE_RAID_CHANCE + run.heat * RAID_PER_HEAT - Turf.level(run, district_id) * RAID_TURF_REDUCTION
+	var chance := BASE_RAID_CHANCE + run.heat * RAID_PER_HEAT - (RAID_HELD_REDUCTION if Turf.holds(run, district_id) else 0.0)
 	chance = maxf(chance, MIN_RAID_CHANCE)
 	if Families.hostile_family_in(run, district_id) != null:
 		chance *= HOSTILE_RAID_FACTOR

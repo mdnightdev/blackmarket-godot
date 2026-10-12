@@ -29,6 +29,9 @@ func test_street_jobs_keep_coming_until_wealthy_districts_open() -> void:
 	_run.street_cred = 0
 	assert_eq(PayScale.top_tier(_run), Tiers.STREET)
 	assert_false(PayScale.outgrown(_run, Tiers.STREET))
-	_run.street_cred = StreetCred.MAX
-	assert_eq(PayScale.top_tier(_run), Tiers.MIDDLE, "wealthy districts also need power")
+	_run.street_cred = int(StreetCred.RANKS[6].cred)
+	assert_eq(PayScale.top_tier(_run), Tiers.MIDDLE, "wealthy districts open at rank 8")
 	assert_false(PayScale.outgrown(_run, Tiers.STREET))
+	_run.street_cred = StreetCred.MAX
+	assert_eq(PayScale.top_tier(_run), Tiers.WEALTHY)
+	assert_true(PayScale.outgrown(_run, Tiers.STREET))

@@ -1,10 +1,22 @@
 class_name Heat
 
+## Calm, then Noticed: stops get likelier. Watched: Officer Brandt follows the player between districts.
+## Wanted, at the top: Brandt raids. Only loud moves make the player hot: escapes, fights, hijacks, heists and wars.
+## Buying, selling and travelling with goods add nothing. Carrying still draws stops, see Police.stop_chance.
+enum Level { CALM, NOTICED, WATCHED, WANTED }
+
+const LEVEL_NAMES := {
+	Level.CALM: "Calm",
+	Level.NOTICED: "Noticed",
+	Level.WATCHED: "Watched",
+	Level.WANTED: "Wanted",
+}
 const MAX := 100
+## From here the player counts as hot: the top bar warns and Lexie explains it.
+const NOTICED := 30
+const WATCHED := 60
 const DECAY_PER_PHASE := 4
 const OVERNIGHT_DECAY := 6
-const TRADE_RISK_DIVISOR := 80.0
-const TRAVEL_RISK_DIVISOR := 100.0
 
 
 static func carried_risk(run: RunState) -> int:
@@ -16,28 +28,18 @@ static func carried_risk(run: RunState) -> int:
 	return total
 
 
-static func for_trade(run: RunState, item: ItemDef, quantity: int) -> int:
-	var district := Content.district(run.district_id)
-	var strictness := district.heat_multiplier if district != null else 1.0
-	return ceili(item.risk * quantity * strictness / TRADE_RISK_DIVISOR)
+static func level(run: RunState) -> Level:
+	if run.heat >= MAX:
+		return Level.WANTED
+	if run.heat >= WATCHED:
+		return Level.WATCHED
+	if run.heat >= NOTICED:
+		return Level.NOTICED
+	return Level.CALM
 
 
-static func for_travel(run: RunState) -> int:
-	if Crew.removes_travel_heat(run):
-		return 0
-	return _travel_heat(run)
-
-
-## A driver takes the travel heat instead, and the crew report counts what was saved.
-static func add_for_travel(run: RunState) -> void:
-	if Crew.removes_travel_heat(run):
-		Crew.note(run, Crew.HEAT_SAVED, _travel_heat(run))
-		return
-	add(run, _travel_heat(run))
-
-
-static func _travel_heat(run: RunState) -> int:
-	return maxi(0, ceili(carried_risk(run) / TRAVEL_RISK_DIVISOR) - Skills.travel_heat_reduction(run))
+static func level_name(run: RunState) -> String:
+	return LEVEL_NAMES[level(run)]
 
 
 static func add(run: RunState, amount: int) -> void:

@@ -4,12 +4,15 @@ extends RefCounted
 var id: StringName
 var label: String
 var enabled: bool
-## Picked when the player presses back.
+## Picked when the player presses back. Shown as a small link in the corner of the dialogue box.
 var cancel: bool
+## Picked by tapping anywhere once the line is shown. Only for choices that spend or risk nothing.
+var advance: bool
 
 
-func _init(choice_id: StringName, choice_label: String, is_enabled := true, is_cancel := false) -> void:
+func _init(choice_id: StringName, choice_label: String, is_enabled := true, is_cancel := false, is_advance := false) -> void:
 	id = choice_id
 	label = choice_label
 	enabled = is_enabled
 	cancel = is_cancel
+	advance = is_advance

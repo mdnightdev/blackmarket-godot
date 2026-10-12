@@ -15,6 +15,7 @@ func _ready() -> void:
 	_jobs_tab.pressed.connect(GameOverlay.open_jobs)
 	_menu_tab.pressed.connect(GameOverlay.open_profile)
 	GameState.run_changed.connect(_refresh_tabs)
+	Settings.changed.connect(_refresh_tabs)
 	visibility_changed.connect(_refresh_tabs)
 	_refresh_tabs()
 
@@ -23,7 +24,14 @@ func _refresh_tabs() -> void:
 	var run := GameState.run
 	_turf_tab.set_enabled(run != null)
 	_market_tab.set_enabled(run != null and Content.dealer_in(run.district_id) != null)
-	_jobs_tab.set_badge(run != null and not Jobs.due_soon(run).is_empty())
+	_jobs_tab.set_badge(run != null and (not Jobs.due_soon(run).is_empty() or _offers_waiting_silently(run)))
+
+
+## With Do not disturb on, the badge is the only sign that offers came in.
+func _offers_waiting_silently(run: RunState) -> bool:
+	if not Settings.do_not_disturb:
+		return false
+	return not (run.errand_offers.is_empty() and run.customer_offers.is_empty() and run.job_pings.is_empty())
 
 
 func _open_market() -> void:

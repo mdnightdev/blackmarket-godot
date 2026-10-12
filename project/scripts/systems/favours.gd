@@ -3,7 +3,7 @@ class_name Favours
 ## Work the triad lieutenants hand out. Each family posts a fresh board every day.
 ## Offers are { id, family, kind, item, quantity, price, due }: price is per unit for a delivery
 ## and the full amount for a tribute, due is the last phase stamp it can be done in.
-## Tributes are paid on the spot. Accepted deliveries are stored without the kind.
+## Tributes are paid on the spot, at most one a day. Accepted deliveries are stored without the kind.
 
 enum Kind { DELIVERY, TRIBUTE }
 enum Result { OK, BUSY, TAKEN, EXPIRED, NOT_ENOUGH_CASH, TOO_BIG }
@@ -25,12 +25,13 @@ const MISSED_LOSS := 20
 
 
 ## Today's open offers from a family. Seeded by the run, so a reload cannot reroll them.
+## The families only hand out work from Act 2.
 static func board(run: RunState, family: FamilyDef) -> Array[Dictionary]:
 	var day_index := run.day - 1
 	var stamp := Calendar.stamp(run)
 	var goods := Tiers.goods(Tiers.STREET)
 	var offers: Array[Dictionary] = []
-	if goods.is_empty():
+	if goods.is_empty() or not Campaign.is_act_two(run):
 		return offers
 	for index in POSTED_PER_DAY:
 		var offer := _post(run, family, day_index, index, goods)
@@ -146,7 +147,8 @@ static func _post(run: RunState, family: FamilyDef, day_index: int, index: int, 
 		"id": "%s:%d:%d" % [family.id, day_index, index],
 		"family": String(family.id),
 	}
-	if rng.randf() < TRIBUTE_CHANCE:
+	var tribute := rng.randf() < TRIBUTE_CHANCE
+	if tribute and index == 0:
 		offer.merge({
 			"kind": Kind.TRIBUTE,
 			"item": "",

@@ -4,7 +4,7 @@ class_name PayScale
 ## big job, at the rank that first opens the tier. Pay grows with every rank above that.
 
 const BANDS := {
-	Tiers.STREET: [2000.0, 4000.0, 10000.0],
+	Tiers.STREET: [1500.0, 3000.0, 7500.0],
 	Tiers.MIDDLE: [10000.0, 18000.0, 40000.0],
 	Tiers.WEALTHY: [50000.0, 100000.0, 250000.0],
 }

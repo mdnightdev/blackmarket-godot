@@ -94,13 +94,13 @@ static func dealer_should_hit(cards: Array[int]) -> bool:
 	return hand_value(cards) < DEALER_STANDS_ON
 
 
-static func blackjack_payout(player: Array[int], dealer: Array[int], stake: int) -> int:
+static func blackjack_payout(player: Array[int], dealer: Array[int], stake: int, natural_payout := NATURAL_PAYOUT) -> int:
 	var player_total := hand_value(player)
 	var dealer_total := hand_value(dealer)
 	if player_total > BLACKJACK:
 		return 0
 	if is_natural(player) and not is_natural(dealer):
-		return roundi(stake * NATURAL_PAYOUT)
+		return roundi(stake * natural_payout)
 	if is_natural(dealer) and not is_natural(player):
 		return 0
 	if dealer_total > BLACKJACK or player_total > dealer_total:

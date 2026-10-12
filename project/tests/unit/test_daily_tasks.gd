@@ -10,6 +10,7 @@ var _run: RunState
 func before_each() -> void:
 	_run = RunState.new()
 	_run.price_seed = 777
+	Story.mark(_run, War.VEX_FELL)
 
 
 func test_deal_fills_the_board_once_per_day() -> void:

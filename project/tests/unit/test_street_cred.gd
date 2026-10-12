@@ -5,6 +5,7 @@ var _run: RunState
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 
 
 func test_new_runs_start_as_nobody() -> void:

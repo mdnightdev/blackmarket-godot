@@ -19,7 +19,7 @@ static func asking_price_at(run: RunState, dealer: DealerDef, item: ItemDef, pha
 
 static func buy_price(run: RunState, dealer: DealerDef, item: ItemDef) -> int:
 	var asking := asking_price_at(run, dealer, item, Calendar.stamp(run))
-	return maxi(1, roundi(asking * Families.buy_factor(run, dealer) * (1.0 - Skills.buy_discount(run))))
+	return maxi(1, roundi(asking * Families.buy_factor(run, dealer) * (1.0 - Skills.buy_discount(run) - Edges.buy_discount(run))))
 
 
 static func sell_price(run: RunState, dealer: DealerDef, item: ItemDef) -> int:

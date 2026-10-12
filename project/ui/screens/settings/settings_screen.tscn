@@ -114,6 +114,12 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "Screen shake"
 
+[node name="DoNotDisturbToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Do not disturb (job offers wait in Jobs)"
+
 [node name="Spacer" type="Control" parent="Margin/Layout"]
 layout_mode = 2
 size_flags_vertical = 3

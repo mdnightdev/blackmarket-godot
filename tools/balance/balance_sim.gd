@@ -66,7 +66,7 @@ func _summarize(strategy: StringName, results: Array[Dictionary], checkpoint_day
 		])
 
 	lines.append(_day_line("cleared the debt", _days_of(results, "cleared_day"), results.size()))
-	lines.append(_day_line("lost to missed payments", _days_of(results, "lost_day"), results.size()))
+	lines.append(_day_line("debt sold to Vex", _days_of(results, "sold_day"), results.size()))
 
 	var busts := 0
 	var realized := 0

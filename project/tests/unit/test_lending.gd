@@ -7,6 +7,7 @@ func before_each() -> void:
 	_run = RunState.new()
 	_run.price_seed = 4321
 	_run.career = true
+	Story.mark(_run, War.VEX_FELL)
 	_run.debt = 0
 	_run.cash = Lending.BUYOUT_PRICE + 100000
 	_run.district_id = &"downtown"

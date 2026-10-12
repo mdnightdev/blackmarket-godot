@@ -9,6 +9,7 @@ const MUSCLE: StringName = &"muscle"
 const BUY_OUT: StringName = &"buy_out"
 const DEAL: StringName = &"deal"
 const LEAVE: StringName = &"leave"
+const RAMOS: StringName = &"officer"
 const LENDING_HINT := "Due back in %d days. Street dealers skip out 1 in 4, middle class 1 in 8, wealthy 1 in 20. The Shark collects half of a skipped loan."
 
 
@@ -19,7 +20,12 @@ static func talk_to(character: CharacterDef) -> void:
 		CharacterDef.Role.INFORMANT:
 			_talk_to_informant(character)
 		CharacterDef.Role.RIVAL:
-			_talk_turf(character, character.line)
+			if character.id == Loan.VEX_LENDER and not Campaign.is_act_two(GameState.run):
+				VexTalk.play(character)
+			else:
+				_talk_turf(character, character.line)
+		CharacterDef.Role.POLICE:
+			_talk_to_police(character)
 		CharacterDef.Role.LIEUTENANT:
 			FamilyTalk.talk_to(character)
 		CharacterDef.Role.HACKER:
@@ -34,6 +40,10 @@ static func _talk_to_lender(shark: CharacterDef) -> void:
 	if run.shark_bought:
 		_talk_lending(shark)
 		return
+	if Loan.is_with_vex(run):
+		var leave: Array[DialogueChoice] = [_leave()]
+		GameOverlay.talk(shark, "I am retired. Your debt is Vex's business now. Pay her, not me.", leave, _end)
+		return
 	var due_day := run.next_due_day - 1
 	var line: String
 	var choices: Array[DialogueChoice] = []
@@ -41,19 +51,20 @@ static func _talk_to_lender(shark: CharacterDef) -> void:
 		line = "You're clear with me. Need another loan? My rates are fair. Mostly."
 	elif Loan.amount_due(run) > 0:
 		line = "You owe me %s. I want %s by the end of day %d." % [Format.money(run.debt), Format.money(Loan.amount_due(run)), due_day]
-		choices.append(DialogueChoice.new(REPAY, "Repay"))
 	else:
 		line = "You owe me %s. This week is covered. Next payment is set on day %d." % [Format.money(run.debt), due_day]
-		choices.append(DialogueChoice.new(REPAY, "Repay early"))
 	if not run.career and run.missed_weeks > 0:
-		line += " Missed %d of %d in a row. Then we're done." % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
+		line += " Missed %d of %d in a row. Then I sell your debt to someone less patient." % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
 	if run.career:
-		choices.append(DialogueChoice.new(BORROW, "Borrow"))
+		choices.append(DialogueChoice.new(BORROW, "Borrow or repay"))
+	elif run.debt > 0:
+		choices.append(DialogueChoice.new(REPAY, "Repay"))
 	if Lending.can_buy_out(run):
 		line += " Or buy me out. %s and the whole book is yours." % Format.money(Lending.BUYOUT_PRICE)
 		choices.append(DialogueChoice.new(BUY_OUT, "Buy him out (%s)" % Format.money(Lending.BUYOUT_PRICE), run.cash >= Lending.BUYOUT_PRICE))
 	choices.append(_leave())
-	GameOverlay.talk(shark, line, choices, _on_lender_choice.bind(shark))
+	var hint := "His trust in you: %s." % SharkTrust.level_name(run) if not run.career else ""
+	GameOverlay.talk(shark, line, choices, _on_lender_choice.bind(shark), hint)
 
 
 static func _on_lender_choice(choice: StringName, shark: CharacterDef) -> void:
@@ -66,7 +77,7 @@ static func _on_lender_choice(choice: StringName, shark: CharacterDef) -> void:
 	if choice == REPAY:
 		GameOverlay.open_loan(LoanSheet.Mode.REPAY)
 	elif choice == BORROW:
-		GameOverlay.open_loan(LoanSheet.Mode.BORROW)
+		GameOverlay.open_loan(LoanSheet.Mode.REPAY if Loan.amount_due(GameState.run) > 0 else LoanSheet.Mode.BORROW)
 
 
 static func _on_buy_out_choice(choice: StringName, shark: CharacterDef) -> void:
@@ -77,7 +88,19 @@ static func _on_buy_out_choice(choice: StringName, shark: CharacterDef) -> void:
 		GameOverlay.say("Come back with the money.", TripTalk.continue_only(), TripTalk.end)
 		return
 	AudioService.play_sfx(Sfx.FAVOUR_TAKEN)
-	GameOverlay.talk(shark, "Pleasure doing business, boss. The book is yours.", TripTalk.continue_only(), func(_choice: StringName) -> void: _talk_lending(shark))
+	var ramos_pages := Ramos.join_player(GameState.run)
+	GameState.save_run()
+	var then := func(_choice: StringName) -> void: _show_pages(ramos_pages, 0, _talk_lending.bind(shark))
+	GameOverlay.talk(shark, "Pleasure doing business, boss. The book is yours. Ramos comes with it.", TripTalk.continue_only(), then)
+
+
+static func _show_pages(pages: Array[Dictionary], index: int, then: Callable) -> void:
+	if index >= pages.size():
+		then.call()
+		return
+	var page := pages[index]
+	var speaker := Content.speaker(StringName(str(page.speaker)))
+	GameOverlay.talk(speaker, str(page.line), TripTalk.continue_only(), func(_choice: StringName) -> void: _show_pages(pages, index + 1, then))
 
 
 static func _talk_lending(shark: CharacterDef) -> void:
@@ -110,6 +133,32 @@ static func _on_lending_choice(choice: StringName, shark: CharacterDef) -> void:
 			GameOverlay.say("You don't have that much on you.", TripTalk.continue_only(), TripTalk.end)
 		_:
 			GameOverlay.say("That one already found the money somewhere else.", TripTalk.continue_only(), TripTalk.end)
+
+
+static func _talk_to_police(officer: CharacterDef) -> void:
+	var run := GameState.run
+	var line := officer.line
+	if officer.id == Moreau.ID:
+		line = Moreau.line(run)
+		GameState.save_run()
+	elif officer.id == RAMOS:
+		line = _ramos_line(run, officer)
+	var choices: Array[DialogueChoice] = [_leave()]
+	GameOverlay.talk(officer, line, choices, _end, officer.blurb)
+
+
+## Ramos works for whoever holds the Shark's book.
+static func _ramos_line(run: RunState, ramos: CharacterDef) -> String:
+	match Ramos.book(run):
+		Ramos.Book.NOBODY:
+			return "Nobody holds the book now, so anybody can pay me. Envelope first, amigo."
+		Ramos.Book.PLAYER:
+			if Ramos.is_lying_low(run):
+				return "Not here. They're still counting who knew. I'll call you when it's quiet."
+			return "Your book, your envelope. Brandt sneezes, you hear it first, amigo."
+		Ramos.Book.VEX:
+			return "New boss, same envelope. Nothing personal, amigo."
+	return ramos.line
 
 
 static func _talk_to_informant(informant: CharacterDef) -> void:
@@ -185,14 +234,23 @@ static func talk_about_turf() -> void:
 		share, district.display_name if district != null else "town", gang.display_name if gang != null else "Nobody",
 		Turf.held_count(run), Turf.contested().size(),
 	]
+	if Corners.has_corners(run.district_id):
+		line = "I hold %d of the %d corners in %s. %s has the rest." % [
+			Corners.held_count(run, run.district_id), Corners.of(run.district_id).size(), district.display_name,
+			gang.display_name if gang != null else "Nobody",
+		]
 	_talk_turf(Content.player(run.player_id), line)
 
 
 static func _talk_turf(speaker: SpeakerDef, line: String) -> void:
 	var run := GameState.run
 	var choices: Array[DialogueChoice] = []
-	var hint := "Selling here gains you ground. Held districts pay from %s each morning, more as you level them, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
-	if not Gangs.is_gone(run, Gangs.owner(run.district_id)):
+	var hint := "Selling here gains you ground. Held districts pay %s each morning, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
+	if Corners.has_corners(run.district_id):
+		hint = "Corners are bought or taken by force, never sold into. Tap a corner on the street to see who holds it."
+	elif not Campaign.is_act_two(run):
+		hint = "The turf war out here waits until Old Market is yours."
+	elif not Gangs.is_gone(run, Gangs.owner(run.district_id)):
 		var cost := Turf.muscle_cost(run)
 		choices.append(DialogueChoice.new(MUSCLE, "Send muscle %s" % Format.money(cost), Turf.can_send_muscle(run)))
 		hint = "Muscle adds %d%% here and %d heat. Once per phase. %s" % [Turf.MUSCLE_GAIN, Turf.MUSCLE_HEAT, hint]

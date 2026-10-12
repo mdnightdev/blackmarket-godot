@@ -8,6 +8,7 @@ signal enter_requested
 @onready var _name_label: Label = %NameLabel
 @onready var _tagline_label: Label = %TaglineLabel
 @onready var _description_label: Label = %DescriptionLabel
+@onready var _intel_label: Label = %IntelLabel
 @onready var _fare_value: Label = %FareValue
 @onready var _travel_button: Button = %TravelButton
 
@@ -34,6 +35,9 @@ func show_district(district: DistrictDef, travel_check: Travel.Check) -> void:
 	_name_label.text = district.display_name
 	_tagline_label.text = district.tagline
 	_description_label.text = district.description
+	var gang := Edges.boss_next_phase(GameState.run, district.id)
+	_intel_label.text = "Word is %s will be here next phase." % Content.character(gang.boss).display_name if gang != null else ""
+	_intel_label.visible = gang != null
 	_fare_value.text = Format.money(Travel.fare(GameState.run, district))
 	_is_here = travel_check == Travel.Check.ALREADY_HERE
 	_walking = travel_check == Travel.Check.NOT_ENOUGH_CASH

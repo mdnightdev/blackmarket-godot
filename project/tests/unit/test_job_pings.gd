@@ -5,6 +5,7 @@ var _run: RunState
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 	_run.price_seed = 2468
 	_run.tutorial_completed = true
 	_run.cash = 5000

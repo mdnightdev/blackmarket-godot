@@ -25,6 +25,12 @@ var screen_shake: bool = true:
 		screen_shake = value
 		changed.emit()
 
+## Job offers stop ringing. They still wait in the Jobs list.
+var do_not_disturb: bool = false:
+	set(value):
+		do_not_disturb = value
+		changed.emit()
+
 
 func _ready() -> void:
 	load_from_disk()
@@ -38,6 +44,7 @@ func load_from_disk() -> void:
 	sfx_volume = float(config.get_value(SECTION, "sfx_volume", sfx_volume))
 	vibration = bool(config.get_value(SECTION, "vibration", vibration))
 	screen_shake = bool(config.get_value(SECTION, "screen_shake", screen_shake))
+	do_not_disturb = bool(config.get_value(SECTION, "do_not_disturb", do_not_disturb))
 
 
 func save() -> void:
@@ -46,6 +53,7 @@ func save() -> void:
 	config.set_value(SECTION, "sfx_volume", sfx_volume)
 	config.set_value(SECTION, "vibration", vibration)
 	config.set_value(SECTION, "screen_shake", screen_shake)
+	config.set_value(SECTION, "do_not_disturb", do_not_disturb)
 	var error := config.save(FILE_PATH)
 	if error != OK:
 		push_error("Settings save failed: %s" % error_string(error))

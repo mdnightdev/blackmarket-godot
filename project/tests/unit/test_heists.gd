@@ -12,6 +12,7 @@ var _van: HeistDef
 func before_each() -> void:
 	_run = RunState.new()
 	_run.career = true
+	Story.mark(_run, War.VEX_FELL)
 	_run.cash = 100_000
 	_run.stash_level = Safehouse.UPGRADES.size()
 	_run.district_id = &"old_market"
@@ -60,9 +61,9 @@ func test_ready_heist_passes_the_check() -> void:
 	assert_eq(Heists.days_until_ready(_run, _van), 0)
 
 
-func test_heists_need_a_career() -> void:
+func test_heists_wait_for_act_two() -> void:
 	_hire_for(_van)
-	_run.career = false
+	_run.story_flags.clear()
 	assert_eq(Heists.check(_run, _van), Heists.Result.NOT_CAREER)
 
 
@@ -125,14 +126,28 @@ func test_success_chance_is_capped() -> void:
 	assert_almost_eq(Heists.success_chance(_run, easy), Heists.MAX_CHANCE, 0.0001)
 
 
+func test_payout_grows_with_rank_above_the_heist() -> void:
+	_set_rank(_van.min_rank)
+	assert_eq(Heists.payout(_run, _van), _van.payout)
+	_set_rank(_van.min_rank + 2)
+	assert_eq(Heists.payout(_run, _van), roundi(_van.payout * (1.0 + 2 * PayScale.RANK_GROWTH)))
+
+
+func test_heists_pay_far_more_than_a_crate_to_the_same_tier() -> void:
+	for heist in Content.heists():
+		var band: Array = PayScale.BANDS[Content.district(heist.district_id).tier]
+		assert_gt(heist.payout, roundi(band[1] * Smuggling.RISK_PREMIUM * 2), String(heist.id))
+
+
 func test_success_pays_out() -> void:
 	_hire_for(_van)
 	var cash_before := _run.cash
 	var cred_before := _run.street_cred
+	var take := Heists.payout(_run, _van)
 	var outcome := Heists.attempt(_run, _van, 0.0, 0.0)
-	assert_eq(outcome, { "success": true, "payout": _van.payout, "lost_role": "" })
-	assert_eq(_run.cash, cash_before + _van.payout)
-	assert_eq(_run.profit, _van.payout)
+	assert_eq(outcome, { "success": true, "payout": take, "lost_role": "" })
+	assert_eq(_run.cash, cash_before + take)
+	assert_eq(_run.profit, take)
 	assert_eq(_run.heat, _van.heat)
 	assert_eq(_run.street_cred, cred_before + _van.cred)
 	assert_false(Encounters.has_pending(_run))

@@ -6,6 +6,7 @@ enum Mode { REPAY, BORROW }
 var _mode := Mode.REPAY
 var _amount := 0
 
+@onready var _section_label: Label = %Section
 @onready var _debt_value: Label = %DebtValue
 @onready var _interest_caption: Label = %InterestCaption
 @onready var _interest_value: Label = %InterestValue
@@ -13,6 +14,7 @@ var _amount := 0
 @onready var _owed_value: Label = %OwedValue
 @onready var _note_label: Label = %NoteLabel
 @onready var _action_box: Control = %ActionBox
+@onready var _tabs: Control = %Tabs
 @onready var _repay_tab: Button = %RepayTab
 @onready var _borrow_tab: Button = %BorrowTab
 @onready var _amount_label: Label = %AmountLabel
@@ -60,17 +62,21 @@ func _select_mode(mode: Mode) -> void:
 
 func _refresh() -> void:
 	var run := GameState.run
+	_section_label.text = "VEX" if Loan.is_with_vex(run) else "THE SHARK"
 	_debt_value.text = Format.money(run.debt)
 	if run.career:
 		_interest_caption.text = "INTEREST / DAY"
 		_interest_value.text = "+%s" % Format.money(Loan.daily_interest(run))
-	else:
+	elif Loan.is_with_vex(run):
 		_interest_caption.text = "MISSED"
-		_interest_value.text = "%d of %d" % [run.missed_weeks, Loan.MAX_MISSED_WEEKS]
+		_interest_value.text = "%d in a row" % run.missed_weeks
+	else:
+		_interest_caption.text = "TRUST"
+		_interest_value.text = SharkTrust.level_name(run)
 	_due_value.text = "Day %d" % (run.next_due_day - 1)
 	_owed_value.text = Format.money(Loan.amount_due(run))
 	_note_label.text = _note(run)
-	_borrow_tab.visible = run.career
+	_tabs.visible = run.career
 	_action_box.visible = _mode == Mode.REPAY or Loan.can_borrow(run)
 	if _action_box.visible:
 		_refresh_amount()
@@ -78,14 +84,19 @@ func _refresh() -> void:
 
 func _note(run: RunState) -> String:
 	var lines: Array[String] = []
+	var vex := Loan.is_with_vex(run)
 	if run.debt <= 0:
-		lines.append("You owe the shark nothing.")
+		lines.append("You owe %s nothing." % ("Vex" if vex else "the Shark"))
 	elif Loan.amount_due(run) > 0:
-		lines.append("Pay %s by the end of day %d or his men come to collect." % [Format.money(Loan.amount_due(run)), run.next_due_day - 1])
+		var collectors := "her crew comes" if vex else "his men come"
+		lines.append("Pay %s by the end of day %d or %s to collect. A missed week adds %d%% to the debt." % [
+			Format.money(Loan.amount_due(run)), run.next_due_day - 1, collectors, roundi(Loan.MISSED_WEEK_INTEREST * 100),
+		])
 	else:
 		lines.append("This week is covered. The next payment is set on day %d." % (run.next_due_day - 1))
-	if run.debt > 0 and not run.career and run.outcome == RunState.Outcome.ONGOING:
-		lines.append("Miss %d payments in a row and he stops waiting." % Loan.MAX_MISSED_WEEKS)
+	if run.debt > 0 and not run.career and not vex and run.outcome == RunState.Outcome.ONGOING:
+		var streak := " Missed %d in a row so far." % run.missed_weeks if run.missed_weeks > 0 else ""
+		lines.append("Miss %d payments in a row, or lose his trust, and he sells your debt.%s" % [Loan.MAX_MISSED_WEEKS, streak])
 	if _mode == Mode.BORROW and not Loan.can_visit(run):
 		lines.append("Borrow at The Shark in Downtown.")
 	return "\n".join(lines)

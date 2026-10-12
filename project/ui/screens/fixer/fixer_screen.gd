@@ -3,6 +3,7 @@ extends VenueScreen
 const CLEAN_UP: StringName = &"clean_up"
 const RESPEC: StringName = &"respec"
 const RESPEC_ICON: Texture2D = preload("res://assets/icons/hud/rotate-ccw.svg")
+const WEAPONS_ICON: Texture2D = preload("res://assets/items/ghost_pistol.jpg")
 const SOLD_LINES: Array[String] = [
 	"It's yours. Look after it.",
 	"Good choice. No receipts.",
@@ -42,8 +43,11 @@ func _refresh() -> void:
 	_add_clean_up_row()
 	if Skills.points_spent(GameState.run) > 0:
 		_add_respec_row()
-	_add_label("GEAR", &"ListHeading")
 	var run := GameState.run
+	if Armory.unlocked(run):
+		_add_label("WEAPONS", &"ListHeading")
+		_add_weapons_row()
+	_add_label("GEAR", &"ListHeading")
 	for item in Content.items(ItemDef.Kind.EQUIPMENT):
 		var row := _add_row()
 		if Gear.owns(run, item.id):
@@ -51,7 +55,7 @@ func _refresh() -> void:
 		else:
 			var affordable := run.cash >= item.base_price
 			row.display(item, Format.money(item.base_price), Gear.describe(item), "TAP TO BUY" if affordable else "NOT ENOUGH CASH", Palette.TEXT_CREAM if affordable else Palette.TEXT_MUTED)
-		row.item_selected.connect(func(selected: ItemDef) -> void: _trade_sheet.show_trade(TradeSheet.Mode.GEAR, selected, null))
+		row.item_selected.connect(func(selected: ItemDef) -> void: _trade_sheet.show_trade(TradeForm.Mode.GEAR, selected, null))
 
 
 func _add_clean_up_row() -> void:
@@ -67,6 +71,15 @@ func _add_clean_up_row() -> void:
 	var row := _add_row()
 	row.show_entry(Fixer.CLEAN_UP_ICON, "Make the heat go away", Format.money(Fixer.clean_up_cost(run)), caption, detail, Palette.TEXT_CREAM if Fixer.can_clean_up(run) else Palette.TEXT_MUTED)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_clean_up())
+
+
+func _add_weapons_row() -> void:
+	var run := GameState.run
+	var caption := "Blades, handguns and rifles in lots. Each arms one man." if Armory.room(run) == Armory.Room.FRONT else "The back room is open to you."
+	var owned := Armory.total(run)
+	var row := _add_row()
+	row.show_entry(WEAPONS_ICON, "Ask about weapons", "%d owned" % owned if owned > 0 else "", caption, "TAP TO TALK", Palette.TEXT_CREAM)
+	row.item_selected.connect(func(_item: ItemDef) -> void: WeaponsTalk.open(_host))
 
 
 func _add_respec_row() -> void:

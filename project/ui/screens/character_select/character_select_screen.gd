@@ -6,6 +6,7 @@ const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
 @onready var _portrait: TalkingPortrait = %Portrait
 @onready var _name_label: Label = %NameLabel
 @onready var _tagline_label: Label = %TaglineLabel
+@onready var _edge_label: Label = %EdgeLabel
 @onready var _speech: Typewriter = %Speech
 @onready var _pick_list: GridContainer = %PickList
 @onready var _start_button: Button = %StartButton
@@ -43,6 +44,7 @@ func _select(player: PlayerDef) -> void:
 	_portrait.show_speaker(player)
 	_name_label.text = player.display_name
 	_tagline_label.text = player.tagline
+	_edge_label.text = player.edge_text
 	_portrait.set_talking(true)
 	_speech.type_text("\"%s\"" % player.intro_line)
 
@@ -51,6 +53,6 @@ func _start_run() -> void:
 	if _selected == null:
 		return
 	GameState.start_new_run(_selected.id)
-	if Tutorial.should_show(GameState.run):
-		GameOverlay.open_tutorial()
+	if OpeningTalk.should_play(GameState.run):
+		OpeningTalk.play()
 	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)

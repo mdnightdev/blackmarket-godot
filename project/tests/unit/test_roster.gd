@@ -105,11 +105,11 @@ func test_patrols_raise_stop_odds() -> void:
 
 
 func test_rival_presence_alone_does_not_change_prices() -> void:
-	var dealer := Content.dealer_in(&"old_market")
+	var dealer := Content.dealer_in(&"docks")
 	var phones := Content.item(&"burner_phones")
-	var with_rival := _find_stamp(func(at: int) -> bool: return (Gangs.in_district(_run, &"old_market", at) != null))
+	var with_rival := _find_stamp(func(at: int) -> bool: return (Gangs.in_district(_run, &"docks", at) != null))
 	_set_stamp(with_rival)
-	assert_eq(Turf.holder(_run, &"old_market"), Turf.Holder.NOBODY)
+	assert_eq(Turf.holder(_run, &"docks"), Turf.Holder.NOBODY)
 	assert_eq(Market.sell_price(_run, dealer, phones), maxi(1, floori(Market.buy_price(_run, dealer, phones) * Market.SELL_SPREAD)))
 
 

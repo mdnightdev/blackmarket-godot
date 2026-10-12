@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://ui/components/dialogue_panel.gd" id="1_panel"]
 [ext_resource type="Script" path="res://ui/components/talking_portrait.gd" id="2_portrait"]
 [ext_resource type="Script" path="res://ui/components/typewriter.gd" id="3_typewriter"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/chevron-down.svg" id="4_chevron"]
 
 [node name="DialoguePanel" type="Control"]
 layout_mode = 3
@@ -105,13 +106,46 @@ layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"PillLabel"
 
-[node name="Line" type="Label" parent="Margin/Column/Box/Content"]
+[node name="Spacer" type="Control" parent="Margin/Column/Box/Content/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="SkipButton" type="Button" parent="Margin/Column/Box/Content/NameRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+theme_type_variation = &"GhostButton"
+theme_override_font_sizes/font_size = 15
+
+[node name="LineRow" type="HBoxContainer" parent="Margin/Column/Box/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Line" type="Label" parent="Margin/Column/Box/Content/LineRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 21
 autowrap_mode = 3
 script = ExtResource("3_typewriter")
+
+[node name="ContinueMark" type="TextureRect" parent="Margin/Column/Box/Content/LineRow"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0)
+self_modulate = Color(0.8784, 0.5412, 0.5961, 1)
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+texture = ExtResource("4_chevron")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="HintLabel" type="Label" parent="Margin/Column/Box/Content"]
 unique_name_in_owner = true

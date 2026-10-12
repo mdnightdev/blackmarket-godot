@@ -28,6 +28,10 @@ static func last_blocked_stamp(run: RunState, district_id: StringName, stamp: in
 	return day_index * phases + last
 
 
+static func push_risk(run: RunState) -> float:
+	return PUSH_RISK * Edges.push_risk_factor(run)
+
+
 static func blocks(run: RunState, district_id: StringName) -> bool:
 	return last_blocked_stamp(run, district_id, Calendar.stamp(run)) >= 0
 

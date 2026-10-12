@@ -12,3 +12,13 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 tagline = "Moved money across borders for twenty years. Never lost a cent that was not his."
 intro_line = "Money always finds a way across. So do I."
+edge = 5
+edge_text = "Credit: clients who owe him almost always pay."
+origin_story = "Tariq guaranteed an Azure Dragon transfer across the border. Customs seized it halfway. A guarantee is a guarantee, and the Shark collects for the Azure Dragon."
+origin_lines = Array[Dictionary]([{
+"line": "Twenty years, never a cent lost. One customs officer with ambition.",
+"speaker": "player"
+}, {
+"line": "Uncle, you taught me to count. Let me at least drive you.",
+"speaker": "midnight_rabbit"
+}])

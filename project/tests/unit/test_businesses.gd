@@ -14,6 +14,7 @@ func before_each() -> void:
 	_run.price_seed = 4711
 	_run.district_id = &"old_market"
 	_run.career = true
+	Story.mark(_run, War.VEX_FELL)
 	_run.cash = 100000
 	_shop = Content.business(&"corner_shop")
 	_car_wash = Content.business(&"car_wash")
@@ -21,12 +22,18 @@ func before_each() -> void:
 	_watches = Content.item(&"rare_watches")
 	_sims = Content.item(&"burner_sims")
 	_pistol = Content.item(&"ghost_pistol")
-	_hold(&"old_market", 2)
+	_set_rank(_shop.min_rank)
+	_hold(&"old_market")
 
 
-func _hold(district_id: StringName, level: int) -> void:
+func _set_rank(rank_number: int) -> void:
+	_run.street_cred = int(StreetCred.RANKS[rank_number - 1].cred)
+
+
+func _hold(district_id: StringName) -> void:
 	_run.turf[district_id] = 80
-	_run.turf_levels[district_id] = level
+	for corner in Corners.of(district_id):
+		Corners.take(_run, corner.id)
 
 
 func _open(business: BusinessDef, district_id: StringName = &"old_market") -> Dictionary:
@@ -83,8 +90,8 @@ func test_buying_takes_cash_and_adds_an_empty_business() -> void:
 	assert_true(Businesses.in_district(_run, &"docks").is_empty())
 
 
-func test_businesses_need_a_career() -> void:
-	_run.career = false
+func test_businesses_wait_for_act_two() -> void:
+	_run.story_flags.clear()
 	assert_eq(Businesses.buy(_run, _shop, &"old_market"), Businesses.Result.NOT_CAREER)
 	assert_true(_run.businesses.is_empty())
 	assert_eq(_run.cash, 100000)
@@ -94,25 +101,26 @@ func test_unknown_business_is_refused() -> void:
 	assert_eq(Businesses.check_buy(_run, null, &"old_market"), Businesses.Result.UNKNOWN)
 
 
-func test_businesses_need_enough_turf() -> void:
-	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.TURF_TOO_LOW, "district not held")
-	assert_eq(Businesses.check_buy(_run, _nightclub, &"old_market"), Businesses.Result.TURF_TOO_LOW, "nightclub needs a higher level")
-	_run.turf[&"old_market"] = 30
-	assert_eq(Businesses.check_buy(_run, _shop, &"old_market"), Businesses.Result.TURF_TOO_LOW, "hold lost")
+func test_businesses_need_a_held_district_and_the_rank() -> void:
+	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.NOT_HELD, "district not held")
+	assert_eq(Businesses.check_buy(_run, _nightclub, &"old_market"), Businesses.Result.RANK_TOO_LOW, "nightclub needs a higher rank")
+	_hold(&"docks")
+	_run.turf[&"docks"] = 30
+	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.NOT_HELD, "hold lost")
 
 
-func test_turf_level_one_has_no_slots() -> void:
-	_hold(&"docks", 1)
+func test_an_unheld_district_has_no_slots() -> void:
 	assert_eq(Businesses.slots_free(_run, &"docks"), 0)
-	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.TURF_TOO_LOW)
+	_hold(&"docks")
+	assert_eq(Businesses.slots_free(_run, &"docks"), 1)
 
 
-func test_slots_follow_the_turf_level() -> void:
+func test_a_second_slot_opens_with_the_rank() -> void:
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 1)
 	_open(_shop)
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 0)
 	assert_eq(Businesses.buy(_run, _car_wash, &"old_market"), Businesses.Result.NO_SLOT)
-	_hold(&"old_market", 4)
+	_set_rank(Turf.SECOND_BUSINESS_RANK)
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 1)
 	_open(_nightclub)
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 0)
@@ -192,22 +200,24 @@ func test_unloading_respects_bag_space_and_item_slots() -> void:
 
 
 func test_unloading_works_while_closed() -> void:
-	var entry := _open(_shop)
+	_hold(&"docks")
+	var entry := _open(_shop, &"docks")
 	_stock(entry, _watches, 2, 400)
-	_run.turf[&"old_market"] = 30
+	_run.turf[&"docks"] = 30
 	assert_false(Businesses.is_open(_run, entry))
 	assert_eq(Businesses.unload_stock(_run, entry, _watches, 2), Businesses.Result.OK)
 	assert_eq(Inventory.count(_run, _watches.id), 2)
 
 
 func test_open_needs_the_day_and_the_district() -> void:
-	var entry := _open(_shop)
+	_hold(&"docks")
+	var entry := _open(_shop, &"docks")
 	assert_true(Businesses.is_open(_run, entry))
 	entry.closed_until = _run.day + 1
 	assert_false(Businesses.is_open(_run, entry))
 	_run.day += 1
 	assert_true(Businesses.is_open(_run, entry))
-	_run.turf[&"old_market"] = 30
+	_run.turf[&"docks"] = 30
 	assert_false(Businesses.is_open(_run, entry))
 
 
@@ -221,13 +231,14 @@ func test_sale_price_follows_the_resident_dealer() -> void:
 
 func test_sale_price_falls_back_to_base_price_without_a_dealer() -> void:
 	assert_null(Content.dealer_in(&"downtown"))
-	_hold(&"downtown", 2)
+	_hold(&"downtown")
 	var entry := _open(_shop, &"downtown")
 	assert_eq(Businesses.sale_price(_run, entry, _sims), floori(_sims.base_price * Businesses.SALE_FACTOR))
 
 
 func test_luxury_bonus_only_lifts_luxury_goods() -> void:
-	_hold(&"old_market", 4)
+	_set_rank(Turf.SECOND_BUSINESS_RANK)
+	_hold(&"old_market")
 	var shop := _open(_shop)
 	var club := _open(_nightclub)
 	var local := Market.sell_price(_run, Content.dealer_in(&"old_market"), _watches)
@@ -303,14 +314,11 @@ func test_price_paid_is_forgotten_once_nothing_is_left() -> void:
 	assert_eq(_run.cost_basis[_sims.id], 50, "still carried")
 
 
-func test_raid_chance_rises_with_heat_and_falls_with_turf() -> void:
+func test_raid_chance_rises_with_heat_and_falls_on_held_turf() -> void:
 	var entry := _open(_shop)
-	assert_almost_eq(Businesses.raid_chance(_run, entry), Businesses.BASE_RAID_CHANCE - 2 * Businesses.RAID_TURF_REDUCTION, 0.0001)
+	assert_almost_eq(Businesses.raid_chance(_run, entry), Businesses.BASE_RAID_CHANCE - Businesses.RAID_HELD_REDUCTION, 0.0001)
 	_run.heat = 100
-	assert_almost_eq(Businesses.raid_chance(_run, entry), Businesses.BASE_RAID_CHANCE + 100 * Businesses.RAID_PER_HEAT - 2 * Businesses.RAID_TURF_REDUCTION, 0.0001)
-	_run.heat = 0
-	_hold(&"old_market", 5)
-	assert_almost_eq(Businesses.raid_chance(_run, entry), Businesses.MIN_RAID_CHANCE, 0.0001)
+	assert_almost_eq(Businesses.raid_chance(_run, entry), Businesses.BASE_RAID_CHANCE + 100 * Businesses.RAID_PER_HEAT - Businesses.RAID_HELD_REDUCTION, 0.0001)
 
 
 func test_hostile_home_family_doubles_the_raid_chance() -> void:
@@ -377,7 +385,8 @@ func test_missing_rolls_mean_no_raid() -> void:
 
 
 func test_each_roll_belongs_to_its_business() -> void:
-	_hold(&"old_market", 4)
+	_set_rank(Turf.SECOND_BUSINESS_RANK)
+	_hold(&"old_market")
 	var shop := _open(_shop)
 	var wash := _open(_car_wash)
 	_stock(shop, _watches, 2, 400)

@@ -9,6 +9,8 @@ const JAIL_CARD := preload("res://ui/components/jail_card.tscn")
 const OFFER_BANNER := preload("res://ui/components/offer_banner.tscn")
 const QUOTE_SHEET := preload("res://ui/components/quote_sheet.tscn")
 const PROFILE_SHEET := preload("res://ui/components/profile_sheet.tscn")
+const CREW_PICKER := preload("res://ui/components/crew_picker.tscn")
+const BATTLE_SCENE := preload("res://ui/battle/battle_scene.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -20,6 +22,7 @@ const HIT_SHAKE_PIXELS := 12.0
 const SHAKE_DECAY_PER_SECOND := 40.0
 const POLICE_VIBRATE_MS := 150
 const RAID_VIBRATE_MS := 350
+const BAIL_LINE := "Bail's paid. Don't thank me, just stop carrying through Brandt's street."
 
 var _dialogue: DialoguePanel
 var _loan_sheet: LoanSheet
@@ -29,8 +32,12 @@ var _jobs_sheet: JobsSheet
 var _quote_sheet: QuoteSheet
 var _profile_sheet: ProfileSheet
 var _jail_card: JailCard
+var _crew_picker: CrewPicker
 var _banner: OfferBanner
 var _lights: PoliceLights
+var _battle: BattleScene
+var _raid: RaidScene
+var _ambush_alert: AmbushAlert
 var _settled_for := 0.0
 var _shake_pixels := 0.0
 ## Shown one at a time after any pending encounter. Kept in memory only, since missing an order is already saved.
@@ -56,18 +63,20 @@ func _ready() -> void:
 	_quote_sheet = QUOTE_SHEET.instantiate()
 	_profile_sheet = PROFILE_SHEET.instantiate()
 	_jail_card = JAIL_CARD.instantiate()
+	_crew_picker = CREW_PICKER.instantiate()
 	_banner = OFFER_BANNER.instantiate()
 	_lights = PoliceLights.new()
+	add_child(_jail_card)
 	add_child(_inventory_sheet)
 	add_child(_turf_sheet)
 	add_child(_jobs_sheet)
 	add_child(_profile_sheet)
 	add_child(_quote_sheet)
 	add_child(_loan_sheet)
-	add_child(_jail_card)
 	add_child(_banner)
 	add_child(_dialogue)
-	_jail_card.visibility_changed.connect(_close_sheets_when_jailed)
+	add_child(_crew_picker)
+	_jail_card.bail_requested.connect(_post_bail)
 	_banner.opened.connect(_open_offer)
 	_dialogue.add_backdrop_layer(_lights)
 	for sheet in _sheets():
@@ -107,6 +116,8 @@ func _process(delta: float) -> void:
 		_settled_for = 0.0
 		if Encounters.has_pending(GameState.run):
 			_present_encounter(GameState.run.pending_encounter)
+		elif not Tutorial.next_lesson(GameState.run).is_empty():
+			_present_lesson(Tutorial.next_lesson(GameState.run))
 		elif not _missed_orders.is_empty():
 			_present_missed_order(_missed_orders.pop_front())
 		elif not _missed_favours.is_empty():
@@ -161,8 +172,21 @@ func _close_pages_except(keep: BottomSheet) -> void:
 
 
 ## Opens a conversation that is not an encounter. See DialoguePanel.open for the callback contract.
+## Nobody talks business with a player in a cell.
 func talk(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_choice: Callable, hint := "") -> void:
+	if blocked_by_jail():
+		return
 	_dialogue.open(speaker, line, choices, on_choice, hint)
+
+
+## True while the player sits in a cell, so the activity has to wait. Points the player at the jail card.
+func blocked_by_jail() -> bool:
+	if GameState.run == null or not Police.is_jailed(GameState.run):
+		return false
+	for sheet in _sheets():
+		sheet.close()
+	_jail_card.nudge()
+	return true
 
 
 func say(line: String, choices: Array[DialogueChoice], on_choice: Callable, talking := true, hint := "") -> void:
@@ -173,24 +197,33 @@ func end_talk() -> void:
 	_dialogue.close()
 
 
-func open_tutorial() -> void:
-	var run := GameState.run
-	var page := Tutorial.page(run)
-	talk(Content.speaker(Tutorial.SPEAKER), page.line, Tutorial.choices(run), _on_tutorial_choice, page.hint)
+## Asks the player who goes into a fight. on_sent receives the deployment. Back or cancel calls on_cancel.
+func pick_crew(title: String, message: String, send_format: String, cancel_text: String, on_sent: Callable, on_cancel: Callable) -> void:
+	_dialogue.close()
+	_crew_picker.open(title, message, send_format, cancel_text, on_sent, on_cancel)
 
 
-func _on_tutorial_choice(choice: StringName) -> void:
-	var run := GameState.run
-	if choice == Tutorial.SKIP:
-		Tutorial.finish(run)
-	else:
-		Tutorial.advance(run)
-	GameState.save_run()
-	if not Tutorial.should_show(run):
-		end_talk()
-		return
-	var page := Tutorial.page(run)
-	say(page.line, Tutorial.choices(run), _on_tutorial_choice, true, page.hint)
+## Plays a fight that is already decided over the current screen, then calls on_done.
+func play_battle(player_side: BattleSide, enemy_side: BattleSide, result_line: String, battle_seed: int, on_done: Callable) -> void:
+	_dialogue.close()
+	_battle = BATTLE_SCENE.instantiate()
+	add_child(_battle)
+	_battle.finished.connect(func() -> void:
+		_battle.queue_free()
+		_battle = null
+		on_done.call())
+	_battle.play(player_side, enemy_side, result_line, battle_seed)
+
+
+func play_raid(officer: SpeakerDef, result_line: String, on_done: Callable) -> void:
+	_dialogue.close()
+	_raid = RaidScene.new()
+	add_child(_raid)
+	_raid.finished.connect(func() -> void:
+		_raid.queue_free()
+		_raid = null
+		on_done.call())
+	_raid.play(officer, result_line)
 
 
 func is_talking() -> bool:
@@ -198,10 +231,13 @@ func is_talking() -> bool:
 
 
 func handle_back() -> bool:
+	if _battle != null or _raid != null or _ambush_alert != null:
+		return true
+	if _crew_picker.visible:
+		_crew_picker.cancel()
+		return true
 	if _dialogue.visible:
 		return _dialogue.handle_back()
-	if _jail_card.visible:
-		return true
 	if _turf_sheet.visible and _turf_sheet.close_modal():
 		return true
 	if _jobs_sheet.visible and _jobs_sheet.close_modal():
@@ -220,30 +256,47 @@ func _sheets() -> Array[BottomSheet]:
 	return sheets
 
 
-func _close_sheets_when_jailed() -> void:
-	if not _jail_card.visible:
+func _post_bail() -> void:
+	if not GameState.post_bail():
+		_jail_card.nudge()
 		return
-	for sheet in _sheets():
-		sheet.close()
+	AudioService.play_sfx(Sfx.COINS_OUT)
+	var rabbit := Content.speaker(RabbitCells.FRIEND)
+	if rabbit != null:
+		_dialogue.open(rabbit, BAIL_LINE, [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)], func(_id: StringName) -> void: _dialogue.close())
+
+
+## A booked player is walked back to the street, since every other place is closed to them.
+func _leave_for_the_cell() -> void:
+	var screen := get_tree().current_scene
+	if screen != null and screen.scene_file_path != SceneRouter.DISTRICT_SCREEN:
+		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 
 
 ## Offer banners wait behind every card and never stack, so one shows at a time once the cards are done.
 func _can_present() -> bool:
 	if GameState.run == null:
 		return false
-	if not _has_cards() and (_banner.is_showing() or _offers.is_empty()):
+	if not _has_cards() and (_banner.is_showing() or _offers.is_empty() or _offers_held()):
 		return false
 	return _screen_is_free()
+
+
+## Offers stay in the Jobs list without ringing while the player is in a cell or asked not to be disturbed.
+func _offers_held() -> bool:
+	return Settings.do_not_disturb or Police.is_jailed(GameState.run)
 
 
 func _has_cards() -> bool:
 	if Encounters.has_pending(GameState.run) or not _filled_orders.is_empty():
 		return true
+	if not Tutorial.next_lesson(GameState.run).is_empty():
+		return true
 	return not (_missed_orders.is_empty() and _missed_favours.is_empty() and _lost_crates.is_empty() and _notices.is_empty())
 
 
 func _screen_is_free() -> bool:
-	if GameState.run == null or _dialogue.visible or SceneRouter.is_transitioning():
+	if GameState.run == null or _dialogue.visible or _crew_picker.visible or _battle != null or _raid != null or _ambush_alert != null or SceneRouter.is_transitioning():
 		return false
 	if _sheets().any(func(sheet: BottomSheet) -> bool: return sheet.visible):
 		return false
@@ -263,7 +316,7 @@ func _show_next_offer() -> void:
 		var errand := Errands.find_offer(run, offer_id)
 		var sender := Content.character(StringName(str(errand.get("sender", Errands.SENDER))))
 		if not errand.is_empty() and sender != null:
-			_banner.show_offer(offer_id, sender.portrait, sender.display_name, Errands.describe(errand), Format.money(int(errand.pay)))
+			_banner.show_offer(offer_id, sender.portrait, sender.display_name, Errands.describe(errand), Errands.pay_label(errand))
 			return
 		var order := Customers.find_offer(run, offer_id)
 		if not order.is_empty():
@@ -309,11 +362,54 @@ func _present_encounter(encounter: Dictionary) -> void:
 		speaker = Content.player(GameState.run.player_id)
 	var choices: Array[DialogueChoice] = []
 	for choice in Encounters.choices(GameState.run, encounter):
-		choices.append(DialogueChoice.new(choice.id, choice.label, choice.enabled))
+		var plain := choice.id == Encounters.CONTINUE
+		choices.append(DialogueChoice.new(choice.id, choice.label, choice.enabled, plain, plain))
 	var type := str(encounter.get("type", ""))
-	var backdrop := RAID_BACKDROP if type == Encounters.RAID else null
-	_dialogue.open(speaker, str(encounter.get("body", "")), choices, _resolve_encounter, "", backdrop)
-	_raise_alarm(type)
+	if type == VexAmbush.TYPE:
+		_sound_ambush(encounter)
+		return
+	var open_card := func() -> void:
+		_dialogue.open(speaker, str(encounter.get("body", "")), choices, _resolve_encounter, "", RAID_BACKDROP if type == Encounters.RAID else null)
+		_raise_alarm(type)
+	if type == Encounters.RAID:
+		play_raid(speaker, "EVIDENCE BAGGED", open_card)
+	else:
+		open_card.call()
+
+
+func _sound_ambush(encounter: Dictionary) -> void:
+	_ambush_alert = AmbushAlert.new()
+	add_child(_ambush_alert)
+	_ambush_alert.show_ambush(encounter)
+	_shake(RAID_SHAKE_PIXELS, RAID_VIBRATE_MS)
+	_ambush_alert.decided.connect(func(choice: StringName) -> void:
+		_ambush_alert.queue_free()
+		_ambush_alert = null
+		AmbushTalk.answer(choice))
+
+
+func _present_lesson(lesson: String, page := 0) -> void:
+	var lines := Tutorial.lines(lesson)
+	var last := page >= lines.size() - 1
+	var hint := Tutorial.hint(lesson) if last else ""
+	var on_choice := _on_lesson_choice.bind(lesson, page)
+	if page == 0:
+		talk(Content.speaker(Tutorial.SPEAKER), str(lines[page]), Tutorial.choices(last), on_choice, hint)
+	else:
+		say(str(lines[page]), Tutorial.choices(last), on_choice, true, hint)
+
+
+func _on_lesson_choice(choice: StringName, lesson: String, page: int) -> void:
+	var run := GameState.run
+	if choice == Tutorial.SKIP:
+		Tutorial.switch_off(run)
+	elif page < Tutorial.lines(lesson).size() - 1:
+		_present_lesson(lesson, page + 1)
+		return
+	else:
+		Tutorial.finish_lesson(run, lesson)
+	GameState.save_run()
+	end_talk()
 
 
 func _present_missed_order(order: Dictionary) -> void:
@@ -348,8 +444,8 @@ func _present_lost_crate(crate: Dictionary) -> void:
 		return
 	var destination := Smuggling.destination(crate)
 	var place := destination.display_name if destination != null else "the drop"
-	var line := "My crate never reached %s. I do not pay for late, and I do not forget." % place
-	var hint := "Crate lost. Voronin has no work for you for the rest of the day."
+	var line := VoroninTalk.LOST_CRATE_LINE
+	var hint := "Crate never reached %s. No work from Voronin for the rest of the day, and his pay bonus for a streak starts over." % place
 	var choices: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
 	_dialogue.open(voronin, line, choices, func(_id: StringName) -> void: _dialogue.close(), hint)
 	AudioService.play_sfx(Sfx.HAGGLE_FAIL)
@@ -357,8 +453,10 @@ func _present_lost_crate(crate: Dictionary) -> void:
 
 func _present_notice(notice: Dictionary) -> void:
 	var choices: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
-	var player := Content.player(GameState.run.player_id)
-	_dialogue.open(player, str(notice.get("line", "")), choices, func(_id: StringName) -> void: _dialogue.close(), str(notice.get("hint", "")))
+	var speaker: SpeakerDef = Content.speaker(StringName(str(notice.get("speaker", ""))))
+	if speaker == null:
+		speaker = Content.player(GameState.run.player_id)
+	_dialogue.open(speaker, str(notice.get("line", "")), choices, func(_id: StringName) -> void: _dialogue.close(), str(notice.get("hint", "")))
 	AudioService.play_sfx(Sfx.EVENT)
 
 
@@ -373,7 +471,7 @@ func _raise_alarm(type: String) -> void:
 			AudioService.start_siren()
 			AudioService.play_sfx(Sfx.RAID_HIT)
 			_shake(RAID_SHAKE_PIXELS, RAID_VIBRATE_MS)
-		Encounters.ENFORCERS:
+		Encounters.ENFORCERS, DebtSale.VEX_VISIT:
 			AudioService.play_sfx(Sfx.CAUGHT)
 			_shake(HIT_SHAKE_PIXELS, POLICE_VIBRATE_MS)
 		Gangs.GATE, Gangs.HUNT, Ambush.TYPE:
@@ -397,14 +495,25 @@ func _resolve_encounter(choice: StringName) -> void:
 	var run := GameState.run
 	var cash_before := run.cash
 	var bag_before := Inventory.used(run)
+	var raided := str(run.pending_encounter.get("type", "")) == Ramos.TIP
 	var outcome := GameState.resolve_encounter(choice)
 	_stand_down()
 	if outcome.is_empty():
 		_dialogue.close()
 		return
-	_play_outcome(choice, run.cash < cash_before or Inventory.used(run) < bag_before)
 	var next: Array[DialogueChoice] = [DialogueChoice.new(Encounters.CONTINUE, "Continue", true, true)]
-	_dialogue.say(outcome, next, func(_id: StringName) -> void: _dialogue.close(), false)
+	if raided:
+		var brandt := Content.speaker(Police.BRANDT)
+		var found := Inventory.used(run) < bag_before
+		play_raid(brandt, "EVIDENCE BAGGED" if found else "NOTHING FOUND", func() -> void:
+			_dialogue.open(Content.player(run.player_id), outcome, next, func(_id: StringName) -> void: _dialogue.close()))
+		return
+	_play_outcome(choice, run.cash < cash_before or Inventory.used(run) < bag_before)
+	var jailed := Police.is_jailed(run)
+	_dialogue.say(outcome, next, func(_id: StringName) -> void:
+		_dialogue.close()
+		if jailed:
+			_leave_for_the_cell(), false)
 
 
 func _play_outcome(choice: StringName, lost_something: bool) -> void:

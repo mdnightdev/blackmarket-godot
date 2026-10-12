@@ -45,10 +45,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if run == null or not clock_active:
 		return
+	if Police.release_if_served(run):
+		_commit(false)
 	if Encounters.has_pending(run) or Campaign.is_over(run):
 		return
-	if Police.serve_time(run, delta):
-		_commit(false)
 	run.phase_seconds_left -= delta
 	if run.phase_seconds_left <= 0.0:
 		advance_phase()
@@ -87,6 +87,12 @@ func load_saved_run() -> bool:
 	return true
 
 
+## The Shark's terms are over, so Lexie's lessons can start.
+func finish_opening() -> void:
+	run.opening_done = true
+	_commit(false)
+
+
 func current_district() -> DistrictDef:
 	return Content.district(run.district_id)
 
@@ -121,7 +127,7 @@ func travel_to(destination: DistrictDef, walking := false) -> Travel.Check:
 
 ## Drives a crate through a roadblock. Sometimes the police wave the player over on arrival.
 func push_through_roadblock(destination: DistrictDef) -> Travel.Check:
-	var stopped := _rng.randf() < Roadblocks.PUSH_RISK
+	var stopped := _rng.randf() < Roadblocks.push_risk(run)
 	var result := travel_to(destination)
 	if result == Travel.Check.OK and stopped and Smuggling.is_carrying(run) and not Encounters.has_pending(run):
 		run.pending_encounter = Encounters.police_stop(run)
@@ -140,11 +146,17 @@ func wait_out_roadblock(district_id: StringName) -> bool:
 
 
 func buy(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
-	return _commit_trade(Trade.buy(run, item, quantity, unit_price), item, quantity)
+	var result := Trade.buy(run, item, quantity, unit_price)
+	if result == Trade.Result.OK:
+		Tutorial.note(run, Tutorial.FIRST_BUY)
+	return _commit_trade(result)
 
 
 func sell(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
-	var result := _commit_trade(Trade.sell(run, item, quantity, unit_price), item, quantity)
+	var sold := Trade.sell(run, item, quantity, unit_price)
+	if sold == Trade.Result.OK:
+		Tutorial.note(run, Tutorial.FIRST_SALE)
+	var result := _commit_trade(sold)
 	if result == Trade.Result.OK:
 		_report_tasks(DailyTasks.record_sale(run, run.district_id, quantity * unit_price))
 	return result
@@ -162,10 +174,18 @@ func resolve_encounter(choice: StringName) -> String:
 	return outcome
 
 
+func post_bail() -> bool:
+	if not Police.post_bail(run):
+		return false
+	_commit(false)
+	return true
+
+
 func repay_debt(amount: int) -> bool:
 	if not Loan.repay(run, amount):
 		return false
 	Campaign.start_career_if_cleared(run)
+	SharkTrust.check_promise(run)
 	_commit(false)
 	return true
 
@@ -242,6 +262,72 @@ func clean_up_heat() -> int:
 	return removed
 
 
+func buy_mama_lin_corner() -> Corners.Result:
+	var result := Corners.buy_mama_lin(run)
+	if result == Corners.Result.OK:
+		_commit(false)
+	return result
+
+
+func expand_outfit() -> Army.Result:
+	var result := Army.expand(run)
+	if result == Army.Result.OK:
+		_commit(false)
+	return result
+
+
+## Returns the slots the tier ended up with.
+func set_army_slots(tier: Army.Tier, amount: int) -> int:
+	var granted := Army.set_slots(run, tier, amount)
+	_commit(false)
+	return granted
+
+
+func upgrade_hospital() -> Hospital.Result:
+	var result := Hospital.upgrade(run)
+	if result == Hospital.Result.OK:
+		_commit(false)
+	return result
+
+
+func hire_rabbit_unit() -> bool:
+	if not War.hire_unit(run):
+		return false
+	_commit(false)
+	return true
+
+
+## The fight takes the rest of the phase. Returns the result, empty when the attack could not happen.
+func attack_corner(corner_id: StringName, deployment: Dictionary) -> Dictionary:
+	var result := War.attack(run, corner_id, deployment, _rng.randf(), _rng.randf())
+	if result.is_empty():
+		return result
+	Encounters.check_raid(run)
+	if Encounters.has_pending(run):
+		_commit(false)
+	else:
+		advance_phase()
+	return result
+
+
+## Answers Vex's ambush with the men sent. Returns the fight's result, empty when no ambush is waiting.
+func defend_ambush(deployment: Dictionary, delegated: bool) -> Dictionary:
+	var encounter := run.pending_encounter
+	if str(encounter.get("type", "")) != VexAmbush.TYPE:
+		return {}
+	run.pending_encounter = {}
+	var result := VexAmbush.defend(run, encounter, deployment, delegated, _rng.randf(), _rng.randf())
+	_commit(false)
+	return result
+
+
+func buy_weapons(lot_index: int) -> Armory.Result:
+	var result := Armory.buy(run, lot_index)
+	if result == Armory.Result.OK:
+		_commit(false)
+	return result
+
+
 ## Returns the dealers whose prices were recorded, empty when the player cannot pay.
 func buy_price_hack(district_id: StringName) -> Array[DealerDef]:
 	var dealers := Hacker.hack(run, district_id)
@@ -266,11 +352,8 @@ func accept_order(offer: Dictionary) -> Orders.Result:
 
 
 func deliver_order(order: Dictionary) -> bool:
-	var item := Content.item(StringName(order.item))
 	if not Orders.deliver(run, order):
 		return false
-	Heat.add(run, Heat.for_trade(run, item, int(order.quantity)))
-	Encounters.check_raid(run)
 	var finished := DailyTasks.record_delivery(run)
 	_commit(false)
 	_report_tasks(finished)
@@ -301,11 +384,8 @@ func accept_favour(offer: Dictionary) -> Favours.Result:
 
 
 func deliver_favour(favour: Dictionary) -> bool:
-	var item := Content.item(StringName(favour.item))
 	if not Favours.deliver(run, favour):
 		return false
-	Heat.add(run, Heat.for_trade(run, item, int(favour.quantity)))
-	Encounters.check_raid(run)
 	var finished := DailyTasks.record_delivery(run)
 	_commit(false)
 	_report_tasks(finished)
@@ -385,12 +465,9 @@ func agree_meeting(order_id: String, spot: StringName) -> bool:
 
 ## Hands a bar order over at the agreed meeting spot. Returns the cash taken, 0 when there is no meeting here.
 func meet_order(order: Dictionary) -> int:
-	var item := Content.item(StringName(order.item))
 	var paid := Orders.meet(run, order)
 	if paid <= 0:
 		return 0
-	Heat.add(run, Heat.for_trade(run, item, int(order.quantity)))
-	Encounters.check_raid(run)
 	var finished := DailyTasks.record_delivery(run)
 	_commit(false)
 	_report_tasks(finished)
@@ -433,7 +510,6 @@ func answer_haggle(id: String, accept: bool) -> Dictionary:
 func _finish_handover(result: Dictionary) -> Dictionary:
 	if result.is_empty():
 		return result
-	Encounters.check_raid(run)
 	_commit(false)
 	var finished: Array[Dictionary] = []
 	finished.assign(result.get("tasks", []))
@@ -500,13 +576,6 @@ func collect_winnings(amount: int, stake: int) -> void:
 		finished = DailyTasks.record_casino_win(run)
 	_commit(false)
 	_report_tasks(finished)
-
-
-func level_up_turf(district_id: StringName) -> Turf.LevelResult:
-	var result := Turf.level_up(run, district_id)
-	if result == Turf.LevelResult.OK:
-		_commit(false)
-	return result
 
 
 func learn_skill(skill_id: StringName) -> Skills.Result:
@@ -612,12 +681,9 @@ func save_run() -> void:
 		push_error("Run save failed: %s" % error_string(error))
 
 
-func _commit_trade(result: Trade.Result, goods: ItemDef = null, quantity := 0) -> Trade.Result:
+func _commit_trade(result: Trade.Result) -> Trade.Result:
 	if result != Trade.Result.OK:
 		return result
-	if goods != null:
-		Heat.add(run, Heat.for_trade(run, goods, quantity))
-		Encounters.check_raid(run)
 	_commit(false)
 	return result
 
@@ -693,6 +759,7 @@ func _start_morning() -> Array[Dictionary]:
 		else:
 			notices.append({ "line": "%s never paid the %s invoice. That money is gone." % [invoice.client, amount], "hint": "Higher street cred makes buyers less likely to skip out." })
 	notices.append_array(Lending.settle(run))
+	notices.append_array(Gym.morning(run))
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),
@@ -760,6 +827,7 @@ func _commit(new_day_started: bool) -> void:
 		has_unseen_new_day = true
 	Journal.record_finished(run, _active_jobs)
 	_active_jobs = Jobs.deadlines(run)
+	Tutorial.observe(run)
 	save_run()
 	run_changed.emit()
 	if Campaign.is_over(run):

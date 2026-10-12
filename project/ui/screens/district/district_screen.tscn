@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/district/district_screen.gd" id="1_screen"]
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" path="res://ui/components/fab_button.tscn" id="10_fab"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/map.svg" id="11_map_icon"]
 [ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="12_confirm"]
+[ext_resource type="Script" path="res://ui/components/corner_map.gd" id="13_corner_map"]
+
 [node name="DistrictScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -48,6 +50,18 @@ unique_name_in_owner = true
 
 [node name="Vignette" parent="." instance=ExtResource("2_vignette")]
 layout_mode = 1
+
+[node name="CornerMap" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("13_corner_map")
 
 [node name="Margin" type="MarginContainer" parent="."]
 unique_name_in_owner = true

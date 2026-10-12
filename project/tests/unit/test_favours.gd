@@ -6,6 +6,7 @@ var _family: FamilyDef
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 	_run.price_seed = 777
 	_run.cash = 20000
 	_family = Content.family(&"red_lotus")
@@ -29,6 +30,13 @@ func test_board_is_stable_for_a_day() -> void:
 	for offer in board:
 		assert_eq(offer.family, "red_lotus")
 		assert_true(String(offer.id).begins_with("red_lotus:0:"))
+
+
+func test_a_board_never_posts_two_tributes() -> void:
+	for day in 60:
+		_run.day = day + 1
+		var tributes := Favours.board(_run, _family).filter(func(offer: Dictionary) -> bool: return int(offer.kind) == Favours.Kind.TRIBUTE)
+		assert_lt(tributes.size(), 2, "Day %d posted two tributes" % _run.day)
 
 
 func test_accepting_a_delivery_stores_it_once() -> void:

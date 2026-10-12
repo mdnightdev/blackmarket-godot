@@ -13,6 +13,8 @@ const CRATE := "crate"
 const SOURCES: Array[String] = [ORDER, FAVOUR, CRATE]
 
 const POST_CHANCE := 0.45
+## In Act 1 the phone rings less, and only with the best paying job on offer.
+const ACT_ONE_POST_CHANCE := 0.25
 const MAX_OPEN := 2
 ## Phases a ping can be answered in, counting the one it arrived in.
 const OFFER_PHASES := 2
@@ -47,12 +49,13 @@ static func post(run: RunState) -> Array[Dictionary]:
 	if Campaign.is_over(run) or not run.tutorial_completed or run.job_pings.size() >= MAX_OPEN:
 		return posted
 	var rng := Odds.rng_for(run, &"job_ping")
-	if rng.randf() >= POST_CHANCE:
+	var act_two := Campaign.is_act_two(run)
+	if rng.randf() >= (POST_CHANCE if act_two else ACT_ONE_POST_CHANCE):
 		return posted
 	var choices := candidates(run)
 	if choices.is_empty():
 		return posted
-	var pick: Dictionary = choices[rng.randi_range(0, choices.size() - 1)]
+	var pick: Dictionary = choices[rng.randi_range(0, choices.size() - 1)] if act_two else _best_paying(choices)
 	var ping := {
 		"id": str(pick.offer.id),
 		"source": str(pick.source),
@@ -159,6 +162,10 @@ static func sender(ping: Dictionary) -> SpeakerDef:
 	return Content.character(docks.host) if docks != null else null
 
 
+static func phases_left(run: RunState, ping: Dictionary) -> int:
+	return maxi(0, int(ping.get("expires_stamp", -1)) - Calendar.stamp(run) + 1)
+
+
 static func total_pay(ping: Dictionary) -> int:
 	var offer: Dictionary = ping.offer
 	if str(ping.source) == CRATE:
@@ -258,6 +265,14 @@ static func _raise_pay(offer: Dictionary, is_crate: bool, factor: float) -> void
 		offer.pay = roundi(int(offer.pay) * factor / Smuggling.PAY_ROUNDING) * Smuggling.PAY_ROUNDING
 	else:
 		offer.price = maxi(1, roundi(int(offer.price) * factor))
+
+
+static func _best_paying(choices: Array[Dictionary]) -> Dictionary:
+	var best := choices[0]
+	for choice in choices:
+		if total_pay(choice) > total_pay(best):
+			best = choice
+	return best
 
 
 static func _reachable_bars(run: RunState) -> Array[StringName]:

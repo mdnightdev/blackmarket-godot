@@ -7,6 +7,7 @@ var _papers: ItemDef
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 	_phones = Content.item(&"burner_phones")
 	_papers = Content.item(&"forged_papers")
 
@@ -45,7 +46,7 @@ func test_bribe_holds_for_the_whole_phase() -> void:
 func test_a_cornered_player_cannot_run_and_pays_more() -> void:
 	Inventory.add_units(_run, _phones.id, 200)
 	var calm := Encounters.police_stop(_run)
-	var cornered := Encounters.police_stop(_run, true)
+	var cornered := Encounters.police_talk(calm, true)
 	assert_eq(int(cornered.bribe), roundi(int(calm.bribe) * Police.CORNERED_BRIBE_FACTOR))
 	var ids := Encounters.choices(_run, cornered).map(func(choice: Encounters.Choice) -> StringName: return choice.id)
 	assert_false(ids.has(Encounters.RUN))
@@ -101,6 +102,7 @@ func test_no_stop_right_after_a_stop() -> void:
 
 
 func test_held_turf_sees_fewer_stops() -> void:
+	_run.district_id = &"docks"
 	Inventory.add_units(_run, _phones.id, 5)
 	_run.heat = 0
 	var contested := Police.stop_chance(_run)

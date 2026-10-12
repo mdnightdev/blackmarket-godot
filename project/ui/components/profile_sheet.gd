@@ -1,7 +1,7 @@
 class_name ProfileSheet
 extends BottomSheet
 
-const HEAT_HIGH := 70
+const HEAT_HIGH := Heat.WATCHED
 
 @onready var _margin: MarginContainer = %Margin
 @onready var _portrait: TextureRect = %Portrait
@@ -63,12 +63,12 @@ func _refresh() -> void:
 	if run.stashed_cash > 0:
 		_add_stat("In the stash", Format.money(run.stashed_cash))
 	if run.debt > 0:
-		_add_stat("Owed to the Shark", Format.money(run.debt))
+		_add_stat("Owed to Vex" if Loan.is_with_vex(run) else "Owed to the Shark", Format.money(run.debt))
 	_add_stat("Net worth", Format.money(Campaign.net_worth(run)))
 	_add_stat("Districts held", "%d" % Turf.held_count(run))
 
 	_heat_bar.value = run.heat
-	_heat_value.text = "%d / %d" % [run.heat, Heat.MAX]
+	_heat_value.text = "%s  %d / %d" % [Heat.level_name(run).to_upper(), run.heat, Heat.MAX]
 	_heat_fill.bg_color = Palette.RISK_HIGH if run.heat >= HEAT_HIGH else Palette.PEACH
 
 	var floor_cred := int(StreetCred.RANKS[rank - 1].cred)

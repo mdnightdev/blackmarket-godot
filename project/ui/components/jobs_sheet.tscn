@@ -57,10 +57,20 @@ theme_override_constants/separation = 12
 [node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="Sheet/Page/Margin/Top"]
+[node name="TitleRow" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2
+
+[node name="Title" type="Label" parent="Sheet/Page/Margin/Top/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_type_variation = &"HeaderLabel"
 text = "Jobs"
+
+[node name="DoNotDisturbToggle" type="CheckButton" parent="Sheet/Page/Margin/Top/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+text = "Do not disturb"
 
 [node name="Tabs" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2

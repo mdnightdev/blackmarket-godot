@@ -4,6 +4,7 @@ extends Control
 @onready var _sfx_slider: HSlider = %SfxSlider
 @onready var _vibration_toggle: CheckButton = %VibrationToggle
 @onready var _shake_toggle: CheckButton = %ShakeToggle
+@onready var _do_not_disturb_toggle: CheckButton = %DoNotDisturbToggle
 @onready var _version_label: Label = %VersionLabel
 
 
@@ -15,11 +16,13 @@ func _ready() -> void:
 	_sfx_slider.value = Settings.sfx_volume
 	_vibration_toggle.button_pressed = Settings.vibration
 	_shake_toggle.button_pressed = Settings.screen_shake
+	_do_not_disturb_toggle.button_pressed = Settings.do_not_disturb
 
 	_music_slider.value_changed.connect(func(value: float) -> void: Settings.music_volume = value)
 	_sfx_slider.value_changed.connect(func(value: float) -> void: Settings.sfx_volume = value)
 	_vibration_toggle.toggled.connect(func(enabled: bool) -> void: Settings.vibration = enabled)
 	_shake_toggle.toggled.connect(func(enabled: bool) -> void: Settings.screen_shake = enabled)
+	_do_not_disturb_toggle.toggled.connect(func(enabled: bool) -> void: Settings.do_not_disturb = enabled)
 
 
 func handle_back() -> bool:

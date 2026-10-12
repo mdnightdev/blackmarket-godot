@@ -1,7 +1,7 @@
 class_name CharacterDef
 extends SpeakerDef
 
-enum Role { LENDER, ENFORCER, POLICE, INFORMANT, RIVAL, BARTENDER, CASINO_HOST, SMUGGLER, FIXER, LIEUTENANT, HACKER }
+enum Role { LENDER, ENFORCER, POLICE, INFORMANT, RIVAL, BARTENDER, CASINO_HOST, SMUGGLER, FIXER, LIEUTENANT, HACKER, FRIEND }
 
 const ROLE_NAMES := {
 	Role.LENDER: "Lender",
@@ -15,6 +15,7 @@ const ROLE_NAMES := {
 	Role.FIXER: "Fixer",
 	Role.LIEUTENANT: "Triad",
 	Role.HACKER: "Hacker",
+	Role.FRIEND: "Friend",
 }
 
 @export var role: Role

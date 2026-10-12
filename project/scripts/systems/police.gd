@@ -1,5 +1,10 @@
 class_name Police
 
+## Officer Brandt, Moreau's junior, makes the stops and leads the raids. See Ramos for the one exception.
+const BRANDT: StringName = &"brandt"
+## How much more often Brandt walks into the player's district once they are watched.
+const FOLLOW_WEIGHT := 4.0
+
 const BASE_STOP_CHANCE := 0.02
 const HEAT_STOP_CHANCE := 0.25
 const CARGO_RISK_SCALE := 2000.0
@@ -26,7 +31,14 @@ const GRACE_DAYS := 3
 const QUIET_PHASES_AFTER_ARREST := 4
 const HEAT_AFTER_ARREST := 20
 const ARREST_SEIZED_SHARE := 0.5
+## In Act 1 a bust takes less, but the Shark hears about it and the questioning eats into the phase.
+const ACT_ONE_SEIZED_SHARE := 0.3
+const QUESTIONING_SECONDS := 120.0
+## Real time in a cell. It keeps counting while the game is closed.
 const JAIL_SECONDS := 300.0
+## Bail is a share of what the player was carrying when booked, never less than the minimum.
+const BAIL_SHARE := 0.5
+const MIN_BAIL := 1000
 
 
 ## No stops or raids in the first days of a run, or for a full day after an arrest.
@@ -106,43 +118,96 @@ static func run_for_it(run: RunState, roll: float) -> bool:
 	return false
 
 
-## Hands over a smuggling crate if one is carried, otherwise half of the riskiest stack, rounded up.
+## Hands over a smuggling crate if one is carried, otherwise the seized share of the riskiest stack, rounded up.
 ## Returns { crate = true }, the confiscated item and quantity, or an empty dictionary.
 static func comply(run: RunState) -> Dictionary:
 	Heat.add(run, -COMPLY_HEAT_DROP)
 	if Smuggling.seize(run):
+		_act_one_bust_cost(run)
 		return { "crate": true }
 	var item := riskiest_item(run)
 	if item == null:
 		return {}
-	var quantity := ceili(Inventory.count(run, item.id) / 2.0)
+	var quantity := ceili(Inventory.count(run, item.id) * seized_share(run))
 	Inventory.discard(run, item.id, quantity)
+	_act_one_bust_cost(run)
 	return { "item": item, "quantity": quantity }
 
 
-static func is_jailed(run: RunState) -> bool:
-	return run.jail_seconds_left > 0.0
+static func seized_share(run: RunState) -> float:
+	return ARREST_SEIZED_SHARE if Campaign.is_act_two(run) else ACT_ONE_SEIZED_SHARE
 
 
-## The player keeps everything and sits out JAIL_SECONDS of real time while the clock runs on.
-static func go_to_jail(run: RunState) -> void:
-	run.jail_seconds_left = JAIL_SECONDS
+static func _act_one_bust_cost(run: RunState) -> void:
+	if Campaign.is_act_two(run):
+		return
+	SharkTrust.add(run, SharkTrust.BUSTED)
+	run.phase_seconds_left = maxf(0.0, run.phase_seconds_left - QUESTIONING_SECONDS)
 
 
-## Counts the cell time down. Returns true on the tick that sets the player free.
-static func serve_time(run: RunState, seconds: float) -> bool:
-	if not is_jailed(run):
+## now is Unix time in seconds. Leave it negative to use the system clock. A clock turned back never adds time.
+static func jail_seconds_left(run: RunState, now := -1.0) -> float:
+	if run.jail_until <= 0.0:
+		return 0.0
+	return clampf(run.jail_until - _now(now), 0.0, JAIL_SECONDS)
+
+
+static func is_jailed(run: RunState, now := -1.0) -> bool:
+	return jail_seconds_left(run, now) > 0.0
+
+
+## The player sits out JAIL_SECONDS of real time while the game clock runs on. carried is the street value of what
+## they were caught with, which sets the bail.
+static func go_to_jail(run: RunState, carried: int, now := -1.0) -> void:
+	run.jail_until = _now(now) + JAIL_SECONDS
+	run.jail_bail = maxi(MIN_BAIL, roundi(carried * BAIL_SHARE))
+
+
+static func post_bail(run: RunState, now := -1.0) -> bool:
+	if not is_jailed(run, now) or run.cash < run.jail_bail:
 		return false
-	run.jail_seconds_left = maxf(0.0, run.jail_seconds_left - seconds)
-	return not is_jailed(run)
+	run.cash -= run.jail_bail
+	release(run)
+	return true
 
 
-## Takes any crate and half of every stack in the bag, rounded up. Cash and the stash are left alone.
-static func arrest(run: RunState) -> void:
+## Returns true once, on the check that finds the time served.
+static func release_if_served(run: RunState, now := -1.0) -> bool:
+	if run.jail_until <= 0.0 or is_jailed(run, now):
+		return false
+	release(run)
+	return true
+
+
+static func release(run: RunState) -> void:
+	run.jail_until = 0.0
+	run.jail_bail = 0
+
+
+static func _now(now: float) -> float:
+	return now if now >= 0.0 else Time.get_unix_time_from_system()
+
+
+## Takes any crate and the seized share of every stack in the bag, rounded up. Cash is left alone, and so is the
+## stash unless the raid knows where it is.
+static func arrest(run: RunState, with_stash := false) -> void:
 	Smuggling.seize(run)
 	for item_id: StringName in run.inventory.keys():
-		Inventory.discard(run, item_id, ceili(Inventory.count(run, item_id) * ARREST_SEIZED_SHARE))
-	run.heat = HEAT_AFTER_ARREST
-	run.arrest_stamp = Calendar.stamp(run)
+		Inventory.discard(run, item_id, ceili(Inventory.count(run, item_id) * seized_share(run)))
+	if with_stash:
+		for item_id: StringName in run.stash.keys():
+			var left := int(run.stash[item_id]) - ceili(int(run.stash[item_id]) * seized_share(run))
+			if left > 0:
+				run.stash[item_id] = left
+			else:
+				run.stash.erase(item_id)
+	_act_one_bust_cost(run)
+	raided(run)
 	run.busts += 1
 	StreetCred.add(run, StreetCred.BUSTED)
+
+
+## Every raid, empty or not, cools the player down and keeps the police away for a while.
+static func raided(run: RunState) -> void:
+	run.heat = HEAT_AFTER_ARREST
+	run.arrest_stamp = Calendar.stamp(run)

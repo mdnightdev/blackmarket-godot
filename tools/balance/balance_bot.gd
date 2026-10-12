@@ -60,6 +60,7 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 	var cleared_day := 0
 	var missed_weeks := 0
 	var worst_streak := 0
+	var sold_day := 0
 
 	while phases_left > 0 and not Campaign.is_over(run):
 		phases_left -= 1
@@ -83,6 +84,8 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 		if run.missed_weeks > streak_before:
 			missed_weeks += 1
 		worst_streak = maxi(worst_streak, run.missed_weeks)
+		if sold_day == 0 and Loan.is_with_vex(run):
+			sold_day = run.day
 		if run.career and cleared_day == 0:
 			cleared_day = run.day
 		if run.day != day_before and CHECKPOINT_DAYS.has(day_before):
@@ -95,8 +98,8 @@ func play(strategy: StringName, seed_value: int, days: int) -> Dictionary:
 		"ledger": _ledger,
 		"counts": _counts,
 		"orders": _order_results,
-		"lost": run.outcome == RunState.Outcome.LOST,
-		"lost_day": run.day if run.outcome == RunState.Outcome.LOST else 0,
+		"sold": sold_day > 0,
+		"sold_day": sold_day,
 		"cleared_day": cleared_day,
 		"missed_weeks": missed_weeks,
 		"worst_streak": worst_streak,
@@ -437,6 +440,8 @@ func _resolve_pending(run: RunState) -> void:
 		var debt_before := run.debt
 		_game_state.resolve_encounter(choice)
 		_add(StringName(label), run.cash - cash_before + _goods_value(run) - goods_before + debt_before - run.debt)
+		# Cells run on real time, which would freeze a simulated run. The bot serves its time at once.
+		Police.release(run)
 
 
 func _choose(run: RunState, encounter: Dictionary) -> StringName:
@@ -446,6 +451,8 @@ func _choose(run: RunState, encounter: Dictionary) -> StringName:
 			enabled.append(choice.id)
 	match str(encounter.get("type", "")):
 		Encounters.POLICE:
+			if enabled.has(Encounters.STAY):
+				return Encounters.STAY
 			if enabled.has(Encounters.BRIBE) and int(encounter.bribe) <= run.cash * BRIBE_SHARE_OF_CASH:
 				return Encounters.BRIBE
 			return Encounters.COMPLY
@@ -461,6 +468,8 @@ func _choose(run: RunState, encounter: Dictionary) -> StringName:
 			return Families.PAY_UP if enabled.has(Families.PAY_UP) else Families.REFUSE
 		Collections.TYPE:
 			return Collections.LEAN
+		DebtSale.RABBIT_OFFER:
+			return DebtSale.REFUSE_GIFT
 	if enabled.has(Encounters.PAY):
 		return Encounters.PAY
 	if enabled.has(Encounters.TAKE):

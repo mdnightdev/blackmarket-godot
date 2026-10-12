@@ -1,6 +1,6 @@
 extends GutTest
 
-const HELD: StringName = &"old_market"
+const HELD: StringName = &"docks"
 const NOT_HELD: StringName = &"warehouse_row"
 
 var _run: RunState

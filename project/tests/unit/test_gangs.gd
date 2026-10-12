@@ -7,8 +7,9 @@ var _vex_at: StringName
 func before_each() -> void:
 	_run = RunState.new()
 	_run.price_seed = 4711
-	_run.district_id = &"old_market"
+	_run.district_id = &"docks"
 	_run.cash = 10000
+	Story.mark(_run, War.VEX_FELL)
 	_vex_at = _find_vex()
 
 
@@ -116,7 +117,7 @@ func test_winning_the_hunt_fight_gains_ground_and_ends_the_feud() -> void:
 	Gangs.set_anger(_run, _vex(), Gangs.MAX_ANGER)
 	_run.pending_encounter = Gangs.hunt(_run, _vex())
 	Encounters.resolve(_run, Gangs.FIGHT, 0.0)
-	assert_eq(Turf.share(_run, &"old_market"), Turf.STARTING_SHARE + Gangs.FIGHT_GAIN)
+	assert_eq(Turf.share(_run, &"docks"), Turf.STARTING_SHARE + Gangs.FIGHT_GAIN)
 	assert_eq(Gangs.anger(_run, _vex()), 0)
 	assert_eq(_run.cash, 10000)
 
@@ -125,7 +126,7 @@ func test_losing_the_hunt_fight_costs_ground_and_heat_but_no_cash() -> void:
 	Gangs.set_anger(_run, _vex(), Gangs.MAX_ANGER)
 	_run.pending_encounter = Gangs.hunt(_run, _vex())
 	Encounters.resolve(_run, Gangs.FIGHT, 0.99)
-	assert_eq(Turf.share(_run, &"old_market"), Turf.STARTING_SHARE - Gangs.FIGHT_LOSS)
+	assert_eq(Turf.share(_run, &"docks"), Turf.STARTING_SHARE - Gangs.FIGHT_LOSS)
 	assert_eq(_run.heat, Gangs.FIGHT_LOSS_HEAT)
 	assert_eq(_run.cash, 10000)
 	assert_eq(Gangs.anger(_run, _vex()), Gangs.ANGER_AFTER_BEATING)

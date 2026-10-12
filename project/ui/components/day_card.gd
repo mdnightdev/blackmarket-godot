@@ -21,7 +21,7 @@ func _ready() -> void:
 func play(run: RunState, turf_cut := 0) -> void:
 	_number_label.text = str(run.day)
 	_remaining_label.text = StreetCred.rank_name(StreetCred.rank(run)) if run.career else _payment_text(run)
-	_income_label.text = "Your corners paid %s" % Format.money(turf_cut)
+	_income_label.text = "Rent and protection: %s" % Format.money(turf_cut)
 	_income_label.visible = turf_cut > 0
 	modulate.a = 0.0
 	show()
@@ -42,14 +42,15 @@ func _fade_out() -> void:
 
 
 func _payment_text(run: RunState) -> String:
+	var lender := Loan.lender_label(run)
 	if Loan.amount_due(run) <= 0:
-		return "Shark paid this week"
+		return "%s paid this week" % lender
 	var days_left := run.next_due_day - 1 - run.day
 	if days_left <= 0:
-		return "Shark payment due today"
+		return "%s payment due today" % lender
 	if days_left == 1:
-		return "Shark payment due tomorrow"
-	return "Shark payment in %d days" % days_left
+		return "%s payment due tomorrow" % lender
+	return "%s payment in %d days" % [lender, days_left]
 
 
 func _on_gui_input(event: InputEvent) -> void:

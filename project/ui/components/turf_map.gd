@@ -148,7 +148,7 @@ func _status_text(district: DistrictDef) -> String:
 	var share := Turf.share(run, district.id)
 	match Turf.holder(run, district.id):
 		Turf.Holder.PLAYER:
-			return "Yours %d%%  Lv %d" % [share, Turf.level(run, district.id)]
+			return "Yours %d%%" % share
 		Turf.Holder.GANG:
 			return "%s %d%%" % [Gangs.owner(district.id).display_name, 100 - share]
 	return "Contested %d%%" % share

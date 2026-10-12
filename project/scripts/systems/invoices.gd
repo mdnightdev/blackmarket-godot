@@ -13,7 +13,7 @@ const MIN_DEFAULT_CHANCE := 0.05
 
 
 static func default_chance(run: RunState) -> float:
-	return maxf(MIN_DEFAULT_CHANCE, BASE_DEFAULT_CHANCE - DEFAULT_DROP_PER_RANK * (StreetCred.rank(run) - 1))
+	return maxf(MIN_DEFAULT_CHANCE, BASE_DEFAULT_CHANCE - DEFAULT_DROP_PER_RANK * (StreetCred.rank(run) - 1)) * Edges.default_factor(run)
 
 
 static func file(run: RunState, id: String, client: String, amount: int) -> Dictionary:

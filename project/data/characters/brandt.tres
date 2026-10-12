@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/brandt.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/brandt_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"brandt"
+display_name = "Officer Brandt"
+role = 2
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "Turn out your pockets. Slowly. I'm going to remember this face."
+blurb = "Moreau's junior, chasing a promotion. Runs the stops and the raids, and follows you once you run hot."
+route = Array[StringName]([&"old_market", &"slums", &"docks", &"downtown", &"north_port", &"warehouse_row"])
+stop_multiplier = 1.5

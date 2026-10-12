@@ -20,6 +20,12 @@ func _init() -> void:
 	hide()
 
 
+## One color on both edges instead of the red and blue swap.
+func tint(color: Color) -> void:
+	(material as ShaderMaterial).set_shader_parameter("red", color)
+	(material as ShaderMaterial).set_shader_parameter("blue", color)
+
+
 func switch_on(intensity: float) -> void:
 	_on = true
 	show()

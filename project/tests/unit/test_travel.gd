@@ -6,6 +6,9 @@ var _destination: DistrictDef
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
+	# Kade's shorter trips have their own test in test_edges.gd.
+	_run.player_id = &"jin"
 	_destination = DistrictDef.new()
 	_destination.id = &"docks"
 	_destination.travel_cost = 60
@@ -41,21 +44,6 @@ func test_check_locks_destination_above_players_rank() -> void:
 	assert_eq(Travel.lock_reason(_run, _destination), "Needs Hustler rank")
 	_run.street_cred = int(StreetCred.RANKS[3].cred)
 	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
-
-
-func test_check_locks_destination_above_players_power() -> void:
-	_destination.min_power = 2
-	assert_eq(Travel.check(_run, _destination), Travel.Check.LOCKED)
-	assert_eq(Travel.lock_reason(_run, _destination), "Needs Power 2")
-	_run.turf[&"docks"] = Turf.HOLD_SHARE
-	_run.turf[&"old_market"] = Turf.HOLD_SHARE
-	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
-
-
-func test_lock_reason_lists_every_unmet_gate() -> void:
-	_destination.min_rank = 4
-	_destination.min_power = 2
-	assert_eq(Travel.lock_reason(_run, _destination), "Needs Hustler rank and Power 2")
 
 
 func test_lock_is_checked_before_the_fare() -> void:
@@ -113,10 +101,10 @@ func test_check_uses_discounted_fare() -> void:
 	assert_eq(Travel.check(_run, _destination), Travel.Check.OK)
 
 
-func test_arrival_mid_phase_adds_travel_heat_only() -> void:
+func test_arrival_mid_phase_adds_no_heat() -> void:
 	Inventory.add_units(_run, &"burner_phones", 10)
 	Encounters.after_arrival(_run, RandomNumberGenerator.new())
-	assert_eq(_run.heat, Heat.for_travel(_run))
+	assert_eq(_run.heat, 0)
 	assert_false(Encounters.has_pending(_run), "police stay away in the first days")
 
 

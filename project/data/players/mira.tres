@@ -12,3 +12,16 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 tagline = "Ex-pickpocket from the border towns. Reads people before they speak."
 intro_line = "Everyone has a tell. I just have to stay alive long enough to read it."
+edge = 3
+edge_text = "Stings: spots undercover buyers before the deal."
+origin_story = "Mira lifted a fat envelope off a drunk at Auntie Tran's bar. The drunk was carrying the Shark's weekly collection. Vex wanted Mira's hands broken. The Shark wanted his money. The Shark won."
+origin_lines = Array[Dictionary]([{
+"line": "You read everyone in that room except the one man who mattered.",
+"speaker": "midnight_rabbit"
+}, {
+"line": "He looked like nobody.",
+"speaker": "player"
+}, {
+"line": "Those are the ones carrying money.",
+"speaker": "midnight_rabbit"
+}])

@@ -2,8 +2,8 @@ class_name HudBar
 extends PanelContainer
 
 const CASH_COUNT_SECONDS := 0.45
-const HEAT_MEDIUM := 30
-const HEAT_HIGH := 70
+const HEAT_MEDIUM := Heat.NOTICED
+const HEAT_HIGH := Heat.WATCHED
 const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 
 @onready var _cash_value: Label = %CashValue

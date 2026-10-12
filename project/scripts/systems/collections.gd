@@ -31,7 +31,7 @@ static func start(run: RunState, errand: Dictionary) -> Dictionary:
 		"type": TYPE,
 		"speaker": String(run.player_id),
 		"title": "Collection",
-		"body": "%s owes the Shark %s. \"%s\"" % [debtor, Format.money(int(errand.owed)), DEBTOR_LINES[rng.randi_range(0, DEBTOR_LINES.size() - 1)]],
+		"body": "%s owes %s %s. \"%s\"" % [debtor, Errands.creditor(errand), Format.money(int(errand.owed)), DEBTOR_LINES[rng.randi_range(0, DEBTOR_LINES.size() - 1)]],
 		"errand": str(errand.id),
 		"debtor": debtor,
 		"owed": int(errand.owed),
@@ -86,7 +86,10 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 			line = "You take %s from %s and let the rest slide." % [Format.money(roundi(owed * share)), debtor]
 		_:
 			return ""
-	return "%s Your cut: %s." % [line, Errands.describe_payout(Errands.complete(run, errand, share))]
+	var paid := Errands.complete(run, errand, share)
+	if int(paid.cash) <= 0 and int(paid.debt) <= 0:
+		return "%s %s" % [line, Errands.describe_payout(paid)]
+	return "%s Your cut: %s." % [line, Errands.describe_payout(paid)]
 
 
 static func _upset_family(run: RunState, district_id: StringName) -> void:

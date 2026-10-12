@@ -4,7 +4,6 @@ class_name Turf
 ## gang holds the rest. See GangDef.
 
 enum Holder { NOBODY, PLAYER, GANG }
-enum LevelResult { OK, NOT_CONTESTED, NOT_HELD, MAX_LEVEL, RANK_TOO_LOW, NEEDS_TRUST, NOT_ENOUGH_CASH }
 
 const STARTING_SHARE := 50
 const HOLD_SHARE := 60
@@ -14,22 +13,10 @@ const HELD_SELL_FACTOR := 1.1
 const GANG_SELL_FACTOR := 0.9
 ## Lookouts on the player's own corners keep the police away.
 const HELD_STOP_FACTOR := 0.7
-const STOP_FACTOR_PER_LEVEL := 0.05
-const MIN_HELD_STOP_FACTOR := 0.5
-## Paid every morning for each district the player holds, at turf level 1.
-const DAILY_CUT := 150
-const CUT_PER_LEVEL := 100
-
-const MAX_LEVEL := 5
-## Entry n is the upgrade to level n + 2.
-const LEVEL_UPS: Array[Dictionary] = [
-	{ "cost": 2000, "rank": 3 },
-	{ "cost": 5000, "rank": 5 },
-	{ "cost": 12000, "rank": 7 },
-	{ "cost": 25000, "rank": 9 },
-]
-## From this level on, a family's home district also needs that family's trust.
-const TRUSTED_LEVEL := 4
+## Rent and protection paid every morning for each district the player holds.
+const DAILY_CUT := 5000
+## A held district has room for one business, and a second from this street cred rank.
+const SECOND_BUSINESS_RANK := 6
 
 const SALE_VALUE_PER_POINT := 600
 const MAX_SALE_GAIN := 4
@@ -57,10 +44,13 @@ static func is_contested(district_id: StringName) -> bool:
 	return Gangs.owner(district_id) != null
 
 
+## Districts split into corners take their share from the corners held. See Corners.
 static func share(run: RunState, district_id: StringName) -> int:
 	var gang := Gangs.owner(district_id)
 	if gang == null:
 		return 0
+	if Corners.has_corners(district_id):
+		return Corners.share(run, district_id)
 	return int(run.turf.get(district_id, gang.strongholds.get(district_id, STARTING_SHARE)))
 
 
@@ -80,33 +70,14 @@ static func held_count(run: RunState) -> int:
 	return contested().filter(func(district_id: StringName) -> bool: return holder(run, district_id) == Holder.PLAYER).size()
 
 
-## The level paid for in a district. It is kept while the hold is lost.
-static func bought_level(run: RunState, district_id: StringName) -> int:
-	return clampi(int(run.turf_levels.get(district_id, 1)), 1, MAX_LEVEL)
-
-
-## The level in effect, 0 while the player does not hold the district.
-static func level(run: RunState, district_id: StringName) -> int:
-	return bought_level(run, district_id) if holder(run, district_id) == Holder.PLAYER else 0
-
-
-## Summed turf levels across the contested districts, from 0 to max_power.
-static func power(run: RunState) -> int:
-	var total := 0
-	for district_id in contested():
-		total += level(run, district_id)
-	return total
-
-
-static func max_power() -> int:
-	return contested().size() * MAX_LEVEL
+static func holds(run: RunState, district_id: StringName) -> bool:
+	return holder(run, district_id) == Holder.PLAYER
 
 
 static func business_slots(run: RunState, district_id: StringName) -> int:
-	var current := level(run, district_id)
-	if current < 2:
+	if not holds(run, district_id):
 		return 0
-	return 1 if current < TRUSTED_LEVEL else 2
+	return 2 if StreetCred.rank(run) >= SECOND_BUSINESS_RANK else 1
 
 
 ## The family whose home turf this is, or null.
@@ -115,52 +86,6 @@ static func home_family(district_id: StringName) -> FamilyDef:
 		if family.home_districts.has(district_id):
 			return family
 	return null
-
-
-## Cash for the next level, -1 when the district cannot level further.
-static func next_level_cost(run: RunState, district_id: StringName) -> int:
-	var upgrade := _next_level_up(run, district_id)
-	return int(upgrade.cost) if not upgrade.is_empty() else -1
-
-
-## Street cred rank for the next level, -1 when the district cannot level further.
-static func next_level_rank(run: RunState, district_id: StringName) -> int:
-	var upgrade := _next_level_up(run, district_id)
-	return int(upgrade.rank) if not upgrade.is_empty() else -1
-
-
-static func check_level_up(run: RunState, district_id: StringName) -> LevelResult:
-	if not is_contested(district_id):
-		return LevelResult.NOT_CONTESTED
-	if holder(run, district_id) != Holder.PLAYER:
-		return LevelResult.NOT_HELD
-	var next_level := bought_level(run, district_id) + 1
-	if next_level > MAX_LEVEL:
-		return LevelResult.MAX_LEVEL
-	if StreetCred.rank(run) < next_level_rank(run, district_id):
-		return LevelResult.RANK_TOO_LOW
-	if next_level >= TRUSTED_LEVEL:
-		var family := home_family(district_id)
-		if family != null and Families.tier(run, family.id) < Families.Tier.TRUSTED:
-			return LevelResult.NEEDS_TRUST
-	if run.cash < next_level_cost(run, district_id):
-		return LevelResult.NOT_ENOUGH_CASH
-	return LevelResult.OK
-
-
-static func level_up(run: RunState, district_id: StringName) -> LevelResult:
-	var result := check_level_up(run, district_id)
-	if result == LevelResult.OK:
-		run.cash -= next_level_cost(run, district_id)
-		run.turf_levels[district_id] = bought_level(run, district_id) + 1
-	return result
-
-
-static func _next_level_up(run: RunState, district_id: StringName) -> Dictionary:
-	if not is_contested(district_id):
-		return {}
-	var index := bought_level(run, district_id) - 1
-	return LEVEL_UPS[index] if index < LEVEL_UPS.size() else {}
 
 
 static func sell_factor(run: RunState, district_id: StringName) -> float:
@@ -173,22 +98,16 @@ static func sell_factor(run: RunState, district_id: StringName) -> float:
 
 
 static func stop_factor(run: RunState, district_id: StringName) -> float:
-	var current := level(run, district_id)
-	if current == 0:
-		return 1.0
-	return maxf(HELD_STOP_FACTOR - STOP_FACTOR_PER_LEVEL * (current - 1), MIN_HELD_STOP_FACTOR)
+	return HELD_STOP_FACTOR if holds(run, district_id) else 1.0
 
 
 ## The morning cut from one district, 0 while the player does not hold it.
 static func district_cut(run: RunState, district_id: StringName) -> int:
-	var current := level(run, district_id)
-	if current == 0:
-		return 0
-	return DAILY_CUT + CUT_PER_LEVEL * (current - 1)
+	return DAILY_CUT if holds(run, district_id) and not Corners.has_corners(district_id) else 0
 
 
 static func daily_cut(run: RunState) -> int:
-	var total := 0
+	var total := Corners.daily_cut(run)
 	for district_id in contested():
 		total += district_cut(run, district_id)
 	return total
@@ -210,7 +129,7 @@ static func fight_chance(run: RunState, district_id: StringName) -> float:
 
 ## Moves the player's share and returns the change actually applied.
 static func shift(run: RunState, district_id: StringName, amount: int) -> int:
-	if Gangs.is_gone(run, Gangs.owner(district_id)):
+	if Gangs.is_gone(run, Gangs.owner(district_id)) or Corners.has_corners(district_id):
 		return 0
 	var before := share(run, district_id)
 	var after := clampi(before + amount, 0, 100)
@@ -219,7 +138,10 @@ static func shift(run: RunState, district_id: StringName, amount: int) -> int:
 	return after - before
 
 
+## Turf outside Old Market only moves in Act 2.
 static func record_sale(run: RunState, sale_value: int) -> void:
+	if not Campaign.is_act_two(run):
+		return
 	shift(run, run.district_id, mini(MAX_SALE_GAIN, ceili(float(sale_value) / SALE_VALUE_PER_POINT)))
 
 
@@ -228,7 +150,9 @@ static func muscle_cost(run: RunState) -> int:
 
 
 static func can_send_muscle(run: RunState) -> bool:
-	return not Gangs.is_gone(run, Gangs.owner(run.district_id)) \
+	return Campaign.is_act_two(run) \
+		and not Gangs.is_gone(run, Gangs.owner(run.district_id)) \
+		and not Corners.has_corners(run.district_id) \
 		and share(run, run.district_id) < 100 \
 		and run.muscle_stamp != Calendar.stamp(run) \
 		and run.cash >= muscle_cost(run)
@@ -248,6 +172,8 @@ static func send_muscle(run: RunState) -> bool:
 ## dominates.
 ## Crews leave districts the player cannot reach yet alone, so the player never arrives to find them already lost.
 static func gangs_push(run: RunState) -> void:
+	if not Campaign.is_act_two(run):
+		return
 	var stamp := Calendar.stamp(run)
 	for gang in Gangs.active(run):
 		var location := Gangs.boss_location(run, gang, stamp)
@@ -261,10 +187,13 @@ static func gang_push(run: RunState, gang: GangDef, district_id: StringName) -> 
 
 
 ## A gang leaves once the player holds every district of its turf. Waits while another encounter is pending.
+## A gang with corners is only beaten in a war for them.
 static func check_victory(run: RunState) -> void:
 	if not run.pending_encounter.is_empty():
 		return
 	for gang in Gangs.active(run):
+		if gang.turf.any(func(district_id: StringName) -> bool: return Corners.has_corners(district_id)):
+			continue
 		if gang.turf.all(func(district_id: StringName) -> bool: return share(run, district_id) >= HOLD_SHARE):
 			run.gangs_gone.append(gang.id)
 			run.cash += gang.victory_reward

@@ -18,5 +18,4 @@ travel_cost = 800
 heat_multiplier = 1.6
 venues = Array[StringName]([&"market", &"vip_casino"])
 roads = Array[StringName]([&"west_end", &"north_port", &"golden_mile"])
-min_rank = 7
-min_power = 5
+min_rank = 8

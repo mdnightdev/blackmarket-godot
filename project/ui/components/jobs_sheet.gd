@@ -17,6 +17,7 @@ enum Tab { ACTIVE, COMPLETED, FAILED }
 @onready var _active_tab: Button = %ActiveTab
 @onready var _completed_tab: Button = %CompletedTab
 @onready var _failed_tab: Button = %FailedTab
+@onready var _do_not_disturb_toggle: CheckButton = %DoNotDisturbToggle
 
 var _pending_action := Callable()
 var _tab := Tab.ACTIVE
@@ -32,12 +33,16 @@ func _ready() -> void:
 	_active_tab.pressed.connect(_select_tab.bind(Tab.ACTIVE))
 	_completed_tab.pressed.connect(_select_tab.bind(Tab.COMPLETED))
 	_failed_tab.pressed.connect(_select_tab.bind(Tab.FAILED))
+	_do_not_disturb_toggle.toggled.connect(func(enabled: bool) -> void:
+		Settings.do_not_disturb = enabled
+		Settings.save())
 
 
 func open_jobs() -> void:
 	SafeArea.apply_top_margin(_margin, 24)
 	_tab = Tab.ACTIVE
 	_active_tab.button_pressed = true
+	_do_not_disturb_toggle.set_pressed_no_signal(Settings.do_not_disturb)
 	_rebuild()
 	open_sheet()
 
@@ -103,15 +108,23 @@ func _add_tasks(run: RunState) -> void:
 
 ## Unanswered phone offers. Tapping one opens the same prompt as the banner.
 func _add_offers(run: RunState) -> void:
-	if run.errand_offers.is_empty() and run.customer_offers.is_empty():
+	if run.errand_offers.is_empty() and run.customer_offers.is_empty() and run.job_pings.is_empty():
 		return
 	_add_heading("OFFERS")
+	for ping in run.job_pings:
+		var caller := JobPings.sender(ping)
+		if caller == null:
+			continue
+		var place := JobPings.destination(ping)
+		var caption := "From %s%s" % [caller.display_name, ", in %s" % place.display_name if place != null else ""]
+		var row := _add_offer_row(caller.portrait, JobPings.headline(ping), Format.money(JobPings.total_pay(ping)), caption, JobPings.phases_left(run, ping))
+		row.pressed.connect(_open_ping.bind(str(ping.id)))
 	for offer in run.errand_offers:
 		var sender := Content.character(StringName(str(offer.sender)))
 		if sender == null:
 			continue
 		var caption := "From %s. %d phases to finish once taken" % [sender.display_name, int(offer.lead)]
-		var row := _add_offer_row(sender.portrait, Errands.describe(offer), Format.money(int(offer.pay)), caption, Errands.phases_left(run, offer))
+		var row := _add_offer_row(sender.portrait, Errands.describe(offer), Errands.pay_label(offer), caption, Errands.phases_left(run, offer))
 		row.pressed.connect(_open_offer.bind(str(offer.id)))
 	for offer in run.customer_offers:
 		var caption := "In %s. %s each, street %s" % [Customers.district_name(offer), Format.money(int(offer.unit_price)), Format.money(int(offer.street_price))]
@@ -131,6 +144,11 @@ func _add_offer_row(icon: Texture2D, title: String, pay: String, caption: String
 func _open_offer(offer_id: String) -> void:
 	close()
 	OfferTalk.open(offer_id)
+
+
+func _open_ping(ping_id: String) -> void:
+	close()
+	JobTalk.open(ping_id)
 
 
 func _open_customer_offer(offer_id: String) -> void:
@@ -215,6 +233,8 @@ func _offer_meeting(order: Dictionary, dealer: DealerDef, district: DistrictDef)
 
 
 func _meet_dealer(order: Dictionary) -> void:
+	if GameOverlay.blocked_by_jail():
+		return
 	var run := GameState.run
 	var dealer := Content.dealer(StringName(str(order.dealer)))
 	var scammed := Meetings.is_scam(run, order)
@@ -263,7 +283,7 @@ func _add_errands(run: RunState) -> void:
 		var caption := "For %s by %s" % [sender.display_name, Calendar.describe(int(errand.due_stamp)).to_lower()]
 		var place := Content.district(Errands.target_district(errand))
 		var hint := "GO TO %s" % place.display_name.to_upper() if place != null else ""
-		_add_row(sender.portrait, Errands.describe(errand), Format.money(int(errand.pay)), caption, hint)
+		_add_row(sender.portrait, Errands.describe(errand), Errands.pay_label(errand), caption, hint)
 
 
 ## Short of goods the row opens where to buy them. With the goods it heads to the customer or hands over here.
@@ -310,8 +330,8 @@ func _send_runner(job: Dictionary) -> void:
 
 func _add_heists(run: RunState) -> void:
 	_add_heading("HEISTS")
-	if not run.career:
-		_add_row(LOCK_ICON, "Heists", "", "Pay off the Shark to unlock", "")
+	if not Campaign.is_act_two(run):
+		_add_row(LOCK_ICON, "Heists", "", "Take Old Market from Vex to unlock", "")
 		return
 	for heist in Content.heists():
 		var district := Content.district(heist.district_id)
@@ -332,7 +352,7 @@ func _add_heists(run: RunState) -> void:
 				hint = "READY IN %d %s" % [days, "DAY" if days == 1 else "DAYS"]
 			Heists.Result.WRONG_DISTRICT:
 				hint = "GO TO %s" % place.to_upper()
-		var row := _add_row(heist.icon, heist.display_name, Format.money(heist.payout), "%s. %s" % [place, heist.description], hint, hint_color)
+		var row := _add_row(heist.icon, heist.display_name, Format.money(Heists.payout(run, heist)), "%s. %s" % [place, heist.description], hint, hint_color)
 		if result == Heists.Result.OK:
 			row.set_tappable(true)
 			row.pressed.connect(_ask_heist.bind(heist))
@@ -351,9 +371,11 @@ func _on_confirmed() -> void:
 
 
 func _ask_heist(heist: HeistDef) -> void:
+	if GameOverlay.blocked_by_jail():
+		return
 	var run := GameState.run
 	var message := "You have %s. Success pays %s and adds %d heat. Failure adds %d heat, brings the police, and can cost you a crew member." % [
-		Odds.reading(Heists.success_chance(run, heist)), Format.money(heist.payout), heist.heat, Heists.FAILED_HEAT,
+		Odds.reading(Heists.success_chance(run, heist)), Format.money(Heists.payout(run, heist)), heist.heat, Heists.FAILED_HEAT,
 	]
 	_ask("Pull the %s?" % heist.display_name.to_lower(), message, "Pull it", _pull_heist.bind(heist), true)
 

@@ -1,9 +1,10 @@
 class_name Errands
 
-## Jobs the Shark sends to the player's phone. Offers wait in run.errand_offers until answered, accepted ones
+## Jobs the Shark sends to the player's phone. After he sells the debt, Vex sends them instead and pays nothing. Offers wait in run.errand_offers until answered, accepted ones
 ## move to run.errands. Every entry has the same keys:
-## { id, kind, sender, district, pickup_district, drop_district, debtor, owed, pay, lead, posted_stamp,
+## { id, kind, flavor, sender, district, pickup_district, drop_district, debtor, owed, pay, lead, posted_stamp,
 ##   expires_stamp, due_stamp, picked_up }
+## flavor dresses up a Shark delivery: a package, an envelope for Ramos, or Voronin's crate picked up at the docks.
 ## A collection sends the player to district to get owed from debtor; pay is the player's cut when all of it comes in.
 ## A delivery is picked up on arriving in pickup_district and dropped on arriving in drop_district.
 ## expires_stamp is the last phase stamp an offer can be accepted in. lead is the phases allowed once accepted and
@@ -11,6 +12,13 @@ class_name Errands
 
 const COLLECTION := "collection"
 const DELIVERY := "delivery"
+const PACKAGE := "package"
+const ENVELOPE := "envelope"
+const PIER := "pier"
+const PIER_DISTRICT: StringName = &"docks"
+const ENVELOPE_CHANCE := 0.3
+const RAMOS: StringName = &"officer"
+const VORONIN: StringName = &"voronin"
 const SENDER: StringName = Loan.LENDER
 ## Phases that start with a new offer from the Shark.
 const POSTING_PHASES: Array[RunState.Phase] = [RunState.Phase.MORNING]
@@ -26,7 +34,7 @@ const COLLECTION_CUT := 0.4
 ## While the Shark is owed, this share of every errand's pay goes straight onto the debt.
 const DEBT_SHARE := 0.6
 const DEBTORS: Array[String] = [
-	"Benny Tsai", "Marco Lin", "Dex Okafor", "Ivy Moreau", "Sal Kwan", "Nico Reyes", "Old Pao", "Teddy Ng",
+	"Benny Tsai", "Marco Silva", "Dex Tavares", "Ivy Kowalczyk", "Sal Kwan", "Nico Petrakis", "Old Bashir", "Teddy Ng",
 ]
 
 
@@ -34,6 +42,8 @@ const DEBTORS: Array[String] = [
 static func post(run: RunState) -> Array[Dictionary]:
 	var posted: Array[Dictionary] = []
 	if Campaign.is_over(run) or not POSTING_PHASES.has(run.phase) or run.errand_offers.size() >= MAX_OPEN_OFFERS:
+		return posted
+	if Loan.is_with_vex(run) and run.career:
 		return posted
 	if PayScale.outgrown(run, Tiers.STREET):
 		return posted
@@ -57,10 +67,12 @@ static func generate(run: RunState) -> Dictionary:
 		return {}
 	var stamp := Calendar.stamp(run)
 	var pay := _round_pay(PayScale.roll(rng, run, Tiers.STREET))
+	var sender := run.lender if not run.career else SENDER
 	var offer := {
 		"id": _id_for(stamp),
 		"kind": COLLECTION,
-		"sender": String(SENDER),
+		"flavor": PACKAGE,
+		"sender": String(sender),
 		"district": "",
 		"pickup_district": "",
 		"drop_district": "",
@@ -84,6 +96,10 @@ static func generate(run: RunState) -> Dictionary:
 		offer.kind = DELIVERY
 		offer.pickup_district = String(pickup)
 		offer.drop_district = String(_pick(rng, places))
+		if sender == SENDER:
+			offer.flavor = _flavor(rng, pickup)
+	if sender == Loan.VEX_LENDER:
+		offer.pay = 0
 	return offer
 
 
@@ -108,6 +124,7 @@ static func decline(run: RunState, id: String) -> bool:
 	if offer.is_empty():
 		return false
 	run.errand_offers.erase(offer)
+	_let_down(run, offer, SharkTrust.ERRAND_DECLINED)
 	return true
 
 
@@ -148,10 +165,15 @@ static func expire(run: RunState) -> Array[Dictionary]:
 			continue
 		run.errands.erase(errand)
 		StreetCred.add(run, StreetCred.JOB_MISSED)
-		notices.append({
+		_let_down(run, errand, SharkTrust.ERRAND_FAILED)
+		var notice := {
 			"line": "Missed the deadline on %s." % job_title(errand),
 			"hint": "Errand failed. %+d cred" % StreetCred.JOB_MISSED,
-		})
+		}
+		if is_from_shark(errand):
+			notice.merge({ "speaker": String(SENDER), "line": "Late is a kind of no." }, true)
+			notice.hint = "Missed the deadline on %s. %s" % [job_title(errand), notice.hint]
+		notices.append(notice)
 	return notices
 
 
@@ -163,18 +185,25 @@ static func visit(run: RunState) -> Array[Dictionary]:
 		if str(errand.kind) != DELIVERY:
 			continue
 		var place := _place_name(target_district(errand))
+		var flavor := str(errand.get("flavor", PACKAGE))
 		if not bool(errand.picked_up) and StringName(str(errand.pickup_district)) == run.district_id:
 			errand.picked_up = true
 			place = _place_name(target_district(errand))
-			notices.append({
-				"line": "Picked up the Shark's package.",
+			var picked_up := {
+				"line": "Picked up %s %s." % [possessive(errand), noun(errand)],
 				"hint": "Drop it in %s by %s." % [place, Calendar.describe(int(errand.due_stamp)).to_lower()],
-			})
+			}
+			if flavor == PIER:
+				picked_up.merge({ "speaker": String(VORONIN), "line": "Do not open it. The Shark knows what is inside, and so do I. You do not." }, true)
+			notices.append(picked_up)
 		elif bool(errand.picked_up) and StringName(str(errand.drop_district)) == run.district_id:
-			notices.append({
-				"line": "Dropped the Shark's package in %s." % place,
+			var dropped := {
+				"line": "Dropped %s %s in %s." % [possessive(errand), noun(errand), place],
 				"hint": describe_payout(complete(run, errand)),
-			})
+			}
+			if flavor == ENVELOPE:
+				dropped.merge({ "speaker": String(RAMOS), "line": "Tell the old man the docks are quiet this week. Now keep walking, amigo." }, true)
+			notices.append(dropped)
 	if Encounters.has_pending(run):
 		return notices
 	for errand in run.errands:
@@ -188,6 +217,8 @@ static func visit(run: RunState) -> Array[Dictionary]:
 static func complete(run: RunState, errand: Dictionary, share := 1.0) -> Dictionary:
 	run.errands.erase(errand)
 	StreetCred.add(run, StreetCred.ERRAND_DONE)
+	if is_from_shark(errand):
+		SharkTrust.add(run, SharkTrust.ERRAND_DONE)
 	return pay_out(run, roundi(int(errand.pay) * share))
 
 
@@ -201,12 +232,15 @@ static func pay_out(run: RunState, amount: int) -> Dictionary:
 		to_debt = mini(roundi(amount * DEBT_SHARE), Loan.max_repay(run))
 		if to_debt > 0 and Loan.repay(run, to_debt):
 			Campaign.start_career_if_cleared(run)
+			SharkTrust.check_promise(run)
 		else:
 			to_debt = 0
 	return { "cash": amount - to_debt, "debt": to_debt }
 
 
 static func describe_payout(paid: Dictionary) -> String:
+	if int(paid.get("cash", 0)) <= 0 and int(paid.get("debt", 0)) <= 0:
+		return "No pay. It only keeps Vex off your back."
 	var text := "+%s cash" % Format.money(int(paid.get("cash", 0)))
 	if int(paid.get("debt", 0)) > 0:
 		text += ", %s off your debt" % Format.money(int(paid.debt))
@@ -228,15 +262,45 @@ static func describe(errand: Dictionary) -> String:
 	if str(errand.get("kind", "")) == COLLECTION:
 		return "Collect %s from %s in %s" % [Format.money(int(errand.get("owed", 0))), str(errand.get("debtor", "")), place]
 	if bool(errand.get("picked_up", false)):
-		return "Drop the package in %s" % place
-	return "Pick up a package in %s" % place
+		return "Drop the %s in %s" % [noun(errand), place]
+	return "Pick up the %s in %s" % [noun(errand), place]
 
 
 ## Name used in deadline reminders.
 static func job_title(errand: Dictionary) -> String:
 	if str(errand.get("kind", "")) == COLLECTION:
-		return "the Shark's money from %s" % str(errand.get("debtor", ""))
-	return "the Shark's package"
+		return "%s money from %s" % [possessive(errand), str(errand.get("debtor", ""))]
+	return "%s %s" % [possessive(errand), noun(errand)]
+
+
+## "package", "envelope" or "crate".
+static func noun(errand: Dictionary) -> String:
+	match str(errand.get("flavor", PACKAGE)):
+		ENVELOPE:
+			return "envelope"
+		PIER:
+			return "crate"
+	return "package"
+
+
+## What the errand pays, as shown on the phone.
+static func pay_label(errand: Dictionary) -> String:
+	var pay := int(errand.get("pay", 0))
+	return Format.money(pay) if pay > 0 else "Unpaid"
+
+
+static func is_from_shark(errand: Dictionary) -> bool:
+	return StringName(str(errand.get("sender", SENDER))) == SENDER
+
+
+## "the Shark's" or "Vex's", for lines about the errand.
+static func possessive(errand: Dictionary) -> String:
+	return "the Shark's" if is_from_shark(errand) else "Vex's"
+
+
+## The one the debtor owes, for the collection scene.
+static func creditor(errand: Dictionary) -> String:
+	return "the Shark" if is_from_shark(errand) else "Vex"
 
 
 ## Returns an empty dictionary for entries that cannot be played.
@@ -244,12 +308,17 @@ static func sanitize(source: Dictionary) -> Dictionary:
 	var id := str(source.get("id", ""))
 	var kind := str(source.get("kind", ""))
 	var pay := int(source.get("pay", 0))
-	if id.is_empty() or pay <= 0 or not [COLLECTION, DELIVERY].has(kind):
+	var sender := str(source.get("sender", SENDER))
+	if sender != String(Loan.VEX_LENDER):
+		sender = String(SENDER)
+	var unpaid := sender == String(Loan.VEX_LENDER)
+	if id.is_empty() or pay < 0 or (pay == 0 and not unpaid) or not [COLLECTION, DELIVERY].has(kind):
 		return {}
 	var clean := {
 		"id": id,
 		"kind": kind,
-		"sender": str(source.get("sender", SENDER)),
+		"flavor": PACKAGE,
+		"sender": sender,
 		"district": "",
 		"pickup_district": "",
 		"drop_district": "",
@@ -274,8 +343,27 @@ static func sanitize(source: Dictionary) -> Dictionary:
 		var drop := str(source.get("drop_district", ""))
 		if Content.district(StringName(pickup)) == null or Content.district(StringName(drop)) == null or pickup == drop:
 			return {}
-		clean.merge({ "pickup_district": pickup, "drop_district": drop, "picked_up": bool(source.get("picked_up", false)) }, true)
+		var flavor := str(source.get("flavor", PACKAGE))
+		if not [PACKAGE, ENVELOPE, PIER].has(flavor) or unpaid:
+			flavor = PACKAGE
+		clean.merge({
+			"pickup_district": pickup, "drop_district": drop, "flavor": flavor, "picked_up": bool(source.get("picked_up", false)),
+		}, true)
 	return clean
+
+
+## The Shark loses trust when let down. Vex sends her crew instead.
+static func _let_down(run: RunState, errand: Dictionary, trust_loss: int) -> void:
+	if is_from_shark(errand):
+		SharkTrust.add(run, trust_loss)
+	else:
+		DebtSale.send_crew(run)
+
+
+static func _flavor(rng: RandomNumberGenerator, pickup: StringName) -> String:
+	if pickup == PIER_DISTRICT:
+		return PIER
+	return ENVELOPE if rng.randf() < ENVELOPE_CHANCE else PACKAGE
 
 
 static func _id_for(stamp: int) -> String:

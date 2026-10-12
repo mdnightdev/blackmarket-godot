@@ -2,6 +2,39 @@
 
 All notable changes to BLACK MARKET are listed here. Versions follow [Semantic Versioning](https://semver.org/), and the format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.0] - 2026-10-12
+
+### Added
+- Act 1 story. Lexie teaches you the street, 午夜兔子 (Midnight Rabbit) joins once you own a corner, and the act ends in a war with Vex for Old Market.
+- Old Market corners: Noodle Alley, Temple Steps, Ice House Wharf and Red Lantern Hall. Buy Mama Lin's corner, then take the rest from Vex. Sellers keep working the corner whoever holds it and pay you rent and protection every morning.
+- The war. Pick which of Vex's corners to hit and who goes in. Every fight plays out as an animated battle, and both sides count their dead and wounded. Take every corner and Vex kneels.
+- Crew picker: attacks and ambush defences show one slider per tier, Lunatics, Guards and Black Hand, capped at how many men one fight can take.
+- Your headquarters: a gym where Rabbit trains your men four mornings a week, a hospital for the wounded, and an armory stocked from Rook's garage.
+- The Black Hand, Rabbit's old unit, offered after your first lost fight.
+- Vex's ambushes. Her crew strikes back at corners you took, with a siren and a 15-second countdown. Leave it to Rabbit or mobilise the crew yourself. A lost defence hands the corner back.
+- Officer Brandt, Detective Moreau's junior, runs street stops and raids and follows you when you run hot.
+- Ramos works for whoever holds the Shark's book. Buy the Shark out and he tips you off before raids.
+- Rabbit's night in the cells, the Shark's trust, and a failure branch where the Shark sells your debt to Vex.
+- Each character brings a small edge from their background.
+- Do not disturb: silence job offers from Settings or the Jobs page. Offers still wait in Jobs and the tab shows a badge.
+
+### Changed
+- Heat comes only from loud moves: running from a stop, fights, hijacks, heists, muscle and war attacks. Buying, selling and travelling with goods add no heat. Heat has four levels, Calm, Noticed, Watched and Wanted.
+- Police stops: run or stay put. A caught run or staying put leads to the talk, where you bribe, try a line or let him search. A clean search lets you go, goods found get you booked.
+- Jail runs on real time and keeps the game open. Trading, travel and jobs wait until you walk out, and Rabbit can post bail with your cash.
+- War numbers are ten times larger. Vex holds Old Market with about 4,000 blades.
+- Turf strength and turf levels are gone. District access depends on street cred alone, and held districts pay $5,000 in rent and protection every morning.
+- Voronin's crates pay 2.5 times the district job rate. Heists pay $80,000, $200,000 and $600,000, more as your rank grows.
+- The driver now means fewer police stops, and the Wheelman skill improves escapes.
+- The market keeps pink for the buy and sell button only.
+- The Shark's sheet shows Repay and Borrow tabs only when borrowing is open, and he offers one money option instead of two.
+
+### Fixed
+- Corner sellers no longer vanish from their corners.
+- A triad board could post two identical tributes on the same day.
+- The war plan offered several buttons that all sent the same men.
+- The raid scene and the ambush alert could render at zero size.
+
 ## [0.18.0] - 2026-10-08
 
 ### Added

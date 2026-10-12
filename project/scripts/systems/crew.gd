@@ -13,7 +13,6 @@ const MIN_STOP_FACTOR := 0.2
 ## Keys of run.crew_report, cleared by each morning report.
 const DELIVERIES: StringName = &"deliveries"
 const DELIVERY_PAY: StringName = &"delivery_pay"
-const HEAT_SAVED: StringName = &"heat_saved"
 const RAIDS_WARNED: StringName = &"raids_warned"
 
 
@@ -69,7 +68,7 @@ static func daily_wages(run: RunState) -> int:
 
 
 static func check_hire(run: RunState, role_id: StringName) -> Result:
-	if not run.career:
+	if not Campaign.is_act_two(run):
 		return Result.NOT_CAREER
 	var role := Content.crew_role(role_id)
 	if role == null:
@@ -164,10 +163,6 @@ static func mugging_factor(run: RunState) -> float:
 	return factor
 
 
-static func removes_travel_heat(run: RunState) -> bool:
-	return roles(run).any(func(role: CrewRoleDef) -> bool: return role.removes_travel_heat)
-
-
 static func scouts_routes(run: RunState) -> bool:
 	return roles(run).any(func(role: CrewRoleDef) -> bool: return role.scouts_routes)
 
@@ -232,9 +227,6 @@ static func report_line(run: RunState) -> String:
 	var deliveries := int(run.crew_report.get(DELIVERIES, 0))
 	if deliveries > 0:
 		parts.append("your runner made %d %s worth %s" % [deliveries, "delivery" if deliveries == 1 else "deliveries", Format.money(int(run.crew_report.get(DELIVERY_PAY, 0)))])
-	var heat_saved := int(run.crew_report.get(HEAT_SAVED, 0))
-	if heat_saved > 0:
-		parts.append("your driver kept %d heat off you" % heat_saved)
 	var warned := int(run.crew_report.get(RAIDS_WARNED, 0))
 	if warned > 0:
 		parts.append("your lookout warned you of %d %s" % [warned, "raid" if warned == 1 else "raids"])
@@ -258,8 +250,6 @@ static func effects(role: CrewRoleDef) -> String:
 		parts.append("free route recon")
 	if role.escape_bonus > 0.0:
 		parts.append("better escapes")
-	if role.removes_travel_heat:
-		parts.append("no travel heat")
 	if role.fight_bonus > 0.0:
 		parts.append("wins more fights")
 	if role.mugging_factor < 1.0:

@@ -13,6 +13,8 @@ const CASINO_SCREEN := "res://ui/screens/casino/casino_screen.tscn"
 const DOCKS_SCREEN := "res://ui/screens/docks/docks_screen.tscn"
 const FIXER_SCREEN := "res://ui/screens/fixer/fixer_screen.tscn"
 const END_SCREEN := "res://ui/screens/end/end_screen.tscn"
+## Places a player in a cell cannot get to.
+const CLOSED_TO_THE_JAILED: Array[String] = [MAP_SCREEN, MARKET_SCREEN, BAR_SCREEN, CASINO_SCREEN, DOCKS_SCREEN, FIXER_SCREEN]
 
 const SHUTTER_SHADER: Shader = preload("res://ui/shaders/shutter.gdshader")
 const CLOSE_SECONDS := 0.24
@@ -63,6 +65,8 @@ func is_transitioning() -> bool:
 
 
 func go_to(scene_path: String, queue_if_busy := false) -> void:
+	if scene_path in CLOSED_TO_THE_JAILED and GameOverlay.blocked_by_jail():
+		return
 	if _is_transitioning:
 		if queue_if_busy:
 			_queued_scene = scene_path

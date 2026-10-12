@@ -76,7 +76,12 @@ func _on_tapped() -> void:
 
 
 func _rest_y() -> float:
-	return maxf(SCREEN_TOP_MARGIN, SafeArea.top_inset(get_viewport()) + 16.0) + TOP_BAR_HEIGHT + TOP_GAP
+	return below_top_bar(get_viewport())
+
+
+## Where a card rests just under the screens' top bar.
+static func below_top_bar(viewport: Viewport) -> float:
+	return maxf(SCREEN_TOP_MARGIN, SafeArea.top_inset(viewport) + 16.0) + TOP_BAR_HEIGHT + TOP_GAP
 
 
 func _slide_to(target_y: float) -> Tween:

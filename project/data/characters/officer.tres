@@ -12,6 +12,6 @@ role = 2
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 line = "Keep walking, amigo. Unless you want me looking in that bag."
-blurb = "Walks a beat. Stops are more likely wherever he is."
+blurb = "On the Shark's payroll. Moves with the Shark's book, and works for whoever holds it."
 route = Array[StringName]([&"old_market", &"slums", &"docks", &"downtown", &"north_port", &"warehouse_row"])
 stop_multiplier = 1.5

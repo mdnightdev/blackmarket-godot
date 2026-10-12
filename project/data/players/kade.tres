@@ -12,3 +12,13 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 tagline = "Former courier. Knows every back road."
 intro_line = "I know every back road in this city. Time that paid off."
+edge = 2
+edge_text = "Routes: shorter trips and fewer road stops."
+origin_story = "Kade took a delivery for Voronin, no questions asked. A police blockade on the river road, and the crate was gone. Voronin wanted paying. The Shark paid Voronin and bought Kade's problem."
+origin_lines = Array[Dictionary]([{
+"line": "I told them the road was hot. They said drive anyway.",
+"speaker": "player"
+}, {
+"line": "And now the Shark owns the road you're on. Come on. I'll walk you up.",
+"speaker": "midnight_rabbit"
+}])

@@ -17,6 +17,7 @@ var _taken := 0
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 	_run.price_seed = 1357
 	_run.cash = 100000
 	_taken = 0

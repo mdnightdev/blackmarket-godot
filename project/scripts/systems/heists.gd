@@ -16,7 +16,7 @@ const MAX_CHANCE := 0.9
 
 
 static func check(run: RunState, heist: HeistDef) -> Result:
-	if not run.career:
+	if not Campaign.is_act_two(run):
 		return Result.NOT_CAREER
 	if StreetCred.rank(run) < heist.min_rank:
 		return Result.RANK_TOO_LOW
@@ -41,6 +41,12 @@ static func days_until_ready(run: RunState, heist: HeistDef) -> int:
 	return maxi(0, int(run.heist_cooldowns.get(heist.id, 0)) - run.day)
 
 
+## The take grows with every rank above the one that opens the heist.
+static func payout(run: RunState, heist: HeistDef) -> int:
+	var ranks_above := maxi(0, StreetCred.rank(run) - heist.min_rank)
+	return roundi(heist.payout * (1.0 + PayScale.RANK_GROWTH * ranks_above))
+
+
 static func success_chance(run: RunState, heist: HeistDef) -> float:
 	var hired_roles := heist.required_roles.size() - missing_roles(run, heist).size()
 	var chance := heist.base_chance + ROLE_BONUS * hired_roles + Skills.fight_bonus(run)
@@ -60,14 +66,15 @@ static func attempt(run: RunState, heist: HeistDef, roll: float, crew_roll: floa
 	run.heist_cooldowns[heist.id] = run.day + COOLDOWN_DAYS
 
 	if roll < chance:
-		run.cash += heist.payout
-		run.profit += heist.payout
+		var take := payout(run, heist)
+		run.cash += take
+		run.profit += take
 		Heat.add(run, heist.heat)
 		StreetCred.add(run, heist.cred)
 		if not heist.target_family.is_empty():
 			Families.shift(run, heist.target_family, -heist.standing_loss)
 		outcome["success"] = true
-		outcome["payout"] = heist.payout
+		outcome["payout"] = take
 		return outcome
 
 	Heat.add(run, FAILED_HEAT)

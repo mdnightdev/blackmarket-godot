@@ -101,6 +101,8 @@ static func _terms(run: RunState, offer: Dictionary) -> String:
 		terms.append("Rush order.")
 	terms.append("Due by %s if you take it now." % Calendar.describe(Calendar.stamp(run) + int(offer.lead)).to_lower())
 	terms.append(Customers.tell(offer))
+	if Edges.spots_sting(run, offer):
+		terms.append("Smells like a cop.")
 	return " ".join(terms)
 
 

@@ -8,6 +8,7 @@ enum Result { OK, FULL, TAKEN, EXPIRED, TOO_BIG }
 
 const MAX_ACTIVE := 2
 const POSTED_PER_DAY := 3
+const ACT_ONE_POSTED_PER_DAY := 2
 const PREMIUM_MIN := 1.35
 const PREMIUM_MAX := 1.6
 const LEAD_MIN_PHASES := 2
@@ -31,7 +32,7 @@ static func board(run: RunState, venue_id: StringName) -> Array[Dictionary]:
 	var offers: Array[Dictionary] = []
 	if clients.is_empty() or goods.is_empty():
 		return offers
-	for index in POSTED_PER_DAY:
+	for index in POSTED_PER_DAY if Campaign.is_act_two(run) else ACT_ONE_POSTED_PER_DAY:
 		var offer := _post(run, venue_id, day_index, index, clients, goods)
 		if int(offer.due) > stamp and not run.taken_orders.has(offer.id):
 			offers.append(offer)
@@ -183,14 +184,15 @@ static func _post(run: RunState, venue_id: StringName, day_index: int, index: in
 		wanted = goods.filter(dealer.deals_in)
 	var item: ItemDef = wanted[rng.randi_range(0, wanted.size() - 1)]
 	var price := roundi(item.base_price * dealer.bias_for(item.category) * rng.randf_range(PREMIUM_MIN, PREMIUM_MAX))
-	var quantity := lot_size(PayScale.roll(rng, run, dealer.tier) * ORDER_VALUE_PER_PAY, price, MIN_QUANTITY, MAX_QUANTITY)
+	var most := MAX_QUANTITY if Campaign.is_act_two(run) else clampi(floori(float(Inventory.capacity(run)) / item.slots), MIN_QUANTITY, MAX_QUANTITY)
+	var quantity := lot_size(PayScale.roll(rng, run, dealer.tier) * ORDER_VALUE_PER_PAY, price, MIN_QUANTITY, most)
 	return {
 		"id": "%s:%d:%d" % [venue_id, day_index, index],
 		"venue": String(venue_id),
 		"dealer": String(dealer.id),
 		"item": String(item.id),
 		"quantity": quantity,
-		"price": maxi(1, price),
+		"price": maxi(1, roundi(price * Edges.order_pay_factor(run))),
 		"due": day_index * RunState.Phase.size() + rng.randi_range(LEAD_MIN_PHASES, LEAD_MAX_PHASES),
 	}
 

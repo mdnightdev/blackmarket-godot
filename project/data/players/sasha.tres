@@ -12,3 +12,13 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 tagline = "Dealt cards for the house for ten years. Now she wants to be the house."
 intro_line = "Ten years of watching other people get rich at my table. My turn."
+edge = 4
+edge_text = "Venues: better bar orders and casino terms."
+origin_story = "Sasha borrowed through the Shark to open a private card room. On opening night Detective Moreau walked in with a warrant. The room, the cash and the tables were seized. The loan was not."
+origin_lines = Array[Dictionary]([{
+"line": "Ten years dealing for other people. One night as the house.",
+"speaker": "player"
+}, {
+"line": "Moreau knew your name before you did. Keep that in mind.",
+"speaker": "midnight_rabbit"
+}])

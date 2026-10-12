@@ -11,6 +11,7 @@ var _run: RunState
 func before_each() -> void:
 	_run = RunState.new()
 	_run.career = true
+	Story.mark(_run, War.VEX_FELL)
 	_run.cash = 50_000
 	_run.stash_level = Safehouse.UPGRADES.size()
 	_set_rank(StreetCred.max_rank())
@@ -53,8 +54,8 @@ func test_hiring_pays_and_records_the_day() -> void:
 	assert_eq(_run.crew[0], { "role": "runner", "hired_day": 7, "unpaid_days": 0 })
 
 
-func test_crew_needs_a_career() -> void:
-	_run.career = false
+func test_crew_waits_for_act_two() -> void:
+	_run.story_flags.clear()
 	assert_eq(Crew.check_hire(_run, RUNNER), Crew.Result.NOT_CAREER)
 	assert_eq(Crew.hire(_run, RUNNER), Crew.Result.NOT_CAREER)
 	assert_true(_run.crew.is_empty())
@@ -166,7 +167,6 @@ func test_no_crew_means_no_effects() -> void:
 	assert_almost_eq(Crew.escape_bonus(_run), 0.0, 0.0001)
 	assert_almost_eq(Crew.fight_bonus(_run), 0.0, 0.0001)
 	assert_almost_eq(Crew.mugging_factor(_run), 1.0, 0.0001)
-	assert_false(Crew.removes_travel_heat(_run))
 	assert_false(Crew.can_warn_of_raid(_run))
 	assert_eq(Crew.daily_wages(_run), 0)
 
@@ -189,7 +189,6 @@ func test_full_crew_effects_add_up() -> void:
 	assert_almost_eq(Crew.escape_bonus(_run), escape, 0.0001)
 	assert_almost_eq(Crew.fight_bonus(_run), fight, 0.0001)
 	assert_almost_eq(Crew.mugging_factor(_run), mugging, 0.0001)
-	assert_true(Crew.removes_travel_heat(_run))
 
 
 func test_each_role_brings_its_perk() -> void:
@@ -199,11 +198,11 @@ func test_each_role_brings_its_perk() -> void:
 	assert_almost_eq(Crew.mugging_factor(_run), Content.crew_role(MUSCLE).mugging_factor, 0.0001)
 	assert_almost_eq(Crew.fight_bonus(_run), Content.crew_role(MUSCLE).fight_bonus, 0.0001)
 	Crew.hire(_run, DRIVER)
-	assert_true(Crew.removes_travel_heat(_run))
+	assert_lt(Crew.stop_factor(_run), 1.0)
 	assert_almost_eq(Crew.escape_bonus(_run), Content.crew_role(DRIVER).escape_bonus, 0.0001)
 	assert_false(Crew.can_warn_of_raid(_run))
 	Crew.hire(_run, LOOKOUT)
-	assert_almost_eq(Crew.stop_factor(_run), 1.0 - Content.crew_role(LOOKOUT).stop_reduction, 0.0001)
+	assert_almost_eq(Crew.stop_factor(_run), 1.0 - Content.crew_role(LOOKOUT).stop_reduction - Content.crew_role(DRIVER).stop_reduction, 0.0001)
 	assert_true(Crew.can_warn_of_raid(_run))
 
 
@@ -281,17 +280,7 @@ func test_morning_report_counts_what_the_crew_did() -> void:
 	assert_eq(Crew.report_line(_run), "")
 	Crew.use_runner(_run, 900)
 	Crew.use_runner(_run, 300)
-	Crew.note(_run, Crew.HEAT_SAVED, 7)
-	assert_eq(Crew.report_line(_run), "Yesterday your runner made 2 deliveries worth $1,200, your driver kept 7 heat off you.")
-
-
-func test_driver_logs_the_travel_heat_saved() -> void:
-	Inventory.add_units(_run, &"street_meds", 15)
-	var heat := Heat.for_travel(_run)
-	Crew.hire(_run, DRIVER)
-	Heat.add_for_travel(_run)
-	assert_eq(_run.heat, 0)
-	assert_eq(int(_run.crew_report.get(Crew.HEAT_SAVED, 0)), heat)
+	assert_eq(Crew.report_line(_run), "Yesterday your runner made 2 deliveries worth $1,200.")
 
 
 func test_crew_report_and_runner_survive_a_save() -> void:

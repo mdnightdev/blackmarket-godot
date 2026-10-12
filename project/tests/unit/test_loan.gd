@@ -84,16 +84,16 @@ func test_missed_week_sends_enforcers_and_adds_a_strike() -> void:
 	assert_eq(_run.pending_encounter.type, Encounters.ENFORCERS)
 	assert_string_contains(str(_run.pending_encounter.body), "Missed 1 of %d" % Loan.MAX_MISSED_WEEKS)
 	assert_eq(_run.cash, cash_after_cut - roundi(cash_after_cut * Loan.ENFORCER_CASH_FRACTION))
-	assert_eq(_run.debt, RunState.STARTING_DEBT + 2500)
+	assert_eq(_run.debt, RunState.STARTING_DEBT + ceili(RunState.STARTING_DEBT * Loan.MISSED_WEEK_INTEREST))
 	assert_eq(_run.missed_weeks, 1)
 	assert_eq(_run.next_due_day, Loan.PAYMENT_PERIOD_DAYS * 2 + 1)
 	assert_eq(_run.paid_this_period, 0)
 	assert_eq(_run.period_minimum, Loan.minimum_payment(_run.debt))
 
 
-func test_penalty_is_charged_on_the_unpaid_part() -> void:
-	Loan.repay(_run, 2000)
-	assert_eq(Loan.enforcer_penalty(_run), 1500)
+func test_missed_week_interest_is_charged_on_the_whole_debt() -> void:
+	_run.debt = 40000
+	assert_eq(Loan.missed_week_interest(_run), 2000)
 
 
 func test_enforcers_take_no_more_than_the_cap() -> void:
@@ -114,6 +114,7 @@ func test_enforcers_never_take_goods() -> void:
 func test_paid_week_rolls_over_quietly_and_clears_strikes() -> void:
 	_run.cash = 10000
 	_run.missed_weeks = 2
+	_run.day = Loan.PAYMENT_PERIOD_DAYS
 	Loan.repay(_run, Loan.FIRST_PAYMENT)
 	_start_day(Loan.PAYMENT_PERIOD_DAYS + 1)
 	assert_true(_run.pending_encounter.is_empty())

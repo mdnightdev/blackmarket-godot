@@ -20,8 +20,12 @@ var cash: int = STARTING_CASH
 var debt: int = STARTING_DEBT
 var heat: int = 0
 var district_id: StringName = STARTING_DISTRICT
-var tutorial_step: int = 0
+## The Shark's terms, played once when the run starts. See OpeningTalk.
+var opening_done := false
+## Lexie's lessons switched off by the player. See Tutorial.
 var tutorial_completed := false
+var lessons_seen: Array[String] = []
+var lessons_queued: Array[String] = []
 ## Item id to units carried.
 var inventory: Dictionary = {}
 ## Item id to units stored in the safehouse stash.
@@ -57,8 +61,9 @@ var stop_stamp: int = -1
 var arrest_stamp: int = -1
 ## Phase stamp of the last paid route recon.
 var recon_stamp: int = -1
-## Real seconds left in a cell after choosing jail at a police stop.
-var jail_seconds_left: float = 0.0
+## Unix time when the player walks out of a cell, 0 when free. See Police.
+var jail_until: float = 0.0
+var jail_bail: int = 0
 ## Phase stamp of the last hijack attempt.
 var hijacked_stamp: int = -1
 ## District id to the player's turf share. Missing districts use the Turf defaults.
@@ -94,8 +99,6 @@ var cred_day: int = 0
 var trading_cred_today: int = 0
 ## Skill id to rank bought. See Skills.
 var skills: Dictionary = {}
-## District id to the turf level bought there. Holding a district counts as level 1. See Turf.
-var turf_levels: Dictionary = {}
 ## Hired crew. See Crew for the entry layout.
 var crew: Array[Dictionary] = []
 ## What the crew did since the last morning report. See Crew.note().
@@ -128,6 +131,52 @@ var job_pings: Array[Dictionary] = []
 var seen_pings: Array[String] = []
 ## Weekly payments to the Shark missed in a row. See Loan.
 var missed_weeks: int = 0
+## Every weekly payment ever missed. The Shark's inheritance talk needs a clean record.
+var missed_total: int = 0
+## Day the current week's payment was fully covered. 0 while it is still owed.
+var covered_day: int = 0
+## Who holds the debt: the Shark, or Vex after he sells it. See DebtSale.
+var lender: StringName = Loan.LENDER
+## See SharkTrust.
+var shark_trust: int = SharkTrust.START
+var shark_letter_sent := false
+var inheritance_promised := false
+## What the player did with 午夜兔子's savings. See DebtSale.RabbitOffer.
+var rabbit_offer: DebtSale.RabbitOffer = DebtSale.RabbitOffer.NONE
+## 午夜兔子's night in the cells. See RabbitCells.
+var rabbit_cells: RabbitCells.Stage = RabbitCells.Stage.NONE
+## Phase stamp he walks out at while held. -1 when he is not held.
+var rabbit_release_stamp: int = -1
+## Ramos kept his service medal.
+var rabbit_medal_held := false
+## How hard the police hunt for whoever tips the player off before raids. Never shown. See Ramos.
+var leak_suspicion: int = 0
+## Ramos gives no raid tips until this day. 0 when he is not lying low.
+var ramos_quiet_until: int = 0
+## The day of Vex's last ambush, 0 before the first. See VexAmbush.
+var last_ambush_day: int = 0
+## See Story.
+var story_flags: Array[String] = []
+## Weapon grade to how many men it arms. See Armory.
+var armory: Dictionary = {}
+## Weapon lots bought from Rook. His back room opens with it.
+var rook_lots: int = 0
+## Voronin's crates delivered in a row. A lost or seized crate resets it.
+var crate_streak: int = 0
+## Corner ids the player holds. See Corners.
+var corners_held: Array[String] = []
+## Tier to a count of men per state. See Army.
+var army: Dictionary = {}
+## Tier to the men who died fighting, over the whole run.
+var fallen: Dictionary = {}
+## Index into Army.EXPANSIONS.
+var army_level: int = 0
+## Tier to the slots the player gives it. Missing tiers use Army.STARTING_SPLIT.
+var army_split: Dictionary = {}
+## Index into Hospital.LEVELS.
+var hospital_level: int = 0
+## Corner id to the gang fighters left on it after a failed attack. Missing corners keep their full crew.
+var corner_defenders: Dictionary = {}
 ## Finished jobs, newest first. See Journal for the entry layout.
 var journal: Array[Dictionary] = []
 ## Jobs closed early as failures since the last commit. Never saved. See Journal.mark_failed.
@@ -178,7 +227,8 @@ func to_dict() -> Dictionary:
 		"smuggling_ban_day": smuggling_ban_day,
 		"stop_stamp": stop_stamp,
 		"arrest_stamp": arrest_stamp,
-		"jail_seconds_left": jail_seconds_left,
+		"jail_until": jail_until,
+		"jail_bail": jail_bail,
 		"recon_stamp": recon_stamp,
 		"hijacked_stamp": hijacked_stamp,
 		"turf": _string_keys(turf),
@@ -198,7 +248,6 @@ func to_dict() -> Dictionary:
 		"cred_day": cred_day,
 		"trading_cred_today": trading_cred_today,
 		"skills": _string_keys(skills),
-		"turf_levels": _string_keys(turf_levels),
 		"crew": crew,
 		"crew_report": _string_keys(crew_report),
 		"runner_stamp": runner_stamp,
@@ -215,6 +264,31 @@ func to_dict() -> Dictionary:
 		"job_pings": job_pings,
 		"seen_pings": seen_pings,
 		"missed_weeks": missed_weeks,
+		"missed_total": missed_total,
+		"covered_day": covered_day,
+		"lender": String(lender),
+		"shark_trust": shark_trust,
+		"shark_letter_sent": shark_letter_sent,
+		"inheritance_promised": inheritance_promised,
+		"rabbit_offer": rabbit_offer,
+		"rabbit_cells": rabbit_cells,
+		"rabbit_release_stamp": rabbit_release_stamp,
+		"rabbit_medal_held": rabbit_medal_held,
+		"leak_suspicion": leak_suspicion,
+		"ramos_quiet_until": ramos_quiet_until,
+		"last_ambush_day": last_ambush_day,
+		"story_flags": story_flags,
+		"armory": armory,
+		"rook_lots": rook_lots,
+		"crate_streak": crate_streak,
+		"corners_held": corners_held,
+		"army": army,
+		"war_scale": Army.WAR_SCALE,
+		"fallen": fallen,
+		"army_level": army_level,
+		"army_split": army_split,
+		"hospital_level": hospital_level,
+		"corner_defenders": corner_defenders,
 		"journal": journal,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -223,8 +297,10 @@ func to_dict() -> Dictionary:
 		"trades": trades,
 		"profit": profit,
 		"busts": busts,
-		"tutorial_step": tutorial_step,
+		"opening_done": opening_done,
 		"tutorial_completed": tutorial_completed,
+		"lessons_seen": lessons_seen,
+		"lessons_queued": lessons_queued,
 	}
 
 
@@ -286,7 +362,12 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.stop_stamp = int(data.get("stop_stamp", -1))
 	state.arrest_stamp = int(data.get("arrest_stamp", -1))
 	state.recon_stamp = int(data.get("recon_stamp", -1))
-	state.jail_seconds_left = clampf(float(data.get("jail_seconds_left", 0.0)), 0.0, Police.JAIL_SECONDS)
+	state.jail_until = maxf(0.0, float(data.get("jail_until", 0.0)))
+	state.jail_bail = maxi(0, int(data.get("jail_bail", 0)))
+	var legacy_jail := clampf(float(data.get("jail_seconds_left", 0.0)), 0.0, Police.JAIL_SECONDS)
+	if legacy_jail > 0.0:
+		state.jail_until = Time.get_unix_time_from_system() + legacy_jail
+		state.jail_bail = Police.MIN_BAIL
 	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
 	state.turf = Turf.sanitize(data.get("turf", {}))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
@@ -319,10 +400,13 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.street_cred = clampi(int(data.get("street_cred", 0)), 0, StreetCred.MAX)
 	state.cred_day = maxi(0, int(data.get("cred_day", 0)))
 	state.trading_cred_today = clampi(int(data.get("trading_cred_today", 0)), 0, StreetCred.DAILY_TRADING_CAP)
-	state.tutorial_step = maxi(0, int(data.get("tutorial_step", 0)))
+	state.opening_done = bool(data.get("opening_done", true))
 	state.tutorial_completed = bool(data.get("tutorial_completed", false))
+	state.lessons_seen = _lessons(data.get("lessons_seen"))
+	for lesson in _lessons(data.get("lessons_queued")):
+		if not state.lessons_seen.has(lesson):
+			state.lessons_queued.append(lesson)
 	state.skills = _positive_counts(data.get("skills"))
-	state.turf_levels = _positive_counts(data.get("turf_levels"))
 	for member in _dictionaries(data.get("crew")):
 		var clean := Crew.sanitize(member)
 		var has_room := Crew.is_free(clean) or Crew.hired_count(state) < Crew.cap(state)
@@ -370,6 +454,38 @@ static func from_dict(data: Dictionary) -> RunState:
 		for id: Variant in saved_seen_pings:
 			state.seen_pings.append(str(id))
 	state.missed_weeks = maxi(0, int(data.get("missed_weeks", 0)))
+	state.missed_total = maxi(state.missed_weeks, int(data.get("missed_total", 0)))
+	state.covered_day = maxi(0, int(data.get("covered_day", 0)))
+	state.lender = Loan.VEX_LENDER if str(data.get("lender", "")) == String(Loan.VEX_LENDER) else Loan.LENDER
+	state.shark_trust = clampi(int(data.get("shark_trust", SharkTrust.START)), 0, SharkTrust.MAX)
+	state.shark_letter_sent = bool(data.get("shark_letter_sent", false))
+	state.inheritance_promised = bool(data.get("inheritance_promised", false))
+	state.rabbit_offer = clampi(int(data.get("rabbit_offer", 0)), 0, DebtSale.RabbitOffer.size() - 1) as DebtSale.RabbitOffer
+	state.rabbit_cells = clampi(int(data.get("rabbit_cells", 0)), 0, RabbitCells.Stage.size() - 1) as RabbitCells.Stage
+	state.rabbit_release_stamp = int(data.get("rabbit_release_stamp", -1))
+	state.rabbit_medal_held = bool(data.get("rabbit_medal_held", false))
+	state.leak_suspicion = clampi(int(data.get("leak_suspicion", 0)), 0, Ramos.LEAK_LIMIT)
+	state.ramos_quiet_until = maxi(0, int(data.get("ramos_quiet_until", 0)))
+	state.last_ambush_day = maxi(0, int(data.get("last_ambush_day", 0)))
+	var saved_flags: Variant = data.get("story_flags", [])
+	if saved_flags is Array:
+		for flag: Variant in saved_flags:
+			if not str(flag).is_empty() and not state.story_flags.has(str(flag)):
+				state.story_flags.append(str(flag))
+	state.armory = Armory.sanitize(data.get("armory"))
+	state.rook_lots = maxi(0, int(data.get("rook_lots", 0)))
+	state.crate_streak = maxi(0, int(data.get("crate_streak", 0)))
+	state.corners_held = Corners.sanitize(data.get("corners_held"))
+	var saved_army: Variant = data.get("army") if data.has("army") else Army.from_legacy(int(data.get("men", 0)), state.story_flags.has(War.UNIT_HIRED))
+	state.army = Army.sanitize(saved_army)
+	state.fallen = Army.sanitize_counts(data.get("fallen"))
+	state.army_level = clampi(int(data.get("army_level", 0)), 0, Army.EXPANSIONS.size() - 1)
+	state.army_split = Army.sanitize_counts(data.get("army_split"))
+	state.hospital_level = clampi(int(data.get("hospital_level", 0)), 0, Hospital.LEVELS.size() - 1)
+	state.corner_defenders = War.sanitize_defenders(data.get("corner_defenders"))
+	var saved_scale := maxi(1, int(data.get("war_scale", 1)))
+	if saved_scale < Army.WAR_SCALE:
+		Army.rescale(state, Army.WAR_SCALE / saved_scale)
 	for entry in _dictionaries(data.get("journal")):
 		var clean := Journal.sanitize(entry)
 		if not clean.is_empty() and state.journal.size() < Journal.MAX_ENTRIES:
@@ -385,6 +501,8 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.trades = maxi(0, int(data.get("trades", state.trades)))
 	state.profit = int(data.get("profit", state.profit))
 	state.busts = maxi(0, int(data.get("busts", state.busts)))
+	if state.career and not data.has("story_flags"):
+		Campaign.skip_act_one(state)
 	return state
 
 
@@ -401,6 +519,16 @@ static func _dictionaries(source: Variant) -> Array[Dictionary]:
 		for entry: Variant in source:
 			if entry is Dictionary:
 				result.append(entry)
+	return result
+
+
+static func _lessons(source: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if source is Array:
+		for entry: Variant in source:
+			var lesson := str(entry)
+			if Tutorial.LINES.has(lesson) and not result.has(lesson):
+				result.append(lesson)
 	return result
 
 

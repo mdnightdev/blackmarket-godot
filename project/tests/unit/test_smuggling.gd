@@ -5,6 +5,7 @@ var _run: RunState
 
 func before_each() -> void:
 	_run = RunState.new()
+	Story.mark(_run, War.VEX_FELL)
 	_run.price_seed = 1357
 	_run.district_id = Smuggling.ORIGIN
 
@@ -22,7 +23,9 @@ func test_board_posts_crates_to_other_districts_within_limits() -> void:
 		assert_between(int(offer.slots), Smuggling.MIN_SLOTS, Smuggling.MAX_SLOTS)
 		assert_between(int(offer.lead), Smuggling.MIN_LEAD_PHASES, Smuggling.MAX_LEAD_PHASES)
 		var band: Array = PayScale.BANDS[Smuggling.destination(offer).tier]
-		assert_between(int(offer.pay), int(band[0]) - Smuggling.PAY_ROUNDING, ceili(band[2] * (1.0 + Smuggling.DISTANCE_BONUS * sqrt(2.0))))
+		var floor_pay := roundi(band[0] * Smuggling.RISK_PREMIUM) - Smuggling.PAY_ROUNDING
+		var ceiling_pay := ceili(band[2] * Smuggling.RISK_PREMIUM * (1.0 + Smuggling.DISTANCE_BONUS * sqrt(2.0)))
+		assert_between(int(offer.pay), floor_pay, ceiling_pay)
 		assert_eq(int(offer.pay) % Smuggling.PAY_ROUNDING, 0)
 	assert_eq(Smuggling.board(_run), offers, "same seed and day give the same board")
 
@@ -77,6 +80,24 @@ func test_late_crate_is_lost_and_voronin_stops_giving_work() -> void:
 	assert_true(Smuggling.is_banned(_run))
 	assert_true(Smuggling.board(_run).is_empty())
 	assert_eq(Smuggling.accept(_run, offer), Smuggling.Result.BANNED)
+
+
+func test_a_delivery_streak_raises_pay_and_a_seizure_resets_it() -> void:
+	var offer := _first_offer()
+	Smuggling.accept(_run, offer)
+	_run.crate_streak = 3
+	_run.district_id = StringName(offer.destination)
+	assert_eq(Smuggling.deliver(_run), roundi(int(offer.pay) * (1.0 + 3 * Smuggling.STREAK_BONUS)))
+	assert_eq(_run.crate_streak, 4)
+	_run.district_id = Smuggling.ORIGIN
+	Smuggling.accept(_run, Smuggling.board(_run)[0])
+	Smuggling.seize(_run)
+	assert_eq(_run.crate_streak, 0)
+
+
+func test_streak_bonus_is_capped() -> void:
+	_run.crate_streak = Smuggling.MAX_STREAK_BONUS * 3
+	assert_almost_eq(Smuggling.streak_bonus(_run), Smuggling.MAX_STREAK_BONUS * Smuggling.STREAK_BONUS, 0.0001)
 
 
 func test_police_take_the_crate_first_when_you_comply() -> void:

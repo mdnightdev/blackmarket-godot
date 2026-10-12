@@ -146,4 +146,4 @@ func _show_sell_button(item: ItemDef) -> void:
 func _on_sell_pressed() -> void:
 	var item: ItemDef = _goods_by_title.get(_selected_title)
 	if item != null and _buyer != null:
-		_trade_sheet.show_trade(TradeSheet.Mode.SELL, item, _buyer)
+		_trade_sheet.show_trade(TradeForm.Mode.SELL, item, _buyer)

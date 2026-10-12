@@ -280,7 +280,6 @@ static func _complete(run: RunState, order: Dictionary, unit_price: int, line: S
 		return {}
 	run.customer_orders.erase(order)
 	StreetCred.add(run, StreetCred.ORDER_DELIVERED)
-	Heat.add(run, Heat.for_trade(run, item, quantity))
 	var result := _result(line)
 	result.paid = unit_price * quantity
 	result.tasks = DailyTasks.record_sale(run, run.district_id, unit_price * quantity)

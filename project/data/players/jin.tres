@@ -12,3 +12,16 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 tagline = "Ran tech for a crew that got busted. Starting over."
 intro_line = "My last crew went down. I didn't. Now I owe the wrong man money."
+edge = 1
+edge_text = "Intel: hears about raids and rival moves a phase early."
+origin_story = "Jin ran the tech for a small crew. Officer Ramos raided their stash house. The crew got out, the money did not, and they blamed Jin. To settle their own debt with the Shark, they gave him Jin's name."
+origin_lines = Array[Dictionary]([{
+"line": "They sold you to clear their tab. Nice friends.",
+"speaker": "midnight_rabbit"
+}, {
+"line": "Ex friends.",
+"speaker": "player"
+}, {
+"line": "I'll drive you. I'm not going in. That man's tea gives me the creeps.",
+"speaker": "midnight_rabbit"
+}])

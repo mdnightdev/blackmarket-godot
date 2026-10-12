@@ -6,6 +6,7 @@ var _run: RunState
 func before_each() -> void:
 	_run = RunState.new()
 	_run.career = true
+	Story.mark(_run, War.VEX_FELL)
 	_run.cash = 50_000
 	_run.stash_level = Safehouse.UPGRADES.size()
 	_run.street_cred = StreetCred.MAX
@@ -28,11 +29,11 @@ func test_cool_head_cools_heat_faster() -> void:
 	assert_eq(_run.heat, plain - Skills.extra_cooling(_run))
 
 
-func test_driver_removes_travel_heat() -> void:
+func test_driver_lowers_police_stops() -> void:
 	Inventory.add_units(_run, &"street_meds", 15)
-	assert_gt(Heat.for_travel(_run), 0)
+	var before := Police.stop_chance(_run)
 	Crew.hire(_run, &"driver")
-	assert_eq(Heat.for_travel(_run), 0)
+	assert_lt(Police.stop_chance(_run), before)
 
 
 func test_lookout_lowers_police_stops() -> void:

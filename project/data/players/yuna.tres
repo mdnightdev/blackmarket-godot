@@ -12,3 +12,13 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 tagline = "Counted pills behind a pharmacy counter. Knows what every one is worth on the street."
 intro_line = "I know the price of everything in that back room. Time to sell it."
+edge = 6
+edge_text = "Buy prices: dealers sell to her a little cheaper."
+origin_story = "Yuna found pills leaving the pharmacy for Vex's corners. She reported it to the wrong manager and was blamed for the missing stock. The Shark paid the people who could make the charge disappear."
+origin_lines = Array[Dictionary]([{
+"line": "I did the right thing and I'm the one who owes.",
+"speaker": "player"
+}, {
+"line": "Right thing, wrong people. Happens a lot here.",
+"speaker": "midnight_rabbit"
+}])

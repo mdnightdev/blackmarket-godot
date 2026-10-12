@@ -14,9 +14,11 @@ extends Resource
 @export_range(0, 1_000_000) var travel_cost: int = 0
 @export_range(0.5, 3.0, 0.05) var heat_multiplier: float = 1.0
 @export var venues: Array[StringName] = []
+## Street corners the turf is split into. Empty for districts still fought over as a share.
+@export var corners: Array[CornerDef] = []
+## The district seen from above, shown instead of the street when it has corners.
+@export var corner_map: Texture2D
 ## Districts with a direct road from here. Hot runs travel stop by stop along these.
 @export var roads: Array[StringName] = []
 ## Street cred rank needed before the player can travel here.
 @export_range(1, 10) var min_rank: int = 1
-## Power (summed turf levels) needed before the player can travel here.
-@export_range(0, 25) var min_power: int = 0

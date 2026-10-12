@@ -3,7 +3,14 @@ extends Control
 enum Tab { BUY, SELL }
 
 const ITEM_ROW := preload("res://ui/components/item_row.tscn")
+const ITEM_CARD := preload("res://ui/components/item_card.tscn")
+const CARDS_PER_ROW := 2
+const CARD_SPACING := 10
+const SELECTED_CARD: StringName = &"ItemCardSelected"
 const STEADY_CHANGE := 0.005
+## Item risk where the card caption turns from green to amber, and from amber to red. Matches ItemDef.risk_label.
+const RISK_MEDIUM := 20
+const RISK_HIGH := 35
 const TOAST_HOLD_SECONDS := 1.8
 const GREETING_DELAY := 0.35
 const PLAYER_TURF_LINE := "Your people run this block now. You get the best price in town."
@@ -23,6 +30,8 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _speech: Typewriter = %Speech
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _mood_label: Label = %MoodLabel
+@onready var _district_pill: Label = %DistrictPill
+@onready var _bag_bar: ProgressBar = %BagBar
 @onready var _order_list: VBoxContainer = %OrderList
 @onready var _buy_tab: Button = %BuyTab
 @onready var _sell_tab: Button = %SellTab
@@ -31,12 +40,14 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _list: VBoxContainer = %List
 @onready var _back_button: Button = %BackButton
 @onready var _bag_button: Button = %BagButton
-@onready var _trade_sheet: TradeSheet = %TradeSheet
+@onready var _trade_panel: Control = %TradePanel
+@onready var _trade_form: TradeForm = %TradeForm
 @onready var _toast: Label = %Toast
 @onready var _deal_flash: DealFlash = %DealFlash
 
 var _dealer: DealerDef
 var _tab := Tab.BUY
+var _selected: ItemDef
 var _toast_tween: Tween
 
 
@@ -50,6 +61,7 @@ func _ready() -> void:
 	SafeArea.apply_top_margin(_margin, 40)
 	_background.texture = district.background
 	_dealer_label.text = _dealer.display_name
+	_district_pill.text = district.display_name
 	_portrait.show_speaker(_dealer)
 	_speech.finished.connect(_portrait.set_talking.bind(false))
 
@@ -61,8 +73,9 @@ func _ready() -> void:
 	_sell_tab.pressed.connect(_select_tab.bind(Tab.SELL))
 	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
 	_bag_button.pressed.connect(GameOverlay.open_bag)
-	_trade_sheet.completed.connect(_on_trade_completed)
-	_trade_sheet.dealer_said.connect(_dealer_says)
+	_trade_form.completed.connect(_on_trade_completed)
+	_trade_form.dealer_said.connect(_dealer_says)
+	_trade_form.close_requested.connect(_close_trade)
 	GameState.run_changed.connect(_refresh)
 
 	GameState.clock_active = true
@@ -73,15 +86,17 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	GameState.clock_active = false
+	if _trade_panel.get_parent() == null:
+		_trade_panel.queue_free()
 
 
 func can_present_encounter() -> bool:
-	return not _trade_sheet.visible and not _deal_flash.visible
+	return _selected == null and not _deal_flash.visible
 
 
 func handle_back() -> bool:
-	if _trade_sheet.visible:
-		_trade_sheet.close()
+	if _selected != null:
+		_close_trade()
 	else:
 		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 	return true
@@ -117,6 +132,7 @@ func _dealer_says(line: String) -> void:
 
 
 func _on_trade_completed(message: String, cash_delta: int, haggled: bool) -> void:
+	_close_trade()
 	_deal_flash.play(cash_delta, haggled or absi(cash_delta) >= HANDSHAKE_MIN_TOTAL)
 	_show_toast(message)
 	_dealer_says(TierVoice.pick(TierVoice.CLOSING, _dealer.tier))
@@ -129,6 +145,7 @@ func _dealer_is_here() -> bool:
 
 func _select_tab(tab: Tab) -> void:
 	_tab = tab
+	_selected = null
 	[_buy_tab, _sell_tab][tab].button_pressed = true
 	_scroll.scroll_vertical = 0
 	_refresh()
@@ -137,9 +154,12 @@ func _select_tab(tab: Tab) -> void:
 func _refresh() -> void:
 	var run := GameState.run
 	var mood := Haggle.mood(run, _dealer)
-	_mood_label.text = Haggle.mood_label(mood).to_upper()
+	_mood_label.text = "Mood: %s" % Haggle.mood_label(mood)
+	_mood_label.add_theme_color_override("font_color", _mood_color(mood))
 	_news_line.show_for(run.district_id)
 	_bag_button.text = "Bag %d/%d" % [Inventory.used(run), Inventory.capacity(run)]
+	_bag_bar.max_value = Inventory.capacity(run)
+	_bag_bar.value = Inventory.used(run)
 	var family := Families.family_of(_dealer)
 	_family_label.visible = family != null
 	if family != null:
@@ -148,28 +168,26 @@ func _refresh() -> void:
 	for list in [_list, _order_list]:
 		for child: Node in list.get_children():
 			list.remove_child(child)
-			child.queue_free()
+			if child != _trade_panel:
+				child.queue_free()
 	_order_list.hide()
 
 	if not _dealer_is_here():
-		_trade_sheet.close()
+		_selected = null
 		_show_notice("%s has packed up and moved on." % _dealer.display_name)
 		return
 	if Families.refuses(run, _dealer):
-		_trade_sheet.close()
+		_selected = null
 		_show_notice("%s works for the %s. The family will not deal with you." % [_dealer.display_name, family.english_name])
 		return
 	if not Market.is_open(run, _dealer):
+		_selected = null
 		_show_notice("%s will not deal with you until next phase." % _dealer.display_name)
 		return
 
 	GameState.remember_prices(_dealer)
 	_fill_order_list()
-	match _tab:
-		Tab.BUY:
-			_fill_buy_list()
-		Tab.SELL:
-			_fill_sell_list()
+	_lay_out(_buy_cards() if _tab == Tab.BUY else _sell_cards())
 
 
 func _show_notice(text: String) -> void:
@@ -206,57 +224,105 @@ func _deliver(order: Dictionary) -> void:
 	_dealer_says(TierVoice.pick(TierVoice.DELIVERED, _dealer.tier))
 
 
-func _fill_buy_list() -> void:
+func _buy_cards() -> Array[Dictionary]:
 	var run := GameState.run
+	var cards: Array[Dictionary] = []
 	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
 		if not _dealer.sells(item):
 			continue
 		if not Trade.rank_allows(run, item):
-			_add_row(item, "", "Needs rank %s" % StreetCred.rank_name(item.min_rank), "LOCKED")
+			cards.append(_card(item, "", "Needs %s" % StreetCred.rank_name(item.min_rank), "LOCKED"))
 			continue
 		var held := Inventory.count(run, item.id)
-		var caption := "%s, %s" % [item.category_name(), item.risk_label().to_lower()]
-		if held > 0:
-			caption = "You have %d, %s" % [held, item.risk_label().to_lower()]
+		var caption := item.risk_label() if held == 0 else "You have %d, %s" % [held, item.risk_label().to_lower()]
 		var change := Market.price_change(run, _dealer, item)
-		_add_row(item, Format.money(Market.buy_price(run, _dealer, item)), caption, _change_text(change), _change_color(change))
+		var card := _card(item, Format.money(Market.buy_price(run, _dealer, item)), caption, _change_text(change), _change_color(change))
+		card.trend = 0 if absf(change) < STEADY_CHANGE else (1 if change > 0.0 else -1)
+		card.caption_color = _risk_color(item)
+		cards.append(card)
 	_show_notice("")
+	return cards
 
 
-func _fill_sell_list() -> void:
+func _sell_cards() -> Array[Dictionary]:
 	var run := GameState.run
+	var cards: Array[Dictionary] = []
 	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
 		var held := Inventory.count(run, item.id)
 		if held == 0:
 			continue
 		if not _dealer.deals_in(item):
-			_add_row(item, "", "You have %d" % held, "WON'T BUY")
+			cards.append(_card(item, "", "You have %d" % held, "WON'T BUY"))
 			continue
 		var offer := Market.sell_price(run, _dealer, item)
 		var paid := int(run.cost_basis.get(item.id, 0))
 		var margin := float(offer - paid) / paid if paid > 0 else 0.0
-		var detail := "%+d%% PROFIT" % roundi(margin * 100.0) if margin >= 0.0 else "%d%% LOSS" % roundi(margin * 100.0)
-		_add_row(item, Format.money(offer), "You have %d" % held, detail, Palette.RISK_LOW if margin >= 0.0 else Palette.RISK_HIGH)
-	_show_notice("" if _list.get_child_count() > 0 else "Nothing in your bag to sell.")
+		var detail := "%+d%%" % roundi(margin * 100.0)
+		cards.append(_card(item, Format.money(offer), "You have %d" % held, detail, Palette.RISK_LOW if margin >= 0.0 else Palette.RISK_HIGH))
+	_show_notice("" if not cards.is_empty() else "Nothing in your bag to sell.")
+	return cards
 
 
-func _add_row(item: ItemDef, price_text: String, caption: String, detail: String = "", detail_color: Color = Palette.TEXT_MUTED) -> void:
-	var row: ItemRow = ITEM_ROW.instantiate()
-	_list.add_child(row)
-	row.display(item, price_text, caption, detail, detail_color)
-	row.item_selected.connect(_on_item_selected)
+func _card(item: ItemDef, price_text: String, caption: String, detail := "", detail_color := Palette.TEXT_MUTED) -> Dictionary:
+	return { "item": item, "price": price_text, "caption": caption, "detail": detail, "color": detail_color, "trend": 0, "caption_color": Palette.TEXT_MUTED }
+
+
+## Two cards to a row. The open trade sits under the row of the card it belongs to.
+func _lay_out(cards: Array[Dictionary]) -> void:
+	var trade_shown := false
+	for start in range(0, cards.size(), CARDS_PER_ROW):
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", CARD_SPACING)
+		_list.add_child(row)
+		var holds_selected := false
+		for entry in cards.slice(start, start + CARDS_PER_ROW):
+			var card: ItemCard = ITEM_CARD.instantiate()
+			row.add_child(card)
+			card.display(entry.item, entry.price, entry.caption, entry.detail, entry.color)
+			card.show_trend(entry.trend, entry.color)
+			card.tint_caption(entry.caption_color)
+			card.item_selected.connect(_on_item_selected)
+			if entry.item == _selected:
+				card.theme_type_variation = SELECTED_CARD
+				holds_selected = true
+		if row.get_child_count() < CARDS_PER_ROW:
+			var filler := Control.new()
+			filler.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(filler)
+		if holds_selected:
+			_list.add_child(_trade_panel)
+			trade_shown = true
+	_trade_panel.visible = trade_shown
+	if not trade_shown:
+		_selected = null
 
 
 func _change_text(change: float) -> String:
 	if absf(change) < STEADY_CHANGE:
 		return "STEADY"
-	return "%s %d%%" % ["UP" if change > 0.0 else "DOWN", absi(roundi(change * 100.0))]
+	return "%d%%" % absi(roundi(change * 100.0))
+
+
+func _risk_color(item: ItemDef) -> Color:
+	if item.risk < RISK_MEDIUM:
+		return Palette.RISK_LOW
+	if item.risk < RISK_HIGH:
+		return Palette.TEXT_MUTED
+	return Palette.RISK_HIGH
+
+
+func _mood_color(mood: float) -> Color:
+	if mood >= Haggle.RELAXED_MOOD:
+		return Palette.RISK_LOW
+	if mood >= Haggle.WARY_MOOD:
+		return Palette.TEXT_MUTED
+	return Palette.RISK_HIGH
 
 
 func _change_color(change: float) -> Color:
 	if absf(change) < STEADY_CHANGE:
 		return Palette.TEXT_MUTED
-	return Palette.PEACH_BRIGHT if change > 0.0 else Palette.PRICE
+	return Palette.TEXT_CREAM if change > 0.0 else Palette.PRICE
 
 
 func _on_item_selected(item: ItemDef) -> void:
@@ -266,8 +332,22 @@ func _on_item_selected(item: ItemDef) -> void:
 	if _tab == Tab.BUY and not Trade.rank_allows(GameState.run, item):
 		_dealer_says("%s? I sell those to a %s, not to you. Not yet." % [item.display_name, StreetCred.rank_name(item.min_rank)])
 		return
-	var mode := TradeSheet.Mode.BUY if _tab == Tab.BUY else TradeSheet.Mode.SELL
-	_trade_sheet.show_trade(mode, item, _dealer)
+	if item == _selected:
+		_close_trade()
+		return
+	_selected = item
+	var mode := TradeForm.Mode.BUY if _tab == Tab.BUY else TradeForm.Mode.SELL
+	_trade_form.show_trade(mode, item, _dealer)
+	_refresh()
+	await get_tree().process_frame
+	_scroll.ensure_control_visible(_trade_panel)
+
+
+func _close_trade() -> void:
+	if _selected == null:
+		return
+	_selected = null
+	_refresh()
 
 
 func _show_toast(message: String) -> void:

@@ -5,6 +5,7 @@ class_name FamilyTalk
 const DELIVER: StringName = &"deliver"
 const LEAVE: StringName = &"leave"
 const HOSTILE_LINE := "You have some nerve showing your face here. If you want to make it right, the family has work."
+const STRANGER_LINE := "The family does not give work to a stranger still squabbling over Old Market. Settle your own street first."
 
 
 static func talk_to(lieutenant: CharacterDef) -> void:
@@ -30,7 +31,9 @@ static func _show_board(lieutenant: CharacterDef, family: FamilyDef) -> void:
 		var offer := offers[index]
 		var possible := run.cash >= int(offer.price) if int(offer.kind) == Favours.Kind.TRIBUTE else Orders.fits_in_bag(run, offer)
 		choices.append(DialogueChoice.new(StringName(str(index)), _offer_label(offer), possible))
-	if offers.is_empty():
+	if not Campaign.is_act_two(run):
+		line = STRANGER_LINE
+	elif offers.is_empty():
 		line = "Nothing more for you today. Come back tomorrow."
 	choices.append(_leave())
 	GameOverlay.talk(lieutenant, line, choices, _on_board_choice.bind(family, offers), _standing_hint(family))

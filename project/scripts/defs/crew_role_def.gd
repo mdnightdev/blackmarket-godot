@@ -15,7 +15,6 @@ extends Resource
 @export_range(0.0, 1.0, 0.05) var fight_bonus: float = 0.0
 ## Multiplier on the chance of being mugged.
 @export_range(0.0, 1.0, 0.05) var mugging_factor: float = 1.0
-@export var removes_travel_heat := false
 ## Once per day, turns a raid into a warning.
 @export var warns_of_raids := false
 ## Once per phase, delivers a bar order or family favour from the player's bag without the trip.

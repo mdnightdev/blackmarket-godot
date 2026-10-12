@@ -15,14 +15,16 @@ static func dealer_location(run: RunState, dealer: DealerDef, phase_stamp: int) 
 	return _pick(run, dealer.route, [&"roster", day_index, dealer.id], false)
 
 
-## Characters with a route pick a new district every phase. Police favour districts with more heat.
+## Characters with a route pick a new district every phase. Police favour districts with more heat, and Brandt
+## follows a watched player.
 static func character_location(run: RunState, character: CharacterDef, phase_stamp: int) -> StringName:
 	if character.role == CharacterDef.Role.RIVAL and Gangs.is_gone(run, Gangs.for_boss(character.id)):
 		return &""
 	if character.route.is_empty():
 		return character.district_id
 	var police := character.role == CharacterDef.Role.POLICE
-	return _pick(run, character.route, [&"roster", phase_stamp, character.id], police)
+	var followed := run.district_id if character.id == Police.BRANDT and Heat.level(run) >= Heat.Level.WATCHED else &""
+	return _pick(run, character.route, [&"roster", phase_stamp, character.id], police, Moreau.watches_player(run, character), followed)
 
 
 ## Residents first, then travelling dealers, each group in catalog order.
@@ -51,6 +53,8 @@ static func characters_at(run: RunState, district_id: StringName, phase_stamp: i
 static func strongest_patrol(run: RunState, district_id: StringName, phase_stamp: int) -> CharacterDef:
 	var strongest: CharacterDef = null
 	for character in characters_at(run, district_id, phase_stamp):
+		if character.id == Ramos.ID and not Ramos.is_hostile(run):
+			continue
 		if character.role == CharacterDef.Role.POLICE and (strongest == null or character.stop_multiplier > strongest.stop_multiplier):
 			strongest = character
 	return strongest
@@ -61,7 +65,8 @@ static func patrol_multiplier(run: RunState, district_id: StringName, phase_stam
 	return patrol.stop_multiplier if patrol != null else 1.0
 
 
-static func _pick(run: RunState, districts: Array[StringName], seed_parts: Array, weight_by_heat: bool) -> StringName:
+## weight_by_player favours the districts the player holds, and followed favours the one district the player is in.
+static func _pick(run: RunState, districts: Array[StringName], seed_parts: Array, weight_by_heat: bool, weight_by_player := false, followed: StringName = &"") -> StringName:
 	var weights: Array[float] = []
 	var total := 0.0
 	for district_id in districts:
@@ -69,6 +74,10 @@ static func _pick(run: RunState, districts: Array[StringName], seed_parts: Array
 		if weight_by_heat:
 			var district := Content.district(district_id)
 			weight = district.heat_multiplier if district != null else 1.0
+		if weight_by_player and Turf.holder(run, district_id) == Turf.Holder.PLAYER:
+			weight *= Moreau.ATTENTION_WEIGHT
+		if district_id == followed:
+			weight *= Police.FOLLOW_WEIGHT
 		weights.append(weight)
 		total += weight
 	var target := Market.roll(run, seed_parts, 0.0, total)

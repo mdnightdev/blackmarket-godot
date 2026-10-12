@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_def")
 id = &"enforcer"
-display_name = "Dmitri"
+display_name = "Old Gao"
 role = 1
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")

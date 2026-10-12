@@ -19,4 +19,3 @@ heat_multiplier = 1.2
 venues = Array[StringName]([&"market", &"supply"])
 roads = Array[StringName]([&"docks", &"downtown", &"west_end"])
 min_rank = 4
-min_power = 0

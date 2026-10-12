@@ -2,6 +2,8 @@ class_name Loan
 
 const VENUE: StringName = &"loan_shark"
 const LENDER: StringName = &"shark"
+## Vex's character id. She holds the debt after the Shark sells it. See DebtSale.
+const VEX_LENDER: StringName = &"rival"
 const DAILY_INTEREST := 0.015
 const PAYMENT_PERIOD_DAYS := 7
 const FIRST_PAYMENT := 5000
@@ -12,8 +14,8 @@ const MAX_MISSED_WEEKS := 3
 const MAX_DEBT := 50000
 const ENFORCER_CASH_FRACTION := 0.15
 const MAX_ENFORCER_TAKE := 5000
-## Late fee as a share of the missed payment.
-const ENFORCER_PENALTY_FRACTION := 0.5
+## Interest added to the whole debt for each missed week. On-time weeks add nothing.
+const MISSED_WEEK_INTEREST := 0.05
 
 
 static func minimum_payment(debt: int) -> int:
@@ -42,7 +44,7 @@ static func max_repay(run: RunState) -> int:
 
 
 static func max_borrow(run: RunState) -> int:
-	if not run.career or run.shark_bought:
+	if not run.career or run.shark_bought or is_with_vex(run):
 		return 0
 	return maxi(0, MAX_DEBT - run.debt)
 
@@ -53,7 +55,7 @@ static func can_visit(run: RunState) -> bool:
 
 
 static func can_borrow(run: RunState) -> bool:
-	return run.career and not run.shark_bought and can_visit(run)
+	return run.career and not run.shark_bought and not is_with_vex(run) and can_visit(run)
 
 
 ## Repaying works from anywhere. Only borrowing needs a visit to The Shark.
@@ -63,6 +65,8 @@ static func repay(run: RunState, amount: int) -> bool:
 	run.cash -= amount
 	run.debt -= amount
 	run.paid_this_period += amount
+	if run.covered_day == 0 and amount_due(run) <= 0:
+		run.covered_day = run.day
 	return true
 
 
@@ -81,6 +85,7 @@ static func is_payment_due_today(run: RunState) -> bool:
 static func start_next_period(run: RunState) -> void:
 	run.next_due_day += PAYMENT_PERIOD_DAYS
 	run.paid_this_period = 0
+	run.covered_day = 0
 	run.period_minimum = minimum_payment(run.debt)
 
 
@@ -88,5 +93,14 @@ static func enforcer_cash_take(run: RunState) -> int:
 	return mini(MAX_ENFORCER_TAKE, roundi(maxi(0, run.cash) * ENFORCER_CASH_FRACTION))
 
 
-static func enforcer_penalty(run: RunState) -> int:
-	return ceili(amount_due(run) * ENFORCER_PENALTY_FRACTION)
+static func missed_week_interest(run: RunState) -> int:
+	return ceili(run.debt * MISSED_WEEK_INTEREST)
+
+
+static func is_with_vex(run: RunState) -> bool:
+	return run.lender == VEX_LENDER
+
+
+## Short name for the one the player owes, as used in "Shark payment due today".
+static func lender_label(run: RunState) -> String:
+	return "Vex" if is_with_vex(run) else "Shark"

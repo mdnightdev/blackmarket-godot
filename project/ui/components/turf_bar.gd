@@ -4,9 +4,11 @@ extends GameButton
 const PLAYER_COLOR := Palette.RISK_LOW
 const OPEN_COLOR := Palette.TEXT_MUTED
 const HOLD_MARK_COLOR := Color(1, 1, 1, 0.35)
+const PIP_GAP := 4.0
 
 var _share := 50
 var _gang_color := OPEN_COLOR
+var _corner_colors: Array[Color] = []
 
 @onready var _share_label: Label = %ShareLabel
 @onready var _status_label: Label = %StatusLabel
@@ -34,7 +36,12 @@ func show_district(run: RunState, district_id: StringName) -> void:
 		return
 	_share = Turf.share(run, district_id)
 	_gang_color = gang.color
-	if Gangs.is_gone(run, gang):
+	_corner_colors.clear()
+	for corner in Corners.of(district_id):
+		_corner_colors.append(PLAYER_COLOR if Corners.holds(run, corner.id) else gang.color)
+	if not _corner_colors.is_empty():
+		_share_label.text = "CORNERS  You %d   %s %d" % [Corners.held_count(run, district_id), gang.display_name, _corner_colors.size() - Corners.held_count(run, district_id)]
+	elif Gangs.is_gone(run, gang):
 		_share_label.text = "TURF  %s has left the city" % gang.display_name
 	else:
 		_share_label.text = "TURF  You %d%%   %s %d%%" % [_share, gang.display_name, 100 - _share]
@@ -49,6 +56,9 @@ func show_district(run: RunState, district_id: StringName) -> void:
 
 
 func _draw_bar() -> void:
+	if not _corner_colors.is_empty():
+		_draw_pips()
+		return
 	var full := Rect2(Vector2.ZERO, _bar.size)
 	var split := full.size.x * _share / 100.0
 	_bar.draw_rect(Rect2(Vector2.ZERO, Vector2(split, full.size.y)), PLAYER_COLOR)
@@ -56,3 +66,11 @@ func _draw_bar() -> void:
 	for mark: int in [Turf.GANG_HOLD_SHARE, Turf.HOLD_SHARE]:
 		var x := full.size.x * mark / 100.0
 		_bar.draw_line(Vector2(x, 0), Vector2(x, full.size.y), HOLD_MARK_COLOR, 2.0)
+
+
+func _draw_pips() -> void:
+	var count := _corner_colors.size()
+	var width := (_bar.size.x - PIP_GAP * (count - 1)) / count
+	for index in count:
+		var left := index * (width + PIP_GAP)
+		_bar.draw_rect(Rect2(Vector2(left, 0), Vector2(width, _bar.size.y)), _corner_colors[index])

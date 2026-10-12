@@ -41,6 +41,7 @@ const PHASE_TINTS := {
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _around_block: Control = %AroundBlock
 @onready var _people_list: HBoxContainer = %PeopleList
+@onready var _corner_map: CornerMap = %CornerMap
 @onready var _venue_fabs: VBoxContainer = %VenueFabs
 @onready var _map_fab: FabButton = %MapFab
 @onready var _crate_button: Button = %CrateButton
@@ -51,6 +52,7 @@ const PHASE_TINTS := {
 
 var _tilt_offset := 0.0
 var _tint_tween: Tween
+var _shows_corner_map := false
 
 
 func _ready() -> void:
@@ -60,7 +62,9 @@ func _ready() -> void:
 		return
 
 	SafeArea.apply_top_margin(_margin, 40)
-	_background.texture = district.background
+	_shows_corner_map = district.corner_map != null
+	_background.texture = district.corner_map if _shows_corner_map else district.background
+	_corner_map.visible = _shows_corner_map
 	_background.self_modulate = PHASE_TINTS[GameState.run.phase]
 	if district.ambient_effect != null:
 		_effects.add_child(district.ambient_effect.instantiate())
@@ -76,13 +80,15 @@ func _ready() -> void:
 	_map_fab.pressed.connect(SceneRouter.go_to.bind(SceneRouter.MAP_SCREEN))
 	_logout_dialog.confirmed.connect(_log_out)
 	_turf_bar.pressed.connect(StreetTalk.talk_about_turf)
+	_corner_map.corner_tapped.connect(CornerTalk.open)
 	GameState.run_changed.connect(_on_run_changed)
 	GameState.day_started.connect(_on_day_started)
 	resized.connect(_center_background_pivot)
 	_center_background_pivot()
 
 	GameState.clock_active = true
-	_start_background_drift()
+	if not _shows_corner_map:
+		_start_background_drift()
 	_play_entrance()
 	if GameState.has_unseen_new_day:
 		_show_day_card()
@@ -92,7 +98,10 @@ func _exit_tree() -> void:
 	GameState.clock_active = false
 
 
+## The corner map stays still so its pins stay on their corners.
 func _process(delta: float) -> void:
+	if _shows_corner_map:
+		return
 	var target := clampf(-Input.get_accelerometer().x / 9.8, -1.0, 1.0) * TILT_PIXELS
 	_tilt_offset = lerpf(_tilt_offset, target, minf(1.0, delta * TILT_SMOOTHING))
 	_background.position.x = _tilt_offset
@@ -120,6 +129,10 @@ func _build_people_strip() -> void:
 		child.queue_free()
 
 	var run := GameState.run
+	if _shows_corner_map:
+		_corner_map.show_corners(run, GameState.current_district())
+		_around_block.visible = false
+		return
 	var stamp := Calendar.stamp(run)
 	for dealer in Roster.dealers_at(run, run.district_id, stamp):
 		var role := "DEALER" if dealer.is_resident() else "VISITING"
@@ -197,6 +210,8 @@ func _refresh_crate_button() -> void:
 
 
 func _deliver_crate() -> void:
+	if GameOverlay.blocked_by_jail():
+		return
 	var run := GameState.run
 	if Smuggling.can_deliver(run):
 		var invoiced := Smuggling.is_invoiced(run.crate)

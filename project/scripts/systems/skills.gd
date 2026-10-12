@@ -27,7 +27,6 @@ const SKILLS := {
 	&"wheelman": {
 		"name": "Wheelman",
 		"escape": [0.05, 0.10, 0.15],
-		"travel_heat": [1, 2, 3],
 	},
 	&"muscle": {
 		"name": "Muscle",
@@ -68,7 +67,7 @@ static func describe(id: StringName, rank: int) -> String:
 		&"cool_head":
 			return "Heat cools %d more per phase" % int(_value_at(id, "cooling", rank))
 		&"wheelman":
-			return "Escapes %s easier, travel heat -%d" % [_strength(rank), int(_value_at(id, "travel_heat", rank))]
+			return "Escapes %s easier" % _strength(rank)
 		&"muscle":
 			return "Fights %s easier" % _strength(rank)
 		&"smuggler":
@@ -164,10 +163,6 @@ static func extra_cooling(run: RunState) -> int:
 
 static func escape_bonus(run: RunState) -> float:
 	return _effect(run, &"wheelman", "escape", 0.0)
-
-
-static func travel_heat_reduction(run: RunState) -> int:
-	return int(_effect(run, &"wheelman", "travel_heat", 0.0))
 
 
 ## Added to the win chance of muggings, gang fights and heists.

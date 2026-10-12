@@ -6,6 +6,9 @@ class_name CustomerOffers
 
 const OFFER_PHASES := 3
 const POST_CHANCE := 0.65
+## Customers do not respect a new face. In Act 1 they post less often, a little more with every rank.
+const ACT_ONE_POST_CHANCE := 0.3
+const ACT_ONE_CHANCE_PER_RANK := 0.05
 const MIN_LEAD_PHASES := 3
 const MAX_LEAD_PHASES := 6
 const MIN_RUSH_PHASES := 1
@@ -44,7 +47,7 @@ static func post(run: RunState) -> Array[Dictionary]:
 	if not Customers.find_offer(run, id).is_empty() or not Customers.find(run, id).is_empty():
 		return posted
 	var rng := Odds.rng_for(run, &"customer")
-	if rng.randf() >= POST_CHANCE:
+	if rng.randf() >= post_chance(run):
 		return posted
 	var customer := _pick(rng, eligible(run))
 	if customer == null:
@@ -55,6 +58,12 @@ static func post(run: RunState) -> Array[Dictionary]:
 	run.customer_offers.append(offer)
 	posted.append(offer)
 	return posted
+
+
+static func post_chance(run: RunState) -> float:
+	if Campaign.is_act_two(run):
+		return POST_CHANCE
+	return minf(POST_CHANCE, ACT_ONE_POST_CHANCE + StreetCred.rank(run) * ACT_ONE_CHANCE_PER_RANK)
 
 
 ## Customers who could post this phase: working now, ranked for, reachable and not already waiting on the player.
@@ -81,7 +90,7 @@ static func sting_ready(run: RunState, district: DistrictDef) -> bool:
 
 
 ## The customer's order for this phase. It comes from the run seed, so a reload cannot reroll it.
-## Quantities can outgrow the bag by the next bag upgrade, so bigger orders ask for a bigger bag.
+## From Act 2 quantities can outgrow the bag by the next bag upgrade, so bigger orders ask for a bigger bag.
 ## Empty when none of the goods they want exist.
 static func generate(run: RunState, customer: CustomerDef) -> Dictionary:
 	var district := Content.district(customer.district_id)
@@ -139,8 +148,10 @@ static func street_price(run: RunState, item: ItemDef) -> int:
 	return maxi(1, roundi(float(total) / sellers))
 
 
-## The most bag slots an order can ask for: the bag now plus the next upgrade.
+## The most bag slots an order can ask for: the bag now plus the next upgrade, or only the bag now in Act 1.
 static func max_slots(run: RunState) -> int:
+	if not Campaign.is_act_two(run):
+		return Inventory.capacity(run)
 	return Inventory.capacity(run) + Gear.next_capacity_bonus(run)
 
 

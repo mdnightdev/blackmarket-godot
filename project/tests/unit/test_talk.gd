@@ -37,31 +37,35 @@ func test_a_family_name_beats_a_fake_id_and_a_fake_id_beats_playing_dumb() -> vo
 	assert_gt(Talk.police_chance(_run, Talk.SHOW_ID), Talk.police_chance(_run, Talk.PLAY_DUMB))
 
 
-func test_a_good_line_ends_the_stop_for_free() -> void:
+func _stay_put() -> void:
 	_run.pending_encounter = Encounters.police_stop(_run)
+	Encounters.resolve(_run, Encounters.STAY, 0.5)
+
+
+func test_a_good_line_ends_the_stop_for_free() -> void:
+	_stay_put()
 	assert_ne(Encounters.resolve(_run, Talk.PLAY_DUMB, 0.0), "")
 	assert_false(Encounters.has_pending(_run))
 	assert_eq(_run.cash, RunState.STARTING_CASH)
 	assert_eq(Inventory.count(_run, &"burner_phones"), 5)
 
 
-func test_a_bad_line_leaves_the_player_cornered() -> void:
-	_run.pending_encounter = Encounters.police_stop(_run)
+func test_a_bad_line_leads_straight_to_the_search() -> void:
+	_stay_put()
 	Encounters.resolve(_run, Talk.PLAY_DUMB, 0.999)
-	assert_true(bool(_run.pending_encounter.get("cornered", false)))
-	var ids := Encounters.choices(_run, _run.pending_encounter).map(func(choice: Encounters.Choice) -> StringName: return choice.id)
-	assert_false(ids.has(Talk.PLAY_DUMB), "no second try")
-	assert_false(ids.has(Encounters.RUN))
+	assert_false(Encounters.has_pending(_run), "no second try")
+	assert_true(Police.is_jailed(_run), "the bag was searched")
 
 
 func test_a_fake_id_that_fails_is_kept_by_the_police() -> void:
 	Inventory.add_units(_run, Talk.FAKE_ID, 2)
-	_run.pending_encounter = Encounters.police_stop(_run)
-	Encounters.resolve(_run, Talk.SHOW_ID, 0.999)
+	_stay_put()
+	var talked := Talk.resolve_police(_run, Talk.SHOW_ID, 0.999)
+	assert_false(talked.free)
 	assert_eq(Inventory.count(_run, Talk.FAKE_ID), 1)
 
 
 func test_a_line_the_player_does_not_have_is_refused() -> void:
-	_run.pending_encounter = Encounters.police_stop(_run)
+	_stay_put()
 	assert_eq(Encounters.resolve(_run, Talk.SHOW_ID, 0.0), "")
 	assert_true(Encounters.has_pending(_run))

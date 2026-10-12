@@ -6,8 +6,8 @@ extends Resource
 @export var icon: Texture2D
 @export_multiline var description: String
 @export_range(0, 1_000_000) var price: int = 0
-## Turf level the district needs before this business can open there.
-@export_range(1, 5) var min_turf_level: int = 2
+## Street cred rank needed before this business can open in a district the player holds.
+@export_range(1, 10) var min_rank: int = 4
 @export_range(1, 500) var stock_capacity: int = 20
 @export_range(1, 100) var sales_per_phase: int = 1
 @export_range(0, 10_000) var daily_upkeep: int = 0
