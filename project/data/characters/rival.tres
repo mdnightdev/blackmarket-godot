@@ -12,5 +12,5 @@ role = 4
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 line = "This is my corner now. Sell somewhere else, or sell cheap."
-blurb = "Runs a rival crew. Dealers pay less in districts she holds. Sell and send muscle to take them from her."
+blurb = "Runs a rival crew. Dealers pay less in districts she holds. Her corners only change hands by force."
 route = Array[StringName]([&"old_market", &"slums", &"docks", &"north_port", &"downtown"])

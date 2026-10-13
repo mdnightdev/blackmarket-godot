@@ -1,8 +1,51 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/north_port.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_north_port.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_marina_gate"]
+script = ExtResource("4_corner")
+id = &"marina_gate"
+display_name = "Marina Gate"
+map_position = Vector2(0.22, 0.66)
+moves = "Party favours for yacht crews"
+rent = 4000
+protection = 3000
+defenders = 3000
+
+[sub_resource type="Resource" id="Corner_harbour_lounge"]
+script = ExtResource("4_corner")
+id = &"harbour_lounge"
+display_name = "Mermaid"
+map_position = Vector2(0.62, 0.7)
+moves = "Watches and quiet deals"
+rent = 5000
+protection = 4000
+defenders = 5000
+
+[sub_resource type="Resource" id="Corner_fuel_dock"]
+script = ExtResource("4_corner")
+id = &"fuel_dock"
+display_name = "Gasoline"
+map_position = Vector2(0.36, 0.22)
+moves = "Diesel and passports"
+rent = 6000
+protection = 4000
+defenders = 7000
+
+[sub_resource type="Resource" id="Corner_boathouse"]
+script = ExtResource("4_corner")
+id = &"boathouse"
+display_name = "Captain"
+map_position = Vector2(0.78, 0.26)
+moves = "Vex's sea route"
+stronghold = true
+rent = 0
+protection = 12000
+defenders = 10000
 
 [resource]
 script = ExtResource("1_def")
@@ -18,3 +61,5 @@ heat_multiplier = 1.6
 roads = Array[StringName]([&"warehouse_row", &"old_market", &"the_heights", &"golden_mile"])
 venues = Array[StringName]([&"market", &"vip_casino"])
 min_rank = 5
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_marina_gate"), SubResource("Corner_harbour_lounge"), SubResource("Corner_fuel_dock"), SubResource("Corner_boathouse")])

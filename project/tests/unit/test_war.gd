@@ -39,7 +39,7 @@ func test_an_attack_needs_men() -> void:
 
 func test_the_stronghold_is_harder_to_take() -> void:
 	var lantern := Corners.find(LANTERN)
-	assert_almost_eq(War.enemy_power(_run, lantern), lantern.defenders * War.BLADE_SKILL * War.STRONGHOLD_FACTOR, 0.001)
+	assert_almost_eq(War.enemy_power(_run, lantern), lantern.defenders * Rivals.SKILL * War.STRONGHOLD_FACTOR, 0.001)
 
 
 func test_the_starting_outfit_cannot_take_a_corner_alone() -> void:
@@ -96,17 +96,27 @@ func test_rabbits_unit_joins_as_the_black_hand() -> void:
 	assert_eq(_run.cash, 50000 - War.RABBIT_UNIT_PRICE)
 	assert_eq(Army.count(_run, Army.Tier.BLACK_HAND), War.RABBIT_UNIT_SIZE)
 	assert_false(War.unit_on_offer(_run))
-	assert_eq(Army.slots(_run, Army.Tier.BLACK_HAND), War.RABBIT_UNIT_SIZE, "the unit takes Lunatic slots")
-	assert_eq(Army.slots_used(_run), Army.capacity(_run))
 	assert_almost_eq(Army.strength(_run), War.RABBIT_UNIT_SIZE * Army.BLACK_HAND_POWER, 0.001)
 	assert_true(War.can_attack(_run, Corners.find(STEPS)), "the unit can attack on its own")
 
 
-func test_rabbits_unit_needs_room_in_the_outfit() -> void:
+func test_rabbits_unit_is_paid_up_front() -> void:
 	Story.mark(_run, War.LOST_ONCE)
-	_enlist(Army.Tier.BLACK_HAND, Army.capacity(_run) - 5)
+	_run.cash = War.RABBIT_UNIT_PRICE - 1
 	assert_false(War.hire_unit(_run))
-	assert_eq(_run.cash, 50000)
+	assert_eq(Army.count(_run, Army.Tier.BLACK_HAND), 0)
+
+
+func test_men_without_a_bed_die_of_their_wounds() -> void:
+	_run.army_level = 1
+	_enlist(Army.Tier.GUARDS, 400)
+	_run.armory = { Armory.Grade.RIFLE: 400 }
+	Army.add(_run, Army.Tier.LUNATICS, Army.State.WOUNDED, Hospital.beds(_run) - 10)
+	var result := War.attack(_run, STEPS, Army.deployment(_run), 0.5, 0.5)
+	assert_eq(result.wounded, 10, "only ten beds were free")
+	assert_eq(result.dead, 13 + 25)
+	assert_eq(Army.fallen(_run, Army.Tier.GUARDS), 38)
+	assert_eq(Hospital.free_beds(_run), 0)
 
 
 func test_taking_the_last_corner_ends_the_war_and_opens_act_two() -> void:
@@ -147,4 +157,45 @@ func test_defenders_survive_a_save() -> void:
 
 func test_sanitize_defenders_drops_unknown_corners_and_clamps() -> void:
 	var clean := War.sanitize_defenders({ "tran_steps": 99999, "nowhere": 5, "fish_row": -3 })
-	assert_eq(clean, { "tran_steps": Corners.find(STEPS).defenders, "fish_row": 0 })
+	assert_eq(clean, { "tran_steps": Rivals.max_garrison(Corners.find(STEPS)), "fish_row": 0 })
+
+
+func _open_act_two() -> void:
+	Corners.take_all(_run, Corners.HOME)
+	Story.mark(_run, War.VEX_FELL)
+
+
+func test_other_districts_open_to_attack_in_act_two() -> void:
+	_enlist(Army.Tier.LUNATICS, 10)
+	var bay := Corners.find(&"loading_bay")
+	assert_false(War.can_attack(_run, bay), "Act 1 is only about Old Market")
+	_open_act_two()
+	assert_true(War.can_attack(_run, bay))
+	assert_false(War.is_target(_run, Corners.find(&"iron_gate_lane")), "the heights are out of reach")
+	assert_false(War.is_target(_run, Corners.find(STEPS)), "Old Market is already the player's")
+
+
+func test_a_rival_fights_with_what_it_carries() -> void:
+	_open_act_two()
+	var bay := Corners.find(&"loading_bay")
+	assert_almost_eq(War.enemy_power(_run, bay), bay.defenders * Armory.power_of(Armory.Grade.HANDGUN) * Rivals.SKILL, 0.001)
+	_run.rivals[&"jackal"] = { "gear": Armory.Grade.RIFLE }
+	assert_almost_eq(War.enemy_power(_run, bay), bay.defenders * Armory.power_of(Armory.Grade.RIFLE) * Rivals.SKILL, 0.001)
+
+
+func test_taking_a_rivals_last_corner_drives_it_out() -> void:
+	_open_act_two()
+	var jackal := Content.gang(&"jackal")
+	for district_id in jackal.turf:
+		Corners.take_all(_run, district_id)
+	Corners.lose(_run, &"loading_bay")
+	_run.army_level = 2
+	_enlist(Army.Tier.GUARDS, 2000)
+	_run.armory = { Armory.Grade.RIFLE: 2000 }
+	_run.scouted = { "loading_bay": { "low": 1, "high": 2, "gear": 2, "day": _run.day, "seen": false } }
+	var result := War.attack(_run, &"loading_bay", Army.deployment(_run), 0.5, 0.5)
+	assert_true(result.won)
+	assert_false(result.ended)
+	assert_true(Gangs.is_gone(_run, jackal))
+	assert_eq(_run.pending_encounter.type, Turf.VICTORY)
+	assert_false(_run.scouted.has("loading_bay"), "a taken corner needs no report")

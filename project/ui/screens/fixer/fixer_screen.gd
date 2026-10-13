@@ -75,10 +75,10 @@ func _add_clean_up_row() -> void:
 
 func _add_weapons_row() -> void:
 	var run := GameState.run
-	var caption := "Blades, handguns and rifles in lots. Each arms one man." if Armory.room(run) == Armory.Room.FRONT else "The back room is open to you."
+	var caption := "Blades and handguns, any amount. He buys back at half." if Armory.room(run) == Armory.Room.FRONT else "The back room is open to you."
 	var owned := Armory.total(run)
 	var row := _add_row()
-	row.show_entry(WEAPONS_ICON, "Ask about weapons", "%d owned" % owned if owned > 0 else "", caption, "TAP TO TALK", Palette.TEXT_CREAM)
+	row.show_entry(WEAPONS_ICON, "Ask about weapons", "%s owned" % Format.count(owned) if owned > 0 else "", caption, "TAP TO TALK", Palette.TEXT_CREAM)
 	row.item_selected.connect(func(_item: ItemDef) -> void: WeaponsTalk.open(_host))
 
 

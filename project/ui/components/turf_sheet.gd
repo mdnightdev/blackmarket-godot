@@ -146,12 +146,12 @@ func _update_headquarters(run: RunState) -> void:
 		if wounded > 0:
 			_headquarters.set_status(&"hospital", "%d wounded" % wounded, TurfScene.Status.NEEDS_YOU)
 		else:
-			_headquarters.set_status(&"hospital", "%d beds" % Hospital.beds(run), TurfScene.Status.OPEN)
+			_headquarters.set_status(&"hospital", "%s beds" % Format.count(Hospital.beds(run)), TurfScene.Status.OPEN)
 	else:
 		_headquarters.set_status(&"armory", "Locked: buy a corner", TurfScene.Status.LOCKED)
 		_headquarters.set_status(&"hospital", "Locked: buy a corner", TurfScene.Status.LOCKED)
 	if Gym.is_open(run):
-		_headquarters.set_status(&"gym", "Next session day %d" % Gym.next_session_day(run), TurfScene.Status.OPEN)
+		_headquarters.set_status(&"gym", "%s men" % Format.count(Army.total(run)), TurfScene.Status.OPEN)
 	else:
 		_headquarters.set_status(&"gym", "Locked: 午夜兔子 runs it", TurfScene.Status.LOCKED)
 	if Campaign.is_act_two(run):
@@ -174,12 +174,12 @@ func _talk_about_district(district: DistrictDef) -> void:
 	if not Turf.is_contested(district.id):
 		GameOverlay.talk(Content.player(run.player_id), "%s is open city. Nobody runs these streets." % district.display_name, [_close_choice()], _end_talk)
 		return
-	var share := Turf.share(run, district.id)
-	var line := "I run %d%% of %s. %s has the rest." % [share, district.display_name, Gangs.owner(district.id).display_name]
-	var hint := "Get to %d%% to hold it. Sell there or send muscle from the district screen." % Turf.HOLD_SHARE
+	var line := "I hold %d of the %d corners in %s. %s has the rest." % [
+		Corners.held_count(run, district.id), Corners.of(district.id).size(), district.display_name, Gangs.owner(district.id).display_name]
+	var hint := "Take %d%% of the corners to hold it. Scout a corner first, then hit it." % Turf.HOLD_SHARE
 	if Turf.holds(run, district.id):
-		hint = "Yours. It pays %s each morning, the police stop you less and there is room for %d business%s." % [
-			Format.money(Turf.DAILY_CUT), Turf.business_slots(run, district.id), "" if Turf.business_slots(run, district.id) == 1 else "es"]
+		hint = "Yours. The police stop you less and there is room for %d business%s." % [
+			Turf.business_slots(run, district.id), "" if Turf.business_slots(run, district.id) == 1 else "es"]
 	GameOverlay.talk(Content.player(run.player_id), line, [_close_choice()], _end_talk, hint)
 
 

@@ -19,7 +19,8 @@ func test_old_market_is_split_into_four_corners_held_by_vex() -> void:
 	assert_eq(Corners.of(Corners.HOME).size(), 4)
 	assert_eq(Turf.share(_run, Corners.HOME), 0)
 	assert_eq(Turf.holder(_run, Corners.HOME), Turf.Holder.GANG)
-	assert_false(Corners.has_corners(&"slums"))
+	assert_true(Corners.has_corners(&"slums"))
+	assert_false(Corners.has_corners(&"golden_mile"))
 
 
 func test_corner_sellers_work_their_corner_every_phase_whoever_holds_it() -> void:
@@ -44,7 +45,7 @@ func test_everyone_in_old_market_stands_at_one_corner() -> void:
 	var working := Roster.dealers_at(_run, Corners.HOME, stamp).size() + Roster.characters_at(_run, Corners.HOME, stamp).size()
 	assert_eq(placed, working)
 	assert_eq(Corners.people_at(_run, Corners.HOME), people, "The same phase places people the same way")
-	assert_true(Corners.people_at(_run, &"slums").is_empty())
+	assert_true(Corners.people_at(_run, &"golden_mile").is_empty())
 
 
 func test_sellers_stand_at_their_own_corner() -> void:
@@ -54,11 +55,6 @@ func test_sellers_stand_at_their_own_corner() -> void:
 		for corner in Corners.of(Corners.HOME):
 			if corner.seller == dealer.id:
 				assert_true(people[corner.id].has(dealer), "%s works their own corner" % dealer.display_name)
-
-
-func test_selling_and_muscle_do_not_move_corners() -> void:
-	assert_eq(Turf.shift(_run, Corners.HOME, 30), 0)
-	assert_false(Turf.can_send_muscle(_run))
 
 
 func test_mama_lin_sells_only_after_the_debt() -> void:
@@ -124,11 +120,8 @@ func test_held_corners_pay_every_morning() -> void:
 	assert_eq(Turf.daily_cut(_run), Corners.find(Corners.MAMA_LIN).daily_cut())
 
 
-func test_vex_is_not_beaten_by_turf_share() -> void:
-	for district_id in Gangs.owner(Corners.HOME).turf:
-		_run.turf[district_id] = 100
-	for corner in Corners.of(Corners.HOME):
-		Corners.take(_run, corner.id)
+func test_vex_stays_while_she_holds_corners_outside_old_market() -> void:
+	Corners.take_all(_run, Corners.HOME)
 	Turf.check_victory(_run)
 	assert_false(_run.gangs_gone.has(&"vex"))
 

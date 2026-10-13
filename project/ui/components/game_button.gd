@@ -3,10 +3,14 @@ extends Button
 
 const PRESSED_SCALE := Vector2(0.96, 0.96)
 const HAPTIC_MS := 12
+## Inside a scroll list, a press that moves this far is a drag: the list scrolls and the button does not fire.
+const DRAG_CANCEL_DISTANCE := 14.0
 
 @export var click_sound: AudioStream = Sfx.CLICK
 
 var _scale_tween: Tween
+var _press_position := Vector2.ZERO
+var _press_cancelled := false
 
 
 func _ready() -> void:
@@ -15,6 +19,38 @@ func _ready() -> void:
 	pressed.connect(_on_pressed)
 	resized.connect(_center_pivot)
 	_center_pivot()
+	if _in_scroll_list():
+		mouse_filter = MOUSE_FILTER_PASS
+
+
+func _gui_input(event: InputEvent) -> void:
+	if mouse_filter != MOUSE_FILTER_PASS:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		_press_position = event.global_position
+		_press_cancelled = false
+	elif event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT and not _press_cancelled:
+		if event.global_position.distance_to(_press_position) > DRAG_CANCEL_DISTANCE:
+			_cancel_press()
+
+
+## Disabling a button drops its press, so the release that ends the drag does nothing.
+func _cancel_press() -> void:
+	_press_cancelled = true
+	if disabled:
+		return
+	disabled = true
+	disabled = false
+	_animate_scale(Vector2.ONE, 0.16)
+
+
+func _in_scroll_list() -> bool:
+	var node := get_parent()
+	while node != null:
+		if node is ScrollContainer:
+			return true
+		node = node.get_parent()
+	return false
 
 
 func _center_pivot() -> void:

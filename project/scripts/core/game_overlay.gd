@@ -10,6 +10,9 @@ const OFFER_BANNER := preload("res://ui/components/offer_banner.tscn")
 const QUOTE_SHEET := preload("res://ui/components/quote_sheet.tscn")
 const PROFILE_SHEET := preload("res://ui/components/profile_sheet.tscn")
 const CREW_PICKER := preload("res://ui/components/crew_picker.tscn")
+const TRAINING_PICKER := preload("res://ui/components/training_picker.tscn")
+const WEAPON_PICKER := preload("res://ui/components/weapon_picker.tscn")
+const TARGET_CARD := preload("res://ui/components/target_card.tscn")
 const BATTLE_SCENE := preload("res://ui/battle/battle_scene.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
@@ -33,6 +36,9 @@ var _quote_sheet: QuoteSheet
 var _profile_sheet: ProfileSheet
 var _jail_card: JailCard
 var _crew_picker: CrewPicker
+var _training_picker: TrainingPicker
+var _weapon_picker: WeaponPicker
+var _target_card: TargetCard
 var _banner: OfferBanner
 var _lights: PoliceLights
 var _battle: BattleScene
@@ -64,6 +70,9 @@ func _ready() -> void:
 	_profile_sheet = PROFILE_SHEET.instantiate()
 	_jail_card = JAIL_CARD.instantiate()
 	_crew_picker = CREW_PICKER.instantiate()
+	_training_picker = TRAINING_PICKER.instantiate()
+	_weapon_picker = WEAPON_PICKER.instantiate()
+	_target_card = TARGET_CARD.instantiate()
 	_banner = OFFER_BANNER.instantiate()
 	_lights = PoliceLights.new()
 	add_child(_jail_card)
@@ -74,10 +83,14 @@ func _ready() -> void:
 	add_child(_quote_sheet)
 	add_child(_loan_sheet)
 	add_child(_banner)
+	add_child(_target_card)
 	add_child(_dialogue)
 	add_child(_crew_picker)
+	add_child(_training_picker)
+	add_child(_weapon_picker)
 	_jail_card.bail_requested.connect(_post_bail)
 	_banner.opened.connect(_open_offer)
+	SceneRouter.transition_started.connect(_target_card.cancel)
 	_dialogue.add_backdrop_layer(_lights)
 	for sheet in _sheets():
 		SceneRouter.transition_started.connect(sheet.close)
@@ -203,6 +216,24 @@ func pick_crew(title: String, message: String, send_format: String, cancel_text:
 	_crew_picker.open(title, message, send_format, cancel_text, on_sent, on_cancel)
 
 
+## Asks how many men to put through a Gym course.
+func pick_training(course: Gym.Course) -> void:
+	_dialogue.close()
+	_training_picker.open(course)
+
+
+## Sizes up a rival corner: the latest scouting report against the player's force, with Scout and Attack.
+func show_target(corner: CornerDef, people: Array[SpeakerDef]) -> void:
+	_dialogue.close()
+	_target_card.open(corner, people)
+
+
+## Asks how many weapons to buy from Rook or sell back to him. on_closed gets true when the deal went through.
+func pick_weapons(grade: Armory.Grade, selling: bool, on_closed: Callable) -> void:
+	_dialogue.close()
+	_weapon_picker.open(grade, selling, on_closed)
+
+
 ## Plays a fight that is already decided over the current screen, then calls on_done.
 func play_battle(player_side: BattleSide, enemy_side: BattleSide, result_line: String, battle_seed: int, on_done: Callable) -> void:
 	_dialogue.close()
@@ -235,6 +266,13 @@ func handle_back() -> bool:
 		return true
 	if _crew_picker.visible:
 		_crew_picker.cancel()
+		return true
+	for picker: AmountPicker in [_training_picker, _weapon_picker]:
+		if picker.visible:
+			picker.cancel()
+			return true
+	if _target_card.visible:
+		_target_card.cancel()
 		return true
 	if _dialogue.visible:
 		return _dialogue.handle_back()
@@ -296,7 +334,7 @@ func _has_cards() -> bool:
 
 
 func _screen_is_free() -> bool:
-	if GameState.run == null or _dialogue.visible or _crew_picker.visible or _battle != null or _raid != null or _ambush_alert != null or SceneRouter.is_transitioning():
+	if GameState.run == null or _dialogue.visible or _crew_picker.visible or _training_picker.visible or _weapon_picker.visible or _target_card.visible or _battle != null or _raid != null or _ambush_alert != null or SceneRouter.is_transitioning():
 		return false
 	if _sheets().any(func(sheet: BottomSheet) -> bool: return sheet.visible):
 		return false
@@ -365,7 +403,7 @@ func _present_encounter(encounter: Dictionary) -> void:
 		var plain := choice.id == Encounters.CONTINUE
 		choices.append(DialogueChoice.new(choice.id, choice.label, choice.enabled, plain, plain))
 	var type := str(encounter.get("type", ""))
-	if type == VexAmbush.TYPE:
+	if type == RivalStrike.TYPE:
 		_sound_ambush(encounter)
 		return
 	var open_card := func() -> void:

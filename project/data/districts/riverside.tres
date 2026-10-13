@@ -1,8 +1,51 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/riverside.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/rain.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_riverside.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_under_the_bridge"]
+script = ExtResource("4_corner")
+id = &"under_the_bridge"
+display_name = "Troll"
+map_position = Vector2(0.22, 0.58)
+moves = "Chop shop parts"
+rent = 4000
+protection = 3000
+defenders = 4000
+
+[sub_resource type="Resource" id="Corner_loft_labs"]
+script = ExtResource("4_corner")
+id = &"loft_labs"
+display_name = "Chemist"
+map_position = Vector2(0.62, 0.7)
+moves = "Synthetic product"
+rent = 5000
+protection = 4000
+defenders = 6000
+
+[sub_resource type="Resource" id="Corner_ferry_steps"]
+script = ExtResource("4_corner")
+id = &"ferry_steps"
+display_name = "Last Ferry"
+map_position = Vector2(0.26, 0.2)
+moves = "Whatever the river carries"
+rent = 5000
+protection = 3500
+defenders = 8000
+
+[sub_resource type="Resource" id="Corner_pump_house"]
+script = ExtResource("4_corner")
+id = &"pump_house"
+display_name = "Floodgate"
+map_position = Vector2(0.8, 0.24)
+moves = "Jackal's river route"
+stronghold = true
+rent = 0
+protection = 12000
+defenders = 12000
 
 [resource]
 script = ExtResource("1_def")
@@ -13,9 +56,11 @@ tier = 2
 description = "Old warehouses turned into lofts and labs. Chop shops hum under the bridges and nobody asks what the river carries."
 background = ExtResource("2_background")
 ambient_effect = ExtResource("3_effect")
-map_position = Vector2(0.3, 0.86)
+map_position = Vector2(0.3, 0.7)
 travel_cost = 300
 heat_multiplier = 1.2
 venues = Array[StringName]([&"market", &"supply"])
 roads = Array[StringName]([&"docks", &"downtown", &"west_end"])
 min_rank = 4
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_under_the_bridge"), SubResource("Corner_loft_labs"), SubResource("Corner_ferry_steps"), SubResource("Corner_pump_house")])

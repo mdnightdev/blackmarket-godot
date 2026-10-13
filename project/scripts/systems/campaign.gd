@@ -33,8 +33,7 @@ static func is_act_two(run: RunState) -> bool:
 
 ## Careers saved before Act 1 had a story keep everything they built, so they start in Act 2 with Old Market held.
 static func skip_act_one(run: RunState) -> void:
-	for corner in Corners.of(Corners.HOME):
-		Corners.take(run, corner.id)
+	Corners.take_all(run, Corners.HOME)
 	Story.mark(run, Armory.UNLOCK_FLAG)
 	Story.mark(run, War.VEX_FELL)
 

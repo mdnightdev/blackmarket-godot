@@ -10,10 +10,7 @@ const HUNT := "gang_hunt"
 const HUNT_CHANCE := 0.5
 ## The crew hunts the player at this anger.
 const MAX_ANGER := 3
-const IGNORE_LOSS := 6
 const THREAT_STANDING_COST := 5
-const FIGHT_GAIN := 10
-const FIGHT_LOSS := 10
 const FIGHT_LOSS_HEAT := 10
 const ANGER_AFTER_PAYING := 1
 const ANGER_AFTER_BEATING := MAX_ANGER - 1
@@ -33,7 +30,7 @@ const RUN: StringName = &"gang_run"
 
 ## Saves from before gangs were data only knew Vex.
 const LEGACY_GANG: StringName = &"vex"
-const LEGACY_TYPES := { "vex_gate": GATE, "vex_hunt": HUNT }
+const LEGACY_TYPES := { "vex_gate": GATE, "vex_hunt": HUNT, "vex_ambush": RivalStrike.TYPE }
 
 
 ## Gangs still in the city, in catalog order.
@@ -122,8 +119,8 @@ static func gate_chance(run: RunState, gang: GangDef) -> float:
 	var location := boss_location(run, gang, Calendar.stamp(run))
 	if location != run.district_id or owner(location) != gang:
 		return 0.0
-	var crew_lead := Turf.STARTING_SHARE - Turf.share(run, location)
-	return gang.max_gate_chance * maxf(0.0, crew_lead) / Turf.STARTING_SHARE
+	var crew_lead := Turf.EVEN_SHARE - Turf.share(run, location)
+	return gang.max_gate_chance * maxf(0.0, crew_lead) / Turf.EVEN_SHARE
 
 
 static func hunt_due(run: RunState, gang: GangDef, roll: float) -> bool:
@@ -242,7 +239,6 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 			set_anger(run, gang, anger(run, gang) - 1)
 			return "You let it slip that the %s look after you. %s leaves without a word." % [family.english_name, gang.crew_name]
 		IGNORE:
-			Turf.shift(run, district_id, -IGNORE_LOSS)
 			StreetCred.add(run, StreetCred.BACKED_OFF)
 			set_anger(run, gang, anger(run, gang) + 1)
 			if gang.style == GangDef.Style.INFORMER:
@@ -258,23 +254,20 @@ static func resolve(run: RunState, encounter: Dictionary, choice: StringName, ro
 			return "You pay %s for the trouble. %s calls the crew off, for now." % [Format.money(paid), gang.display_name]
 		FIGHT:
 			if roll < Turf.fight_chance(run, district_id):
-				Turf.shift(run, district_id, FIGHT_GAIN)
 				StreetCred.add(run, StreetCred.FIGHT_WON)
 				set_anger(run, gang, 0)
 				return "Your people hold the street. %s scatters and %s backs off." % [gang.crew_name, gang.display_name]
-			Turf.shift(run, district_id, -FIGHT_LOSS)
 			Heat.add(run, FIGHT_LOSS_HEAT)
 			set_anger(run, gang, ANGER_AFTER_BEATING)
 			if encounter.get("type") == GATE:
 				var taken := _take_cash(run, roundi(int(encounter.bribe) * BEATEN_MUGGING_FACTOR))
-				return "They beat you down and empty your pockets of %s. %s takes more of %s." % [Format.money(taken), gang.display_name, place]
-			return "They beat you down in the street. %s takes more of %s, and the police heard every punch." % [gang.display_name, place]
+				return "They beat you down in %s and empty your pockets of %s." % [place, Format.money(taken)]
+			return "They beat you down in the street in %s, and the police heard every punch." % place
 		RUN:
 			set_anger(run, gang, anger(run, gang) + 1)
 			if roll < Ambush.escape_chance(run):
 				Heat.add(run, ESCAPED_HEAT)
 				return "You lose them in the alleys. %s will not forget it." % gang.display_name
-			Turf.shift(run, district_id, -IGNORE_LOSS)
 			var lost := _take_cash(run, int(encounter.bribe))
 			return "They catch you two streets over and take %s. Word spreads that you ran." % Format.money(lost)
 	return ""

@@ -10,9 +10,7 @@ crew_name = "Celeste's crew"
 boss = &"celeste"
 style = 2
 turf = Array[StringName]([&"west_end", &"the_heights"])
-strongholds = {
-&"the_heights": 30
-}
+gear = 3
 color = Color(0.4902, 0.5608, 0.702, 1)
 gate_title = "Celeste knows your face"
 gate_line = "My people have watched you work %s all week. The police would love those notes. Make it worth my while to keep them."
@@ -26,5 +24,4 @@ max_gate_chance = 0.3
 bribe_base = 400
 bribe_per_anger = 150
 hunt_fee = 900
-max_push = 6
 victory_reward = 9000

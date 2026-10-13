@@ -1,8 +1,51 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/slums.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/steam.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_slums.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_steam_grate_alley"]
+script = ExtResource("4_corner")
+id = &"steam_grate_alley"
+display_name = "Candy Shop"
+map_position = Vector2(0.22, 0.62)
+moves = "Pills and cheap blades"
+rent = 2000
+protection = 1500
+defenders = 1500
+
+[sub_resource type="Resource" id="Corner_block_nine"]
+script = ExtResource("4_corner")
+id = &"block_nine"
+display_name = "Widower"
+map_position = Vector2(0.77, 0.7)
+moves = "Whatever fits in a pocket"
+rent = 2500
+protection = 2000
+defenders = 2500
+
+[sub_resource type="Resource" id="Corner_laundry_court"]
+script = ExtResource("4_corner")
+id = &"laundry_court"
+display_name = "Graveyard"
+map_position = Vector2(0.3, 0.3)
+moves = "Stolen phones and SIM cards"
+rent = 3000
+protection = 2000
+defenders = 3500
+
+[sub_resource type="Resource" id="Corner_boiler_house"]
+script = ExtResource("4_corner")
+id = &"boiler_house"
+display_name = "Furnace"
+map_position = Vector2(0.77, 0.27)
+moves = "Vex's crew and their stock"
+stronghold = true
+rent = 0
+protection = 6000
+defenders = 5000
 
 [resource]
 script = ExtResource("1_def")
@@ -17,3 +60,5 @@ travel_cost = 30
 heat_multiplier = 0.8
 roads = Array[StringName]([&"warehouse_row", &"old_market", &"docks"])
 venues = Array[StringName]([&"market"])
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_steam_grate_alley"), SubResource("Corner_block_nine"), SubResource("Corner_laundry_court"), SubResource("Corner_boiler_house")])

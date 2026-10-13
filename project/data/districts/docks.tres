@@ -1,8 +1,51 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/docks.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_docks.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_container_yard"]
+script = ExtResource("4_corner")
+id = &"container_yard"
+display_name = "Saltwater"
+map_position = Vector2(0.22, 0.66)
+moves = "Crates that never cleared customs"
+rent = 2500
+protection = 2000
+defenders = 1500
+
+[sub_resource type="Resource" id="Corner_menders_pier"]
+script = ExtResource("4_corner")
+id = &"menders_pier"
+display_name = "Drowned Man"
+map_position = Vector2(0.66, 0.7)
+moves = "Fish, and what is under the fish"
+rent = 2000
+protection = 1500
+defenders = 2500
+
+[sub_resource type="Resource" id="Corner_crane_seven"]
+script = ExtResource("4_corner")
+id = &"crane_seven"
+display_name = "Hangman"
+map_position = Vector2(0.24, 0.3)
+moves = "Fuel and spare parts"
+rent = 3000
+protection = 2500
+defenders = 3500
+
+[sub_resource type="Resource" id="Corner_customs_shed"]
+script = ExtResource("4_corner")
+id = &"customs_shed"
+display_name = "Lighthouse"
+map_position = Vector2(0.78, 0.32)
+moves = "Everything that comes off the ships"
+stronghold = true
+rent = 0
+protection = 7000
+defenders = 5000
 
 [resource]
 script = ExtResource("1_def")
@@ -12,8 +55,10 @@ tagline = "Cargo moves at night"
 description = "Cranes, containers and harbour fog. Half the city's contraband passes through here before sunrise."
 background = ExtResource("2_background")
 ambient_effect = ExtResource("3_effect")
-map_position = Vector2(0.6, 0.77)
+map_position = Vector2(0.6, 0.7)
 travel_cost = 60
 heat_multiplier = 1.2
 roads = Array[StringName]([&"slums", &"downtown", &"riverside"])
 venues = Array[StringName]([&"docks", &"market"])
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_container_yard"), SubResource("Corner_menders_pier"), SubResource("Corner_crane_seven"), SubResource("Corner_customs_shed")])

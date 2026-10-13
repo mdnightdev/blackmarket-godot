@@ -276,11 +276,19 @@ func expand_outfit() -> Army.Result:
 	return result
 
 
-## Returns the slots the tier ended up with.
-func set_army_slots(tier: Army.Tier, amount: int) -> int:
-	var granted := Army.set_slots(run, tier, amount)
-	_commit(false)
-	return granted
+func enroll_training(course: Gym.Course, men: int) -> Gym.Result:
+	var result := Gym.enroll(run, course, men)
+	if result == Gym.Result.OK:
+		_commit(false)
+	return result
+
+
+## Returns { healed, paid }.
+func heal_wounded() -> Dictionary:
+	var result := Hospital.heal(run)
+	if int(result.healed) > 0:
+		_commit(false)
+	return result
 
 
 func upgrade_hospital() -> Hospital.Result:
@@ -310,19 +318,34 @@ func attack_corner(corner_id: StringName, deployment: Dictionary) -> Dictionary:
 	return result
 
 
-## Answers Vex's ambush with the men sent. Returns the fight's result, empty when no ambush is waiting.
+## Scouting takes the rest of the phase.
+func scout_corner(corner_id: StringName) -> Scouting.Result:
+	var result := Scouting.scout(run, corner_id, _rng.randf(), _rng.randf())
+	if result == Scouting.Result.OK:
+		advance_phase()
+	return result
+
+
+## Answers a rival's strike with the men sent. Returns the fight's result, empty when no strike is waiting.
 func defend_ambush(deployment: Dictionary, delegated: bool) -> Dictionary:
 	var encounter := run.pending_encounter
-	if str(encounter.get("type", "")) != VexAmbush.TYPE:
+	if str(encounter.get("type", "")) != RivalStrike.TYPE:
 		return {}
 	run.pending_encounter = {}
-	var result := VexAmbush.defend(run, encounter, deployment, delegated, _rng.randf(), _rng.randf())
+	var result := RivalStrike.defend(run, encounter, deployment, delegated, _rng.randf(), _rng.randf())
 	_commit(false)
 	return result
 
 
-func buy_weapons(lot_index: int) -> Armory.Result:
-	var result := Armory.buy(run, lot_index)
+func buy_weapons(grade: Armory.Grade, amount: int) -> Armory.Result:
+	var result := Armory.buy(run, grade, amount)
+	if result == Armory.Result.OK:
+		_commit(false)
+	return result
+
+
+func sell_weapons(grade: Armory.Grade, amount: int) -> Armory.Result:
+	var result := Armory.sell(run, grade, amount)
 	if result == Armory.Result.OK:
 		_commit(false)
 	return result
@@ -552,14 +575,6 @@ func hijack(shipment: Dictionary, approach: Hijacks.Approach) -> int:
 	return taken
 
 
-func send_muscle() -> bool:
-	if not Turf.send_muscle(run):
-		return false
-	Encounters.check_raid(run)
-	_commit(false)
-	return true
-
-
 func place_bet(casino: CasinoDef, amount: int) -> bool:
 	if not Casino.place_bet(run, casino, amount):
 		return false
@@ -759,7 +774,7 @@ func _start_morning() -> Array[Dictionary]:
 		else:
 			notices.append({ "line": "%s never paid the %s invoice. That money is gone." % [invoice.client, amount], "hint": "Higher street cred makes buyers less likely to skip out." })
 	notices.append_array(Lending.settle(run))
-	notices.append_array(Gym.morning(run))
+	notices.append_array(Rivals.morning(run))
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),

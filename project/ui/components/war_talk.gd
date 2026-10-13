@@ -25,13 +25,12 @@ const GUN_FIGHTERS: Array[Texture2D] = [
 	preload("res://assets/battle/rifles_3.png"), preload("res://assets/battle/rifles_4.png"),
 ]
 const PLAYER_SQUADS: Array[String] = ["Front line", "Second line", "Reserve"]
-const VEX_SQUADS: Array[String] = ["Lookouts", "Blades", "Vex's guard"]
 
 const FIRST_LOSS_LINES: Array[String] = [
 	"That was my fault. I let you go in with what you had.",
 	"I still have friends from my unit. They don't work cheap and they don't work for strangers. They'll work for me.",
 ]
-const LOST_AGAIN_LINE := "We regroup. She's bleeding too."
+const LOST_AGAIN_LINE := "We regroup. They're bleeding too."
 const SURRENDER: Array[Dictionary] = [
 	{ "speaker": VEX, "line": "Enough. Enough. Show me mercy." },
 ]
@@ -109,10 +108,8 @@ static func _on_unit_choice(choice: StringName) -> void:
 	if GameState.hire_rabbit_unit():
 		AudioService.play_sfx(Sfx.COINS_OUT)
 		GameOverlay.talk(Content.speaker(RABBIT), "I'll make the calls. They'll be there.", _next(), _end)
-	elif GameState.run.cash < War.RABBIT_UNIT_PRICE:
-		GameOverlay.talk(Content.speaker(RABBIT), "They want the money up front. All of it.", _next(), _end)
 	else:
-		GameOverlay.talk(Content.speaker(RABBIT), "We have no room for %d more. Expand the gym first." % War.RABBIT_UNIT_SIZE, _next(), _end)
+		GameOverlay.talk(Content.speaker(RABBIT), "They want the money up front. All of it.", _next(), _end)
 
 
 static func _offer_mercy() -> void:
@@ -145,10 +142,10 @@ static func _show_pages(pages: Array[Dictionary], index: int, then: Callable) ->
 	GameOverlay.talk(speaker, str(page.line), _next(), func(_choice: StringName) -> void: _show_pages(pages, index + 1, then))
 
 
-## The two sides of a fight for a corner, from a War.attack or VexAmbush.defend result.
+## The two sides of a fight for a corner, from a War.attack or RivalStrike.defend result.
 static func sides(result: Dictionary, corner: CornerDef, carried: Dictionary) -> Array[BattleSide]:
 	var run := GameState.run
-	var gang := Gangs.owner(Corners.HOME)
+	var gang := Corners.gang_of(corner.id)
 	var black_hand := int(result.deployed.get(Army.Tier.BLACK_HAND, 0)) > 0
 	var mine := BattleSide.new()
 	mine.display_name = "Your crew"
@@ -158,24 +155,32 @@ static func sides(result: Dictionary, corner: CornerDef, carried: Dictionary) ->
 	mine.squad_names = PLAYER_SQUADS
 	mine.ranged = black_hand or _has_guns(carried)
 	mine.fighters = GUN_FIGHTERS if mine.ranged else BLADE_FIGHTERS
-	if not mine.ranged:
-		mine.team_color = mine.color
 	if black_hand:
 		mine.skill_name = "Black Hand"
 		mine.skill_owner = Content.speaker(RABBIT).display_name
 		mine.skill_portrait = Content.speaker(RABBIT).portrait
 	var theirs := BattleSide.new()
-	theirs.display_name = "Vex's crew"
+	theirs.display_name = gang.crew_name if gang != null else "Their crew"
 	theirs.color = gang.color if gang != null else Palette.RISK_HIGH
 	theirs.head_count = int(result.defenders)
 	theirs.survivors = theirs.head_count - int(result.defenders_lost)
-	theirs.squad_names = VEX_SQUADS
-	theirs.fighters = BLADE_FIGHTERS
-	if corner.stronghold:
-		theirs.skill_name = "Vex's sword"
-		theirs.skill_owner = "Vex"
-		theirs.skill_portrait = Content.character(VEX).portrait
+	theirs.ranged = gang != null and Rivals.gear(run, gang) >= Armory.Grade.HANDGUN
+	theirs.fighters = GUN_FIGHTERS if theirs.ranged else BLADE_FIGHTERS
+	theirs.squad_names = _rival_squads(gang, theirs.ranged)
+	if mine.ranged == theirs.ranged:
+		mine.team_color = mine.color
+	var boss := Content.character(gang.boss) if gang != null else null
+	if corner.stronghold and boss != null:
+		theirs.skill_name = "Vex's sword" if gang.id == War.VEX_GANG else "%s's guard" % gang.display_name
+		theirs.skill_owner = gang.display_name
+		theirs.skill_portrait = boss.portrait
 	return [mine, theirs]
+
+
+static func _rival_squads(gang: GangDef, ranged: bool) -> Array[String]:
+	var squads: Array[String] = ["Lookouts", "Gunmen" if ranged else "Blades"]
+	squads.append("%s's guard" % gang.display_name if gang != null else "The guard")
+	return squads
 
 
 static func _has_guns(carried: Dictionary) -> bool:

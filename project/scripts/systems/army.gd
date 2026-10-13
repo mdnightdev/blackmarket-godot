@@ -1,8 +1,8 @@
 class_name Army
 
 ## The player's fighters, in three tiers: Lunatics from Auntie Tran, the Guards and the Black Hand trained by 午夜兔子.
-## The outfit has a number of slots, bought as training expansions in the Gym, and the player splits them between the
-## tiers. Men are only paid for at training sessions, which fill every tier back up to its slots and heal the wounded.
+## There is no limit on how many men the player keeps. The outfit's level sets how many go into one fight. See Gym for
+## training.
 ## run.army maps a Tier to a count per State. The dead live only in run.fallen.
 
 enum Tier { LUNATICS, GUARDS, BLACK_HAND }
@@ -10,7 +10,7 @@ enum State { ACTIVE, WOUNDED }
 
 const TIER_NAMES := {
 	Tier.LUNATICS: "Lunatics",
-	Tier.GUARDS: "The Guards",
+	Tier.GUARDS: "Guards",
 	Tier.BLACK_HAND: "Black Hand",
 }
 ## Lunatics and Guards multiply the power of the weapon they carry. The Black Hand bring their own.
@@ -30,25 +30,18 @@ const LETHALITY := {
 	Tier.GUARDS: 0.75,
 	Tier.BLACK_HAND: 0.5,
 }
-## Paid at a training session for every hundred empty slots filled.
-const REPLACE_PRICES := {
-	Tier.LUNATICS: 250,
-	Tier.GUARDS: 1500,
-	Tier.BLACK_HAND: 15000,
-}
 const DEPLOY_ORDER: Array[Tier] = [Tier.BLACK_HAND, Tier.GUARDS, Tier.LUNATICS]
 ## Weapons go to the Guards first, then the Lunatics.
 const ARMED_ORDER: Array[Tier] = [Tier.GUARDS, Tier.LUNATICS]
-## Training expansions. Each sets how many men the outfit keeps and how many go into one fight.
+## Outfit levels. deploy is how many men go into one fight.
 const EXPANSIONS: Array[Dictionary] = [
-	{ "name": "Small operation", "capacity": 1000, "deploy": 300, "price": 0 },
-	{ "name": "Established gang", "capacity": 3000, "deploy": 1000, "price": 25000 },
-	{ "name": "Crime syndicate", "capacity": 10000, "deploy": 3000, "price": 100000 },
-	{ "name": "Major organization", "capacity": 25000, "deploy": 7500, "price": 300000 },
-	{ "name": "Powerful family", "capacity": 50000, "deploy": 15000, "price": 750000 },
-	{ "name": "Kingpin", "capacity": 100000, "deploy": 30000, "price": 2000000 },
+	{ "name": "Small operation", "deploy": 1000, "price": 0 },
+	{ "name": "Established gang", "deploy": 5000, "price": 10000 },
+	{ "name": "Crime syndicate", "deploy": 15000, "price": 40000 },
+	{ "name": "Major organization", "deploy": 40000, "price": 120000 },
+	{ "name": "Powerful family", "deploy": 80000, "price": 300000 },
+	{ "name": "Kingpin", "deploy": 120000, "price": 800000 },
 ]
-const STARTING_SPLIT := { Tier.LUNATICS: 800, Tier.GUARDS: 200, Tier.BLACK_HAND: 0 }
 ## Saves written before this scale kept a tenth of the men. They are multiplied up on load.
 const WAR_SCALE := 10
 
@@ -107,10 +100,6 @@ static func expansion(run: RunState) -> Dictionary:
 	return EXPANSIONS[run.army_level]
 
 
-static func capacity(run: RunState) -> int:
-	return int(expansion(run).capacity)
-
-
 static func deploy_cap(run: RunState) -> int:
 	return int(expansion(run).deploy)
 
@@ -120,7 +109,6 @@ static func expansion_price(run: RunState) -> int:
 	return int(EXPANSIONS[run.army_level + 1].price) if run.army_level + 1 < EXPANSIONS.size() else -1
 
 
-## The new slots go to the Lunatics until the player splits them differently.
 static func expand(run: RunState) -> Result:
 	var price := expansion_price(run)
 	if price < 0:
@@ -128,66 +116,22 @@ static func expand(run: RunState) -> Result:
 	if run.cash < price:
 		return Result.NOT_ENOUGH_CASH
 	run.cash -= price
-	var added := int(EXPANSIONS[run.army_level + 1].capacity) - capacity(run)
 	run.army_level += 1
-	run.army_split[Tier.LUNATICS] = slots(run, Tier.LUNATICS) + added
 	return Result.OK
 
 
-## Prices for men are per hundred. A part of a hundred costs its share, rounded up.
-static func price_of(per_hundred: int, men: int) -> int:
-	return ceili(men * per_hundred / 100.0)
+## Prices for men are per thousand. A part of a thousand costs its share, rounded up.
+static func price_of(per_thousand: int, men: int) -> int:
+	return ceili(men * per_thousand / 1000.0)
 
 
-static func men_for(per_hundred: int, cash: int) -> int:
-	return floori(cash * 100.0 / per_hundred)
+static func men_for(per_thousand: int, cash: int) -> int:
+	return floori(cash * 1000.0 / per_thousand)
 
 
-## The Black Hand are kept for special missions. Until Vex falls the only ones are Rabbit's unit, and the player
-## cannot give them more slots.
+## The Black Hand are kept for special missions. Until Vex falls the only ones are Rabbit's unit.
 static func black_hand_open(run: RunState) -> bool:
 	return Campaign.is_act_two(run)
-
-
-static func slots(run: RunState, tier: Tier) -> int:
-	return int(run.army_split.get(tier, STARTING_SPLIT[tier]))
-
-
-static func slots_used(run: RunState) -> int:
-	var sum := 0
-	for tier in Tier.values():
-		sum += slots(run, tier)
-	return sum
-
-
-## Gives the tier this many slots, as far as the outfit's capacity allows. Returns the slots it ended up with.
-static func set_slots(run: RunState, tier: Tier, amount: int) -> int:
-	if tier == Tier.BLACK_HAND and not black_hand_open(run):
-		return slots(run, tier)
-	var others := slots_used(run) - slots(run, tier)
-	var granted := clampi(amount, 0, capacity(run) - others)
-	run.army_split[tier] = granted
-	return granted
-
-
-## Makes sure the tier has room for at least this many men, taking the slots from the Lunatics, then the Guards.
-static func make_room(run: RunState, tier: Tier, amount: int) -> void:
-	var missing := amount - slots(run, tier)
-	if missing <= 0:
-		return
-	var free := capacity(run) - slots_used(run)
-	for donor in [Tier.LUNATICS, Tier.GUARDS]:
-		if free >= missing or donor == tier:
-			continue
-		var taken := mini(missing - free, slots(run, donor))
-		run.army_split[donor] = slots(run, donor) - taken
-		free += taken
-	run.army_split[tier] = slots(run, tier) + mini(missing, free)
-
-
-## Empty slots of the tier waiting for the next session.
-static func vacancies(run: RunState, tier: Tier) -> int:
-	return maxi(0, slots(run, tier) - total(run, tier))
 
 
 ## The men sent into a fight, best tier first. size -1 sends as many as the expansion allows. The Black Hand stay
@@ -282,7 +226,7 @@ static func sum_losses(losses: Dictionary, key: String) -> int:
 	return sum
 
 
-## The wounded wait for a training session. The dead are gone with the weapons they carried.
+## The wounded wait in the hospital until healed. The dead are gone with the weapons they carried.
 static func take_losses(run: RunState, deployment: Dictionary, losses: Dictionary) -> void:
 	var carried := issue(run, deployment)
 	for tier: int in losses:
@@ -321,7 +265,7 @@ static func rescale(run: RunState, factor: int) -> void:
 	for tier: int in run.army:
 		for state: int in run.army[tier]:
 			run.army[tier][state] = int(run.army[tier][state]) * factor
-	for counts: Dictionary in [run.fallen, run.army_split, run.armory]:
+	for counts: Dictionary in [run.fallen, run.armory]:
 		for key: Variant in counts:
 			counts[key] = int(counts[key]) * factor
 	for corner_id: String in run.corner_defenders:
@@ -348,7 +292,7 @@ static func sanitize(source: Variant) -> Dictionary:
 	return clean
 
 
-## Tier to a count, for run.fallen and run.army_split.
+## Tier to a count, for run.fallen.
 static func sanitize_counts(source: Variant) -> Dictionary:
 	var clean := {}
 	if source is Dictionary:

@@ -66,8 +66,8 @@ func test_voronin_turns_cold_on_a_banned_day() -> void:
 func test_rook_talks_guns_once_then_opens_rooms() -> void:
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.FIRST_LINE)
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.SHOP_LINE)
-	_run.rook_lots = Armory.BACK_ROOM_LOTS
+	_run.rook_spent = int(Armory.ROOM_SPEND[Armory.Room.BACK])
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.BACK_ROOM_LINE)
-	_run.rook_lots = Armory.MILITARY_LOTS
+	_run.rook_spent = int(Armory.ROOM_SPEND[Armory.Room.MILITARY])
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.MILITARY_LINE)
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.SHOP_LINE)

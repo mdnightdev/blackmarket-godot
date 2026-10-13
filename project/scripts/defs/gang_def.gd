@@ -1,8 +1,8 @@
 class_name GangDef
 extends Resource
 
-## A street crew fighting the player for turf. Its boss walks the turf on the boss character's route, and the
-## player wins a district from the crew by holding most of it. Taking every district of its turf drives the crew out.
+## A street crew fighting the player for turf. Its boss walks the turf on the boss character's route. The player
+## takes the crew's corners by force, see War, and taking every corner of its turf drives the crew out.
 
 ## What the crew does to a player working its corners.
 enum Style {
@@ -23,8 +23,8 @@ enum Style {
 @export var boss: StringName
 @export var style := Style.TAX
 @export var turf: Array[StringName] = []
-## Districts where the crew starts strong, mapped to the player's starting share there.
-@export var strongholds: Dictionary = {}
+## What the crew carries at the start. It buys better weapons as its war chest fills, see Rivals.
+@export var gear := Armory.Grade.BLADE
 @export var color: Color = Color.WHITE
 
 @export_group("Lines")
@@ -47,6 +47,4 @@ enum Style {
 @export var bribe_base := 200
 @export var bribe_per_anger := 100
 @export var hunt_fee := 500
-## Share taken in a phase where the crew holds the whole district. It takes less the less it holds.
-@export var max_push := 6
 @export var victory_reward := 5000

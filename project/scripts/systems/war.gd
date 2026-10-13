@@ -1,13 +1,12 @@
 class_name War
 
-## Act 1 ends in a war for Old Market. Once the player holds Mama Lin's corner, 午夜兔子 trains their men (see Gym),
-## Rook arms them and the player chooses which of Vex's corners to hit. Every fight is
-## decided by numbers the player never sees: who goes in, what they carry and luck. Each side counts its own dead and
-## wounded. Rabbit's old unit, the first of the Black Hand, is offered after the first loss. When the last corner
-## falls, Vex kneels and Act 2 opens.
+## Corners change hands by force. Act 1 ends in a war for Old Market: once the player holds Mama Lin's corner,
+## 午夜兔子 trains their men (see Gym), Rook arms them and the player chooses which of Vex's corners to hit. Rabbit's
+## old unit, the first of the Black Hand, is offered after the first loss. When the last corner falls, Vex kneels and
+## Act 2 opens, and every rival corner in a district the player can reach is fair game. Every fight is decided by
+## numbers the player never sees: who goes in, what each side carries and luck. Scouting gives a rough read first,
+## see Scouting. Each side counts its own dead and wounded.
 
-## Vex's crew fights with blades and knows how.
-const BLADE_SKILL := 2.0
 const STRONGHOLD_FACTOR := 1.5
 ## The result swings by up to this share either way.
 const LUCK := 0.2
@@ -36,21 +35,34 @@ static func is_open(run: RunState) -> bool:
 	return Corners.holds(run, Corners.MAMA_LIN) and not Story.has(run, VEX_FELL)
 
 
+## A rival corner the player could hit or scout: Old Market's during the war, any other in Act 2 once the district
+## is open to the player.
+static func is_target(run: RunState, corner: CornerDef) -> bool:
+	if Corners.holds(run, corner.id):
+		return false
+	var district_id := Corners.district_of(corner.id)
+	if district_id == Corners.HOME:
+		return is_open(run)
+	var district := Content.district(district_id)
+	return Campaign.is_act_two(run) \
+		and district != null \
+		and not Gangs.is_gone(run, Gangs.owner(district_id)) \
+		and not Travel.is_locked(run, district)
+
+
 static func can_attack(run: RunState, corner: CornerDef) -> bool:
-	return is_open(run) and not Corners.holds(run, corner.id) and Corners.of(Corners.HOME).has(corner) and Army.active(run) > 0
+	return is_target(run, corner) and Army.active(run) > 0
 
 
 static func unit_on_offer(run: RunState) -> bool:
 	return is_open(run) and Story.has(run, LOST_ONCE) and not Story.has(run, UNIT_HIRED)
 
 
-## Rabbit's old unit joins as the Black Hand and stays after the war. Their slots come out of the Lunatics'.
+## Rabbit's old unit joins as the Black Hand and stays after the war.
 static func hire_unit(run: RunState) -> bool:
-	var black_hand := Army.total(run, Army.Tier.BLACK_HAND) + RABBIT_UNIT_SIZE
-	if not unit_on_offer(run) or run.cash < RABBIT_UNIT_PRICE or black_hand > Army.capacity(run):
+	if not unit_on_offer(run) or run.cash < RABBIT_UNIT_PRICE:
 		return false
 	run.cash -= RABBIT_UNIT_PRICE
-	Army.make_room(run, Army.Tier.BLACK_HAND, black_hand)
 	Army.add(run, Army.Tier.BLACK_HAND, Army.State.ACTIVE, RABBIT_UNIT_SIZE)
 	Story.mark(run, UNIT_HIRED)
 	return true
@@ -63,7 +75,9 @@ static func defenders(run: RunState, corner: CornerDef) -> int:
 
 
 static func enemy_power(run: RunState, corner: CornerDef) -> float:
-	return defenders(run, corner) * BLADE_SKILL * (STRONGHOLD_FACTOR if corner.stronghold else 1.0)
+	var gang := Corners.gang_of(corner.id)
+	var per_man := Rivals.power_per_man(run, gang) if gang != null else Rivals.SKILL
+	return defenders(run, corner) * per_man * (STRONGHOLD_FACTOR if corner.stronghold else 1.0)
 
 
 ## Fights for a corner with the deployment from Army.deployment. roll and fate are in [0, 1): roll is the luck of the
@@ -79,6 +93,7 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 	var hit_share := WIN_HIT_SHARE * minf(1.0, theirs / maxf(mine, 1.0)) if won else LOSS_HIT_SHARE
 	var death_share := (WIN_DEATH_SHARE if won else LOSS_DEATH_SHARE) + (fate - 0.5) * FATE_SWING
 	var losses := Army.casualties(deployment, hit_share, death_share)
+	Hospital.admit(run, losses)
 	var result := {
 		"corner": String(corner_id),
 		"won": won,
@@ -94,6 +109,7 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 		defenders_lost = int(result.defenders)
 		Corners.take(run, corner_id)
 		run.corner_defenders.erase(String(corner_id))
+		run.scouted.erase(String(corner_id))
 	else:
 		defenders_lost = roundi(int(result.defenders) * DEFENDERS_BLED)
 		run.corner_defenders[String(corner_id)] = int(result.defenders) - defenders_lost
@@ -101,9 +117,11 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 	Army.take_losses(run, deployment, losses)
 	Heat.add(run, ATTACK_HEAT)
 	result.defenders_lost = defenders_lost
-	if won and Corners.held_count(run, Corners.HOME) == Corners.of(Corners.HOME).size():
+	if won and is_open(run) and Corners.held_count(run, Corners.HOME) == Corners.of(Corners.HOME).size():
 		end_war(run)
 		result.ended = true
+	elif won:
+		Turf.check_victory(run)
 	return result
 
 
@@ -124,5 +142,5 @@ static func sanitize_defenders(source: Variant) -> Dictionary:
 		for key: Variant in source:
 			var corner := Corners.find(StringName(str(key)))
 			if corner != null:
-				clean[str(key)] = clampi(int(source[key]), 0, corner.defenders)
+				clean[str(key)] = clampi(int(source[key]), 0, Rivals.max_garrison(corner))
 	return clean

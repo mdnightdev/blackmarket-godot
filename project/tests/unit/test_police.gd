@@ -107,7 +107,7 @@ func test_held_turf_sees_fewer_stops() -> void:
 	_run.heat = 0
 	var contested := Police.stop_chance(_run)
 	assert_lt(contested, Police.MAX_STOP_CHANCE)
-	_run.turf[_run.district_id] = Turf.HOLD_SHARE
+	Corners.take_all(_run, _run.district_id)
 	assert_almost_eq(Police.stop_chance(_run), contested * Turf.HELD_STOP_FACTOR, 0.0001)
 
 

@@ -1,28 +1,31 @@
 class_name Hospital
 
-## Heals the wounded at each training session, as many as there are beds, Black Hand first. Each man healed is paid
-## for, so a short purse leaves men waiting for the next session. Nothing brings back the dead.
+## Holds the wounded until the player pays to heal them, Black Hand first. A short purse heals as many as it covers.
+## When every bed is taken, men hit in a fight die instead of being wounded. Nothing brings back the dead.
 
 enum Result { OK, MAX_LEVEL, NOT_ENOUGH_CASH }
 
 const LEVELS: Array[Dictionary] = [
-	{ "beds": 200, "price": 0 },
-	{ "beds": 600, "price": 15000 },
-	{ "beds": 1500, "price": 60000 },
-	{ "beds": 4000, "price": 200000 },
-	{ "beds": 10000, "price": 500000 },
-	{ "beds": 25000, "price": 1500000 },
+	{ "beds": 25000, "price": 0 },
+	{ "beds": 50000, "price": 150000 },
+	{ "beds": 100000, "price": 500000 },
+	{ "beds": 200000, "price": 1200000 },
+	{ "beds": 300000, "price": 2500000 },
 ]
-## Per hundred men healed.
+## Per thousand men healed.
 const HEAL_PRICES := {
-	Army.Tier.LUNATICS: 100,
-	Army.Tier.GUARDS: 500,
-	Army.Tier.BLACK_HAND: 4000,
+	Army.Tier.LUNATICS: 500,
+	Army.Tier.GUARDS: 2000,
+	Army.Tier.BLACK_HAND: 15000,
 }
 
 
 static func beds(run: RunState) -> int:
 	return int(LEVELS[run.hospital_level].beds)
+
+
+static func free_beds(run: RunState) -> int:
+	return maxi(0, beds(run) - Army.wounded(run))
 
 
 ## The price of the next level, -1 at the top.
@@ -41,13 +44,26 @@ static func upgrade(run: RunState) -> Result:
 	return Result.OK
 
 
+## Gives the wounded of a fight the free beds, best tier first. The ones left without a bed are counted as dead.
+## losses is the result of Army.casualties and is changed in place.
+static func admit(run: RunState, losses: Dictionary) -> void:
+	var free := free_beds(run)
+	for tier in Army.DEPLOY_ORDER:
+		if not losses.has(tier):
+			continue
+		var wounded := int(losses[tier].wounded)
+		var admitted := mini(wounded, free)
+		free -= admitted
+		losses[tier] = { "dead": int(losses[tier].dead) + wounded - admitted, "wounded": admitted }
+
+
 ## Returns { healed, paid }.
 static func heal(run: RunState) -> Dictionary:
 	var healed := 0
 	var paid := 0
 	for tier in Army.DEPLOY_ORDER:
 		var price := int(HEAL_PRICES[tier])
-		var taken := mini(mini(beds(run) - healed, Army.count(run, tier, Army.State.WOUNDED)), Army.men_for(price, run.cash))
+		var taken := mini(Army.count(run, tier, Army.State.WOUNDED), Army.men_for(price, run.cash))
 		var cost := Army.price_of(price, taken)
 		Army.move(run, tier, Army.State.WOUNDED, Army.State.ACTIVE, taken)
 		run.cash -= cost
@@ -56,12 +72,9 @@ static func heal(run: RunState) -> Dictionary:
 	return { "healed": healed, "paid": paid }
 
 
-## What healing everyone waiting would cost at the next session, beds allowing.
+## What healing every wounded man would cost.
 static func estimate(run: RunState) -> int:
 	var sum := 0
-	var left := beds(run)
 	for tier in Army.DEPLOY_ORDER:
-		var taken := mini(left, Army.count(run, tier, Army.State.WOUNDED))
-		sum += Army.price_of(int(HEAL_PRICES[tier]), taken)
-		left -= taken
+		sum += Army.price_of(int(HEAL_PRICES[tier]), Army.count(run, tier, Army.State.WOUNDED))
 	return sum

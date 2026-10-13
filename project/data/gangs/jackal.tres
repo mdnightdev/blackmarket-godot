@@ -10,9 +10,7 @@ crew_name = "Jackal's crew"
 boss = &"jackal"
 style = 1
 turf = Array[StringName]([&"warehouse_row", &"riverside"])
-strongholds = {
-&"riverside": 30
-}
+gear = 2
 color = Color(0.7529, 0.5412, 0.2902, 1)
 gate_title = "Jackal's crew jumps you"
 gate_line = "Nice night to be walking %s with full pockets. Empty them, or we empty you."
@@ -26,5 +24,4 @@ max_gate_chance = 0.3
 bribe_base = 250
 bribe_per_anger = 100
 hunt_fee = 600
-max_push = 6
 victory_reward = 6000

@@ -1,0 +1,180 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/components/target_card.gd" id="1_card"]
+[ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+[ext_resource type="Script" path="res://ui/components/strength_bar.gd" id="3_bar"]
+
+[node name="TargetCard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_card")
+
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0314, 0.0353, 0.0471, 0.72)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Card" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 2
+theme_type_variation = &"Card"
+
+[node name="Content" type="VBoxContainer" parent="Center/Card"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Center/Card/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Names" type="VBoxContainer" parent="Center/Card/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="TitleLabel" type="Label" parent="Center/Card/Content/Header/Names"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text_overrun_behavior = 3
+
+[node name="HolderLabel" type="Label" parent="Center/Card/Content/Header/Names"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+
+[node name="StrongholdTag" type="Label" parent="Center/Card/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"PillLabel"
+text = "STRONGHOLD"
+
+[node name="Sides" type="HBoxContainer" parent="Center/Card/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Mine" type="PanelContainer" parent="Center/Card/Content/Sides"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"HudCard"
+
+[node name="Lines" type="VBoxContainer" parent="Center/Card/Content/Sides/Mine"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MineCaption" type="Label" parent="Center/Card/Content/Sides/Mine/Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "YOUR FORCE"
+
+[node name="MenLabel" type="Label" parent="Center/Card/Content/Sides/Mine/Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+
+[node name="KitLabel" type="Label" parent="Center/Card/Content/Sides/Mine/Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+autowrap_mode = 3
+
+[node name="Theirs" type="PanelContainer" parent="Center/Card/Content/Sides"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"HudCard"
+
+[node name="Lines" type="VBoxContainer" parent="Center/Card/Content/Sides/Theirs"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="TheirCaption" type="Label" parent="Center/Card/Content/Sides/Theirs/Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+text = "THEIR CREW"
+
+[node name="EnemyLabel" type="Label" parent="Center/Card/Content/Sides/Theirs/Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudValueLabel"
+
+[node name="GearLabel" type="Label" parent="Center/Card/Content/Sides/Theirs/Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+autowrap_mode = 3
+
+[node name="StrengthBar" type="Control" parent="Center/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3_bar")
+
+[node name="ReadingLabel" type="Label" parent="Center/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"StatValueLabel"
+horizontal_alignment = 1
+
+[node name="ReportLabel" type="Label" parent="Center/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="People" type="HFlowContainer" parent="Center/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="Actions" type="HBoxContainer" parent="Center/Card/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LeaveButton" type="Button" parent="Center/Card/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"GhostButton"
+text = "Leave"
+script = ExtResource("2_button")
+
+[node name="ScoutButton" type="Button" parent="Center/Card/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SecondaryButton"
+script = ExtResource("2_button")
+
+[node name="AttackButton" type="Button" parent="Center/Card/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Attack"
+script = ExtResource("2_button")

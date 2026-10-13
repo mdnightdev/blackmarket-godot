@@ -23,8 +23,15 @@ func _find_vex() -> StringName:
 	return &""
 
 
+func _hold_corners(district_id: StringName, count: int) -> void:
+	for corner in Corners.of(district_id):
+		Corners.lose(_run, corner.id)
+	for corner in Corners.of(district_id).slice(0, count):
+		Corners.take(_run, corner.id)
+
+
 func _gate() -> Dictionary:
-	_run.turf[_vex_at] = 70
+	_hold_corners(_vex_at, 3)
 	_run.pending_encounter = Gangs.gate(_run, _vex())
 	return _run.pending_encounter
 
@@ -34,30 +41,30 @@ func _ids(encounter: Dictionary) -> Array:
 
 
 func test_vex_only_taxes_where_she_holds_more_and_the_player_stands() -> void:
-	_run.turf[_vex_at] = 20
+	_hold_corners(_vex_at, 1)
 	_run.district_id = &"golden_mile"
 	assert_false(Gangs.gate_due(_run, _vex(), 0.0), "the player is somewhere else")
 	_run.district_id = _vex_at
 	assert_true(Gangs.gate_due(_run, _vex(), 0.0))
 	assert_false(Gangs.gate_due(_run, _vex(), 0.99))
-	_run.turf[_vex_at] = Turf.STARTING_SHARE
+	_hold_corners(_vex_at, 2)
 	assert_false(Gangs.gate_due(_run, _vex(), 0.0), "no tax at an even split")
-	_run.turf[_vex_at] = Turf.HOLD_SHARE
+	_hold_corners(_vex_at, 3)
 	assert_eq(Gangs.gate_chance(_run, _vex()), 0.0, "never where the player holds more")
 
 
 func test_her_tax_comes_more_often_the_stronger_her_hold() -> void:
 	_run.district_id = _vex_at
-	_run.turf[_vex_at] = 40
+	_hold_corners(_vex_at, 1)
 	var weak := Gangs.gate_chance(_run, _vex())
-	_run.turf[_vex_at] = 10
+	_hold_corners(_vex_at, 0)
 	assert_gt(Gangs.gate_chance(_run, _vex()), weak)
 	assert_lte(Gangs.gate_chance(_run, _vex()), _vex().max_gate_chance)
 
 
 func test_no_gate_while_vex_is_hunting_or_gone() -> void:
 	_run.district_id = _vex_at
-	_run.turf[_vex_at] = 20
+	_hold_corners(_vex_at, 1)
 	Gangs.set_anger(_run, _vex(), Gangs.MAX_ANGER)
 	assert_false(Gangs.gate_due(_run, _vex(), 0.0))
 	Gangs.set_anger(_run, _vex(), 0)
@@ -79,7 +86,7 @@ func test_bribe_is_small_and_leaves_turf_alone() -> void:
 	Encounters.resolve(_run, Gangs.BRIBE, 0.0)
 	assert_eq(_run.cash, 10000 - int(encounter.bribe))
 	assert_eq(int(encounter.bribe), _vex().bribe_base)
-	assert_eq(Turf.share(_run, _vex_at), 70)
+	assert_eq(Turf.share(_run, _vex_at), 75)
 	assert_false(Encounters.has_pending(_run))
 
 
@@ -93,11 +100,11 @@ func test_threat_uses_family_standing_and_calms_vex() -> void:
 	assert_eq(_run.cash, 10000)
 
 
-func test_ignoring_costs_ground_and_builds_to_a_hunt() -> void:
+func test_ignoring_builds_to_a_hunt_but_never_moves_turf() -> void:
 	for step in Gangs.MAX_ANGER:
 		_gate()
 		Encounters.resolve(_run, Gangs.IGNORE, 0.0)
-		assert_eq(Turf.share(_run, _vex_at), 70 - Gangs.IGNORE_LOSS)
+		assert_eq(Turf.share(_run, _vex_at), 75, "corners only change hands by force")
 	assert_eq(Gangs.anger(_run, _vex()), Gangs.MAX_ANGER)
 	assert_eq(_run.cash, 10000, "ignoring never costs cash")
 	assert_true(Gangs.hunt_due(_run, _vex(), 0.0))
@@ -113,20 +120,19 @@ func test_hunt_fee_is_fixed_and_calms_vex() -> void:
 	assert_eq(Gangs.anger(_run, _vex()), Gangs.ANGER_AFTER_PAYING)
 
 
-func test_winning_the_hunt_fight_gains_ground_and_ends_the_feud() -> void:
+func test_winning_the_hunt_fight_ends_the_feud() -> void:
 	Gangs.set_anger(_run, _vex(), Gangs.MAX_ANGER)
 	_run.pending_encounter = Gangs.hunt(_run, _vex())
 	Encounters.resolve(_run, Gangs.FIGHT, 0.0)
-	assert_eq(Turf.share(_run, &"docks"), Turf.STARTING_SHARE + Gangs.FIGHT_GAIN)
+	assert_eq(Turf.share(_run, &"docks"), 0)
 	assert_eq(Gangs.anger(_run, _vex()), 0)
 	assert_eq(_run.cash, 10000)
 
 
-func test_losing_the_hunt_fight_costs_ground_and_heat_but_no_cash() -> void:
+func test_losing_the_hunt_fight_costs_heat_but_no_cash() -> void:
 	Gangs.set_anger(_run, _vex(), Gangs.MAX_ANGER)
 	_run.pending_encounter = Gangs.hunt(_run, _vex())
 	Encounters.resolve(_run, Gangs.FIGHT, 0.99)
-	assert_eq(Turf.share(_run, &"docks"), Turf.STARTING_SHARE - Gangs.FIGHT_LOSS)
 	assert_eq(_run.heat, Gangs.FIGHT_LOSS_HEAT)
 	assert_eq(_run.cash, 10000)
 	assert_eq(Gangs.anger(_run, _vex()), Gangs.ANGER_AFTER_BEATING)
@@ -134,7 +140,7 @@ func test_losing_the_hunt_fight_costs_ground_and_heat_but_no_cash() -> void:
 
 func test_hunt_outside_the_turf_war_is_fought_over_the_strongest_district() -> void:
 	_run.district_id = &"golden_mile"
-	_run.turf[&"docks"] = 80
+	_hold_corners(&"docks", 3)
 	assert_eq(Gangs.fight_district(_run, _vex()), &"docks")
 
 
@@ -181,8 +187,10 @@ func test_every_gang_has_a_boss_and_its_own_turf() -> void:
 			assert_not_null(Content.district(district_id), "%s turf %s" % [gang.id, district_id])
 			assert_false(claimed.has(district_id), "%s is claimed twice" % district_id)
 			claimed.append(district_id)
-		for district_id: StringName in gang.strongholds:
-			assert_true(gang.turf.has(district_id), "%s stronghold %s" % [gang.id, district_id])
+		for district_id in gang.turf:
+			var corners := Corners.of(district_id)
+			assert_eq(corners.size(), 4, "%s corners" % district_id)
+			assert_eq(corners.filter(func(corner: CornerDef) -> bool: return corner.stronghold).size(), 1, "%s stronghold" % district_id)
 		assert_string_contains(gang.gate_line, "%s")
 		assert_string_contains(gang.victory_line, "%s")
 
@@ -191,7 +199,7 @@ func _style_gate(gang_id: StringName, district_id: StringName) -> Dictionary:
 	var encounter := Gangs.gate(_run, Content.gang(gang_id))
 	encounter.district = String(district_id)
 	_run.district_id = district_id
-	_run.turf[district_id] = 20
+	_hold_corners(district_id, 1)
 	_run.pending_encounter = encounter
 	return encounter
 
@@ -215,7 +223,7 @@ func test_losing_a_fight_to_muggers_empties_more_of_your_pockets() -> void:
 	var cut := int(encounter.bribe)
 	Encounters.resolve(_run, Gangs.FIGHT, 0.99)
 	assert_eq(_run.cash, 10000 - roundi(cut * Gangs.BEATEN_MUGGING_FACTOR))
-	assert_eq(Turf.share(_run, &"riverside"), 20 - Gangs.FIGHT_LOSS)
+	assert_eq(Turf.share(_run, &"riverside"), 25)
 
 
 func test_running_from_muggers_costs_heat_or_the_cut() -> void:
@@ -228,7 +236,6 @@ func test_running_from_muggers_costs_heat_or_the_cut() -> void:
 	var cut := int(encounter.bribe)
 	Encounters.resolve(_run, Gangs.RUN, 0.99)
 	assert_eq(_run.cash, 10000 - cut)
-	assert_eq(Turf.share(_run, &"riverside"), 20 - Gangs.IGNORE_LOSS)
 
 
 func test_refusing_an_informer_brings_the_police() -> void:
@@ -239,14 +246,3 @@ func test_refusing_an_informer_brings_the_police() -> void:
 	assert_eq(_run.pending_encounter.get("type"), Encounters.POLICE)
 	assert_eq(Gangs.anger(_run, Content.gang(&"celeste")), 1)
 
-
-func test_crews_leave_locked_districts_alone() -> void:
-	var celeste := Content.gang(&"celeste")
-	for attempt in 40:
-		if Gangs.boss_location(_run, celeste, Calendar.stamp(_run)) == &"the_heights":
-			break
-		Calendar.advance_phase(_run)
-	assert_eq(Gangs.boss_location(_run, celeste, Calendar.stamp(_run)), &"the_heights")
-	var before := Turf.share(_run, &"the_heights")
-	Turf.gangs_push(_run)
-	assert_eq(Turf.share(_run, &"the_heights"), before, "the player cannot reach the heights yet")

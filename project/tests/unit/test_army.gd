@@ -14,45 +14,25 @@ func _enlist(tier: Army.Tier, amount: int) -> void:
 	Army.add(_run, tier, Army.State.ACTIVE, amount)
 
 
-func test_the_outfit_starts_small_and_split_mostly_lunatics() -> void:
-	assert_eq(Army.capacity(_run), 1000)
-	assert_eq(Army.deploy_cap(_run), 300)
-	assert_eq(Army.slots(_run, Army.Tier.LUNATICS), 800)
-	assert_eq(Army.slots(_run, Army.Tier.GUARDS), 200)
-	assert_eq(Army.slots(_run, Army.Tier.BLACK_HAND), 0)
-	assert_eq(Army.vacancies(_run, Army.Tier.GUARDS), 200)
-
-
-func test_an_expansion_is_bought_with_cash_and_its_slots_go_to_the_lunatics() -> void:
-	assert_eq(Army.expand(_run), Army.Result.OK)
-	assert_eq(_run.cash, 50000 - 25000)
-	assert_eq(Army.capacity(_run), 3000)
+func test_the_outfit_starts_sending_a_thousand() -> void:
 	assert_eq(Army.deploy_cap(_run), 1000)
-	assert_eq(Army.slots(_run, Army.Tier.LUNATICS), 2800)
+
+
+func test_an_expansion_is_bought_with_cash() -> void:
+	assert_eq(Army.expand(_run), Army.Result.OK)
+	assert_eq(_run.cash, 50000 - 10000)
+	assert_eq(Army.deploy_cap(_run), 5000)
+	_run.cash = 1000
 	assert_eq(Army.expand(_run), Army.Result.NOT_ENOUGH_CASH)
 	_run.army_level = Army.EXPANSIONS.size() - 1
+	assert_eq(Army.deploy_cap(_run), 120000)
 	assert_eq(Army.expansion_price(_run), -1)
 	assert_eq(Army.expand(_run), Army.Result.MAX_LEVEL)
 
 
-func test_the_split_never_goes_past_capacity() -> void:
-	Story.mark(_run, War.VEX_FELL)
-	assert_eq(Army.set_slots(_run, Army.Tier.BLACK_HAND, 500), 0, "every slot is already split")
-	Army.set_slots(_run, Army.Tier.LUNATICS, 400)
-	assert_eq(Army.set_slots(_run, Army.Tier.BLACK_HAND, 500), 400)
-	assert_eq(Army.slots_used(_run), Army.capacity(_run))
-	assert_eq(Army.set_slots(_run, Army.Tier.GUARDS, -5), 0)
-
-
-func test_making_room_takes_lunatic_slots_first() -> void:
-	Army.make_room(_run, Army.Tier.BLACK_HAND, 50)
-	assert_eq(Army.slots(_run, Army.Tier.BLACK_HAND), 50)
-	assert_eq(Army.slots(_run, Army.Tier.LUNATICS), 750)
-	assert_eq(Army.slots(_run, Army.Tier.GUARDS), 200)
-	Army.set_slots(_run, Army.Tier.LUNATICS, 0)
-	Army.make_room(_run, Army.Tier.BLACK_HAND, 1000)
-	assert_eq(Army.slots(_run, Army.Tier.BLACK_HAND), 1000)
-	assert_eq(Army.slots(_run, Army.Tier.GUARDS), 0)
+func test_there_is_no_limit_on_men_kept() -> void:
+	_enlist(Army.Tier.LUNATICS, 1000000)
+	assert_eq(Army.total(_run), 1000000)
 
 
 func test_every_living_man_is_ready_or_wounded() -> void:
@@ -62,27 +42,26 @@ func test_every_living_man_is_ready_or_wounded() -> void:
 	assert_eq(Army.total(_run, Army.Tier.GUARDS), 3)
 	assert_eq(Army.active(_run), 10)
 	assert_eq(Army.wounded(_run), 3)
-	assert_eq(Army.vacancies(_run, Army.Tier.GUARDS), 197, "the wounded keep their slots")
 
 
 func test_deployment_sends_the_best_first_up_to_the_cap() -> void:
-	_enlist(Army.Tier.LUNATICS, 400)
+	_enlist(Army.Tier.LUNATICS, 2000)
 	_enlist(Army.Tier.GUARDS, 100)
 	_enlist(Army.Tier.BLACK_HAND, 50)
 	var sent := Army.deployment(_run)
-	assert_eq(sent, { Army.Tier.BLACK_HAND: 50, Army.Tier.GUARDS: 100, Army.Tier.LUNATICS: 150 })
+	assert_eq(sent, { Army.Tier.BLACK_HAND: 50, Army.Tier.GUARDS: 100, Army.Tier.LUNATICS: 850 })
 	assert_eq(Army.deployed_count(Army.deployment(_run, 80)), 80)
-	assert_eq(Army.deployment(_run, -1, false), { Army.Tier.GUARDS: 100, Army.Tier.LUNATICS: 200 }, "the Black Hand can stay back")
+	assert_eq(Army.deployment(_run, -1, false), { Army.Tier.GUARDS: 100, Army.Tier.LUNATICS: 900 }, "the Black Hand can stay back")
 
 
 func test_a_picked_crew_is_held_to_fit_men_and_the_cap() -> void:
-	_enlist(Army.Tier.LUNATICS, 400)
+	_enlist(Army.Tier.LUNATICS, 2000)
 	_enlist(Army.Tier.GUARDS, 100)
 	_enlist(Army.Tier.BLACK_HAND, 50)
 	var wanted := { Army.Tier.LUNATICS: 120, Army.Tier.BLACK_HAND: 0 }
 	assert_eq(Army.picked(_run, wanted), { Army.Tier.LUNATICS: 120 }, "tiers left at zero stay home")
-	wanted = { Army.Tier.GUARDS: 500, Army.Tier.LUNATICS: 400 }
-	assert_eq(Army.picked(_run, wanted), { Army.Tier.GUARDS: 100, Army.Tier.LUNATICS: 200 })
+	wanted = { Army.Tier.GUARDS: 500, Army.Tier.LUNATICS: 2000 }
+	assert_eq(Army.picked(_run, wanted), { Army.Tier.GUARDS: 100, Army.Tier.LUNATICS: 900 })
 
 
 func test_guards_are_armed_before_lunatics_and_fight_harder() -> void:
@@ -111,15 +90,25 @@ func test_army_and_hospital_survive_a_save() -> void:
 	Army.add(_run, Army.Tier.LUNATICS, Army.State.WOUNDED, 3)
 	_run.fallen = { Army.Tier.LUNATICS: 4 }
 	_run.army_level = 1
-	_run.army_split = { Army.Tier.LUNATICS: 1500, Army.Tier.GUARDS: 1000, Army.Tier.BLACK_HAND: 500 }
 	_run.hospital_level = 2
 	var loaded := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
 	assert_eq(Army.count(loaded, Army.Tier.GUARDS), 7)
 	assert_eq(Army.count(loaded, Army.Tier.LUNATICS, Army.State.WOUNDED), 3)
 	assert_eq(Army.fallen(loaded), 4)
-	assert_eq(Army.capacity(loaded), 3000)
-	assert_eq(Army.slots(loaded, Army.Tier.BLACK_HAND), 500)
+	assert_eq(Army.deploy_cap(loaded), 5000)
 	assert_eq(loaded.hospital_level, 2)
+
+
+func test_old_saves_keep_every_man_and_start_the_hospital_at_its_new_base() -> void:
+	_enlist(Army.Tier.LUNATICS, 782)
+	var data: Dictionary = JSON.parse_string(JSON.stringify(_run.to_dict()))
+	data.erase("hospital_size")
+	data.erase("training")
+	data["hospital_level"] = 5
+	data["army_split"] = { "0": 350, "1": 650 }
+	var loaded := RunState.from_dict(data)
+	assert_eq(Army.count(loaded, Army.Tier.LUNATICS), 782)
+	assert_eq(Hospital.beds(loaded), 25000)
 
 
 func test_old_saves_turn_their_men_into_lunatics_and_the_unit_into_the_black_hand() -> void:
@@ -147,17 +136,10 @@ func test_saves_from_the_small_scale_are_multiplied_up() -> void:
 	assert_eq(int(loaded.corner_defenders["tran_steps"]), 300)
 
 
-func test_the_black_hand_get_no_slots_until_vex_falls() -> void:
-	Army.set_slots(_run, Army.Tier.LUNATICS, 0)
-	assert_eq(Army.set_slots(_run, Army.Tier.BLACK_HAND, 500), 0)
-	Story.mark(_run, War.VEX_FELL)
-	assert_eq(Army.set_slots(_run, Army.Tier.BLACK_HAND, 500), 500)
-
-
-func test_men_are_priced_per_hundred() -> void:
-	assert_eq(Army.price_of(250, 100), 250)
-	assert_eq(Army.price_of(250, 1), 3, "a part of a hundred is rounded up")
-	assert_eq(Army.men_for(1500, 3000), 200)
+func test_men_are_priced_per_thousand() -> void:
+	assert_eq(Army.price_of(2500, 1000), 2500)
+	assert_eq(Army.price_of(2500, 1), 3, "a part of a thousand is rounded up")
+	assert_eq(Army.men_for(15000, 3000), 200)
 
 
 func test_sanitize_drops_unknown_tiers_and_states() -> void:

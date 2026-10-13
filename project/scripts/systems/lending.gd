@@ -20,7 +20,7 @@ const SKIP_CHANCE := { Tiers.STREET: 0.25, Tiers.MIDDLE: 0.12, Tiers.WEALTHY: 0.
 
 
 static func can_buy_out(run: RunState) -> bool:
-	return Campaign.is_act_two(run) and not run.shark_bought and run.debt <= 0 and not Loan.is_with_vex(run)
+	return not run.shark_bought and run.debt <= 0 and not Loan.is_with_vex(run)
 
 
 static func buy_out(run: RunState) -> bool:

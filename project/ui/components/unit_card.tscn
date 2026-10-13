@@ -1,0 +1,113 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/components/unit_card.gd" id="1_card"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.0824, 0.0902, 0.1176, 1)
+
+[sub_resource type="Gradient" id="Gradient_shade"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(0.0471, 0.0549, 0.0706, 0, 0.0471, 0.0549, 0.0706, 0.35, 0.0471, 0.0549, 0.0706, 0.95)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_shade"]
+gradient = SubResource("Gradient_shade")
+width = 8
+height = 128
+fill_to = Vector2(0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1804, 0.1961, 0.2314, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_name"]
+
+[node name="UnitCard" type="Button"]
+clip_contents = true
+custom_minimum_size = Vector2(0, 272)
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_card")
+theme_override_styles/hover = SubResource("StyleBoxFlat_card")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_card")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_card")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_card")
+theme_override_styles/focus = SubResource("StyleBoxFlat_card")
+script = ExtResource("1_card")
+
+[node name="Art" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Shade" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_shade")
+expand_mode = 1
+
+[node name="Info" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -84.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ListHeading"
+theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_name")
+text_overrun_behavior = 3
+
+[node name="CountLabel" type="Label" parent="Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"StatValueLabel"
+theme_override_font_sizes/font_size = 26
+text_overrun_behavior = 3
+
+[node name="StatusLabel" type="Label" parent="Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudCaptionLabel"
+theme_override_font_sizes/font_size = 13
+text_overrun_behavior = 3
+
+[node name="Frame" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_frame")

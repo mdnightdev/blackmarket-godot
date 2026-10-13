@@ -1,7 +1,8 @@
 class_name Corners
 
-## Street corners. In Act 1 only Old Market has them, and Vex holds all four until the player buys Mama Lin's and
-## takes the rest in the war. run.corners_held lists the corner ids the player holds.
+## Street corners. Every district a gang fights over is split into corners, and the gang holds each one until the
+## player takes it by force, see War. In Act 1 the fight is only for Old Market: Vex holds all four corners until the
+## player buys Mama Lin's and takes the rest. run.corners_held lists the corner ids the player holds.
 ## Mama Lin's corner goes on sale once the debt is off the player's back, or once Vex holds it. Auntie Tran tips the
 ## player off by phone, buying it brings Rabbit in, and the next morning Vex smashes the stall.
 
@@ -23,6 +24,11 @@ const RABBIT_JOINED := "rabbit_joined"
 const STALL_DONE := "vex_smashed_stall"
 ## Share of each stack of stock the smashed stall costs.
 const STALL_STOCK_LOSS := 0.25
+## Saves from before every district had corners kept a share per district. A held district comes back with this
+## many corners, all of them from MIGRATED_ALL_AT.
+const MIGRATED_HOLD_SHARE := 60
+const MIGRATED_HELD_CORNERS := 3
+const MIGRATED_ALL_AT := 90
 
 
 static func of(district_id: StringName) -> Array[CornerDef]:
@@ -40,6 +46,19 @@ static func find(corner_id: StringName) -> CornerDef:
 			if corner.id == corner_id:
 				return corner
 	return null
+
+
+static func district_of(corner_id: StringName) -> StringName:
+	for district in Content.districts():
+		for corner in district.corners:
+			if corner.id == corner_id:
+				return district.id
+	return &""
+
+
+## The gang fighting for the corner, or null.
+static func gang_of(corner_id: StringName) -> GangDef:
+	return Gangs.owner(district_of(corner_id))
 
 
 static func holds(run: RunState, corner_id: StringName) -> bool:
@@ -61,8 +80,30 @@ static func take(run: RunState, corner_id: StringName) -> void:
 		run.corners_held.append(String(corner_id))
 
 
+static func take_all(run: RunState, district_id: StringName) -> void:
+	for corner in of(district_id):
+		take(run, corner.id)
+
+
 static func lose(run: RunState, corner_id: StringName) -> void:
 	run.corners_held.erase(String(corner_id))
+
+
+## Hands out corners for a save that kept a share per district. Districts of a gang already driven out are the
+## player's whole. A held district keeps its plain corners before its stronghold.
+static func migrate_turf(run: RunState, shares: Variant) -> void:
+	var saved: Dictionary = shares if shares is Dictionary else {}
+	for gang in Content.gangs():
+		for district_id in gang.turf:
+			if district_id == HOME:
+				continue
+			var share := int(saved.get(String(district_id), saved.get(district_id, 0)))
+			if Gangs.is_gone(run, gang) or share >= MIGRATED_ALL_AT:
+				take_all(run, district_id)
+			elif share >= MIGRATED_HOLD_SHARE:
+				var plain_first := of(district_id).filter(func(corner: CornerDef) -> bool: return not corner.stronghold)
+				for corner: CornerDef in plain_first.slice(0, MIGRATED_HELD_CORNERS):
+					take(run, corner.id)
 
 
 ## Everyone working the district this phase, as corner id to an Array of SpeakerDef. Sellers stand at their own

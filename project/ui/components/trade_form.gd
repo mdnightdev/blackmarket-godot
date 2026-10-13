@@ -13,11 +13,9 @@ signal close_requested
 enum Mode { BUY, SELL, GEAR }
 
 const WALK_AWAY_CLOSE_SECONDS := 1.4
-const COMPACT_ICON_SIZE := Vector2(88, 88)
-const COMPACT_NAME_SIZE := 24
 
-## Compact forms drop the item description and the quantity slider and use a smaller picture, for forms open
-## inside a list.
+## Compact forms open inside a list, right under the item's card, so they leave out what the card already shows:
+## the picture, name, risk and price. They also drop the quantity slider.
 @export var compact := false
 @export var closable := false
 
@@ -29,12 +27,13 @@ var _unit_price := 0
 var _quantity := 1
 var _haggled := false
 
-@onready var _icon_frame: Control = %IconFrame
+@onready var _header: Control = %Header
 @onready var _icon: TextureRect = %Icon
 @onready var _name_label: Label = %NameLabel
 @onready var _caption_label: Label = %CaptionLabel
 @onready var _description_label: Label = %DescriptionLabel
 @onready var _close_button: Button = %CloseButton
+@onready var _price_box: Control = %PriceBox
 @onready var _price_caption: Label = %PriceCaption
 @onready var _price_value: Label = %PriceValue
 @onready var _held_value: Label = %HeldValue
@@ -59,8 +58,8 @@ var _haggled := false
 
 func _ready() -> void:
 	if compact:
-		_icon_frame.custom_minimum_size = COMPACT_ICON_SIZE
-		_name_label.add_theme_font_size_override("font_size", COMPACT_NAME_SIZE)
+		_header.hide()
+		_price_box.hide()
 		_quantity_slider.hide()
 	_close_button.visible = closable
 	_close_button.pressed.connect(close_requested.emit)
@@ -91,7 +90,6 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 	_icon.texture = item.icon
 	_name_label.text = item.display_name
 	_description_label.text = item.description
-	_description_label.visible = not compact
 	_caption_label.text = Gear.describe(item) if item.is_equipment() else "%s, %s" % [item.category_name(), item.risk_label().to_lower()]
 	_price_caption.text = "DEALER PAYS" if mode == Mode.SELL else "PRICE"
 	_quantity_box.visible = mode != Mode.GEAR

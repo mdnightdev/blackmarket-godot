@@ -28,7 +28,6 @@ http://creativecommons.org/publicdomain/zero/1.0/
   hijack_quiet.ogg   RPG Audio         metalLatch.ogg
   hijack_loud.ogg    Impact Sounds     impactMetal_heavy_003.ogg
   turf_clash.ogg     RPG Audio         drawKnife1.ogg
-  turf_muscle.ogg    Impact Sounds     impactPunch_medium_002.ogg
   turf_won.ogg       Interface Sounds  confirmation_004.ogg
   gear_buy.ogg       RPG Audio         beltHandle1.ogg
   clean_up.ogg       RPG Audio         bookFlip2.ogg

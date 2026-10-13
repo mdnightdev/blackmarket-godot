@@ -29,6 +29,16 @@ func test_buyout_needs_a_clear_career_and_the_money() -> void:
 	assert_false(Lending.buy_out(_run), "only at the Shark's office")
 
 
+func test_buyout_opens_once_the_debt_is_paid_in_act_one() -> void:
+	var run := RunState.new()
+	run.career = true
+	run.debt = 0
+	run.cash = Lending.BUYOUT_PRICE
+	run.district_id = &"downtown"
+	assert_false(Campaign.is_act_two(run))
+	assert_true(Lending.buy_out(run))
+
+
 func test_buyout_brings_the_shark_onto_the_crew_for_free() -> void:
 	var run := _bought_run()
 	assert_eq(run.cash, 100000)

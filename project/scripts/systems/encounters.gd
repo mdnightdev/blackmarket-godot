@@ -43,7 +43,6 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 	var raid_due := Heat.is_maxed(run) and not police_quiet
 	Heat.cool_down(run, new_day_started)
 	StreetEvents.prune(run)
-	Turf.gangs_push(run)
 
 	if new_day_started:
 		Turf.collect_daily_cut(run)
@@ -71,7 +70,7 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 		return
 	if Corners.check(run, new_day_started):
 		return
-	if VexAmbush.check(run, new_day_started, rng.randf()):
+	if RivalStrike.check(run, new_day_started, rng.randf()):
 		return
 	if travelled and Smuggling.is_carrying(run) and Routes.ambush_due(run, rng.randf()):
 		run.pending_encounter = Ambush.start(run)
@@ -238,8 +237,8 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			list.append_array(Corners.choices(run, encounter))
 		Ramos.TIP:
 			list.append_array(Ramos.choices(run))
-		VexAmbush.TYPE:
-			list.append_array(VexAmbush.choices(run))
+		RivalStrike.TYPE:
+			list.append_array(RivalStrike.choices(run))
 		Families.SHAKEDOWN:
 			var demand := int(encounter.demand)
 			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
@@ -288,8 +287,8 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			return Corners.resolve(run, encounter, choice)
 		Ramos.TIP:
 			return Ramos.outcome_text(Ramos.resolve(run, choice))
-		VexAmbush.TYPE:
-			return VexAmbush.resolve(run, encounter, choice, roll)
+		RivalStrike.TYPE:
+			return RivalStrike.resolve(run, encounter, choice, roll)
 	match choice:
 		BRIBE:
 			Police.pay_bribe(run, int(encounter.bribe))

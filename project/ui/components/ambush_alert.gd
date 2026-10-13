@@ -1,11 +1,11 @@
 class_name AmbushAlert
 extends Control
-## The warning before Vex's crew hits a corner: red light at the edges, the siren and a countdown over the Old Market
-## street. The player hands the defence to 午夜兔子 or mobilises the crew themselves. When time runs out, Rabbit takes it.
+## The warning before a rival crew hits a corner: red light at the edges, the siren and a countdown over the
+## corner's street. The player hands the defence to 午夜兔子 or mobilises the crew themselves. When time runs out,
+## Rabbit takes it.
 
 signal decided(choice: StringName)
 
-const STREET: Texture2D = preload("res://assets/backgrounds/districts/old_market.jpg")
 const STREET_DIM := Color(0.35, 0.33, 0.36)
 const SHADE_ALPHA := 0.45
 const EDGE_GLOW := 0.45
@@ -18,7 +18,7 @@ const CHOICE_HEIGHT := DialoguePanel.CHOICE_HEIGHT
 const CHOICE_FONT_SIZE := DialoguePanel.CHOICE_FONT_SIZE
 const LINE_FONT_SIZE := 21
 
-var _seconds_left := VexAmbush.COUNTDOWN_SECONDS
+var _seconds_left := RivalStrike.COUNTDOWN_SECONDS
 var _countdown := Label.new()
 var _bar := ProgressBar.new()
 var _portrait := TalkingPortrait.new()
@@ -28,9 +28,9 @@ var _done := false
 func show_ambush(encounter: Dictionary) -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_add_street()
+	_add_street(_street_of(encounter))
 	var column := _add_column()
-	var rabbit := Content.speaker(VexAmbush.RABBIT)
+	var rabbit := Content.speaker(RivalStrike.RABBIT)
 	_portrait.soft_edges = true
 	_portrait.custom_minimum_size.y = PORTRAIT_HEIGHT
 	_portrait.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -54,12 +54,17 @@ func _process(delta: float) -> void:
 	_seconds_left = maxf(0.0, _seconds_left - delta)
 	_show_time()
 	if _seconds_left <= 0.0:
-		_decide(VexAmbush.DELEGATE)
+		_decide(RivalStrike.DELEGATE)
 
 
-func _add_street() -> void:
+func _street_of(encounter: Dictionary) -> Texture2D:
+	var district := Content.district(Corners.district_of(StringName(str(encounter.get("corner", "")))))
+	return district.background if district != null else Content.district(Corners.HOME).background
+
+
+func _add_street(texture: Texture2D) -> void:
 	var street := TextureRect.new()
-	street.texture = STREET
+	street.texture = texture
 	street.modulate = STREET_DIM
 	street.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	street.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -101,10 +106,10 @@ func _choices(rabbit: SpeakerDef) -> Control:
 	list.size_flags_horizontal = Control.SIZE_SHRINK_END
 	list.add_theme_constant_override("separation", 6)
 	var ready := Army.active(GameState.run) > 0
-	_add_choice(list, VexAmbush.DELEGATE, "Leave it to %s" % rabbit.display_name, &"PrimaryButton", "A veteran's odds. He sends everyone.", true)
+	_add_choice(list, RivalStrike.DELEGATE, "Leave it to %s" % rabbit.display_name, &"PrimaryButton", "A veteran's odds. He sends everyone.", true)
 	var mobilise := "Mobilise the crew" if ready else "No men ready"
 	var caption := "You pick who goes." if ready else "Everyone is wounded or gone."
-	_add_choice(list, VexAmbush.MOBILISE, mobilise, &"SecondaryButton", caption, ready)
+	_add_choice(list, RivalStrike.MOBILISE, mobilise, &"SecondaryButton", caption, ready)
 	return list
 
 
@@ -152,7 +157,7 @@ func _card(rabbit: SpeakerDef, body: String) -> Control:
 	var timer_row := HBoxContainer.new()
 	timer_row.add_theme_constant_override("separation", 12)
 	_bar.theme_type_variation = &"ThinBar"
-	_bar.max_value = VexAmbush.COUNTDOWN_SECONDS
+	_bar.max_value = RivalStrike.COUNTDOWN_SECONDS
 	_bar.show_percentage = false
 	_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER

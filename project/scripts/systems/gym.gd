@@ -1,79 +1,74 @@
 class_name Gym
 
-## 午夜兔子's gym, open once he has joined the player. Four mornings a week he holds a training session: the hospital
-## heals who it can, and every tier is filled back up to its slots, Black Hand first, with Lunatics from Auntie Tran.
-## Men over a tier's slots are let go. The session is the only time the outfit costs money.
+## 午夜兔子's gym, open once he has joined the player. Men are paid for and join the outfit on the spot.
 
-## Days of the week, counted from 0, with a session in the morning.
-const SESSION_DAYS: Array[int] = [0, 2, 4, 6]
+enum Course { LUNATICS, GUARDS, PROMOTION, BLACK_HAND }
+enum Result { OK, CLOSED, LOCKED, INVALID, NOT_ENOUGH_MEN, NOT_ENOUGH_CASH }
+
+## tier is who the men become and price is per thousand men.
+const COURSES := {
+	Course.LUNATICS: { "name": "Lunatics", "tier": Army.Tier.LUNATICS, "price": 1000 },
+	Course.GUARDS: { "name": "Guards", "tier": Army.Tier.GUARDS, "price": 6000 },
+	Course.PROMOTION: { "name": "Promote Lunatics", "tier": Army.Tier.GUARDS, "price": 5000 },
+	Course.BLACK_HAND: { "name": "Black Hand", "tier": Army.Tier.BLACK_HAND, "price": 60000 },
+}
 
 
 static func is_open(run: RunState) -> bool:
 	return Story.has(run, Corners.RABBIT_JOINED)
 
 
-static func is_session_day(day: int) -> bool:
-	return SESSION_DAYS.has(posmod(day - 1, 7))
+## Per thousand men.
+static func price_per_thousand(course: Course) -> int:
+	return int(COURSES[course].price)
 
 
-static func next_session_day(run: RunState) -> int:
-	var day := run.day + 1
-	while not is_session_day(day):
-		day += 1
-	return day
+static func price(course: Course, men: int) -> int:
+	return Army.price_of(price_per_thousand(course), men)
 
 
-## Returns { healed, replaced, released, paid, vacancies }. replaced maps a tier to the men it gained.
-static func session(run: RunState) -> Dictionary:
-	var care := Hospital.heal(run)
-	var paid := int(care.paid)
-	var replaced := {}
-	var released := 0
-	for tier in Army.DEPLOY_ORDER:
-		var extra := Army.total(run, tier) - Army.slots(run, tier)
-		if extra > 0:
-			var leaving := mini(extra, Army.count(run, tier))
-			Army.add(run, tier, Army.State.ACTIVE, -leaving)
-			released += leaving
+## The most men the course can take right now: cash and, for a promotion, fit Lunatics.
+static func most(run: RunState, course: Course) -> int:
+	var men := Army.men_for(price_per_thousand(course), run.cash)
+	if course == Course.PROMOTION:
+		men = mini(men, Army.count(run, Army.Tier.LUNATICS))
+	return maxi(0, men)
+
+
+static func check(run: RunState, course: Course, men: int) -> Result:
+	if not is_open(run):
+		return Result.CLOSED
+	if course == Course.BLACK_HAND and not Army.black_hand_open(run):
+		return Result.LOCKED
+	if men <= 0:
+		return Result.INVALID
+	if course == Course.PROMOTION and men > Army.count(run, Army.Tier.LUNATICS):
+		return Result.NOT_ENOUGH_MEN
+	if run.cash < price(course, men):
+		return Result.NOT_ENOUGH_CASH
+	return Result.OK
+
+
+## Pays for the course and adds the men to the outfit. Promoted Lunatics become Guards.
+static func enroll(run: RunState, course: Course, men: int) -> Result:
+	var result := check(run, course, men)
+	if result != Result.OK:
+		return result
+	run.cash -= price(course, men)
+	if course == Course.PROMOTION:
+		Army.add(run, Army.Tier.LUNATICS, Army.State.ACTIVE, -men)
+	Army.add(run, int(COURSES[course].tier) as Army.Tier, Army.State.ACTIVE, men)
+	return Result.OK
+
+
+## Saves from when training took sessions may still hold men in training. They join the outfit on load.
+static func deliver_legacy_training(run: RunState, source: Variant) -> void:
+	if not source is Array:
+		return
+	for entry: Variant in source:
+		if not entry is Dictionary:
 			continue
-		var price := int(Army.REPLACE_PRICES[tier])
-		var filled := mini(Army.vacancies(run, tier), Army.men_for(price, run.cash))
-		if filled > 0:
-			var cost := Army.price_of(price, filled)
-			Army.add(run, tier, Army.State.ACTIVE, filled)
-			run.cash -= cost
-			paid += cost
-			replaced[tier] = filled
-	var still_empty := 0
-	for tier in Army.Tier.values():
-		still_empty += Army.vacancies(run, tier)
-	return { "healed": int(care.healed), "replaced": replaced, "released": released, "paid": paid, "vacancies": still_empty }
-
-
-## What the next session would cost with today's wounded and empty slots.
-static func estimate(run: RunState) -> int:
-	var sum := Hospital.estimate(run)
-	for tier in Army.Tier.values():
-		sum += Army.price_of(int(Army.REPLACE_PRICES[tier]), Army.vacancies(run, tier))
-	return sum
-
-
-## The morning's session, when it is one. Returns notices for the morning.
-static func morning(run: RunState) -> Array[Dictionary]:
-	var notices: Array[Dictionary] = []
-	if not is_open(run) or not is_session_day(run.day):
-		return notices
-	var result := session(run)
-	var replaced := 0
-	for tier: int in result.replaced:
-		replaced += int(result.replaced[tier])
-	if replaced == 0 and int(result.healed) == 0 and int(result.released) == 0:
-		return notices
-	var line := "Training day. %d new men, %d healed." % [replaced, int(result.healed)]
-	if int(result.released) > 0:
-		line += " %d let go." % int(result.released)
-	var hint := "Paid %s." % Format.money(int(result.paid))
-	if int(result.vacancies) > 0:
-		hint += " %d slots still empty. Keep cash for the next session." % int(result.vacancies)
-	notices.append({ "line": line, "hint": hint })
-	return notices
+		var tier := int(entry.get("tier", -1))
+		var men := int(entry.get("men", 0))
+		if tier >= 0 and tier < Army.Tier.size() and men > 0:
+			Army.add(run, tier as Army.Tier, Army.State.ACTIVE, men)

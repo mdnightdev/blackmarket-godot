@@ -2,7 +2,6 @@ class_name CornerTalk
 
 ## Street corners: tapping one on the district screen, and Mama Lin selling hers through Auntie Tran.
 
-const ATTACK: StringName = &"attack"
 const BUY: StringName = &"buy"
 const NEXT: StringName = &"next"
 const LEAVE: StringName = &"leave"
@@ -19,10 +18,13 @@ const RABBIT_LINES: Array[String] = [
 ]
 
 
-## people is everyone working the corner this phase, from Corners.people_at.
+## people is everyone working the corner this phase, from Corners.people_at. Rival corners open the target card.
 static func open(corner: CornerDef, people: Array[SpeakerDef]) -> void:
 	var run := GameState.run
-	var gang := Gangs.owner(run.district_id)
+	if War.is_target(run, corner):
+		GameOverlay.show_target(corner, people)
+		return
+	var gang := Corners.gang_of(corner.id)
 	var holder := "You hold it." if Corners.holds(run, corner.id) else "%s holds it." % (gang.display_name if gang != null else "Nobody")
 	var line := "%s. %s It moves %s." % [corner.display_name, holder, corner.moves.to_lower()]
 	var choices: Array[DialogueChoice] = []
@@ -31,18 +33,11 @@ static func open(corner: CornerDef, people: Array[SpeakerDef]) -> void:
 	var hint := "Pays %s rent and %s protection every morning to whoever holds it." % [Format.money(corner.rent), Format.money(corner.protection)]
 	if corner.rent == 0:
 		hint = "Pays %s protection every morning to whoever holds it." % Format.money(corner.protection)
-	if War.is_open(run) and not Corners.holds(run, corner.id):
-		choices.append(DialogueChoice.new(ATTACK, "Plan an attack", War.can_attack(run, corner)))
-		if not War.can_attack(run, corner):
-			hint = "You need men to take a corner. Auntie Tran knows who is looking for work."
 	choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
-	GameOverlay.talk(Content.player(run.player_id), line, choices, _on_corner_choice.bind(corner, people), hint)
+	GameOverlay.talk(Content.player(run.player_id), line, choices, _on_corner_choice.bind(people), hint)
 
 
-static func _on_corner_choice(choice: StringName, corner: CornerDef, people: Array[SpeakerDef]) -> void:
-	if choice == ATTACK:
-		WarTalk.plan(corner)
-		return
+static func _on_corner_choice(choice: StringName, people: Array[SpeakerDef]) -> void:
 	for person in people:
 		if person.id != choice:
 			continue

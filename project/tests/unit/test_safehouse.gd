@@ -8,7 +8,7 @@ var _run: RunState
 
 func before_each() -> void:
 	_run = RunState.new()
-	_run.turf[HELD] = 100
+	Corners.take_all(_run, HELD)
 	_run.district_id = HELD
 	_run.cash = 30000
 
@@ -18,7 +18,8 @@ func test_opens_only_in_held_districts() -> void:
 	_run.district_id = NOT_HELD
 	assert_false(Safehouse.is_open(_run))
 	_run.district_id = HELD
-	_run.turf[HELD] = Turf.HOLD_SHARE - 1
+	Corners.lose(_run, Corners.of(HELD)[0].id)
+	Corners.lose(_run, Corners.of(HELD)[1].id)
 	assert_false(Safehouse.is_open(_run))
 
 

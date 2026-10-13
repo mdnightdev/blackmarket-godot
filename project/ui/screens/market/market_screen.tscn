@@ -220,13 +220,13 @@ theme_override_constants/separation = 10
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+mouse_filter = 1
 theme_type_variation = &"TradePanel"
 
 [node name="TradeForm" parent="Margin/Layout/Panel/Content/Scroll/List/TradePanel" instance=ExtResource("5_trade_form")]
 unique_name_in_owner = true
 layout_mode = 2
 compact = true
-closable = true
 
 [node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2

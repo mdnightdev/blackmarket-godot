@@ -31,9 +31,12 @@ func _set_rank(rank_number: int) -> void:
 
 
 func _hold(district_id: StringName) -> void:
-	_run.turf[district_id] = 80
-	for corner in Corners.of(district_id):
-		Corners.take(_run, corner.id)
+	Corners.take_all(_run, district_id)
+
+
+func _lose_hold(district_id: StringName) -> void:
+	for corner in Corners.of(district_id).slice(1):
+		Corners.lose(_run, corner.id)
 
 
 func _open(business: BusinessDef, district_id: StringName = &"old_market") -> Dictionary:
@@ -105,7 +108,7 @@ func test_businesses_need_a_held_district_and_the_rank() -> void:
 	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.NOT_HELD, "district not held")
 	assert_eq(Businesses.check_buy(_run, _nightclub, &"old_market"), Businesses.Result.RANK_TOO_LOW, "nightclub needs a higher rank")
 	_hold(&"docks")
-	_run.turf[&"docks"] = 30
+	_lose_hold(&"docks")
 	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.NOT_HELD, "hold lost")
 
 
@@ -203,7 +206,7 @@ func test_unloading_works_while_closed() -> void:
 	_hold(&"docks")
 	var entry := _open(_shop, &"docks")
 	_stock(entry, _watches, 2, 400)
-	_run.turf[&"docks"] = 30
+	_lose_hold(&"docks")
 	assert_false(Businesses.is_open(_run, entry))
 	assert_eq(Businesses.unload_stock(_run, entry, _watches, 2), Businesses.Result.OK)
 	assert_eq(Inventory.count(_run, _watches.id), 2)
@@ -217,7 +220,7 @@ func test_open_needs_the_day_and_the_district() -> void:
 	assert_false(Businesses.is_open(_run, entry))
 	_run.day += 1
 	assert_true(Businesses.is_open(_run, entry))
-	_run.turf[&"docks"] = 30
+	_lose_hold(&"docks")
 	assert_false(Businesses.is_open(_run, entry))
 
 

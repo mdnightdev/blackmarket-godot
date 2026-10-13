@@ -57,7 +57,6 @@ static func sell(run: RunState, item: ItemDef, quantity: int, unit_price: int) -
 	run.profit += (unit_price - paid) * quantity
 	run.trades += 1
 	Inventory.discard(run, item.id, quantity)
-	Turf.record_sale(run, unit_price * quantity)
 	StreetCred.add_from_sale(run, unit_price * quantity)
 	return Result.OK
 

@@ -6,7 +6,7 @@ var _phones: ItemDef
 
 func before_each() -> void:
 	_run = RunState.new()
-	_run.turf[&"slums"] = 100
+	Corners.take_all(_run, &"slums")
 	_phones = Content.item(&"burner_phones")
 
 

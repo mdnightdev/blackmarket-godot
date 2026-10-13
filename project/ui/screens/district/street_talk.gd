@@ -5,7 +5,6 @@ class_name StreetTalk
 const REPAY: StringName = &"repay"
 const BORROW: StringName = &"borrow"
 const PAY: StringName = &"pay"
-const MUSCLE: StringName = &"muscle"
 const BUY_OUT: StringName = &"buy_out"
 const DEAL: StringName = &"deal"
 const LEAVE: StringName = &"leave"
@@ -229,48 +228,21 @@ static func talk_about_turf() -> void:
 	var run := GameState.run
 	var district := Content.district(run.district_id)
 	var gang := Gangs.owner(run.district_id)
-	var share := Turf.share(run, run.district_id)
-	var line := "I run %d%% of the corners in %s. %s has the rest. I hold %d of %d districts." % [
-		share, district.display_name if district != null else "town", gang.display_name if gang != null else "Nobody",
+	var line := "I hold %d of the %d corners in %s. %s has the rest. I hold %d of %d districts." % [
+		Corners.held_count(run, run.district_id), Corners.of(run.district_id).size(),
+		district.display_name if district != null else "town", gang.display_name if gang != null else "Nobody",
 		Turf.held_count(run), Turf.contested().size(),
 	]
-	if Corners.has_corners(run.district_id):
-		line = "I hold %d of the %d corners in %s. %s has the rest." % [
-			Corners.held_count(run, run.district_id), Corners.of(run.district_id).size(), district.display_name,
-			gang.display_name if gang != null else "Nobody",
-		]
 	_talk_turf(Content.player(run.player_id), line)
 
 
 static func _talk_turf(speaker: SpeakerDef, line: String) -> void:
 	var run := GameState.run
-	var choices: Array[DialogueChoice] = []
-	var hint := "Selling here gains you ground. Held districts pay %s each morning, keep muggers away and see fewer police." % Format.money(Turf.DAILY_CUT)
-	if Corners.has_corners(run.district_id):
-		hint = "Corners are bought or taken by force, never sold into. Tap a corner on the street to see who holds it."
-	elif not Campaign.is_act_two(run):
-		hint = "The turf war out here waits until Old Market is yours."
-	elif not Gangs.is_gone(run, Gangs.owner(run.district_id)):
-		var cost := Turf.muscle_cost(run)
-		choices.append(DialogueChoice.new(MUSCLE, "Send muscle %s" % Format.money(cost), Turf.can_send_muscle(run)))
-		hint = "Muscle adds %d%% here and %d heat. Once per phase. %s" % [Turf.MUSCLE_GAIN, Turf.MUSCLE_HEAT, hint]
-		if run.muscle_stamp == Calendar.stamp(run):
-			hint = "Your crew already went out this phase."
-	choices.append(_leave())
-	GameOverlay.talk(speaker, line, choices, _on_turf_choice, hint)
-
-
-static func _on_turf_choice(choice: StringName) -> void:
-	if choice != MUSCLE:
-		GameOverlay.end_talk()
-		return
-	var reply := "Not enough cash to pay the crew."
-	if GameState.send_muscle():
-		AudioService.play_sfx(Sfx.TURF_MUSCLE)
-		var run := GameState.run
-		reply = "Your crew leans on the corners. You now run %d%% of them." % Turf.share(run, run.district_id)
-	var done: Array[DialogueChoice] = [_leave()]
-	GameOverlay.say(reply, done, _end, false)
+	var choices: Array[DialogueChoice] = [_leave()]
+	var hint := "Corners are taken by force, never sold into. Scout one first, then hit it. Held corners pay rent and protection every morning."
+	if run.district_id != Corners.HOME and not Campaign.is_act_two(run):
+		hint = "The fight for these corners waits until Old Market is yours."
+	GameOverlay.talk(speaker, line, choices, _end, hint)
 
 
 static func _leave() -> DialogueChoice:

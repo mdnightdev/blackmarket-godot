@@ -19,7 +19,7 @@ protection = 1000
 [sub_resource type="Resource" id="Corner_tran_steps"]
 script = ExtResource("4_corner")
 id = &"tran_steps"
-display_name = "Temple Steps"
+display_name = "Holy City"
 map_position = Vector2(0.78, 0.7)
 moves = "Phones, SIM cards and gossip"
 seller = &"nadia"
@@ -30,7 +30,7 @@ defenders = 800
 [sub_resource type="Resource" id="Corner_fish_row"]
 script = ExtResource("4_corner")
 id = &"fish_row"
-display_name = "Ice House Wharf"
+display_name = "Ice Box"
 map_position = Vector2(0.33, 0.3)
 moves = "Whatever comes off the boats"
 seller = &"anya"
@@ -41,7 +41,7 @@ defenders = 1200
 [sub_resource type="Resource" id="Corner_lantern"]
 script = ExtResource("4_corner")
 id = &"lantern"
-display_name = "Red Lantern Hall"
+display_name = "Red Lantern"
 map_position = Vector2(0.74, 0.27)
 moves = "Vex's own stock"
 stronghold = true

@@ -1,8 +1,51 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/west_end.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_west_end.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_stage_door"]
+script = ExtResource("4_corner")
+id = &"stage_door"
+display_name = "Virgin"
+map_position = Vector2(0.2, 0.7)
+moves = "Party supplies for the cast"
+rent = 4000
+protection = 3000
+defenders = 4000
+
+[sub_resource type="Resource" id="Corner_cafe_verona"]
+script = ExtResource("4_corner")
+id = &"cafe_verona"
+display_name = "Cafe Verona"
+map_position = Vector2(0.62, 0.7)
+moves = "Gossip and gold"
+rent = 5000
+protection = 3500
+defenders = 6000
+
+[sub_resource type="Resource" id="Corner_brownstone_row"]
+script = ExtResource("4_corner")
+id = &"brownstone_row"
+display_name = "Brownstones"
+map_position = Vector2(0.18, 0.33)
+moves = "Things off better trucks"
+rent = 5000
+protection = 4000
+defenders = 8000
+
+[sub_resource type="Resource" id="Corner_the_gallery"]
+script = ExtResource("4_corner")
+id = &"the_gallery"
+display_name = "Gallery"
+map_position = Vector2(0.78, 0.31)
+moves = "Celeste's clean money"
+stronghold = true
+rent = 0
+protection = 12000
+defenders = 12000
 
 [resource]
 script = ExtResource("1_def")
@@ -19,3 +62,5 @@ heat_multiplier = 1.1
 venues = Array[StringName]([&"market", &"casino"])
 roads = Array[StringName]([&"downtown", &"old_market", &"riverside", &"the_heights"])
 min_rank = 4
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_stage_door"), SubResource("Corner_cafe_verona"), SubResource("Corner_brownstone_row"), SubResource("Corner_the_gallery")])

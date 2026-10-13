@@ -76,6 +76,7 @@ func _ready() -> void:
 	_trade_form.completed.connect(_on_trade_completed)
 	_trade_form.dealer_said.connect(_dealer_says)
 	_trade_form.close_requested.connect(_close_trade)
+	_trade_panel.resized.connect(_keep_trade_in_view)
 	GameState.run_changed.connect(_refresh)
 
 	GameState.clock_active = true
@@ -288,6 +289,7 @@ func _lay_out(cards: Array[Dictionary]) -> void:
 		if row.get_child_count() < CARDS_PER_ROW:
 			var filler := Control.new()
 			filler.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			filler.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_child(filler)
 		if holds_selected:
 			_list.add_child(_trade_panel)
@@ -339,8 +341,17 @@ func _on_item_selected(item: ItemDef) -> void:
 	var mode := TradeForm.Mode.BUY if _tab == Tab.BUY else TradeForm.Mode.SELL
 	_trade_form.show_trade(mode, item, _dealer)
 	_refresh()
+	_keep_trade_in_view()
+
+
+## The form opens under its card and grows when haggling opens, so the card and the form's buttons are scrolled
+## back on screen.
+func _keep_trade_in_view() -> void:
 	await get_tree().process_frame
+	if _selected == null or not _trade_panel.is_inside_tree():
+		return
 	_scroll.ensure_control_visible(_trade_panel)
+	_scroll.ensure_control_visible(_list.get_child(_trade_panel.get_index() - 1))
 
 
 func _close_trade() -> void:

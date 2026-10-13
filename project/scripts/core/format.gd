@@ -2,13 +2,17 @@ class_name Format
 
 
 static func money(amount: int) -> String:
+	return ("-$" if amount < 0 else "$") + count(absi(amount))
+
+
+## Whole numbers with thousands separators, for example 12,500.
+static func count(amount: int) -> String:
 	var digits := str(absi(amount))
 	var grouped := ""
 	while digits.length() > 3:
 		grouped = "," + digits.right(3) + grouped
 		digits = digits.left(digits.length() - 3)
-	var prefix := "-$" if amount < 0 else "$"
-	return prefix + digits + grouped
+	return ("-" if amount < 0 else "") + digits + grouped
 
 
 ## Gains carry a plus sign, for example +$1,200, -$300 and $0.

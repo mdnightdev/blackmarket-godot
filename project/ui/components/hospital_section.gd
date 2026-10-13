@@ -1,45 +1,55 @@
 class_name HospitalSection
 extends TurfSection
 
-## The Hospital on the Turf headquarters: the wounded waiting for the next training session, what healing them costs,
-## and the next upgrade.
+## The Hospital on the Turf headquarters: the wounded, the beds they fill, one button that heals them and the next
+## expansion. When every bed is taken, men hit in a fight die instead of coming here.
 
-const UPGRADE: StringName = &"upgrade"
-const LEAVE: StringName = &"leave"
-const BED_ICON: Texture2D = preload("res://assets/icons/hud/cross.svg")
-const UPGRADE_ICON: Texture2D = preload("res://assets/icons/hud/wrench.svg")
+const ART: Texture2D = preload("res://assets/scenes/hospital.jpg")
+const CARD_HEIGHT := 170.0
 
 
 func _build(run: RunState) -> void:
-	_add_heading("HOSPITAL  %d BEDS" % Hospital.beds(run))
-	_add_row(BED_ICON, "Wounded", "%d" % Army.wounded(run), "Healed at the next training session, day %d. %d beds, Black Hand first." % [Gym.next_session_day(run), Hospital.beds(run)],
-		"WAITING" if Army.wounded(run) > 0 else "", Palette.RISK_HIGH)
-	for tier in Army.DEPLOY_ORDER:
-		_add_row(BED_ICON, Army.TIER_NAMES[tier], "%d" % Army.count(run, tier, Army.State.WOUNDED), "%s to heal every hundred" % Format.money(Hospital.HEAL_PRICES[tier]))
+	var wounded := Army.wounded(run)
+	var beds := Hospital.beds(run)
+	_add_banner(ART, "%s wounded" % Format.count(wounded) if wounded > 0 else "Nobody hurt",
+		"Full beds mean the next wounded die" if Hospital.free_beds(run) == 0 else "",
+		Palette.PEACH_BRIGHT if wounded > 0 else Palette.TEXT_CREAM)
+	_add_meter("Beds taken", "%s / %s" % [Format.count(wounded), Format.count(beds)], float(wounded) / beds,
+		Palette.RISK_HIGH if Hospital.free_beds(run) == 0 else Palette.PEACH)
+	var cards := _add_card_row()
+	for tier: Army.Tier in Army.Tier.values():
+		var card := _add_card(cards, CARD_HEIGHT)
+		card.show_tier(tier, Format.count(Army.count(run, tier, Army.State.WOUNDED)), per_man(int(Hospital.HEAL_PRICES[tier])))
+		card.disabled = true
+	_add_heal_button(run, wounded)
 	_add_upgrade(run)
+
+
+func _add_heal_button(run: RunState, wounded: int) -> void:
+	var cost := Hospital.estimate(run)
+	var text := "Heal everyone, %s" % Format.money(cost)
+	if wounded == 0:
+		text = "Nobody to heal"
+	elif run.cash < cost:
+		text = "Heal what %s covers" % Format.money(run.cash)
+	var button := _add_button(&"PrimaryButton", text, wounded > 0 and run.cash > 0)
+	button.pressed.connect(_heal)
+
+
+func _heal() -> void:
+	if int(GameState.heal_wounded().healed) > 0:
+		AudioService.play_sfx(Sfx.COINS_OUT)
 
 
 func _add_upgrade(run: RunState) -> void:
 	var price := Hospital.upgrade_price(run)
 	if price < 0:
-		_add_row(UPGRADE_ICON, "Fully built", "", "The best hospital money can hide.", "MAXED")
 		return
 	var beds := int(Hospital.LEVELS[run.hospital_level + 1].beds)
-	var affordable := run.cash >= price
-	_add_row(UPGRADE_ICON, "Expand to %d beds" % beds, Format.money(price), "Heals more men at each session.",
-		"TAP TO BUILD" if affordable else "NOT ENOUGH CASH", Palette.TEXT_CREAM if affordable else Palette.TEXT_MUTED, _ask_upgrade.bind(beds, price) if affordable else Callable())
+	var button := _add_button(&"SecondaryButton", "Grow to %s beds, %s" % [Format.count(beds), Format.money(price)], run.cash >= price)
+	button.pressed.connect(_upgrade)
 
 
-func _ask_upgrade(beds: int, price: int) -> void:
-	var choices: Array[DialogueChoice] = [
-		DialogueChoice.new(UPGRADE, "Build it (%s)" % Format.money(price)),
-		DialogueChoice.new(LEAVE, "Not now", true, true),
-	]
-	var line := "More beds means fewer men bleeding in the hallway. %d beds." % beds
-	GameOverlay.talk(Content.player(GameState.run.player_id), line, choices, _on_upgrade_choice)
-
-
-func _on_upgrade_choice(choice: StringName) -> void:
-	GameOverlay.end_talk()
-	if choice == UPGRADE and GameState.upgrade_hospital() == Hospital.Result.OK:
+func _upgrade() -> void:
+	if GameState.upgrade_hospital() == Hospital.Result.OK:
 		AudioService.play_sfx(Sfx.COINS_OUT)

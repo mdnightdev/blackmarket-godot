@@ -66,10 +66,6 @@ var jail_until: float = 0.0
 var jail_bail: int = 0
 ## Phase stamp of the last hijack attempt.
 var hijacked_stamp: int = -1
-## District id to the player's turf share. Missing districts use the Turf defaults.
-var turf: Dictionary = {}
-## Phase stamp in which muscle was last sent.
-var muscle_stamp: int = -1
 ## Gangs driven out of the city.
 var gangs_gone: Array[StringName] = []
 ## Gang id to how angry its boss is. It rises each time the player refuses the crew, and at Gangs.MAX_ANGER
@@ -153,14 +149,14 @@ var rabbit_medal_held := false
 var leak_suspicion: int = 0
 ## Ramos gives no raid tips until this day. 0 when he is not lying low.
 var ramos_quiet_until: int = 0
-## The day of Vex's last ambush, 0 before the first. See VexAmbush.
-var last_ambush_day: int = 0
 ## See Story.
 var story_flags: Array[String] = []
 ## Weapon grade to how many men it arms. See Armory.
 var armory: Dictionary = {}
-## Weapon lots bought from Rook. His back room opens with it.
-var rook_lots: int = 0
+## Orders placed with Rook. Jackal's men walk in on the second.
+var rook_orders: int = 0
+## Cash spent with Rook. His back rooms open with it.
+var rook_spent: int = 0
 ## Voronin's crates delivered in a row. A lost or seized crate resets it.
 var crate_streak: int = 0
 ## Corner ids the player holds. See Corners.
@@ -171,12 +167,16 @@ var army: Dictionary = {}
 var fallen: Dictionary = {}
 ## Index into Army.EXPANSIONS.
 var army_level: int = 0
-## Tier to the slots the player gives it. Missing tiers use Army.STARTING_SPLIT.
-var army_split: Dictionary = {}
-## Index into Hospital.LEVELS.
+## Index into Hospital.LEVELS. Saved as hospital_size, since older saves kept hospital_level on a smaller scale whose
+## top matched today's first level.
 var hospital_level: int = 0
-## Corner id to the gang fighters left on it after a failed attack. Missing corners keep their full crew.
+## Corner id to the gang fighters on it, once a fight or the gang's growth changed it. Missing corners keep their
+## starting crew.
 var corner_defenders: Dictionary = {}
+## Gang id to its war chest, weapons and last strike. See Rivals.
+var rivals: Dictionary = {}
+## Corner id to the latest scouting report. See Scouting.
+var scouted: Dictionary = {}
 ## Finished jobs, newest first. See Journal for the entry layout.
 var journal: Array[Dictionary] = []
 ## Jobs closed early as failures since the last commit. Never saved. See Journal.mark_failed.
@@ -231,8 +231,6 @@ func to_dict() -> Dictionary:
 		"jail_bail": jail_bail,
 		"recon_stamp": recon_stamp,
 		"hijacked_stamp": hijacked_stamp,
-		"turf": _string_keys(turf),
-		"muscle_stamp": muscle_stamp,
 		"gangs_gone": Array(gangs_gone).map(func(gang_id: StringName) -> String: return String(gang_id)),
 		"gang_anger": _string_keys(gang_anger),
 		"cleanup_stamp": cleanup_stamp,
@@ -276,19 +274,20 @@ func to_dict() -> Dictionary:
 		"rabbit_medal_held": rabbit_medal_held,
 		"leak_suspicion": leak_suspicion,
 		"ramos_quiet_until": ramos_quiet_until,
-		"last_ambush_day": last_ambush_day,
 		"story_flags": story_flags,
 		"armory": armory,
-		"rook_lots": rook_lots,
+		"rook_orders": rook_orders,
+		"rook_spent": rook_spent,
 		"crate_streak": crate_streak,
 		"corners_held": corners_held,
 		"army": army,
 		"war_scale": Army.WAR_SCALE,
 		"fallen": fallen,
 		"army_level": army_level,
-		"army_split": army_split,
-		"hospital_level": hospital_level,
+		"hospital_size": hospital_level,
 		"corner_defenders": corner_defenders,
+		"rivals": _string_keys(rivals),
+		"scouted": scouted,
 		"journal": journal,
 		"next_due_day": next_due_day,
 		"period_minimum": period_minimum,
@@ -369,8 +368,6 @@ static func from_dict(data: Dictionary) -> RunState:
 		state.jail_until = Time.get_unix_time_from_system() + legacy_jail
 		state.jail_bail = Police.MIN_BAIL
 	state.hijacked_stamp = int(data.get("hijacked_stamp", -1))
-	state.turf = Turf.sanitize(data.get("turf", {}))
-	state.muscle_stamp = int(data.get("muscle_stamp", -1))
 	var legacy_gone: Array = [Gangs.LEGACY_GANG] if bool(data.get("vex_gone", false)) else []
 	state.gangs_gone = Gangs.sanitize_gone(data.get("gangs_gone", legacy_gone))
 	state.gang_anger = Gangs.sanitize_anger(data.get("gang_anger", { Gangs.LEGACY_GANG: data.get("vex_anger", 0) }))
@@ -466,26 +463,34 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.rabbit_medal_held = bool(data.get("rabbit_medal_held", false))
 	state.leak_suspicion = clampi(int(data.get("leak_suspicion", 0)), 0, Ramos.LEAK_LIMIT)
 	state.ramos_quiet_until = maxi(0, int(data.get("ramos_quiet_until", 0)))
-	state.last_ambush_day = maxi(0, int(data.get("last_ambush_day", 0)))
 	var saved_flags: Variant = data.get("story_flags", [])
 	if saved_flags is Array:
 		for flag: Variant in saved_flags:
 			if not str(flag).is_empty() and not state.story_flags.has(str(flag)):
 				state.story_flags.append(str(flag))
 	state.armory = Armory.sanitize(data.get("armory"))
-	state.rook_lots = maxi(0, int(data.get("rook_lots", 0)))
+	var saved_lots := maxi(0, int(data.get("rook_lots", 0)))
+	state.rook_orders = maxi(0, int(data.get("rook_orders", saved_lots)))
+	state.rook_spent = maxi(0, int(data.get("rook_spent", Armory.spend_from_lots(saved_lots))))
 	state.crate_streak = maxi(0, int(data.get("crate_streak", 0)))
 	state.corners_held = Corners.sanitize(data.get("corners_held"))
+	if data.has("turf"):
+		Corners.migrate_turf(state, data.get("turf"))
 	var saved_army: Variant = data.get("army") if data.has("army") else Army.from_legacy(int(data.get("men", 0)), state.story_flags.has(War.UNIT_HIRED))
 	state.army = Army.sanitize(saved_army)
 	state.fallen = Army.sanitize_counts(data.get("fallen"))
 	state.army_level = clampi(int(data.get("army_level", 0)), 0, Army.EXPANSIONS.size() - 1)
-	state.army_split = Army.sanitize_counts(data.get("army_split"))
-	state.hospital_level = clampi(int(data.get("hospital_level", 0)), 0, Hospital.LEVELS.size() - 1)
+	state.hospital_level = clampi(int(data.get("hospital_size", 0)), 0, Hospital.LEVELS.size() - 1)
 	state.corner_defenders = War.sanitize_defenders(data.get("corner_defenders"))
+	state.rivals = Rivals.sanitize(data.get("rivals"))
+	var last_ambush_day := maxi(0, int(data.get("last_ambush_day", 0)))
+	if not data.has("rivals") and last_ambush_day > 0:
+		Rivals.note_strike(state, Content.gang(Gangs.LEGACY_GANG), last_ambush_day)
+	state.scouted = Scouting.sanitize(data.get("scouted"))
 	var saved_scale := maxi(1, int(data.get("war_scale", 1)))
 	if saved_scale < Army.WAR_SCALE:
 		Army.rescale(state, Army.WAR_SCALE / saved_scale)
+	Gym.deliver_legacy_training(state, data.get("training"))
 	for entry in _dictionaries(data.get("journal")):
 		var clean := Journal.sanitize(entry)
 		if not clean.is_empty() and state.journal.size() < Journal.MAX_ENTRIES:

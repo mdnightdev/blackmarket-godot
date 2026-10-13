@@ -9,10 +9,7 @@ display_name = "Vex"
 crew_name = "Vex's crew"
 boss = &"rival"
 turf = Array[StringName]([&"old_market", &"slums", &"docks", &"north_port", &"downtown"])
-strongholds = {
-&"north_port": 25,
-&"slums": 25
-}
+gear = 1
 color = Color(0.7176, 0.4549, 0.4902, 1)
 gate_title = "Vex's corner tax"
 gate_line = "This side of %s is mine. You work my corners, you pay my crew."
@@ -26,5 +23,4 @@ max_gate_chance = 0.35
 bribe_base = 200
 bribe_per_anger = 100
 hunt_fee = 500
-max_push = 6
 victory_reward = 5000

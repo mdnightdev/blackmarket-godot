@@ -1,8 +1,51 @@
-[gd_resource type="Resource" script_class="DistrictDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/the_heights.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/map_the_heights.jpg" id="5_corner_map"]
+
+[sub_resource type="Resource" id="Corner_iron_gate_lane"]
+script = ExtResource("4_corner")
+id = &"iron_gate_lane"
+display_name = "Old Money"
+map_position = Vector2(0.27, 0.66)
+moves = "Whatever the help can carry out"
+rent = 8000
+protection = 6000
+defenders = 10000
+
+[sub_resource type="Resource" id="Corner_country_club"]
+script = ExtResource("4_corner")
+id = &"country_club"
+display_name = "Country Club"
+map_position = Vector2(0.62, 0.7)
+moves = "Pills for the members"
+rent = 10000
+protection = 8000
+defenders = 15000
+
+[sub_resource type="Resource" id="Corner_observatory_road"]
+script = ExtResource("4_corner")
+id = &"observatory_road"
+display_name = "Stargazer"
+map_position = Vector2(0.3, 0.22)
+moves = "Art with no paperwork"
+rent = 12000
+protection = 10000
+defenders = 20000
+
+[sub_resource type="Resource" id="Corner_glasshouse_estate"]
+script = ExtResource("4_corner")
+id = &"glasshouse_estate"
+display_name = "Estate"
+map_position = Vector2(0.76, 0.25)
+moves = "Celeste's own house"
+stronghold = true
+rent = 0
+protection = 25000
+defenders = 30000
 
 [resource]
 script = ExtResource("1_def")
@@ -19,3 +62,5 @@ heat_multiplier = 1.6
 venues = Array[StringName]([&"market", &"vip_casino"])
 roads = Array[StringName]([&"west_end", &"north_port", &"golden_mile"])
 min_rank = 8
+corner_map = ExtResource("5_corner_map")
+corners = Array[ExtResource("4_corner")]([SubResource("Corner_iron_gate_lane"), SubResource("Corner_country_club"), SubResource("Corner_observatory_road"), SubResource("Corner_glasshouse_estate")])

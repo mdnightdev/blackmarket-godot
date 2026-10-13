@@ -6,6 +6,7 @@ var _run: RunState
 func before_each() -> void:
 	_run = RunState.new()
 	_run.cash = 100000
+	_run.day = 1
 	Story.mark(_run, Corners.RABBIT_JOINED)
 
 
@@ -13,61 +14,62 @@ func _enlist(tier: Army.Tier, amount: int) -> void:
 	Army.add(_run, tier, Army.State.ACTIVE, amount)
 
 
-func test_sessions_run_four_mornings_a_week() -> void:
-	var sessions := 0
-	for day in range(1, 8):
-		if Gym.is_session_day(day):
-			sessions += 1
-	assert_eq(sessions, 4)
-	_run.day = 1
-	assert_eq(Gym.next_session_day(_run), 3)
-
-
-func test_a_session_heals_then_fills_every_tier_to_its_slots() -> void:
-	Army.add(_run, Army.Tier.GUARDS, Army.State.WOUNDED, 30)
-	_enlist(Army.Tier.LUNATICS, 20)
-	var expected := 150 + 2550 + 1950
-	assert_eq(Gym.estimate(_run), expected)
-	var result := Gym.session(_run)
-	assert_eq(result.healed, 30)
-	assert_eq(result.replaced, { Army.Tier.GUARDS: 170, Army.Tier.LUNATICS: 780 })
-	assert_eq(result.paid, expected)
-	assert_eq(result.vacancies, 0)
-	assert_eq(_run.cash, 100000 - expected)
-	assert_eq(Army.count(_run, Army.Tier.GUARDS), 200)
+func test_lunatics_join_the_moment_they_are_paid_for() -> void:
+	assert_eq(Gym.enroll(_run, Gym.Course.LUNATICS, 800), Gym.Result.OK)
+	assert_eq(_run.cash, 100000 - 800)
 	assert_eq(Army.count(_run, Army.Tier.LUNATICS), 800)
-	assert_eq(Gym.estimate(_run), 0)
 
 
-func test_a_short_purse_fills_the_better_tiers_first() -> void:
-	_run.cash = 1000
-	var result := Gym.session(_run)
-	assert_eq(result.replaced, { Army.Tier.GUARDS: 66, Army.Tier.LUNATICS: 4 })
-	assert_eq(result.vacancies, 930)
-	assert_eq(_run.cash, 0)
+func test_guards_join_the_moment_they_are_paid_for() -> void:
+	assert_eq(Gym.enroll(_run, Gym.Course.GUARDS, 300), Gym.Result.OK)
+	assert_eq(_run.cash, 100000 - 1800)
+	assert_eq(Army.count(_run, Army.Tier.GUARDS), 300)
 
 
-func test_men_over_their_slots_are_let_go() -> void:
-	_enlist(Army.Tier.LUNATICS, 300)
-	Army.set_slots(_run, Army.Tier.LUNATICS, 100)
-	var result := Gym.session(_run)
-	assert_eq(result.released, 200)
-	assert_eq(Army.count(_run, Army.Tier.LUNATICS), 100)
+func test_a_promotion_keeps_the_head_count_and_costs_less_than_new_guards() -> void:
+	_enlist(Army.Tier.LUNATICS, 1000)
+	assert_lt(Gym.price(Gym.Course.PROMOTION, 1000), Gym.price(Gym.Course.GUARDS, 1000))
+	assert_eq(Gym.enroll(_run, Gym.Course.PROMOTION, 600), Gym.Result.OK)
+	assert_eq(Army.count(_run, Army.Tier.LUNATICS), 400)
+	assert_eq(Army.count(_run, Army.Tier.GUARDS), 600)
+	assert_eq(Army.total(_run), 1000)
 
 
-func test_the_morning_notice_comes_only_on_session_days() -> void:
-	_run.day = 2
-	assert_true(Gym.morning(_run).is_empty())
-	_run.day = 3
-	var notices := Gym.morning(_run)
-	assert_eq(notices.size(), 1)
-	assert_string_contains(str(notices[0].line), "1000 new men")
-	assert_true(Gym.morning(_run).is_empty(), "nothing left to do")
+func test_a_promotion_needs_fit_lunatics() -> void:
+	_enlist(Army.Tier.LUNATICS, 50)
+	Army.add(_run, Army.Tier.LUNATICS, Army.State.WOUNDED, 100)
+	assert_eq(Gym.most(_run, Gym.Course.PROMOTION), 50)
+	assert_eq(Gym.enroll(_run, Gym.Course.PROMOTION, 51), Gym.Result.NOT_ENOUGH_MEN)
+
+
+func test_cash_and_the_black_hand_lock_are_checked() -> void:
+	_run.cash = 100
+	assert_eq(Gym.most(_run, Gym.Course.LUNATICS), 100)
+	assert_eq(Gym.enroll(_run, Gym.Course.LUNATICS, 101), Gym.Result.NOT_ENOUGH_CASH)
+	assert_eq(Gym.enroll(_run, Gym.Course.LUNATICS, 0), Gym.Result.INVALID)
+	_run.cash = 1000000
+	assert_eq(Gym.enroll(_run, Gym.Course.BLACK_HAND, 10), Gym.Result.LOCKED)
+	Story.mark(_run, War.VEX_FELL)
+	assert_eq(Gym.enroll(_run, Gym.Course.BLACK_HAND, 10), Gym.Result.OK)
+	assert_eq(Army.count(_run, Army.Tier.BLACK_HAND), 10)
 
 
 func test_nothing_happens_before_rabbit_joins() -> void:
 	var run := RunState.new()
-	run.day = 3
+	run.cash = 100000
 	assert_false(Gym.is_open(run))
-	assert_true(Gym.morning(run).is_empty())
-	assert_eq(Army.total(run), 0)
+	assert_eq(Gym.enroll(run, Gym.Course.LUNATICS, 100), Gym.Result.CLOSED)
+
+
+func test_men_still_training_in_an_old_save_join_on_load() -> void:
+	_enlist(Army.Tier.GUARDS, 100)
+	var data: Dictionary = JSON.parse_string(JSON.stringify(_run.to_dict()))
+	data["training"] = [
+		{ "tier": Army.Tier.GUARDS, "men": 250, "sessions": 2, "fresh": true },
+		{ "tier": 9, "men": 5, "sessions": 1 },
+		{ "tier": Army.Tier.LUNATICS, "men": 0, "sessions": 1 },
+		"x",
+	]
+	var loaded := RunState.from_dict(data)
+	assert_eq(Army.count(loaded, Army.Tier.GUARDS), 350)
+	assert_eq(Army.count(loaded, Army.Tier.LUNATICS), 0)
