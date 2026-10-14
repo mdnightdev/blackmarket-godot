@@ -101,3 +101,16 @@ func test_buyout_and_loans_survive_a_save() -> void:
 	assert_true(loaded.shark_bought)
 	assert_eq(loaded.dealer_loans, run.dealer_loans)
 	assert_true(Crew.is_free_role(loaded, Lending.ENFORCER_ROLE))
+
+
+func test_buyout_clears_shark_errands_and_offers() -> void:
+	Errands.post(_run)
+	assert_false(_run.errand_offers.is_empty())
+	var offer: Dictionary = _run.errand_offers[0]
+	assert_true(Errands.accept(_run, str(offer.id)))
+	_run.errand_offers.append(Errands.generate(_run))
+	assert_false(_run.errand_offers.is_empty())
+	assert_false(_run.errands.is_empty())
+	assert_true(Lending.buy_out(_run))
+	assert_true(_run.errand_offers.is_empty())
+	assert_true(_run.errands.is_empty())

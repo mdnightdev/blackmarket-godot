@@ -83,6 +83,11 @@ func test_the_shark_posts_on_posting_phases_up_to_the_cap() -> void:
 	assert_true(Errands.post(_run).is_empty(), "the phone is full")
 
 
+func test_the_shark_does_not_post_when_bought_out() -> void:
+	_run.shark_bought = true
+	assert_true(Errands.post(_run).is_empty())
+
+
 func test_ignored_offers_expire() -> void:
 	Errands.post(_run)
 	var offer: Dictionary = _run.errand_offers[0]

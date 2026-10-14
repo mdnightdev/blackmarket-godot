@@ -43,6 +43,8 @@ static func post(run: RunState) -> Array[Dictionary]:
 	var posted: Array[Dictionary] = []
 	if Campaign.is_over(run) or not POSTING_PHASES.has(run.phase) or run.errand_offers.size() >= MAX_OPEN_OFFERS:
 		return posted
+	if run.shark_bought:
+		return posted
 	if Loan.is_with_vex(run) and run.career:
 		return posted
 	if PayScale.outgrown(run, Tiers.STREET):

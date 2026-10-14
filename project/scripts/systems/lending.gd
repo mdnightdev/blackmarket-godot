@@ -29,6 +29,8 @@ static func buy_out(run: RunState) -> bool:
 	run.cash -= BUYOUT_PRICE
 	run.shark_bought = true
 	Crew.join_free(run, ENFORCER_ROLE)
+	run.errand_offers = run.errand_offers.filter(func(offer: Dictionary) -> bool: return not Errands.is_from_shark(offer))
+	run.errands = run.errands.filter(func(errand: Dictionary) -> bool: return not Errands.is_from_shark(errand))
 	return true
 
 
