@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BusinessDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/business_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/store.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"boutique"
+display_name = "Boutique"
+icon = ExtResource("2_icon")
+description = "High-end fashion, wealthy clients, premium prices on luxury goods."
+price = 1500000
+min_rank = 7
+luxury_bonus = 0.15

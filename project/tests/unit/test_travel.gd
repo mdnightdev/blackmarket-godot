@@ -88,11 +88,11 @@ func test_vehicles_discount_the_fare() -> void:
 	assert_eq(_run.cash, RunState.STARTING_CASH - 36)
 
 
-func test_fare_discount_is_capped() -> void:
+func test_vehicles_take_the_best_discount_only() -> void:
 	_run.gear.append(&"scooter")
 	_run.gear.append(&"smuggler_van")
 	_destination.travel_cost = 100
-	assert_eq(Travel.fare(_run, _destination), 20)
+	assert_eq(Travel.fare(_run, _destination), 60)
 
 
 func test_check_uses_discounted_fare() -> void:

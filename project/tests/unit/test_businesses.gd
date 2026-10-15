@@ -4,6 +4,7 @@ var _run: RunState
 var _shop: BusinessDef
 var _car_wash: BusinessDef
 var _nightclub: BusinessDef
+var _restaurant: BusinessDef
 var _watches: ItemDef
 var _sims: ItemDef
 var _pistol: ItemDef
@@ -15,10 +16,11 @@ func before_each() -> void:
 	_run.district_id = &"old_market"
 	_run.career = true
 	Story.mark(_run, War.VEX_FELL)
-	_run.cash = 100000
+	_run.cash = 10000000
 	_shop = Content.business(&"corner_shop")
 	_car_wash = Content.business(&"car_wash")
 	_nightclub = Content.business(&"nightclub")
+	_restaurant = Content.business(&"restaurant")
 	_watches = Content.item(&"rare_watches")
 	_sims = Content.item(&"burner_sims")
 	_pistol = Content.item(&"ghost_pistol")
@@ -77,6 +79,42 @@ func test_sanitize_fills_missing_fields() -> void:
 	assert_eq(clean.closed_until, 0)
 
 
+func test_sanitize_drops_disallowed_businesses_in_district() -> void:
+	assert_true(Businesses.sanitize({ "business": "boutique", "district": "slums" }).is_empty())
+	assert_false(Businesses.sanitize({ "business": "corner_shop", "district": "slums" }).is_empty())
+
+
+func test_from_dict_deduplicates_businesses_and_preserves_higher_level() -> void:
+	var raw_data := {
+		"businesses": [
+			{ "business": "corner_shop", "district": "old_market", "level": 1 },
+			{ "business": "corner_shop", "district": "old_market", "level": 4 },
+			{ "business": "corner_shop", "district": "old_market", "level": 2 },
+			{ "business": "bakery", "district": "old_market", "level": 3 },
+			{ "business": "boutique", "district": "slums", "level": 1 },
+			{ "business": "deleted_biz", "district": "old_market", "level": 1 },
+		]
+	}
+	var loaded := RunState.from_dict(raw_data)
+	assert_eq(loaded.businesses.size(), 2)
+	assert_eq(loaded.businesses[0].business, "corner_shop")
+	assert_eq(loaded.businesses[0].level, 4)
+	assert_eq(loaded.businesses[1].business, "bakery")
+	assert_eq(loaded.businesses[1].level, 3)
+
+
+func test_from_dict_drops_deleted_crew_roles() -> void:
+	var raw_data := {
+		"crew": [
+			{ "role": "lookout" },
+			{ "role": "deleted_sniper_role" }
+		]
+	}
+	var loaded := RunState.from_dict(raw_data)
+	assert_eq(loaded.crew.size(), 1)
+	assert_eq(loaded.crew[0].role, "lookout")
+
+
 func test_entries_survive_a_save() -> void:
 	var entry := _open(_shop)
 	_stock(entry, _watches, 3, 400)
@@ -87,7 +125,7 @@ func test_entries_survive_a_save() -> void:
 
 func test_buying_takes_cash_and_adds_an_empty_business() -> void:
 	var entry := _open(_shop)
-	assert_eq(_run.cash, 100000 - _shop.price)
+	assert_eq(_run.cash, 10000000 - _shop.price)
 	assert_eq(entry, { "business": "corner_shop", "district": "old_market", "stock": {}, "closed_until": 0 })
 	assert_eq(Businesses.in_district(_run, &"old_market"), [entry] as Array[Dictionary])
 	assert_true(Businesses.in_district(_run, &"docks").is_empty())
@@ -97,7 +135,7 @@ func test_businesses_wait_for_act_two() -> void:
 	_run.story_flags.clear()
 	assert_eq(Businesses.buy(_run, _shop, &"old_market"), Businesses.Result.NOT_CAREER)
 	assert_true(_run.businesses.is_empty())
-	assert_eq(_run.cash, 100000)
+	assert_eq(_run.cash, 10000000)
 
 
 func test_unknown_business_is_refused() -> void:
@@ -112,6 +150,14 @@ func test_businesses_need_a_held_district_and_the_rank() -> void:
 	assert_eq(Businesses.check_buy(_run, _shop, &"docks"), Businesses.Result.NOT_HELD, "hold lost")
 
 
+func test_businesses_respect_district_restrictions() -> void:
+	_hold(&"slums")
+	_set_rank(7)
+	var nightclub := Content.business(&"nightclub")
+	assert_not_null(nightclub)
+	assert_eq(Businesses.check_buy(_run, nightclub, &"slums"), Businesses.Result.NOT_ALLOWED, "nightclub not allowed in slums")
+
+
 func test_an_unheld_district_has_no_slots() -> void:
 	assert_eq(Businesses.slots_free(_run, &"docks"), 0)
 	_hold(&"docks")
@@ -119,13 +165,14 @@ func test_an_unheld_district_has_no_slots() -> void:
 
 
 func test_a_second_slot_opens_with_the_rank() -> void:
+	_run.cash = 2000000
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 1)
 	_open(_shop)
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 0)
 	assert_eq(Businesses.buy(_run, _car_wash, &"old_market"), Businesses.Result.NO_SLOT)
 	_set_rank(Turf.SECOND_BUSINESS_RANK)
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 1)
-	_open(_nightclub)
+	_open(_restaurant)
 	assert_eq(Businesses.slots_free(_run, &"old_market"), 0)
 	assert_eq(_run.businesses.size(), 2)
 
@@ -204,7 +251,7 @@ func test_unloading_respects_bag_space_and_item_slots() -> void:
 
 func test_unloading_works_while_closed() -> void:
 	_hold(&"docks")
-	var entry := _open(_shop, &"docks")
+	var entry := _open(_car_wash, &"docks")
 	_stock(entry, _watches, 2, 400)
 	_lose_hold(&"docks")
 	assert_false(Businesses.is_open(_run, entry))
@@ -214,7 +261,7 @@ func test_unloading_works_while_closed() -> void:
 
 func test_open_needs_the_day_and_the_district() -> void:
 	_hold(&"docks")
-	var entry := _open(_shop, &"docks")
+	var entry := _open(_car_wash, &"docks")
 	assert_true(Businesses.is_open(_run, entry))
 	entry.closed_until = _run.day + 1
 	assert_false(Businesses.is_open(_run, entry))
@@ -234,17 +281,18 @@ func test_sale_price_follows_the_resident_dealer() -> void:
 
 func test_sale_price_falls_back_to_base_price_without_a_dealer() -> void:
 	assert_null(Content.dealer_in(&"downtown"))
+	_set_rank(_restaurant.min_rank)
 	_hold(&"downtown")
-	var entry := _open(_shop, &"downtown")
+	var entry := _open(_restaurant, &"downtown")
 	assert_eq(Businesses.sale_price(_run, entry, _sims), floori(_sims.base_price * Businesses.SALE_FACTOR))
 
 
 func test_luxury_bonus_only_lifts_luxury_goods() -> void:
 	_set_rank(Turf.SECOND_BUSINESS_RANK)
-	_hold(&"old_market")
-	var shop := _open(_shop)
-	var club := _open(_nightclub)
-	var local := Market.sell_price(_run, Content.dealer_in(&"old_market"), _watches)
+	_hold(&"west_end")
+	var shop := _open(_restaurant, &"west_end")
+	var club := _open(_nightclub, &"west_end")
+	var local := Market.sell_price(_run, Content.dealer_in(&"west_end"), _watches)
 	assert_eq(_watches.category, Businesses.LUXURY)
 	assert_eq(Businesses.sale_price(_run, club, _watches), floori(local * Businesses.SALE_FACTOR * (1.0 + _nightclub.luxury_bonus)))
 	assert_eq(Businesses.sale_price(_run, shop, _watches), floori(local * Businesses.SALE_FACTOR))
@@ -400,3 +448,29 @@ func test_each_roll_belongs_to_its_business() -> void:
 	assert_eq(report.raided, [_car_wash.display_name] as Array[String])
 	assert_eq(Businesses.stocked(shop, _watches.id), 2)
 	assert_eq(Businesses.stock_used(wash), 0)
+
+
+func test_businesses_refuse_goods_outside_dealer_tier() -> void:
+	var entry := _open(_shop)
+	var high_tier := Content.item(&"gold_bars")
+	assert_not_null(high_tier)
+	assert_eq(high_tier.tier, 3)
+	assert_false(Businesses.deals_in(entry, high_tier))
+	assert_eq(Businesses.sale_price(_run, entry, high_tier), 0)
+	Inventory.add_units(_run, high_tier.id, 5)
+	assert_eq(Businesses.max_load(_run, entry, high_tier), 0)
+	assert_eq(Businesses.load_stock(_run, entry, high_tier, 2), Businesses.Result.WRONG_TIER)
+
+
+func test_selling_skips_goods_outside_dealer_tier() -> void:
+	var entry := _open(_shop)
+	var high_tier := Content.item(&"gold_bars")
+	assert_not_null(high_tier)
+	entry.stock[String(high_tier.id)] = 2
+	_stock(entry, _sims, 2, 50)
+	var gross := Businesses.sale_price(_run, entry, _sims) * 2
+	var net := gross - floori(gross * Businesses.PROTECTION_CUT)
+	var earned := Businesses.sell_phase(_run)
+	assert_eq(earned, net)
+	assert_eq(Businesses.stocked(entry, high_tier.id), 2)
+	assert_eq(Businesses.stocked(entry, _sims.id), 0)

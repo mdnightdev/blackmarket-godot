@@ -531,11 +531,17 @@ func _stand_down() -> void:
 
 func _resolve_encounter(choice: StringName) -> void:
 	var run := GameState.run
+	var encounter_type := str(run.pending_encounter.get("type", ""))
 	var cash_before := run.cash
 	var bag_before := Inventory.used(run)
 	var raided := str(run.pending_encounter.get("type", "")) == Ramos.TIP
 	var outcome := GameState.resolve_encounter(choice)
 	_stand_down()
+	if encounter_type == Lending.SALE_OFFER and choice == Lending.VISIT_SHARK:
+		_dialogue.close()
+		run.district_id = &"downtown"
+		StreetTalk.talk_to(Content.character(Loan.LENDER))
+		return
 	if outcome.is_empty():
 		_dialogue.close()
 		return

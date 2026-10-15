@@ -9,7 +9,7 @@ func before_each() -> void:
 	_run.career = true
 	Story.mark(_run, War.VEX_FELL)
 	_run.debt = 0
-	_run.cash = Lending.BUYOUT_PRICE + 100000
+	_run.cash = Lending.BUYOUT_PRICE + 1000000
 	_run.district_id = &"downtown"
 
 
@@ -41,7 +41,7 @@ func test_buyout_opens_once_the_debt_is_paid_in_act_one() -> void:
 
 func test_buyout_brings_the_shark_onto_the_crew_for_free() -> void:
 	var run := _bought_run()
-	assert_eq(run.cash, 100000)
+	assert_eq(run.cash, 1000000)
 	assert_true(run.shark_bought)
 	assert_true(Crew.is_free_role(run, Lending.ENFORCER_ROLE))
 	assert_eq(Crew.hired_count(run), 0)
@@ -83,7 +83,7 @@ func test_loans_come_back_with_interest_or_partly_recovered() -> void:
 	var dealer := Content.dealer(StringName(str(request.dealer)))
 	Lending.lend(run, str(request.id))
 	var after_lending := run.cash
-	assert_eq(after_lending, 100000 - amount)
+	assert_eq(after_lending, 1000000 - amount)
 	run.day += Lending.TERM_DAYS - 1
 	assert_true(Lending.settle(run).is_empty())
 	run.day += 1
@@ -92,6 +92,27 @@ func test_loans_come_back_with_interest_or_partly_recovered() -> void:
 	assert_true(run.dealer_loans.is_empty())
 	var returned := run.cash - after_lending
 	assert_true(returned == Lending.repayment(dealer, amount) or returned == roundi(amount * Lending.RECOVERED_SHARE), str(returned))
+
+
+func test_skipped_loan_consequences() -> void:
+	var run := _bought_run()
+	var dealer := Content.dealer(&"mama_lin")
+	assert_not_null(dealer)
+	# Manually trigger lockdown and blacklist
+	Lending.lock_down_dealer(run, dealer.id)
+	Lending.blacklist_dealer(run, dealer.id)
+	assert_true(Lending.is_dealer_locked_down(run, dealer.id))
+	assert_false(Market.is_open(run, dealer))
+	assert_true(Lending.is_dealer_blacklisted(run, dealer.id))
+	assert_false(Lending.requests(run).any(func(req: Dictionary) -> bool: return str(req.dealer) == String(dealer.id)))
+	# Fast forward past lockdown (3 days)
+	run.day += 3
+	assert_false(Lending.is_dealer_locked_down(run, dealer.id))
+	assert_true(Market.is_open(run, dealer))
+	assert_true(Lending.is_dealer_blacklisted(run, dealer.id))
+	# Fast forward past blacklist (7 days from start)
+	run.day += 4
+	assert_false(Lending.is_dealer_blacklisted(run, dealer.id))
 
 
 func test_buyout_and_loans_survive_a_save() -> void:
@@ -114,3 +135,39 @@ func test_buyout_clears_shark_errands_and_offers() -> void:
 	assert_true(Lending.buy_out(_run))
 	assert_true(_run.errand_offers.is_empty())
 	assert_true(_run.errands.is_empty())
+
+
+func test_debt_clear_schedules_shark_sale_in_seven_days() -> void:
+	var run := RunState.new()
+	run.debt = 5000
+	run.cash = 10000
+	run.day = 3
+	assert_true(Loan.repay(run, 5000))
+	assert_eq(run.debt, 0)
+	assert_eq(run.shark_sale_day, 10)
+	assert_false(Lending.can_buy_out(run))
+	assert_false(Lending.check_sale_offer(run))
+	run.day = 9
+	assert_false(Lending.can_buy_out(run))
+	assert_false(Lending.check_sale_offer(run))
+	run.day = 10
+	assert_true(Lending.can_buy_out(run))
+	assert_true(Lending.check_sale_offer(run))
+	assert_true(run.shark_mail_sent)
+	assert_eq(run.pending_encounter.type, Lending.SALE_OFFER)
+	var choices := Encounters.choices(run, run.pending_encounter)
+	assert_eq(choices.size(), 2)
+	assert_eq(choices[0].id, Lending.VISIT_SHARK)
+	assert_eq(choices[1].id, Encounters.CONTINUE)
+	run.district_id = &"slums"
+	Encounters.resolve(run, Lending.VISIT_SHARK, 0.0)
+	assert_eq(run.district_id, &"downtown")
+
+
+func test_shark_sale_state_survives_save() -> void:
+	var run := RunState.new()
+	run.shark_sale_day = 15
+	run.shark_mail_sent = true
+	var saved := RunState.from_dict(run.to_dict())
+	assert_eq(saved.shark_sale_day, 15)
+	assert_true(saved.shark_mail_sent)

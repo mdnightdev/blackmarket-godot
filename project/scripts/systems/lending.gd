@@ -7,20 +7,60 @@ class_name Lending
 
 enum Result { OK, NOT_OWNER, NOT_HERE, GONE, NOT_ENOUGH_CASH }
 
-const BUYOUT_PRICE := 300000
+const BUYOUT_PRICE := 750000
 ## The crew role the Shark fills, free of wages and outside the crew cap.
 const ENFORCER_ROLE: StringName = &"muscle"
 const REQUESTS_PER_DAY := 3
 const TERM_DAYS := 5
 ## Share of a skipped loan the Shark collects.
-const RECOVERED_SHARE := 0.5
-const AMOUNTS := { Tiers.STREET: 10000, Tiers.MIDDLE: 25000, Tiers.WEALTHY: 50000 }
+const RECOVERED_SHARE := 0.75
+const AMOUNTS := { Tiers.STREET: 50000, Tiers.MIDDLE: 250000, Tiers.WEALTHY: 750000 }
 const INTEREST := { Tiers.STREET: 0.3, Tiers.MIDDLE: 0.2, Tiers.WEALTHY: 0.12 }
 const SKIP_CHANCE := { Tiers.STREET: 0.25, Tiers.MIDDLE: 0.12, Tiers.WEALTHY: 0.05 }
+const LOCKDOWN_DAYS := 3
+const BLACKLIST_DAYS := 7
+
+const SALE_OFFER := "shark_sale_offer"
+const VISIT_SHARK: StringName = &"visit_shark"
+
+
+static func is_dealer_locked_down(run: RunState, dealer_id: StringName) -> bool:
+	return int(run.dealer_lockdowns.get(dealer_id, 0)) > run.day
+
+
+static func is_dealer_blacklisted(run: RunState, dealer_id: StringName) -> bool:
+	return int(run.dealer_loan_blacklist.get(dealer_id, 0)) > run.day
+
+
+static func lock_down_dealer(run: RunState, dealer_id: StringName, days := LOCKDOWN_DAYS) -> void:
+	run.dealer_lockdowns[dealer_id] = run.day + days
+
+
+static func blacklist_dealer(run: RunState, dealer_id: StringName, days := BLACKLIST_DAYS) -> void:
+	run.dealer_loan_blacklist[dealer_id] = run.day + days
 
 
 static func can_buy_out(run: RunState) -> bool:
-	return not run.shark_bought and run.debt <= 0 and not Loan.is_with_vex(run)
+	if run.shark_bought or run.debt > 0 or Loan.is_with_vex(run):
+		return false
+	if run.shark_sale_day > 0 and run.day < run.shark_sale_day:
+		return false
+	return true
+
+
+static func check_sale_offer(run: RunState) -> bool:
+	if not can_buy_out(run) or run.shark_mail_sent or run.shark_sale_day == 0:
+		return false
+	if run.day < run.shark_sale_day or Encounters.has_pending(run):
+		return false
+	run.shark_mail_sent = true
+	run.pending_encounter = {
+		"type": SALE_OFFER,
+		"speaker": String(Loan.LENDER),
+		"title": "A message from The Shark",
+		"body": "A week since your debt was settled. I told you I was getting old. My lending desk in Downtown is up for sale. %s takes the book, the office, and my services as muscle." % Format.money(BUYOUT_PRICE),
+	}
+	return true
 
 
 static func buy_out(run: RunState) -> bool:
@@ -103,9 +143,15 @@ static func settle(run: RunState) -> Array[Dictionary]:
 		if rng.randf() < float(SKIP_CHANCE[dealer.tier]):
 			var recovered := roundi(amount * RECOVERED_SHARE)
 			run.cash += recovered
+			lock_down_dealer(run, dealer.id)
+			blacklist_dealer(run, dealer.id)
 			notices.append({
-				"line": "%s skipped out on the %s loan. The Shark got %s of it back." % [dealer.display_name, Format.money(amount), Format.money(recovered)],
-				"hint": "-%s lost" % Format.money(amount - recovered),
+				"line": "%s skipped out on the %s loan. The Shark broke their door, seized %s, and shuttered their stall for %d days." % [
+					dealer.display_name, Format.money(amount), Format.money(recovered), LOCKDOWN_DAYS
+				],
+				"hint": "-%s lost | Stall closed %dd | Barred from loans %dd" % [
+					Format.money(amount - recovered), LOCKDOWN_DAYS, BLACKLIST_DAYS
+				],
 			})
 		else:
 			var paid := int(loan.repayment)
@@ -137,6 +183,7 @@ static func _borrowers(run: RunState) -> Array[DealerDef]:
 	for dealer in Content.dealers():
 		var home := Content.district(dealer.district_id)
 		if dealer.is_resident() and home != null and not Travel.is_locked(run, home):
-			list.append(dealer)
+			if not is_dealer_blacklisted(run, dealer.id):
+				list.append(dealer)
 	list.sort_custom(func(a: DealerDef, b: DealerDef) -> bool: return String(a.id) < String(b.id))
 	return list

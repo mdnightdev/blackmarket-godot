@@ -43,6 +43,12 @@ func _add_money(run: RunState) -> void:
 	_add_heading("MONEY")
 	var stashed := "%s more in the safehouse cash box" % Format.money(run.stashed_cash) if run.stashed_cash > 0 else "Nothing in the safehouse cash box"
 	_add_row(CASH_ICON, "Cash", Format.money(run.cash), stashed, VIEW, Palette.TEXT_CREAM, _open.bind(&"safehouse"))
+	var in_transit := Money.total_laundering_in_transit(run)
+	var transit_str := ""
+	if in_transit > 0:
+		transit_str = " (%s in transit)" % Format.money(in_transit)
+	var bank_desc := "Offshore channels and clean funds%s" % transit_str
+	_add_row(DEBT_ICON, "Bank & Offshore", Format.money(run.clean), bank_desc, VIEW, Palette.TEXT_CREAM, _open.bind(&"laundering"))
 	_add_row(INCOME_ICON, "Every morning", "+%s" % Format.money(Turf.daily_cut(run)), "Rent and protection from the corners and districts you hold")
 	if run.debt > 0:
 		_add_row(DEBT_ICON, "Debt", Format.money(run.debt), "Owed to %s" % ("Vex" if Loan.is_with_vex(run) else "the Shark"))

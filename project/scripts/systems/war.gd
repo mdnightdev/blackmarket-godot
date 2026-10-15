@@ -116,6 +116,7 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 		Story.mark(run, LOST_ONCE)
 	Army.take_losses(run, deployment, losses)
 	Heat.add(run, ATTACK_HEAT)
+	Heat.activate_frenzy(run, 300.0)
 	result.defenders_lost = defenders_lost
 	if won and is_open(run) and Corners.held_count(run, Corners.HOME) == Corners.of(Corners.HOME).size():
 		end_war(run)

@@ -4,6 +4,8 @@ extends BottomSheet
 const ITEM_ROW := preload("res://ui/components/item_row.tscn")
 const CRED_ICON: Texture2D = preload("res://assets/icons/hud/zap.svg")
 const LOCK_ICON: Texture2D = preload("res://assets/icons/hud/lock.svg")
+const BANK_ICON: Texture2D = preload("res://assets/icons/hud/landmark.svg")
+const CASH_ICON: Texture2D = preload("res://assets/icons/hud/banknote.svg")
 const SKILL_ICONS := {
 	&"haggler": preload("res://assets/icons/hud/hand-coins.svg"),
 	&"pack_mule": preload("res://assets/icons/hud/backpack.svg"),
@@ -21,11 +23,24 @@ const TIER_COLORS := {
 const CAREER_LOCK := "Take Old Market from Vex to unlock"
 const ACT_ONE_STATUS := "Locked: take Old Market"
 const LOCKED := "LOCKED"
-const STOCK: StringName = &"stock"
-const UNSTOCK: StringName = &"unstock"
+const LAUNDER_MAX: StringName = &"launder_max"
+const LAUNDER_HALF: StringName = &"launder_half"
+const UPGRADE: StringName = &"upgrade"
 const LEAVE: StringName = &"leave"
 const BLOCK: StringName = &"block"
 const HEADQUARTERS: StringName = &"headquarters"
+const DISTRICT_BUSINESSES: Array[Dictionary] = [
+	{ "district": &"old_market", "business": &"corner_shop" },
+	{ "district": &"slums", "business": &"bakery" },
+	{ "district": &"docks", "business": &"pawn_shop" },
+	{ "district": &"warehouse_row", "business": &"car_wash" },
+	{ "district": &"riverside", "business": &"gym" },
+	{ "district": &"west_end", "business": &"restaurant" },
+	{ "district": &"downtown", "business": &"shark" },
+	{ "district": &"north_port", "business": &"lounge" },
+	{ "district": &"the_heights", "business": &"boutique" },
+	{ "district": &"golden_mile", "business": &"nightclub" },
+]
 const SECTION_TITLES := {
 	BLOCK: "Turf",
 	HEADQUARTERS: "Holdings",
@@ -38,12 +53,16 @@ const SECTION_TITLES := {
 	&"businesses": "Businesses",
 	&"skills": "Skills",
 	&"families": "Families",
+	&"laundering": "Offshore & Banking",
 }
 ## Pages opened from the holdings go back to the holdings.
 const SECTION_PARENTS := {
 	&"districts": HEADQUARTERS,
 	&"crew": HEADQUARTERS,
 	&"skills": HEADQUARTERS,
+	&"businesses": HEADQUARTERS,
+	&"families": HEADQUARTERS,
+	&"laundering": HEADQUARTERS,
 }
 
 @onready var _margin: MarginContainer = %Margin
@@ -131,6 +150,8 @@ func _rebuild() -> void:
 			_add_skills(run)
 		&"families":
 			_add_families(run)
+		&"laundering":
+			_add_laundering(run)
 		_:
 			_update_headquarters(run)
 
@@ -210,42 +231,83 @@ func _add_crew(run: RunState) -> void:
 
 
 func _add_businesses(run: RunState) -> void:
-	_add_heading("BUSINESSES")
+	_add_heading("DISTRICT BUSINESSES")
 	if not Campaign.is_act_two(run):
 		_add_row(LOCK_ICON, "Businesses", "", CAREER_LOCK, LOCKED)
 		return
-	for entry in run.businesses:
-		var business := Content.business(StringName(entry.business))
-		var district := Content.district(StringName(entry.district))
-		if business == null or district == null:
+
+	for def in DISTRICT_BUSINESSES:
+		var dist_id: StringName = def.district
+		var biz_id: StringName = def.business
+		var district := Content.district(dist_id)
+		if district == null:
 			continue
-		var state := "Open" if Businesses.is_open(run, entry) else "Closed"
-		var caption := "%s, %d / %d stocked" % [district.display_name, Businesses.stock_used(entry), business.stock_capacity]
-		_add_row(business.icon, business.display_name, state, caption, "TAP TO MANAGE", Palette.TEXT_CREAM, _manage_business.bind(entry))
-	var offered: Array[StringName] = []
-	for district_id: StringName in Turf.contested():
-		if Businesses.slots_free(run, district_id) <= 0:
+
+		if biz_id == &"shark":
+			if run.shark_bought:
+				_add_row(CRED_ICON, "The Shark in Downtown", "Owned", "Private lending desk active. Dealers come to you for cash loans.", "MANAGE", Palette.TEXT_CREAM, func() -> void:
+					close()
+					run.district_id = &"downtown"
+					StreetTalk.talk_to(Content.character(Loan.LENDER))
+				)
+			else:
+				var can_buy_shark := Lending.can_buy_out(run) and run.cash >= Lending.BUYOUT_PRICE
+				var detail := "BUYOUT"
+				if run.debt > 0:
+					detail = "PAY DEBT FIRST"
+				elif run.shark_sale_day > run.day:
+					detail = "OFFER IN %d DAYS" % maxi(1, run.shark_sale_day - run.day)
+				elif run.cash < Lending.BUYOUT_PRICE:
+					detail = "NOT ENOUGH CASH"
+				var color := Palette.TEXT_CREAM if can_buy_shark else Palette.TEXT_MUTED
+				var action := Callable()
+				if can_buy_shark:
+					action = _ask.bind("Buy out the Shark?", "Retire the Shark for %s and take over his private lending book in Downtown." % Format.money(Lending.BUYOUT_PRICE), "Buy Out", func() -> void:
+						run.district_id = &"downtown"
+						if Lending.buy_out(run):
+							_rebuild()
+					)
+				_add_row(CRED_ICON, "The Shark in Downtown", Format.money(Lending.BUYOUT_PRICE), "Buy out his desk in Downtown to take over street lending.", detail, color, action)
 			continue
-		var district := Content.district(district_id)
-		for business in Content.businesses():
-			var result := Businesses.check_buy(run, business, district_id)
-			if result in [Businesses.Result.NOT_HELD, Businesses.Result.RANK_TOO_LOW]:
-				continue
-			if not offered.has(business.id):
-				offered.append(business.id)
-			var can_buy := result == Businesses.Result.OK
-			var action := Callable()
-			if can_buy:
-				action = _ask.bind("Open a %s?" % business.display_name.to_lower(),
-					"%s in %s for %s. Upkeep is %s a day. Stock it with goods and it sells them for you." % [business.display_name, district.display_name, Format.money(business.price), Format.money(business.daily_upkeep)],
-					"Open it",
-					func() -> void: GameState.buy_business(business, district_id))
-			_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), business.description,
-				"TAP TO OPEN" if can_buy else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_buy else Palette.TEXT_MUTED, action)
-	for business in Content.businesses():
-		if not offered.has(business.id) and StreetCred.rank(run) < business.min_rank:
-			_add_row(business.icon, business.display_name, Format.money(business.price), "Opens in a district you hold once you reach %s" % StreetCred.rank_name(business.min_rank),
-				"%s: %s" % [LOCKED, StreetCred.rank_name(business.min_rank).to_upper()])
+
+		var business := Content.business(biz_id)
+		if business == null:
+			continue
+
+		var owned_entry: Dictionary = {}
+		for entry in run.businesses:
+			if str(entry.get("business", "")) == String(biz_id) and str(entry.get("district", "")) == String(dist_id):
+				owned_entry = entry
+				break
+
+		if not owned_entry.is_empty():
+			var state := "Open" if Businesses.is_open(run, owned_entry) else "Closed"
+			var lvl := Businesses.level_of(owned_entry)
+			var rev := Businesses.daily_revenue(business, 0.5, lvl)
+			var upkeep := business.effective_upkeep(lvl)
+			var caption := "%s | Lvl %d/5 | Net: +%s/d clean (Upkeep: %s)" % [
+				district.display_name,
+				lvl,
+				Format.money_short(rev - upkeep),
+				Format.money_short(upkeep)
+			]
+			_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], state, caption, "MANAGE", Palette.TEXT_CREAM, _manage_business.bind(owned_entry))
+		else:
+			var result := Businesses.check_buy(run, business, dist_id)
+			if result == Businesses.Result.NOT_HELD:
+				_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), "Hold %s to open" % district.display_name, LOCKED, Palette.TEXT_MUTED)
+			elif result == Businesses.Result.RANK_TOO_LOW:
+				_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), "Requires %s" % StreetCred.rank_name(business.min_rank), LOCKED, Palette.TEXT_MUTED)
+			else:
+				var can_buy := result == Businesses.Result.OK
+				var action := Callable()
+				if can_buy:
+					action = _ask.bind("Open a %s?" % business.display_name.to_lower(),
+						"%s in %s for %s. Upkeep is %s a day. Generates passive clean income." % [business.display_name, district.display_name, Format.money(business.price), Format.money(business.effective_upkeep(1))],
+						"Open it",
+						func() -> void: GameState.buy_business(business, dist_id))
+				_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), business.description,
+					"TAP TO OPEN" if can_buy else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_buy else Palette.TEXT_MUTED, action)
 
 
 func _add_skills(run: RunState) -> void:
@@ -290,34 +352,60 @@ func _manage_business(entry: Dictionary) -> void:
 	var run := GameState.run
 	var business := Content.business(StringName(entry.business))
 	var district := Content.district(StringName(entry.district))
-	if business == null or district == null:
+	if business == null or district == null or run == null:
 		return
 	_managed_business = entry
-	var here := run.district_id == district.id
-	var line := "%s in %s. %d of %d stocked." % [business.display_name, district.display_name, Businesses.stock_used(entry), business.stock_capacity]
-	if not here:
-		line += " Go to %s to restock it." % district.display_name
-	var choices: Array[DialogueChoice] = [
-		DialogueChoice.new(STOCK, "Stock it from your bag", here and not run.inventory.is_empty() and Businesses.stock_used(entry) < business.stock_capacity),
-		DialogueChoice.new(UNSTOCK, "Take the stock back", here and Businesses.stock_used(entry) > 0),
-		DialogueChoice.new(LEAVE, "Leave", true, true),
+	var lvl := Businesses.level_of(entry)
+	var rev := Businesses.daily_revenue(business, 0.5, lvl)
+	var upkeep := business.effective_upkeep(lvl)
+	var is_open := Businesses.is_open(run, entry)
+	var can_up := Businesses.can_upgrade(run, entry)
+	var next_cost := business.upgrade_cost(lvl)
+
+	var line := "%s in %s (Level %d/%d). Daily clean revenue: +%s, upkeep: %s. Net profit: +%s/day." % [
+		business.display_name, district.display_name, lvl, BusinessDef.MAX_LEVEL,
+		Format.money(rev), Format.money(upkeep), Format.money(rev - upkeep)
 	]
+
+	var choices: Array[DialogueChoice] = []
+	if not is_open:
+		line += " Business is currently CLOSED due to unpaid upkeep."
+		choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
+	else:
+		if lvl < BusinessDef.MAX_LEVEL:
+			var next_rev := Businesses.daily_revenue(business, 0.5, lvl + 1)
+			choices.append(DialogueChoice.new(
+				UPGRADE,
+				"Upgrade to Level %d for %s (boosts to +%s/d clean)" % [lvl + 1, Format.money(next_cost), Format.money(next_rev)],
+				can_up
+			))
+		else:
+			line += " Business is fully MAXED OUT at Level 5."
+		choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
+
 	GameOverlay.talk(Content.player(run.player_id), line, choices, _on_business_choice)
 
 
 func _on_business_choice(choice: StringName) -> void:
-	var moved := 0
-	match choice:
-		STOCK:
-			moved = GameState.stock_business(_managed_business)
-		UNSTOCK:
-			moved = GameState.unstock_business(_managed_business)
-	if choice == LEAVE or moved <= 0:
+	var run := GameState.run
+	if choice == LEAVE or run == null or _managed_business.is_empty():
 		GameOverlay.end_talk()
 		return
-	var line := "You move %d units onto the shelves." % moved if choice == STOCK else "You pack %d units back into your bag." % moved
-	var next: Array[DialogueChoice] = [DialogueChoice.new(LEAVE, "Continue", true, true)]
-	GameOverlay.say(line, next, func(_id: StringName) -> void: GameOverlay.end_talk(), false)
+	if choice == UPGRADE:
+		var ok := Businesses.upgrade(run, _managed_business)
+		if not ok:
+			GameOverlay.end_talk()
+			return
+		var business := Content.business(StringName(_managed_business.business))
+		var new_lvl := Businesses.level_of(_managed_business)
+		var line := "You upgraded %s to Level %d! Daily clean revenue increased." % [
+			business.display_name if business != null else "Business", new_lvl
+		]
+		var next: Array[DialogueChoice] = [DialogueChoice.new(LEAVE, "Continue", true, true)]
+		GameOverlay.say(line, next, func(_id: StringName) -> void:
+			GameOverlay.end_talk()
+			_rebuild()
+		, false)
 
 
 func _ask(title: String, message: String, confirm_text: String, action: Callable, destructive := false) -> void:
@@ -354,3 +442,138 @@ func _add_row(icon: Texture2D, title: String, value: String, caption: String, de
 		row.item_selected.connect(func(_item: ItemDef) -> void: action.call())
 	else:
 		row.disabled = true
+
+
+func _add_laundering(run: RunState) -> void:
+	_add_heading("BANK BALANCE")
+	var withdraw_act := Callable()
+	var detail := ""
+	var detail_color := Palette.TEXT_MUTED
+	if run.clean > 0:
+		detail = "WITHDRAW"
+		detail_color = Palette.PEACH_BRIGHT
+		withdraw_act = _withdraw_dialog.bind(run)
+	_add_row(BANK_ICON, "Clean Bank Balance", Format.money(run.clean), "Clean funds in the bank. Raids and seizures cannot touch them.", detail, detail_color, withdraw_act)
+
+	_add_heading("IN TRANSIT")
+	if run.laundering.is_empty():
+		_add_note("No funds currently clearing through channels.")
+	else:
+		for batch in run.laundering:
+			var days: int = int(batch.get("days_left", 1))
+			var dirty: int = int(batch.get("dirty_amount", 0))
+			var fee: float = float(batch.get("fee", 0.0))
+			var clean_est := dirty - floori(dirty * fee)
+			var inst_id := StringName(batch.get("instrument", batch.get("business", "")))
+			var item := Content.item(inst_id)
+			var inst_name := item.display_name if item != null else String(inst_id).capitalize()
+			var icon: Texture2D = item.icon if item != null and item.icon != null else CASH_ICON
+			var days_str := "1 day left" if days == 1 else "%d days left" % days
+			var caption := "%s sent (fee: %d%%) -> +%s clean" % [Format.money(dirty), roundi(fee * 100.0), Format.money(clean_est)]
+			_add_row(icon, inst_name, days_str, caption)
+
+	_add_heading("FINANCIAL INSTRUMENTS")
+	_add_note("Clean dirty street cash through financial paper. Buy documents on the market or stash them in the safehouse.")
+	for inst in Money.all_instruments():
+		var id: StringName = inst.id
+		var name: String = inst.name
+		var cap: int = inst.cap
+		var fee: float = inst.fee
+		var days: int = inst.days
+		var free_cap := Money.instrument_capacity_free(run, id)
+		var item := Content.item(id)
+		var icon: Texture2D = item.icon if item != null and item.icon != null else CASH_ICON
+		if Money.has_instrument(run, id):
+			var caption := "Cap: %s (free: %s) | Fee: %d%% | Clears in %d %s" % [
+				Format.money(cap),
+				Format.money(free_cap),
+				roundi(fee * 100.0),
+				days,
+				"day" if days == 1 else "days"
+			]
+			var can_clean := free_cap > 0 and run.cash > 0
+			var row_detail := "CLEAN CASH" if can_clean else ("NO CASH" if run.cash <= 0 else "CHANNEL FULL")
+			var row_color := Palette.TEXT_CREAM if can_clean else Palette.TEXT_MUTED
+			var action := _clean_cash_dialog.bind(id) if can_clean else Callable()
+			_add_row(icon, name, "%d%% fee" % roundi(fee * 100.0), caption, row_detail, row_color, action)
+		else:
+			var caption := "Requires %s in bag or safehouse. Buy on the market." % name
+			_add_row(icon, name, LOCKED, caption, "LOCKED", Palette.TEXT_MUTED)
+
+
+func _withdraw_dialog(run: RunState) -> void:
+	var choices: Array[DialogueChoice] = []
+	var line := "Clean bank balance: %s. How much do you want to withdraw into cash?" % Format.money(run.clean)
+	if run.clean >= Money.WITHDRAWAL_HEAT_THRESHOLD:
+		line += "\nWarning: withdrawals of $5,000+ attract police heat frenzy."
+	if run.clean >= 10000:
+		choices.append(DialogueChoice.new(&"w_10k", "Withdraw $10,000", true))
+	if run.clean >= 50000:
+		choices.append(DialogueChoice.new(&"w_50k", "Withdraw $50,000", true))
+	choices.append(DialogueChoice.new(&"w_all", "Withdraw All (%s)" % Format.money(run.clean), true))
+	choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
+
+	GameOverlay.talk(Content.player(run.player_id), line, choices, func(choice: StringName) -> void:
+		GameOverlay.end_talk()
+		if choice == LEAVE:
+			return
+		var amt := 0
+		match choice:
+			&"w_10k": amt = 10000
+			&"w_50k": amt = 50000
+			&"w_all": amt = run.clean
+		if amt > 0:
+			GameState.withdraw_clean(amt)
+			_rebuild()
+	)
+
+
+func _clean_cash_dialog(instrument_id: StringName) -> void:
+	var run := GameState.run
+	if run == null:
+		return
+	var inst := Money.instrument_def(instrument_id)
+	if inst.is_empty():
+		return
+	var free_cap := Money.instrument_capacity_free(run, instrument_id)
+	var max_amt := mini(run.cash, free_cap)
+	if max_amt <= 0:
+		return
+	var fee: float = float(inst.get("fee", 0.15))
+	var days: int = int(inst.get("days", 3))
+	var name: String = str(inst.get("name", "Channel"))
+
+	var line := "Route dirty cash into %s. Fee: %d%%, clearing in %d %s.\nAvailable dirty cash: %s (Channel free cap: %s)" % [
+		name,
+		roundi(fee * 100.0),
+		days,
+		"day" if days == 1 else "days",
+		Format.money(run.cash),
+		Format.money(free_cap)
+	]
+
+	var choices: Array[DialogueChoice] = []
+	if max_amt >= 20000:
+		choices.append(DialogueChoice.new(&"c_20k", "Clean $20,000 (Fee: %s)" % Format.money(floori(20000 * fee)), true))
+	if max_amt >= 100000:
+		choices.append(DialogueChoice.new(&"c_100k", "Clean $100,000 (Fee: %s)" % Format.money(floori(100000 * fee)), true))
+	if max_amt >= 500000:
+		choices.append(DialogueChoice.new(&"c_500k", "Clean $500,000 (Fee: %s)" % Format.money(floori(500000 * fee)), true))
+	choices.append(DialogueChoice.new(&"c_max", "Clean Max: %s (Fee: %s)" % [Format.money(max_amt), Format.money(floori(max_amt * fee))], true))
+	choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
+
+	GameOverlay.talk(Content.player(run.player_id), line, choices, func(choice: StringName) -> void:
+		GameOverlay.end_talk()
+		if choice == LEAVE:
+			return
+		var amt := 0
+		match choice:
+			&"c_20k": amt = 20000
+			&"c_100k": amt = 100000
+			&"c_500k": amt = 500000
+			&"c_max": amt = max_amt
+		amt = mini(amt, max_amt)
+		if amt > 0:
+			GameState.start_instrument_laundering(instrument_id, amt)
+			_rebuild()
+	)

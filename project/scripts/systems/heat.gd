@@ -31,9 +31,9 @@ static func carried_risk(run: RunState) -> int:
 static func level(run: RunState) -> Level:
 	if run.heat >= MAX:
 		return Level.WANTED
-	if run.heat >= WATCHED:
+	if run.heat >= WATCHED or run.heat_timer > 180.0:
 		return Level.WATCHED
-	if run.heat >= NOTICED:
+	if run.heat >= NOTICED or run.heat_timer > 0.0:
 		return Level.NOTICED
 	return Level.CALM
 
@@ -52,3 +52,16 @@ static func cool_down(run: RunState, new_day_started: bool) -> void:
 
 static func is_maxed(run: RunState) -> bool:
 	return run.heat >= MAX
+
+
+static func activate_frenzy(run: RunState, duration: float) -> void:
+	run.heat_timer = maxf(run.heat_timer, duration)
+
+
+static func is_frenzy(run: RunState) -> bool:
+	return run.heat_timer > 0.0
+
+
+static func tick_frenzy(run: RunState, delta: float) -> void:
+	if run.heat_timer > 0.0:
+		run.heat_timer = maxf(0.0, run.heat_timer - delta)

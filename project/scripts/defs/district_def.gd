@@ -20,5 +20,7 @@ extends Resource
 @export var corner_map: Texture2D
 ## Districts with a direct road from here. Hot runs travel stop by stop along these.
 @export var roads: Array[StringName] = []
+## Businesses that can be opened in this district. Empty means any business is allowed.
+@export var allowed_businesses: Array[StringName] = []
 ## Street cred rank needed before the player can travel here.
 @export_range(1, 10) var min_rank: int = 1

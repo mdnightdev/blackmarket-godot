@@ -60,5 +60,6 @@ travel_cost = 30
 heat_multiplier = 0.8
 roads = Array[StringName]([&"warehouse_row", &"old_market", &"docks"])
 venues = Array[StringName]([&"market"])
+allowed_businesses = Array[StringName]([&"corner_shop", &"car_wash", &"bakery", &"pawn_shop"])
 corner_map = ExtResource("5_corner_map")
 corners = Array[ExtResource("4_corner")]([SubResource("Corner_steam_grate_alley"), SubResource("Corner_block_nine"), SubResource("Corner_laundry_court"), SubResource("Corner_boiler_house")])

@@ -114,6 +114,9 @@ func _choose_dealer(district_id: StringName) -> DealerDef:
 func _greet() -> void:
 	if not is_inside_tree() or not _dealer_is_here():
 		return
+	if Lending.is_dealer_locked_down(GameState.run, _dealer.id):
+		_dealer_says("Stall is shuttered. The Shark's men broke the place up. Come back later.")
+		return
 	var family := Families.family_of(_dealer)
 	if family != null and FAMILY_LINES.has(Families.tier(GameState.run, family.id)):
 		_dealer_says(FAMILY_LINES[Families.tier(GameState.run, family.id)])
@@ -180,6 +183,11 @@ func _refresh() -> void:
 	if Families.refuses(run, _dealer):
 		_selected = null
 		_show_notice("%s works for the %s. The family will not deal with you." % [_dealer.display_name, family.english_name])
+		return
+	if Lending.is_dealer_locked_down(run, _dealer.id):
+		_selected = null
+		var days_left := maxi(1, int(run.dealer_lockdowns.get(_dealer.id, 0)) - run.day)
+		_show_notice("%s's stall is locked down by the Shark. Reopens in %d day(s)." % [_dealer.display_name, days_left])
 		return
 	if not Market.is_open(run, _dealer):
 		_selected = null

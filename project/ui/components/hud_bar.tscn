@@ -54,14 +54,46 @@ size_flags_vertical = 4
 mouse_filter = 2
 color = Color(0.1804, 0.1961, 0.2314, 1)
 
+[node name="Clean" type="HBoxContainer" parent="Row"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CleanIcon" type="TextureRect" parent="Row/Clean"]
+modulate = Color(0.702, 0.776, 0.886, 1)
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("3_cash")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CleanValue" type="Label" parent="Row/Clean"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudStripValue"
+theme_override_colors/font_color = Color(0.702, 0.776, 0.886, 1)
+text = "$0"
+
+[node name="CleanDivider" type="ColorRect" parent="Row"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(1, 28)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+color = Color(0.1804, 0.1961, 0.2314, 1)
+
 [node name="Heat" type="HBoxContainer" parent="Row"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="HeatIcon" type="TextureRect" parent="Row/Heat"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(20, 20)
+custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -71,7 +103,7 @@ stretch_mode = 5
 
 [node name="HeatBar" type="ProgressBar" parent="Row/Heat"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 10)
+custom_minimum_size = Vector2(40, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4

@@ -628,6 +628,20 @@ func buy_business(business: BusinessDef, district_id: StringName) -> Businesses.
 	return result
 
 
+func start_instrument_laundering(instrument_id: StringName, amount: int) -> bool:
+	var ok := Money.start_instrument_laundering(run, instrument_id, amount)
+	if ok:
+		_commit(false)
+	return ok
+
+
+func withdraw_clean(amount: int) -> bool:
+	var ok := Money.withdraw_clean(run, amount)
+	if ok:
+		_commit(false)
+	return ok
+
+
 ## Fills the shelves from the bag, most valuable goods first. Returns the units moved.
 func stock_business(entry: Dictionary) -> int:
 	if run.district_id != Businesses.district_of(entry):

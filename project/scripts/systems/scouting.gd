@@ -50,6 +50,7 @@ static func scout(run: RunState, corner_id: StringName, notice_roll: float, rang
 	if seen:
 		var reinforced := War.defenders(run, corner) + ceili(corner.defenders * NOTICED_REINFORCEMENT)
 		run.corner_defenders[String(corner_id)] = mini(reinforced, Rivals.max_garrison(corner))
+		Heat.activate_frenzy(run, 180.0)
 	var men := War.defenders(run, corner)
 	var width := spread(run)
 	var gang := Corners.gang_of(corner_id)

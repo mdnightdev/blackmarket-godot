@@ -17,8 +17,14 @@ var day: int = 1
 var phase: Phase = Phase.MORNING
 var phase_seconds_left: float = Calendar.PHASE_SECONDS
 var cash: int = STARTING_CASH
+## Clean bank balance from laundering fronts.
+var clean: int = 0
 var debt: int = STARTING_DEBT
 var heat: int = 0
+## Active frenzy countdown in real seconds. While > 0, heat is active and police/rivals are aggressive.
+var heat_timer: float = 0.0
+## Active 3-day laundering batches.
+var laundering: Array[Dictionary] = []
 var district_id: StringName = STARTING_DISTRICT
 ## The Shark's terms, played once when the run starts. See OpeningTalk.
 var opening_done := false
@@ -87,8 +93,16 @@ var pending_encounter: Dictionary = {}
 var career := false
 ## The player bought the Shark's business. Borrowing ends and lending to dealers opens.
 var shark_bought := false
+## Day on which the Shark offers his lending desk for sale (7 days after debt paid).
+var shark_sale_day: int = 0
+## Whether the Shark's retirement buyout letter has been sent.
+var shark_mail_sent := false
 ## Money lent to dealers. See Lending for the entry layout.
 var dealer_loans: Array[Dictionary] = []
+## Dealer id to the day until their stall is shuttered by the Shark.
+var dealer_lockdowns: Dictionary = {}
+## Dealer id to the day until they can request loans again.
+var dealer_loan_blacklist: Dictionary = {}
 var street_cred: int = 0
 ## Day that trading_cred_today counts for.
 var cred_day: int = 0
@@ -207,8 +221,11 @@ func to_dict() -> Dictionary:
 		"phase": phase,
 		"phase_seconds_left": phase_seconds_left,
 		"cash": cash,
+		"clean": clean,
 		"debt": debt,
 		"heat": heat,
+		"heat_timer": heat_timer,
+		"laundering": laundering,
 		"district_id": String(district_id),
 		"inventory": _string_keys(inventory),
 		"stash": _string_keys(stash),
@@ -241,7 +258,11 @@ func to_dict() -> Dictionary:
 		"pending_encounter": pending_encounter,
 		"career": career,
 		"shark_bought": shark_bought,
+		"shark_sale_day": shark_sale_day,
+		"shark_mail_sent": shark_mail_sent,
 		"dealer_loans": dealer_loans,
+		"dealer_lockdowns": _string_keys(dealer_lockdowns),
+		"dealer_loan_blacklist": _string_keys(dealer_loan_blacklist),
 		"street_cred": street_cred,
 		"cred_day": cred_day,
 		"trading_cred_today": trading_cred_today,
@@ -311,8 +332,22 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.phase = clampi(int(data.get("phase", state.phase)), 0, Phase.size() - 1) as Phase
 	state.phase_seconds_left = clampf(float(data.get("phase_seconds_left", state.phase_seconds_left)), 0.0, Calendar.PHASE_SECONDS)
 	state.cash = int(data.get("cash", state.cash))
+	state.clean = maxi(0, int(data.get("clean", 0)))
 	state.debt = maxi(0, int(data.get("debt", state.debt)))
 	state.heat = clampi(int(data.get("heat", state.heat)), 0, 100)
+	state.heat_timer = maxf(0.0, float(data.get("heat_timer", 0.0)))
+	var saved_laundering: Variant = data.get("laundering", [])
+	if saved_laundering is Array:
+		for batch: Variant in saved_laundering:
+			if batch is Dictionary:
+				var dirty := int(batch.get("dirty_amount", 0))
+				var days := int(batch.get("days_left", 0))
+				if dirty <= 0 or days <= 0:
+					continue
+				var inst := StringName(str(batch.get("instrument", batch.get("business", ""))))
+				if not Money.INSTRUMENTS.has(inst) and Content.item(inst) == null and Content.business(inst) == null:
+					continue
+				state.laundering.append(batch)
 	state.district_id = StringName(str(data.get("district_id", state.district_id)))
 	state.inventory = _positive_counts(data.get("inventory"))
 	state.stash = _positive_counts(data.get("stash"))
@@ -390,10 +425,16 @@ static func from_dict(data: Dictionary) -> RunState:
 		state.pending_encounter = Gangs.migrate_encounter(saved_encounter)
 	state.career = bool(data.get("career", false)) or bool(data.get("endless", false))
 	state.shark_bought = state.career and bool(data.get("shark_bought", false))
+	state.shark_sale_day = maxi(0, int(data.get("shark_sale_day", 0)))
+	state.shark_mail_sent = bool(data.get("shark_mail_sent", false))
+	if state.career and state.debt <= 0 and not state.shark_bought and state.shark_sale_day == 0:
+		state.shark_sale_day = 1
 	for loan in _dictionaries(data.get("dealer_loans")):
 		var clean := Lending.sanitize(loan)
 		if not clean.is_empty() and not Lending.has_loan(state, StringName(clean.dealer)):
 			state.dealer_loans.append(clean)
+	state.dealer_lockdowns = _positive_counts(data.get("dealer_lockdowns"))
+	state.dealer_loan_blacklist = _positive_counts(data.get("dealer_loan_blacklist"))
 	state.street_cred = clampi(int(data.get("street_cred", 0)), 0, StreetCred.MAX)
 	state.cred_day = maxi(0, int(data.get("cred_day", 0)))
 	state.trading_cred_today = clampi(int(data.get("trading_cred_today", 0)), 0, StreetCred.DAILY_TRADING_CAP)
@@ -406,8 +447,13 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.skills = _positive_counts(data.get("skills"))
 	for member in _dictionaries(data.get("crew")):
 		var clean := Crew.sanitize(member)
+		if clean.is_empty():
+			continue
+		var role_id := StringName(str(clean.get("role", "")))
+		if Content.crew_role(role_id) == null:
+			continue
 		var has_room := Crew.is_free(clean) or Crew.hired_count(state) < Crew.cap(state)
-		if not clean.is_empty() and has_room and not Crew.has(state, StringName(clean.role)):
+		if has_room and not Crew.has(state, role_id):
 			state.crew.append(clean)
 	state.crew_report = _positive_counts(data.get("crew_report"))
 	state.runner_stamp = int(data.get("runner_stamp", -1))
@@ -415,10 +461,20 @@ static func from_dict(data: Dictionary) -> RunState:
 		var clean := Invoices.sanitize(invoice)
 		if not clean.is_empty():
 			state.invoices.append(clean)
+	var businesses_by_pair: Dictionary = {}
 	for entry in _dictionaries(data.get("businesses")):
 		var clean := Businesses.sanitize(entry)
-		if not clean.is_empty():
-			state.businesses.append(clean)
+		if clean.is_empty():
+			continue
+		var pair_key := "%s:%s" % [clean.business, clean.district]
+		if businesses_by_pair.has(pair_key):
+			var existing: Dictionary = businesses_by_pair[pair_key]
+			if Businesses.level_of(clean) > Businesses.level_of(existing):
+				existing["level"] = Businesses.level_of(clean)
+		else:
+			businesses_by_pair[pair_key] = clean
+	for b in businesses_by_pair.values():
+		state.businesses.append(b)
 	for task in _dictionaries(data.get("daily_tasks")):
 		var clean := DailyTasks.sanitize(task)
 		if not clean.is_empty():
@@ -544,4 +600,17 @@ static func _positive_counts(source: Variant, minimum: int = 1) -> Dictionary:
 			var value := int(source[key])
 			if value >= minimum:
 				result[StringName(str(key))] = value
+	return result
+
+
+static func _item_counts(source: Variant, minimum: int = 1) -> Dictionary:
+	var result := {}
+	if source is Dictionary:
+		for key: Variant in source:
+			var id := StringName(str(key))
+			if Content.item(id) == null:
+				continue
+			var value := int(source[key])
+			if value >= minimum:
+				result[id] = value
 	return result

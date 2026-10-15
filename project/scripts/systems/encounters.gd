@@ -60,6 +60,8 @@ static func after_time_passes(run: RunState, new_day_started: bool, travelled: b
 			Loan.start_next_period(run)
 		if DebtSale.check(run):
 			return
+		if Lending.check_sale_offer(run):
+			return
 
 	if has_pending(run):
 		return
@@ -243,6 +245,9 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 			var demand := int(encounter.demand)
 			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
 			list.append(Choice.new(Families.REFUSE, "Refuse"))
+		Lending.SALE_OFFER:
+			list.append(Choice.new(Lending.VISIT_SHARK, "Go to his desk"))
+			list.append(Choice.new(CONTINUE, "Later"))
 		EVENT:
 			match int(encounter.effect):
 				EventDef.Effect.MUGGING:
@@ -289,6 +294,11 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 			return Ramos.outcome_text(Ramos.resolve(run, choice))
 		RivalStrike.TYPE:
 			return RivalStrike.resolve(run, encounter, choice, roll)
+		Lending.SALE_OFFER:
+			if choice == Lending.VISIT_SHARK:
+				run.district_id = &"downtown"
+				return "You head Downtown to the Shark's office."
+			return "You fold the letter. His office will still be there in Downtown."
 	match choice:
 		BRIBE:
 			Police.pay_bribe(run, int(encounter.bribe))

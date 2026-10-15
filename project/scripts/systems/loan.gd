@@ -67,6 +67,8 @@ static func repay(run: RunState, amount: int) -> bool:
 	run.paid_this_period += amount
 	if run.covered_day == 0 and amount_due(run) <= 0:
 		run.covered_day = run.day
+	if run.debt <= 0 and run.shark_sale_day == 0 and not run.shark_bought:
+		run.shark_sale_day = run.day + 7
 	return true
 
 

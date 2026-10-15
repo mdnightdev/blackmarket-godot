@@ -34,10 +34,10 @@ static func next_capacity_bonus(run: RunState) -> int:
 
 
 static func fare_discount(run: RunState) -> float:
-	var total := 0.0
+	var best := 0.0
 	for item in owned_items(run):
-		total += item.fare_discount
-	return minf(total, MAX_FARE_DISCOUNT)
+		best = maxf(best, item.fare_discount)
+	return minf(best, MAX_FARE_DISCOUNT)
 
 
 static func haggle_bonus(run: RunState) -> float:

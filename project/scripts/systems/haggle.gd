@@ -9,6 +9,7 @@ const MOOD_SWING := 0.04
 const RISK_PENALTY_PER_POINT := 0.002
 const RELAXED_MOOD := 0.14
 const WARY_MOOD := 0.09
+const WALK_OUT_CHANCE := 0.25
 
 
 class Response:
@@ -44,12 +45,15 @@ static func offer_range(asking: int, buying: bool) -> Vector2i:
 	return Vector2i(asking, floori(asking * (1.0 + MAX_DISCOUNT)))
 
 
-## Offers inside the tolerance are taken, offers up to twice as greedy get a counter, anything further ends the talk.
-static func respond(asking: int, offer: int, buying: bool, dealer_tolerance: float) -> Response:
+## Offers inside the tolerance are taken, offers up to twice as greedy get a counter (with a 25% walk-out chance), anything further ends the talk.
+static func respond(asking: int, offer: int, buying: bool, dealer_tolerance: float, walk_out_roll: float = -1.0) -> Response:
 	var greed := float(asking - offer) / asking if buying else float(offer - asking) / asking
 	if greed <= dealer_tolerance:
 		return Response.new(Outcome.ACCEPTED, offer)
 	if greed <= dealer_tolerance * 2.0:
+		var roll := randf() if walk_out_roll < 0.0 else walk_out_roll
+		if roll < WALK_OUT_CHANCE:
+			return Response.new(Outcome.WALKED, asking)
 		var counter := ceili(asking * (1.0 - dealer_tolerance)) if buying else floori(asking * (1.0 + dealer_tolerance))
 		return Response.new(Outcome.COUNTERED, counter)
 	return Response.new(Outcome.WALKED, asking)

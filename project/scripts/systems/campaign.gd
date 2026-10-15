@@ -9,6 +9,8 @@ static func start_career_if_cleared(run: RunState) -> bool:
 	if run.career or run.debt > 0 or run.outcome != RunState.Outcome.ONGOING:
 		return false
 	run.career = true
+	if run.shark_sale_day == 0:
+		run.shark_sale_day = run.day + 7
 	if Loan.is_with_vex(run):
 		run.pending_encounter = {
 			"type": CAREER_START,
@@ -44,7 +46,9 @@ static func is_over(run: RunState) -> bool:
 
 
 static func net_worth(run: RunState) -> int:
-	var total := run.cash + run.stashed_cash - run.debt
+	var total := run.cash + run.clean + run.stashed_cash - run.debt
+	for batch in run.laundering:
+		total += int(batch.get("dirty_amount", 0))
 	for counts: Dictionary in [run.inventory, run.stash]:
 		for item_id: StringName in counts:
 			var item := Content.item(item_id)

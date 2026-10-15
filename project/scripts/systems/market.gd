@@ -65,7 +65,11 @@ static func best_local_buyer(run: RunState, item: ItemDef) -> DealerDef:
 
 
 static func is_open(run: RunState, dealer: DealerDef) -> bool:
-	return int(run.walked_out.get(dealer.id, -1)) != Calendar.stamp(run) and not Families.refuses(run, dealer)
+	if int(run.walked_out.get(dealer.id, -1)) == Calendar.stamp(run) or Families.refuses(run, dealer):
+		return false
+	if Lending.is_dealer_locked_down(run, dealer.id):
+		return false
+	return true
 
 
 static func roll(run: RunState, parts: Array, low: float, high: float) -> float:

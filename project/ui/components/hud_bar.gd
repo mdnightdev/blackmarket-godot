@@ -7,6 +7,9 @@ const HEAT_HIGH := Heat.WATCHED
 const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 
 @onready var _cash_value: Label = %CashValue
+@onready var _clean_box: Control = %Clean
+@onready var _clean_value: Label = %CleanValue
+@onready var _clean_divider: Control = %CleanDivider
 @onready var _debt_box: Control = %Debt
 @onready var _debt_caption: Label = %DebtCaption
 @onready var _debt_value: Label = %DebtValue
@@ -42,7 +45,9 @@ func _sync() -> void:
 	refresh()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if GameState.run != null:
+		Heat.tick_frenzy(GameState.run, delta)
 	_update_clock()
 
 
@@ -51,13 +56,20 @@ func refresh() -> void:
 	if run == null:
 		return
 	_day_text = "%d %s" % [run.day, PHASE_LETTERS[run.phase]]
+	if run.clean > 0 or run.career:
+		_clean_box.show()
+		_clean_divider.show()
+		_clean_value.text = Format.money_short(run.clean)
+	else:
+		_clean_box.hide()
+		_clean_divider.hide()
 	if run.debt > 0:
 		_debt_caption.text = "Debt"
 		_debt_value.text = Format.money_short(run.debt)
 	else:
 		_debt_caption.text = "Cred"
 		_debt_value.text = StreetCred.rank_name(StreetCred.rank(run))
-	var heat_color := _heat_color(run.heat)
+	var heat_color := _heat_color(run.heat, run.heat_timer > 0.0)
 	_heat_bar.value = run.heat
 	_heat_fill.bg_color = heat_color
 	_heat_icon.modulate = heat_color
@@ -93,8 +105,8 @@ func _show_cash(value: int) -> void:
 	_cash_value.text = Format.money_short(value)
 
 
-func _heat_color(heat: int) -> Color:
-	if heat >= HEAT_HIGH:
+func _heat_color(heat: int, frenzy := false) -> Color:
+	if frenzy or heat >= HEAT_HIGH:
 		return Palette.RISK_HIGH
 	if heat >= HEAT_MEDIUM:
 		return Palette.PEACH_BRIGHT
