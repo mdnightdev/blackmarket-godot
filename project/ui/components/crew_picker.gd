@@ -107,7 +107,8 @@ func _add_row(run: RunState, tier: Army.Tier) -> void:
 
 func _on_slider_moved(amount: float, tier: Army.Tier) -> void:
 	var others := Army.deployed_count(_wanted) - int(_wanted.get(tier, 0))
-	var allowed := mini(int(amount), Army.deploy_cap(GameState.run) - others)
+	var cap := mini(Army.deploy_cap(GameState.run), Army.reserve(GameState.run))
+	var allowed := maxi(0, mini(int(amount), cap - others))
 	_wanted[tier] = allowed
 	if allowed != int(amount):
 		(_sliders[tier] as HSlider).set_value_no_signal(allowed)

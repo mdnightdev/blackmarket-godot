@@ -31,6 +31,7 @@ static func state(run: RunState, gang: GangDef) -> Dictionary:
 		"last_strike_day": int(saved.get("last_strike_day", 0)),
 		"anger": clampf(float(saved.get("anger", 0.0)), 0.0, MAX_ANGER),
 		"cop_bribe_until": maxi(0, int(saved.get("cop_bribe_until", 0))),
+		"bait_corner": String(saved.get("bait_corner", "")),
 	}
 
 
@@ -61,6 +62,14 @@ static func cop_bribe_until(run: RunState, gang: GangDef) -> int:
 
 static func set_cop_bribe(run: RunState, gang: GangDef, until_day: int) -> void:
 	_store(run, gang, "cop_bribe_until", maxi(0, until_day))
+
+
+static func bait_corner(run: RunState, gang: GangDef) -> StringName:
+	return StringName(str(state(run, gang).bait_corner))
+
+
+static func set_bait_corner(run: RunState, gang: GangDef, corner_id: StringName) -> void:
+	_store_variant(run, gang, "bait_corner", String(corner_id))
 
 
 static func note_strike(run: RunState, gang: GangDef, day: int) -> void:
@@ -149,11 +158,13 @@ static func sanitize(source: Variant) -> Dictionary:
 		var entry: Variant = source[key]
 		if gang == null or not entry is Dictionary:
 			continue
+		var bait := StringName(str(entry.get("bait_corner", "")))
 		clean[gang.id] = {
 			"chest": maxi(0, int(entry.get("chest", 0))),
 			"gear": clampi(int(entry.get("gear", gang.gear)), Armory.Grade.BLADE, Armory.Grade.MILITARY),
 			"last_strike_day": maxi(0, int(entry.get("last_strike_day", 0))),
 			"anger": clampf(float(entry.get("anger", 0.0)), 0.0, MAX_ANGER),
 			"cop_bribe_until": maxi(0, int(entry.get("cop_bribe_until", 0))),
+			"bait_corner": String(bait) if Corners.find(bait) != null else "",
 		}
 	return clean

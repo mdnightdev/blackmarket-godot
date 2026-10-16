@@ -95,19 +95,25 @@ func test_rival_anger_rises_and_decays_each_morning() -> void:
 func test_rival_moves_pick_stochastically_and_execute_tactics() -> void:
 	_open_act_two()
 	var celeste := Content.gang(&"celeste")
-	_run.rivals[&"celeste"] = { "chest": 10000, "gear": Armory.Grade.RIFLE, "anger": 3.0 }
-	var scores := RivalMoves.candidates(_run, celeste)
-	assert_true(scores.has(RivalMoves.BUY_COP))
-	assert_true(scores.has(RivalMoves.BAIT_TRAP))
+	_run.rivals[&"celeste"] = { "chest": 50000, "gear": Armory.Grade.RIFLE, "anger": 3.0 }
+	var options := RivalMoves.candidates(_run, celeste)
+	var moves := options.map(func(opt: Dictionary) -> int: return int(opt.move))
+	assert_true(moves.has(RivalMoves.Move.BUY_COP))
+	assert_true(moves.has(RivalMoves.Move.BAIT_TRAP))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 777
 	var picked := {}
 	for i in 120:
-		var move := RivalMoves.pick_move(_run, celeste, rng)
-		picked[move] = int(picked.get(move, 0)) + 1
+		var chosen := RivalMoves.pick_move(_run, celeste, rng)
+		var m := int(chosen.move)
+		picked[m] = int(picked.get(m, 0)) + 1
 	assert_gt(picked.size(), 1, "softmax AI does not repeat a single deterministic move")
-	var notice := RivalMoves.execute_move(_run, celeste, RivalMoves.BUY_COP, rng)
+	var notice := RivalMoves.execute_move(_run, celeste, { "move": RivalMoves.Move.BUY_COP, "target": &"" }, rng)
 	assert_false(notice.is_empty())
 	assert_gt(Rivals.cop_bribe_until(_run, celeste), _run.day)
 	assert_gt(RivalMoves.cop_bribe_bonus(_run, celeste.turf[0]), 0.0)
+	var bait_corner := Rivals.corners(_run, celeste)[0]
+	RivalMoves.execute_move(_run, celeste, { "move": RivalMoves.Move.BAIT_TRAP, "target": bait_corner.id }, rng)
+	assert_true(RivalMoves.is_baited(_run, bait_corner.id))
+
 

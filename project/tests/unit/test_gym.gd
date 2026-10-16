@@ -73,3 +73,16 @@ func test_men_still_training_in_an_old_save_join_on_load() -> void:
 	var loaded := RunState.from_dict(data)
 	assert_eq(Army.count(loaded, Army.Tier.GUARDS), 350)
 	assert_eq(Army.count(loaded, Army.Tier.LUNATICS), 0)
+
+
+func test_cash_hiring_cannot_bypass_outfit_cap() -> void:
+	_run.cash = 1000000
+	assert_eq(Gym.most(_run, Gym.Course.LUNATICS), Army.deploy_cap(_run))
+	assert_eq(Gym.enroll(_run, Gym.Course.LUNATICS, Army.deploy_cap(_run) + 1), Gym.Result.OUTFIT_FULL)
+	assert_eq(Gym.enroll(_run, Gym.Course.LUNATICS, Army.deploy_cap(_run)), Gym.Result.OK)
+	assert_eq(Gym.most(_run, Gym.Course.GUARDS), 0)
+	assert_eq(Gym.enroll(_run, Gym.Course.GUARDS, 1), Gym.Result.OUTFIT_FULL)
+	assert_eq(Gym.enroll(_run, Gym.Course.PROMOTION, 200), Gym.Result.OK, "promotions do not add headcount")
+	assert_eq(Army.expand(_run), Army.Result.OK)
+	assert_gt(Gym.most(_run, Gym.Course.GUARDS), 0)
+

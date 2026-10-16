@@ -3,7 +3,7 @@ class_name Gym
 ## 午夜兔子's gym, open once he has joined the player. Men are paid for and join the outfit on the spot.
 
 enum Course { LUNATICS, GUARDS, PROMOTION, BLACK_HAND }
-enum Result { OK, CLOSED, LOCKED, INVALID, NOT_ENOUGH_MEN, NOT_ENOUGH_CASH }
+enum Result { OK, CLOSED, LOCKED, INVALID, NOT_ENOUGH_MEN, NOT_ENOUGH_CASH, OUTFIT_FULL }
 
 ## tier is who the men become and price is per thousand men.
 const COURSES := {
@@ -18,6 +18,11 @@ static func is_open(run: RunState) -> bool:
 	return Story.has(run, Corners.RABBIT_JOINED)
 
 
+## Room left under the current outfit expansion cap.
+static func vacancy(run: RunState) -> int:
+	return maxi(0, Army.deploy_cap(run) - Army.total(run))
+
+
 ## Per thousand men.
 static func price_per_thousand(course: Course) -> int:
 	return int(COURSES[course].price)
@@ -27,11 +32,13 @@ static func price(course: Course, men: int) -> int:
 	return Army.price_of(price_per_thousand(course), men)
 
 
-## The most men the course can take right now: cash and, for a promotion, fit Lunatics.
+## The most men the course can take right now: cash, outfit room, and for a promotion, fit Lunatics.
 static func most(run: RunState, course: Course) -> int:
 	var men := Army.men_for(price_per_thousand(course), run.cash)
 	if course == Course.PROMOTION:
 		men = mini(men, Army.count(run, Army.Tier.LUNATICS))
+	else:
+		men = mini(men, vacancy(run))
 	return maxi(0, men)
 
 
@@ -44,6 +51,8 @@ static func check(run: RunState, course: Course, men: int) -> Result:
 		return Result.INVALID
 	if course == Course.PROMOTION and men > Army.count(run, Army.Tier.LUNATICS):
 		return Result.NOT_ENOUGH_MEN
+	if course != Course.PROMOTION and men > vacancy(run):
+		return Result.OUTFIT_FULL
 	if run.cash < price(course, men):
 		return Result.NOT_ENOUGH_CASH
 	return Result.OK

@@ -789,6 +789,7 @@ func _start_morning() -> Array[Dictionary]:
 			notices.append({ "line": "%s never paid the %s invoice. That money is gone." % [invoice.client, amount], "hint": "Higher street cred makes buyers less likely to skip out." })
 	notices.append_array(Lending.settle(run))
 	notices.append_array(Rivals.morning(run))
+	notices.append_array(RivalMoves.morning(run, _rng))
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),

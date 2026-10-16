@@ -157,6 +157,8 @@ func _report_note(run: RunState, report: Dictionary) -> String:
 	var note := "Scouted today." if age == 0 else "Scouted %d day%s ago." % [age, "" if age == 1 else "s"]
 	if bool(report.seen):
 		note += " They spotted the scout and brought more men."
+	if RivalMoves.is_baited(run, _corner.id):
+		note += " Watch out: extra gunmen are hiding in the back alleys."
 	return note
 
 

@@ -29,6 +29,8 @@ func _describe(men: int) -> void:
 	match Gym.check(run, _course, 1):
 		Gym.Result.NOT_ENOUGH_MEN:
 			_confirm_button.text = "No fit Lunatics"
+		Gym.Result.OUTFIT_FULL:
+			_confirm_button.text = "Expand outfit first"
 		Gym.Result.NOT_ENOUGH_CASH:
 			_confirm_button.text = "Not enough cash"
 		_:

@@ -126,6 +126,7 @@ static func execute_move(run: RunState, gang: GangDef, picked: Dictionary, rng: 
 			if corner != null and not Corners.holds(run, corner.id):
 				var boost := roundi(corner.defenders * Odds.bell(rng, 0.25, 0.45, 0.75))
 				run.corner_defenders[String(corner.id)] = mini(Rivals.max_garrison(corner), War.defenders(run, corner) + boost)
+				Rivals.set_bait_corner(run, gang, corner.id)
 			return {}
 		Move.RAID_FRONT:
 			var front := _front_in_turf(run, gang)
@@ -152,6 +153,27 @@ static func execute_move(run: RunState, gang: GangDef, picked: Dictionary, rng: 
 				for c in held:
 					run.corner_defenders[String(c.id)] = mini(Rivals.max_garrison(c), War.defenders(run, c) + per_corner)
 	return {}
+
+
+## Runs one stochastic move per active gang in Act 2 and returns any morning notices.
+static func morning(run: RunState, rng: RandomNumberGenerator) -> Array[Dictionary]:
+	var notices: Array[Dictionary] = []
+	if not Campaign.is_act_two(run):
+		return notices
+	for gang in Gangs.active(run):
+		var chosen := pick_move(run, gang, rng)
+		var notice := execute_move(run, gang, chosen, rng)
+		if not notice.is_empty():
+			notices.append(notice)
+	return notices
+
+
+## True when the owning rival has set a hidden bait trap on this corner.
+static func is_baited(run: RunState, corner_id: StringName) -> bool:
+	var gang := Corners.gang_of(corner_id)
+	if gang == null or Gangs.is_gone(run, gang) or Corners.holds(run, corner_id):
+		return false
+	return Rivals.bait_corner(run, gang) == corner_id
 
 
 ## Extra police stop chance in a district when the owning rival has bribed local cops.
