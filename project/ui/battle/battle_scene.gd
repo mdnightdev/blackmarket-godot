@@ -33,47 +33,91 @@ const FLASH_SECONDS := 0.12
 const TRACER_SECONDS := 0.1
 const TRACER_COLOR := Color(1.0, 0.86, 0.62, 0.75)
 const LOSS_COLOR := Palette.RISK_HIGH
+const SHAKE_DECAY := 35.0
 
+@onready var _background: TextureRect = $Background
 @onready var _field: Node2D = %Field
 @onready var _hud: BattleHud = %Hud
 @onready var _skill_banner: SkillBanner = %SkillBanner
 @onready var _kill_feed: KillFeed = %KillFeed
+@onready var _command_bar: BattleCommandBar = %CommandBar
 @onready var _result: Label = %Result
+@onready var _result_card: BattleResultCard = %ResultCard
 
 var _rng := RandomNumberGenerator.new()
 var _flash_texture := _make_flash_texture()
 var _flash_material := CanvasItemMaterial.new()
 var _player: _Army
 var _enemy: _Army
+var _shake_pixels := 0.0
+var _enemy_morale := 1.0
+var _enemy_rout_threshold := 0.32
+var _enemy_routed := false
 
 
 func _ready() -> void:
 	_flash_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_result.modulate.a = 0.0
+	_background.modulate = Color(0.72, 0.70, 0.76, 1.0)
+	_command_bar.set_active(false)
+	_command_bar.command_used.connect(_on_command_used)
+	_result_card.confirmed.connect(func() -> void: finished.emit())
+
+
+func _process(delta: float) -> void:
+	if _shake_pixels > 0.05:
+		var offset := Vector2(
+			_rng.randf_range(-_shake_pixels, _shake_pixels),
+			_rng.randf_range(-_shake_pixels, _shake_pixels)
+		)
+		_field.position = offset
+		_background.position = offset * 0.35
+		_shake_pixels = move_toward(_shake_pixels, 0.0, SHAKE_DECAY * delta)
+	elif _field.position != Vector2.ZERO:
+		_field.position = Vector2.ZERO
+		_background.position = Vector2.ZERO
+
+
+func _add_shake(amount: float) -> void:
+	_shake_pixels = clampf(_shake_pixels + amount, 0.0, 16.0)
 
 
 func play(player_side: BattleSide, enemy_side: BattleSide, result_line: String, seed := 0) -> void:
 	_rng.seed = seed
+	_enemy_morale = 1.0
+	_enemy_rout_threshold = Odds.bell(_rng, 0.22, 0.34, 0.46)
+	_enemy_routed = false
 	var largest := maxi(player_side.head_count, enemy_side.head_count)
 	_player = _Army.new(player_side, _fighter_count(player_side.head_count, largest))
 	_enemy = _Army.new(enemy_side, _fighter_count(enemy_side.head_count, largest))
 	_hud.show_sides(player_side, enemy_side)
+	_deploy_cover()
 	_deploy(_player, PLAYER_FRONT_Y, 1.0)
 	_deploy(_enemy, ENEMY_FRONT_Y, -1.0)
 	_advance(_player, -PLAYER_ADVANCE)
 	_advance(_enemy, ENEMY_ADVANCE)
+	AudioService.play_sfx(Sfx.CRATE_LIFT, 0.12, -4.0)
 	await _wait(ADVANCE_SECONDS)
 
+	_command_bar.set_active(true)
 	_schedule_losses(_enemy, _player)
 	_schedule_losses(_player, _enemy)
+	var any_melee := false
 	for army: _Army in [_player, _enemy]:
 		if not army.side.ranged:
 			_charge(army, _player if army == _enemy else _enemy)
+			any_melee = true
 		if army.side.has_skill():
-			get_tree().create_timer(SKILL_AT, false).timeout.connect(_skill_banner.announce.bind(army.side))
+			get_tree().create_timer(SKILL_AT, false).timeout.connect(func() -> void:
+				AudioService.play_sfx(Sfx.HIJACK_LOUD, 0.1, -1.0)
+				_add_shake(6.5)
+				_skill_banner.announce(army.side))
+
+	if any_melee:
+		AudioService.play_sfx(Sfx.TURF_CLASH, 0.15, -2.0)
 
 	var elapsed := 0.0
-	while elapsed < FIGHT_SECONDS:
+	while elapsed < FIGHT_SECONDS and not _enemy_routed:
 		_act(_player, _enemy)
 		_act(_enemy, _player)
 		await _wait(ACTION_GAP)
@@ -142,6 +186,8 @@ func _schedule_losses(army: _Army, attacker: _Army) -> void:
 func _fall(army: _Army, fighter: BattleFighter, share: int) -> void:
 	fighter.fall(-1.0 if _rng.randf() < 0.5 else 1.0)
 	FloatingNumber.spawn(_field, fighter.chest(), "-%d" % share, LOSS_COLOR)
+	AudioService.play_sfx(Sfx.SHAKEDOWN, 0.18, -3.0)
+	_add_shake(3.2)
 	army.shown -= share
 	_hud.set_counts(_player.shown, _enemy.shown)
 	if army == _enemy and army.squad_wiped(fighter.squad):
@@ -159,6 +205,8 @@ func _act(army: _Army, target: _Army) -> void:
 		_shoot(shooter, victim)
 	elif _rng.randf() < LUNGE_CHANCE:
 		shooter.lunge()
+		AudioService.play_sfx(Sfx.TURF_CLASH, 0.2, -6.0)
+		_add_shake(1.2)
 
 
 func _shoot(shooter: BattleFighter, victim: BattleFighter) -> void:
@@ -170,13 +218,25 @@ func _shoot(shooter: BattleFighter, victim: BattleFighter) -> void:
 	flash.z_index = 5
 	_field.add_child(flash)
 	var flash_tween := flash.create_tween().set_parallel(true)
-	flash_tween.tween_property(flash, "scale", Vector2.ONE * 1.4, FLASH_SECONDS).from(Vector2.ONE * 0.6)
+	flash_tween.tween_property(flash, "scale", Vector2.ONE * 1.5, FLASH_SECONDS).from(Vector2.ONE * 0.6)
 	flash_tween.tween_property(flash, "modulate:a", 0.0, FLASH_SECONDS)
 	flash_tween.chain().tween_callback(flash.queue_free)
 
+	var spark := Sprite2D.new()
+	spark.texture = _flash_texture
+	spark.material = _flash_material
+	spark.position = victim.chest()
+	spark.z_index = 6
+	spark.scale = Vector2.ONE * 0.9
+	_field.add_child(spark)
+	var spark_tween := spark.create_tween().set_parallel(true)
+	spark_tween.tween_property(spark, "scale", Vector2.ONE * 1.4, 0.08)
+	spark_tween.tween_property(spark, "modulate:a", 0.0, 0.08)
+	spark_tween.chain().tween_callback(spark.queue_free)
+
 	var tracer := Line2D.new()
 	tracer.points = PackedVector2Array([from, victim.chest()])
-	tracer.width = 1.6
+	tracer.width = 2.2
 	tracer.default_color = TRACER_COLOR
 	tracer.z_index = 4
 	_field.add_child(tracer)
@@ -184,17 +244,119 @@ func _shoot(shooter: BattleFighter, victim: BattleFighter) -> void:
 	tracer_tween.tween_property(tracer, "modulate:a", 0.0, TRACER_SECONDS)
 	tracer_tween.tween_callback(tracer.queue_free)
 
+	AudioService.play_sfx(Sfx.RAID_HIT, 0.2, -4.0)
+	_add_shake(1.8)
+
 
 func _finish(result_line: String) -> void:
-	var loser := _enemy if _enemy.survival_share() < _player.survival_share() else _player
+	_command_bar.set_active(false)
+	var won := _enemy_routed or _enemy.survival_share() < _player.survival_share()
+	var loser := _enemy if won else _player
 	for fighter in loser.fighters:
 		if fighter.alive:
 			fighter.surrender()
 	_hud.set_counts(_player.side.survivors, _enemy.side.survivors)
-	_result.text = result_line
-	create_tween().tween_property(_result, "modulate:a", 1.0, RESULT_FADE_SECONDS)
-	await _wait(END_HOLD_SECONDS)
-	finished.emit()
+	if won:
+		AudioService.play_sfx(Sfx.TURF_WON)
+	else:
+		AudioService.play_sfx(Sfx.CAUGHT)
+	_result_card.display(won, result_line, _player.side, _enemy.side)
+	_result_card.visible = true
+
+
+func _on_command_used(cmd_name: StringName) -> void:
+	match cmd_name:
+		&"suppress":
+			_execute_suppress()
+		&"rally":
+			_execute_rally()
+		&"blitz":
+			_execute_blitz()
+
+
+func _execute_suppress() -> void:
+	AudioService.play_sfx(Sfx.RAID_HIT, 0.22, -2.0)
+	_add_shake(4.5)
+	FloatingNumber.spawn(_field, Vector2(360.0, 700.0), "SUPPRESSIVE FIRE!", Palette.PRICE)
+	for i in 4:
+		var shooter := _player.random_alive(_rng)
+		var victim := _enemy.random_alive(_rng)
+		if shooter and victim:
+			_shoot(shooter, victim)
+	var hits := roundi(Odds.bell(_rng, 1.0, 2.5, 5.0))
+	_force_losses(_enemy, hits)
+	var scale_losses := maxi(1, roundi(float(_enemy.side.head_count) * Odds.bell(_rng, 0.04, 0.08, 0.15)))
+	_enemy.side.survivors = maxi(0, _enemy.side.survivors - scale_losses)
+	_enemy_morale -= Odds.bell(_rng, 0.08, 0.14, 0.24)
+	_check_morale_rout()
+
+
+func _execute_rally() -> void:
+	AudioService.play_sfx(Sfx.TURF_WON, 0.12, -1.0)
+	FloatingNumber.spawn(_field, Vector2(360.0, 800.0), "SQUAD RALLIED!", Palette.PEACH_BRIGHT)
+	var saved := maxi(1, roundi(float(_player.side.head_count) * Odds.bell(_rng, 0.03, 0.07, 0.13)))
+	_player.side.survivors = mini(_player.side.head_count, _player.side.survivors + saved)
+	_hud.set_counts(_player.existing_men(), _enemy.existing_men())
+	for fighter in _player.fighters:
+		if fighter.alive:
+			var tw := fighter.create_tween()
+			tw.tween_property(fighter, "modulate", Color(1.6, 1.4, 0.9, 1.0), 0.12)
+			tw.tween_property(fighter, "modulate", Color.WHITE, 0.25)
+
+
+func _execute_blitz() -> void:
+	AudioService.play_sfx(Sfx.HIJACK_LOUD, 0.15, 0.0)
+	_add_shake(7.0)
+	FloatingNumber.spawn(_field, Vector2(360.0, 680.0), "BLITZ STRIKE!", Palette.RISK_HIGH)
+	for fighter in _player.fighters:
+		if fighter.alive and _rng.randf() < 0.6:
+			fighter.lunge()
+	var hits := roundi(Odds.bell(_rng, 2.0, 3.5, 6.0))
+	_force_losses(_enemy, hits)
+	var scale_losses := maxi(1, roundi(float(_enemy.side.head_count) * Odds.bell(_rng, 0.06, 0.12, 0.22)))
+	_enemy.side.survivors = maxi(0, _enemy.side.survivors - scale_losses)
+	_enemy_morale -= Odds.bell(_rng, 0.14, 0.22, 0.36)
+	_check_morale_rout()
+
+
+func _check_morale_rout() -> void:
+	if _enemy_routed:
+		return
+	var effective_morale := _enemy_morale * _enemy.survival_share()
+	if effective_morale <= _enemy_rout_threshold:
+		_enemy_routed = true
+		FloatingNumber.spawn(_field, Vector2(360.0, 520.0), "ENEMY ROUTED!", Palette.PEACH_BRIGHT)
+
+
+func _force_losses(army: _Army, count: int) -> void:
+	for i in count:
+		var victim := army.random_alive(_rng)
+		if victim:
+			_fall(army, victim, 1)
+
+
+func _deploy_cover() -> void:
+	var cover_xs := [220.0, 360.0, 500.0]
+	for x in cover_xs:
+		var prop := Node2D.new()
+		prop.position = Vector2(x + _rng.randf_range(-15.0, 15.0), 660.0 + _rng.randf_range(-10.0, 10.0))
+		prop.z_index = 0
+		var shadow := ColorRect.new()
+		shadow.color = Color(0.0, 0.0, 0.0, 0.45)
+		shadow.size = Vector2(56.0, 16.0)
+		shadow.position = Vector2(-28.0, 8.0)
+		prop.add_child(shadow)
+		var body := ColorRect.new()
+		body.color = Color(0.18, 0.16, 0.15, 0.95)
+		body.size = Vector2(52.0, 24.0)
+		body.position = Vector2(-26.0, -12.0)
+		prop.add_child(body)
+		var rim := ColorRect.new()
+		rim.color = Color(0.28, 0.25, 0.22, 1.0)
+		rim.size = Vector2(52.0, 3.0)
+		rim.position = Vector2(-26.0, -12.0)
+		prop.add_child(rim)
+		_field.add_child(prop)
 
 
 func _wait(seconds: float) -> Signal:

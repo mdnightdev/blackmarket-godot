@@ -40,3 +40,26 @@ func test_readings_never_show_numbers() -> void:
 		var text := Odds.reading(chance)
 		assert_false(text.contains("%"))
 		assert_false(text.is_valid_float())
+
+
+func test_probit_and_bell_from_roll_follow_gaussian_symmetry() -> void:
+	assert_almost_eq(Odds.probit(0.5), 0.0, 0.0001)
+	assert_almost_eq(Odds.probit(0.8413), 1.0, 0.02)
+	assert_almost_eq(Odds.probit(0.1587), -1.0, 0.02)
+	assert_almost_eq(Odds.bell_from_roll(0.5, 10.0, 20.0, 40.0), 20.0, 0.0001)
+	assert_gt(Odds.bell_from_roll(0.9, 10.0, 20.0, 40.0), 25.0)
+	assert_lt(Odds.bell_from_roll(0.1, 10.0, 20.0, 40.0), 17.0)
+
+
+func test_softmax_pick_favors_higher_scores_without_being_deterministic() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var scores := { &"high": 6.0, &"medium": 4.5, &"low": 1.0 }
+	var counts := { &"high": 0, &"medium": 0, &"low": 0 }
+	for i in 500:
+		var pick := Odds.softmax_pick(rng, scores, 1.0, 0.5)
+		counts[pick] = int(counts[pick]) + 1
+	assert_gt(int(counts[&"high"]), int(counts[&"medium"]), "top utility move is picked most often")
+	assert_gt(int(counts[&"medium"]), 20, "second choice still fires unpredictably")
+	assert_gt(int(counts[&"low"]), 0, "wild-card moves stay possible")
+

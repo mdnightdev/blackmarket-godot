@@ -134,10 +134,28 @@ static func black_hand_open(run: RunState) -> bool:
 	return Campaign.is_act_two(run)
 
 
-## The men sent into a fight, best tier first. size -1 sends as many as the expansion allows. The Black Hand stay
-## back unless asked for.
+## Active men not posted as corner garrisons. Posted men hold their corners and cannot go on attacks.
+static func reserve(run: RunState) -> int:
+	return maxi(0, active(run) - Corners.total_garrisoned(run))
+
+
+## Tier composition of men posted to a corner garrison (Guards and Lunatics first).
+static func garrison_deployment(run: RunState, size: int) -> Dictionary:
+	var left := maxi(0, size)
+	var sent := {}
+	for tier in [Tier.GUARDS, Tier.LUNATICS, Tier.BLACK_HAND]:
+		var taken := mini(left, count(run, tier))
+		if taken > 0:
+			sent[tier] = taken
+			left -= taken
+	return sent
+
+
+## The men sent into a fight, best tier first. size -1 sends as many as the expansion allows from the reserve.
+## The Black Hand stay back unless asked for.
 static func deployment(run: RunState, size: int = -1, with_black_hand := true) -> Dictionary:
-	var ready := active(run) - (0 if with_black_hand else count(run, Tier.BLACK_HAND))
+	var ready := reserve(run) - (0 if with_black_hand else count(run, Tier.BLACK_HAND))
+	ready = maxi(0, ready)
 	var left := mini(deploy_cap(run), ready) if size < 0 else mini(size, mini(deploy_cap(run), ready))
 	var sent := {}
 	for tier in DEPLOY_ORDER:
@@ -150,10 +168,10 @@ static func deployment(run: RunState, size: int = -1, with_black_hand := true) -
 	return sent
 
 
-## The men the player picked tier by tier. Each tier is held to its fit men and the whole to the expansion's limit,
-## the best tiers keeping their men first.
+## The men the player picked tier by tier. Each tier is held to its fit reserve men and the whole to the expansion's
+## limit, the best tiers keeping their men first.
 static func picked(run: RunState, wanted: Dictionary) -> Dictionary:
-	var left := deploy_cap(run)
+	var left := mini(deploy_cap(run), reserve(run))
 	var sent := {}
 	for tier in DEPLOY_ORDER:
 		var taken := mini(left, mini(int(wanted.get(tier, 0)), count(run, tier)))

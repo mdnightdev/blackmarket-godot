@@ -51,7 +51,7 @@ static func is_target(run: RunState, corner: CornerDef) -> bool:
 
 
 static func can_attack(run: RunState, corner: CornerDef) -> bool:
-	return is_target(run, corner) and Army.active(run) > 0
+	return is_target(run, corner) and Army.reserve(run) > 0
 
 
 static func unit_on_offer(run: RunState) -> bool:
@@ -87,11 +87,13 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 	var corner := Corners.find(corner_id)
 	if corner == null or not can_attack(run, corner) or Army.deployed_count(deployment) <= 0:
 		return {}
-	var mine := Army.power(run, deployment) * lerpf(1.0 - LUCK, 1.0 + LUCK, roll)
+	var luck_mult := Odds.bell_from_roll(roll, 1.0 - LUCK, 1.0, 1.0 + LUCK)
+	var mine := Army.power(run, deployment) * luck_mult
 	var theirs := enemy_power(run, corner)
 	var won := mine >= theirs
 	var hit_share := WIN_HIT_SHARE * minf(1.0, theirs / maxf(mine, 1.0)) if won else LOSS_HIT_SHARE
-	var death_share := (WIN_DEATH_SHARE if won else LOSS_DEATH_SHARE) + (fate - 0.5) * FATE_SWING
+	var fate_offset := Odds.bell_from_roll(fate, -0.5 * FATE_SWING, 0.0, 0.5 * FATE_SWING)
+	var death_share := (WIN_DEATH_SHARE if won else LOSS_DEATH_SHARE) + fate_offset
 	var losses := Army.casualties(deployment, hit_share, death_share)
 	Hospital.admit(run, losses)
 	var result := {
@@ -104,12 +106,16 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 		"wounded": Army.sum_losses(losses, "wounded"),
 		"defenders": defenders(run, corner),
 	}
+	var gang := Corners.gang_of(corner_id)
 	var defenders_lost: int
 	if won:
 		defenders_lost = int(result.defenders)
+		_fallback_survivors(run, corner, int(result.defenders))
 		Corners.take(run, corner_id)
 		run.corner_defenders.erase(String(corner_id))
 		run.scouted.erase(String(corner_id))
+		if gang != null:
+			Rivals.add_anger(run, gang, 2.0 if corner.stronghold else 1.0)
 	else:
 		defenders_lost = roundi(int(result.defenders) * DEFENDERS_BLED)
 		run.corner_defenders[String(corner_id)] = int(result.defenders) - defenders_lost
@@ -124,6 +130,50 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 	elif won:
 		Turf.check_victory(run)
 	return result
+
+
+## Escaping defenders from a lost corner fall back to another corner the gang still holds in that district.
+static func _fallback_survivors(run: RunState, lost_corner: CornerDef, original_defenders: int) -> void:
+	if not Campaign.is_act_two(run) or original_defenders <= 0:
+		return
+	var district_id := Corners.district_of(lost_corner.id)
+	var retreat_targets: Array[CornerDef] = []
+	for other in Corners.of(district_id):
+		if other.id != lost_corner.id and not Corners.holds(run, other.id):
+			retreat_targets.append(other)
+	if retreat_targets.is_empty():
+		return
+	var target := retreat_targets[0]
+	var retreated := maxi(1, roundi(original_defenders * 0.2))
+	run.corner_defenders[String(target.id)] = mini(Rivals.max_garrison(target), defenders(run, target) + retreated)
+
+
+## Reconciles the live tactical battle outcome (from SUPPRESS, RALLY, BLITZ, or morale routs) back into run state.
+static func reconcile_live_battle(run: RunState, result: Dictionary, player_side: BattleSide, enemy_side: BattleSide) -> void:
+	if result.is_empty():
+		return
+	var corner_id := StringName(str(result.get("corner", "")))
+	var corner := Corners.find(corner_id)
+	if corner == null:
+		return
+	var player_share := float(player_side.survivors) / maxi(1, player_side.head_count)
+	var enemy_share := float(enemy_side.survivors) / maxi(1, enemy_side.head_count)
+	var live_won := enemy_share < player_share
+	if live_won and not bool(result.won):
+		result.won = true
+		result.defenders_lost = int(result.defenders)
+		_fallback_survivors(run, corner, int(result.defenders))
+		Corners.take(run, corner_id)
+		run.corner_defenders.erase(String(corner_id))
+		run.scouted.erase(String(corner_id))
+		var gang := Corners.gang_of(corner_id)
+		if gang != null:
+			Rivals.add_anger(run, gang, 2.0 if corner.stronghold else 1.0)
+		if is_open(run) and Corners.held_count(run, Corners.HOME) == Corners.of(Corners.HOME).size():
+			end_war(run)
+			result.ended = true
+		else:
+			Turf.check_victory(run)
 
 
 ## Vex kneels. Old Market is the player's for good, Moreau starts her file, and Act 2 opens. Vex keeps her other

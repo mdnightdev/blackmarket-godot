@@ -19,12 +19,18 @@ const GEAR_PRICES := {
 const SKILL := 2.0
 
 
+const ANGER_DECAY := 0.2
+const MAX_ANGER := 20.0
+
+
 static func state(run: RunState, gang: GangDef) -> Dictionary:
 	var saved: Dictionary = run.rivals.get(gang.id, {})
 	return {
 		"chest": int(saved.get("chest", 0)),
 		"gear": int(saved.get("gear", gang.gear)),
 		"last_strike_day": int(saved.get("last_strike_day", 0)),
+		"anger": clampf(float(saved.get("anger", 0.0)), 0.0, MAX_ANGER),
+		"cop_bribe_until": maxi(0, int(saved.get("cop_bribe_until", 0))),
 	}
 
 
@@ -38,6 +44,23 @@ static func chest(run: RunState, gang: GangDef) -> int:
 
 static func last_strike_day(run: RunState, gang: GangDef) -> int:
 	return int(state(run, gang).last_strike_day)
+
+
+static func anger(run: RunState, gang: GangDef) -> float:
+	return float(state(run, gang).anger)
+
+
+static func add_anger(run: RunState, gang: GangDef, delta: float) -> void:
+	var next := clampf(anger(run, gang) + delta, 0.0, MAX_ANGER)
+	_store_variant(run, gang, "anger", snappedf(next, 0.01))
+
+
+static func cop_bribe_until(run: RunState, gang: GangDef) -> int:
+	return int(state(run, gang).cop_bribe_until)
+
+
+static func set_cop_bribe(run: RunState, gang: GangDef, until_day: int) -> void:
+	_store(run, gang, "cop_bribe_until", maxi(0, until_day))
 
 
 static func note_strike(run: RunState, gang: GangDef, day: int) -> void:
@@ -88,6 +111,8 @@ static func morning(run: RunState) -> Array[Dictionary]:
 
 ## One morning for the gang. Returns true when it bought better weapons.
 static func grow(run: RunState, gang: GangDef) -> bool:
+	if anger(run, gang) > 0.0:
+		add_anger(run, gang, -ANGER_DECAY)
 	var saved := 0
 	for corner in corners(run, gang):
 		saved += roundi(corner.daily_cut() * SAVINGS_SHARE)
@@ -106,6 +131,10 @@ static func grow(run: RunState, gang: GangDef) -> bool:
 
 
 static func _store(run: RunState, gang: GangDef, key: String, value: int) -> void:
+	_store_variant(run, gang, key, value)
+
+
+static func _store_variant(run: RunState, gang: GangDef, key: String, value: Variant) -> void:
 	var entry := state(run, gang)
 	entry[key] = value
 	run.rivals[gang.id] = entry
@@ -124,5 +153,7 @@ static func sanitize(source: Variant) -> Dictionary:
 			"chest": maxi(0, int(entry.get("chest", 0))),
 			"gear": clampi(int(entry.get("gear", gang.gear)), Armory.Grade.BLADE, Armory.Grade.MILITARY),
 			"last_strike_day": maxi(0, int(entry.get("last_strike_day", 0))),
+			"anger": clampf(float(entry.get("anger", 0.0)), 0.0, MAX_ANGER),
+			"cop_bribe_until": maxi(0, int(entry.get("cop_bribe_until", 0))),
 		}
 	return clean

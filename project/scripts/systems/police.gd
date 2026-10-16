@@ -59,6 +59,7 @@ static func stop_chance(run: RunState) -> float:
 	var patrol := Roster.patrol_multiplier(run, run.district_id, Calendar.stamp(run))
 	var chance := BASE_STOP_CHANCE + float(run.heat) / Heat.MAX * HEAT_STOP_CHANCE
 	chance += minf(cargo_risk / CARGO_RISK_SCALE, MAX_CARGO_STOP_CHANCE)
+	chance += RivalMoves.cop_bribe_bonus(run, run.district_id)
 	return minf(chance * strictness * patrol * Turf.stop_factor(run, run.district_id) * Crew.stop_factor(run), MAX_STOP_CHANCE)
 
 

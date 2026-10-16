@@ -187,6 +187,8 @@ var hospital_level: int = 0
 ## Corner id to the gang fighters on it, once a fight or the gang's growth changed it. Missing corners keep their
 ## starting crew.
 var corner_defenders: Dictionary = {}
+## Corner id to the player's men posted to hold it. See Corners.
+var player_garrisons: Dictionary = {}
 ## Gang id to its war chest, weapons and last strike. See Rivals.
 var rivals: Dictionary = {}
 ## Corner id to the latest scouting report. See Scouting.
@@ -307,6 +309,7 @@ func to_dict() -> Dictionary:
 		"army_level": army_level,
 		"hospital_size": hospital_level,
 		"corner_defenders": corner_defenders,
+		"player_garrisons": player_garrisons,
 		"rivals": _string_keys(rivals),
 		"scouted": scouted,
 		"journal": journal,
@@ -538,6 +541,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.army_level = clampi(int(data.get("army_level", 0)), 0, Army.EXPANSIONS.size() - 1)
 	state.hospital_level = clampi(int(data.get("hospital_size", 0)), 0, Hospital.LEVELS.size() - 1)
 	state.corner_defenders = War.sanitize_defenders(data.get("corner_defenders"))
+	state.player_garrisons = Corners.sanitize_garrisons(state, data.get("player_garrisons"))
 	state.rivals = Rivals.sanitize(data.get("rivals"))
 	var last_ambush_day := maxi(0, int(data.get("last_ambush_day", 0)))
 	if not data.has("rivals") and last_ambush_day > 0:

@@ -82,3 +82,32 @@ func test_sanitize_drops_unknown_gangs_and_clamps() -> void:
 	assert_true(clean.has(&"jackal"))
 	assert_eq(int(clean[&"jackal"].chest), 0)
 	assert_eq(int(clean[&"jackal"].gear), Armory.Grade.MILITARY)
+
+
+func test_rival_anger_rises_and_decays_each_morning() -> void:
+	_open_act_two()
+	Rivals.add_anger(_run, _jackal(), 2.0)
+	assert_almost_eq(Rivals.anger(_run, _jackal()), 2.0, 0.001)
+	Rivals.grow(_run, _jackal())
+	assert_almost_eq(Rivals.anger(_run, _jackal()), 2.0 - Rivals.ANGER_DECAY, 0.001)
+
+
+func test_rival_moves_pick_stochastically_and_execute_tactics() -> void:
+	_open_act_two()
+	var celeste := Content.gang(&"celeste")
+	_run.rivals[&"celeste"] = { "chest": 10000, "gear": Armory.Grade.RIFLE, "anger": 3.0 }
+	var scores := RivalMoves.candidates(_run, celeste)
+	assert_true(scores.has(RivalMoves.BUY_COP))
+	assert_true(scores.has(RivalMoves.BAIT_TRAP))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 777
+	var picked := {}
+	for i in 120:
+		var move := RivalMoves.pick_move(_run, celeste, rng)
+		picked[move] = int(picked.get(move, 0)) + 1
+	assert_gt(picked.size(), 1, "softmax AI does not repeat a single deterministic move")
+	var notice := RivalMoves.execute_move(_run, celeste, RivalMoves.BUY_COP, rng)
+	assert_false(notice.is_empty())
+	assert_gt(Rivals.cop_bribe_until(_run, celeste), _run.day)
+	assert_gt(RivalMoves.cop_bribe_bonus(_run, celeste.turf[0]), 0.0)
+

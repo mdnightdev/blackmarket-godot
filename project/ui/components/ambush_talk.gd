@@ -47,7 +47,9 @@ static func _fight(deployment: Dictionary, delegated: bool) -> void:
 		teams[0].skill_owner = rabbit.display_name
 		teams[0].skill_portrait = rabbit.portrait
 	var line := "%s HOLDS" % corner.display_name.to_upper() if bool(result.won) else "%s IS LOST" % corner.display_name.to_upper()
-	GameOverlay.play_battle(teams[0], teams[1], line, hash(result), func() -> void: _aftermath(result))
+	GameOverlay.play_battle(teams[0], teams[1], line, hash(result), func() -> void:
+		RivalStrike.reconcile_live_battle(run, result, teams[0], teams[1])
+		_aftermath(result))
 
 
 static func _aftermath(result: Dictionary) -> void:

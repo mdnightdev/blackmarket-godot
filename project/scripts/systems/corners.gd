@@ -75,6 +75,11 @@ static func share(run: RunState, district_id: StringName) -> int:
 	return roundi(100.0 * held_count(run, district_id) / total) if total > 0 else 0
 
 
+const DEFAULT_LOOKOUTS := 50
+const GARRISON_FACTOR := 1.5
+const STRONGHOLD_GARRISON_FACTOR := 2.5
+
+
 static func take(run: RunState, corner_id: StringName) -> void:
 	if find(corner_id) != null and not holds(run, corner_id):
 		run.corners_held.append(String(corner_id))
@@ -87,6 +92,49 @@ static func take_all(run: RunState, district_id: StringName) -> void:
 
 static func lose(run: RunState, corner_id: StringName) -> void:
 	run.corners_held.erase(String(corner_id))
+	run.player_garrisons.erase(String(corner_id))
+
+
+## Men from the player's army posted on a held corner. Unposted corners have 0 posted men (held by DEFAULT_LOOKOUTS).
+static func garrison(run: RunState, corner_id: StringName) -> int:
+	if not holds(run, corner_id):
+		return 0
+	return maxi(0, int(run.player_garrisons.get(String(corner_id), 0)))
+
+
+static func total_garrisoned(run: RunState) -> int:
+	var sum := 0
+	for corner_id in run.corners_held:
+		sum += garrison(run, StringName(corner_id))
+	return sum
+
+
+## Posts men from the player's reserve onto a held corner, or recalls them back to reserve when men < current.
+static func post_garrison(run: RunState, corner_id: StringName, men: int) -> bool:
+	var corner := find(corner_id)
+	if corner == null or not holds(run, corner_id):
+		return false
+	var current := garrison(run, corner_id)
+	var available := Army.reserve(run) + current
+	var clamped := clampi(men, 0, mini(available, Rivals.max_garrison(corner)))
+	if clamped > 0:
+		run.player_garrisons[String(corner_id)] = clamped
+	else:
+		run.player_garrisons.erase(String(corner_id))
+	return true
+
+
+## Defensive combat power of a held corner: base street lookouts plus posted men with home/stronghold cover multiplier.
+static func garrison_power(run: RunState, corner: CornerDef) -> float:
+	if corner == null or not holds(run, corner.id):
+		return 0.0
+	var lookout_power := DEFAULT_LOOKOUTS * Armory.power_of(Armory.Grade.BLADE)
+	var posted := garrison(run, corner.id)
+	var factor := STRONGHOLD_GARRISON_FACTOR if corner.stronghold else GARRISON_FACTOR
+	if posted <= 0:
+		return lookout_power * factor
+	var garrison_deploy := Army.garrison_deployment(run, posted)
+	return (lookout_power + Army.power(run, garrison_deploy)) * factor
 
 
 ## Hands out corners for a save that kept a share per district. Districts of a gang already driven out are the
@@ -223,4 +271,18 @@ static func sanitize(source: Variant) -> Array[String]:
 		for corner_id: Variant in source:
 			if find(StringName(str(corner_id))) != null and not clean.has(str(corner_id)):
 				clean.append(str(corner_id))
+	return clean
+
+
+static func sanitize_garrisons(run: RunState, source: Variant) -> Dictionary:
+	var clean := {}
+	if not source is Dictionary:
+		return clean
+	for key: Variant in source:
+		var corner_id := StringName(str(key))
+		var corner := find(corner_id)
+		if corner != null and holds(run, corner_id):
+			var amount := clampi(int(source[key]), 0, Rivals.max_garrison(corner))
+			if amount > 0:
+				clean[String(corner_id)] = amount
 	return clean

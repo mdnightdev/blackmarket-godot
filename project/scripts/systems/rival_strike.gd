@@ -58,8 +58,10 @@ static func raiders(run: RunState, from: CornerDef) -> int:
 	return clampi(roundi(standing * RAIDING_SHARE), 1, War.defenders(run, from))
 
 
-## The gang weighs its raiders against everyone the player could send.
-static func likes_odds(run: RunState, gang: GangDef, sent: int) -> bool:
+## The gang weighs its raiders against the corner's posted garrison when fortified, or the reserve force.
+static func likes_odds(run: RunState, gang: GangDef, sent: int, target: CornerDef = null) -> bool:
+	if target != null and Corners.garrison(run, target.id) > 0:
+		return sent * Rivals.power_per_man(run, gang) >= Corners.garrison_power(run, target) * 1.25
 	return sent * Rivals.power_per_man(run, gang) >= Army.strength(run) * HOLDING_EDGE * LIKES_ODDS_AT
 
 
@@ -84,7 +86,7 @@ static func check(run: RunState, new_day_started: bool, roll: float) -> bool:
 		if from == null:
 			continue
 		var sent := raiders(run, from)
-		if likes_odds(run, gang, sent):
+		if likes_odds(run, gang, sent, target):
 			run.pending_encounter = start(run, gang, target, from, sent)
 			return true
 	return false
@@ -133,7 +135,7 @@ static func choices(run: RunState) -> Array[Encounters.Choice]:
 	var rabbit := Content.speaker(RABBIT)
 	return [
 		Encounters.Choice.new(DELEGATE, "Leave it to %s" % (rabbit.display_name if rabbit != null else "Rabbit")),
-		Encounters.Choice.new(MOBILISE, "Mobilise the crew yourself", Army.active(run) > 0),
+		Encounters.Choice.new(MOBILISE, "Mobilise the crew yourself", Army.reserve(run) > 0),
 	]
 
 
@@ -148,12 +150,16 @@ static func defend(run: RunState, encounter: Dictionary, deployment: Dictionary,
 		return {}
 	var sent_against := int(encounter.get("raiders", 0))
 	var sent := Army.deployed_count(deployment)
+	var posted := Corners.garrison(run, corner.id)
 	var edge := HOLDING_EDGE * (RABBIT_EDGE if delegated else 1.0)
-	var mine := Army.power(run, deployment) * edge * lerpf(1.0 - War.LUCK, 1.0 + War.LUCK, roll)
+	var luck_mult := Odds.bell_from_roll(roll, 1.0 - War.LUCK, 1.0, 1.0 + War.LUCK)
+	var posted_bonus := Corners.garrison_power(run, corner) if posted > 0 else 0.0
+	var mine := (Army.power(run, deployment) * edge + posted_bonus) * luck_mult
 	var theirs := sent_against * Rivals.power_per_man(run, gang)
-	var won := sent > 0 and mine >= theirs
+	var won := (sent > 0 or posted > 0) and mine >= theirs
 	var hit_share := War.WIN_HIT_SHARE * minf(1.0, theirs / maxf(mine, 1.0)) if won else War.LOSS_HIT_SHARE
-	var death_share := (War.WIN_DEATH_SHARE if won else War.LOSS_DEATH_SHARE) + (fate - 0.5) * War.FATE_SWING
+	var fate_offset := Odds.bell_from_roll(fate, -0.5 * War.FATE_SWING, 0.0, 0.5 * War.FATE_SWING)
+	var death_share := (War.WIN_DEATH_SHARE if won else War.LOSS_DEATH_SHARE) + fate_offset
 	var losses := Army.casualties(deployment, hit_share, death_share)
 	Hospital.admit(run, losses)
 	var raiders_lost := roundi(sent_against * (RAIDERS_LOST_ON_WIN if won else War.DEFENDERS_BLED))
@@ -175,3 +181,19 @@ static func defend(run: RunState, encounter: Dictionary, deployment: Dictionary,
 		"defenders": sent_against,
 		"defenders_lost": raiders_lost,
 	}
+
+
+static func reconcile_live_battle(run: RunState, result: Dictionary, player_side: BattleSide, enemy_side: BattleSide) -> void:
+	if result.is_empty():
+		return
+	var corner_id := StringName(str(result.get("corner", "")))
+	var corner := Corners.find(corner_id)
+	if corner == null:
+		return
+	var player_share := float(player_side.survivors) / maxi(1, player_side.head_count)
+	var enemy_share := float(enemy_side.survivors) / maxi(1, enemy_side.head_count)
+	var live_won := enemy_share < player_share
+	if live_won and not bool(result.won):
+		result.won = true
+		Corners.take(run, corner_id)
+		run.corner_defenders.erase(String(corner_id))

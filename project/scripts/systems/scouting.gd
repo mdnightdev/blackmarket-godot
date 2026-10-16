@@ -54,9 +54,10 @@ static func scout(run: RunState, corner_id: StringName, notice_roll: float, rang
 	var men := War.defenders(run, corner)
 	var width := spread(run)
 	var gang := Corners.gang_of(corner_id)
+	var bell_roll := Odds.bell_from_roll(range_roll, 0.0, 0.5, 1.0)
 	run.scouted[String(corner_id)] = {
-		"low": floori(men * (1.0 - width * range_roll)),
-		"high": ceili(men * (1.0 + width * (1.0 - range_roll))),
+		"low": floori(men * (1.0 - width * bell_roll)),
+		"high": ceili(men * (1.0 + width * (1.0 - bell_roll))),
 		"gear": Rivals.gear(run, gang) if gang != null else Armory.Grade.BLADE,
 		"day": run.day,
 		"seen": seen,

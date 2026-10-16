@@ -199,3 +199,47 @@ func test_taking_a_rivals_last_corner_drives_it_out() -> void:
 	assert_true(Gangs.is_gone(_run, jackal))
 	assert_eq(_run.pending_encounter.type, Turf.VICTORY)
 	assert_false(_run.scouted.has("loading_bay"), "a taken corner needs no report")
+
+
+func test_posted_garrison_draws_from_reserve_and_gains_cover_multiplier() -> void:
+	_enlist(Army.Tier.GUARDS, 150)
+	assert_eq(Army.reserve(_run), 150)
+	assert_true(Corners.post_garrison(_run, Corners.MAMA_LIN, 60))
+	assert_eq(Corners.garrison(_run, Corners.MAMA_LIN), 60)
+	assert_eq(Army.reserve(_run), 90, "posted men are committed to the corner")
+	assert_eq(Army.deployed_count(Army.deployment(_run)), 90)
+	var mama := Corners.find(Corners.MAMA_LIN)
+	assert_gt(Corners.garrison_power(_run, mama), 60 * Army.GUARD_POWER * Corners.GARRISON_FACTOR)
+	Corners.take(_run, LANTERN)
+	assert_true(Corners.post_garrison(_run, LANTERN, 50))
+	assert_gt(Corners.garrison_power(_run, Corners.find(LANTERN)), Corners.garrison_power(_run, mama), "stronghold cover multiplier is higher")
+
+
+func test_live_battle_reconcile_flips_loss_into_victory_on_enemy_rout() -> void:
+	_enlist(Army.Tier.LUNATICS, 200)
+	var result := War.attack(_run, STEPS, Army.deployment(_run), 0.5, 0.5)
+	assert_false(result.won)
+	assert_false(Corners.holds(_run, STEPS))
+	var player_side := BattleSide.new()
+	player_side.survivors = 155
+	var enemy_side := BattleSide.new()
+	enemy_side.survivors = 80
+	War.reconcile_live_battle(_run, result, player_side, enemy_side, true)
+	assert_true(result.won)
+	assert_true(Corners.holds(_run, STEPS))
+	assert_eq(War.defenders(_run, Corners.find(STEPS)), 0)
+
+
+func test_retreating_survivors_reinforce_other_district_corners_in_act_two() -> void:
+	_open_act_two()
+	_run.army_level = 2
+	_enlist(Army.Tier.GUARDS, 1800)
+	_run.armory = { Armory.Grade.RIFLE: 1800 }
+	var scrap := Corners.find(&"scrap_yard")
+	var lockup := Corners.find(&"jackal_lockup")
+	var before := War.defenders(_run, scrap) + War.defenders(_run, lockup)
+	var result := War.attack(_run, &"loading_bay", Army.deployment(_run), 0.5, 0.5)
+	assert_true(result.won)
+	var after := War.defenders(_run, scrap) + War.defenders(_run, lockup)
+	assert_gt(after, before, "survivors fall back to nearby gang corners")
+

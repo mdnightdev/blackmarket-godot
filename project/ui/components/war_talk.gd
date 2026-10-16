@@ -66,7 +66,9 @@ static func _attack(deployment: Dictionary, corner: CornerDef) -> void:
 		return
 	var teams := sides(result, corner, carried)
 	var line := "%s IS YOURS" % corner.display_name.to_upper() if bool(result.won) else "PULL BACK"
-	GameOverlay.play_battle(teams[0], teams[1], line, hash(result), func() -> void: _aftermath(result, corner))
+	GameOverlay.play_battle(teams[0], teams[1], line, hash(result), func() -> void:
+		War.reconcile_live_battle(run, result, teams[0], teams[1])
+		_aftermath(result, corner))
 
 
 static func _aftermath(result: Dictionary, corner: CornerDef) -> void:

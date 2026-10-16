@@ -21,7 +21,7 @@ const RABBIT_LINES: Array[String] = [
 ## people is everyone working the corner this phase, from Corners.people_at. Rival corners open the target card.
 static func open(corner: CornerDef, people: Array[SpeakerDef]) -> void:
 	var run := GameState.run
-	if War.is_target(run, corner):
+	if War.is_target(run, corner) or (Corners.holds(run, corner.id) and (War.is_open(run) or Campaign.is_act_two(run))):
 		GameOverlay.show_target(corner, people)
 		return
 	var gang := Corners.gang_of(corner.id)

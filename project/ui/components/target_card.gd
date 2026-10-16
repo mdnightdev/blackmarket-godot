@@ -66,11 +66,16 @@ func cancel() -> void:
 
 func _refresh() -> void:
 	var run := GameState.run
+	if Corners.holds(run, _corner.id):
+		_refresh_garrison(run)
+		return
 	var gang := Corners.gang_of(_corner.id)
 	var their_color := gang.color if gang != null else Palette.RISK_HIGH
 	_title_label.text = _corner.display_name
 	_holder_label.text = "%s, pays %s a day" % [gang.crew_name if gang != null else "A rival crew", Format.money(_corner.daily_cut())]
 	_holder_label.add_theme_color_override("font_color", their_color)
+	_mine_caption.text = "YOUR FORCE"
+	_their_caption.text = "DEFENCE"
 	_their_caption.add_theme_color_override("font_color", their_color)
 	_stronghold_tag.visible = _corner.stronghold
 
@@ -98,7 +103,48 @@ func _refresh() -> void:
 	var price := Scouting.cost(_corner)
 	_scout_button.text = "Scout %s" % Format.money(price)
 	_scout_button.disabled = run.cash < price
+	_attack_button.text = "Attack"
 	_attack_button.disabled = not War.can_attack(run, _corner)
+
+
+func _refresh_garrison(run: RunState) -> void:
+	var gang := Corners.gang_of(_corner.id)
+	var their_color := gang.color if gang != null else Palette.RISK_HIGH
+	_title_label.text = _corner.display_name
+	_holder_label.text = "Held by your crew, pays %s a day" % Format.money(_corner.daily_cut())
+	_holder_label.add_theme_color_override("font_color", TurfBar.PLAYER_COLOR)
+	_mine_caption.text = "GARRISON"
+	_their_caption.text = "RIVAL THREAT"
+	_their_caption.add_theme_color_override("font_color", their_color)
+	_stronghold_tag.visible = _corner.stronghold
+
+	var posted := Corners.garrison(run, _corner.id)
+	_men_label.text = "%s posted + %d lookouts" % [Format.count(posted), Corners.DEFAULT_LOOKOUTS]
+	var mult_text := "2.5x stronghold cover" if _corner.stronghold else "1.5x street cover"
+	_kit_label.text = "%s (%s in reserve)" % [mult_text, Format.count(Army.reserve(run))]
+
+	var from := RivalStrike.source(run, gang, _corner) if gang != null else null
+	var raiders := RivalStrike.raiders(run, from) if from != null else 0
+	var threat_power := raiders * Rivals.power_per_man(run, gang) if gang != null else 0.0
+	if raiders > 0 and gang != null:
+		_enemy_label.text = "~%s raiders" % Format.count(raiders)
+		_gear_label.text = "with %s" % str(Armory.GRADE_NAMES[Rivals.gear(run, gang)]).to_lower()
+	else:
+		_enemy_label.text = "Quiet"
+		_gear_label.text = "No nearby crew"
+	var def_power := Corners.garrison_power(run, _corner)
+	var bounds := Vector2(threat_power * 0.85, threat_power * 1.25)
+	_strength_bar.show_strength(def_power, bounds, raiders > 0, their_color)
+
+	var locked_down := def_power >= threat_power * 1.25 or raiders <= 0
+	_reading_label.text = "LOCKED DOWN" if locked_down else ("GARRISONED" if posted > 0 else "LOOKOUTS ONLY")
+	_reading_label.add_theme_color_override("font_color", Palette.RISK_LOW if locked_down else (Palette.PEACH_BRIGHT if posted > 0 else Palette.RISK_HIGH))
+	_report_label.text = "Posted men hold this corner with %s and cannot join attacks." % mult_text
+
+	_scout_button.text = "Recall Crew"
+	_scout_button.disabled = posted <= 0
+	_attack_button.text = "Post Crew"
+	_attack_button.disabled = Army.reserve(run) <= 0
 
 
 func _report_note(run: RunState, report: Dictionary) -> String:
@@ -128,6 +174,13 @@ func _show_people(people: Array[SpeakerDef]) -> void:
 
 
 func _scout() -> void:
+	var run := GameState.run
+	if Corners.holds(run, _corner.id):
+		Corners.post_garrison(run, _corner.id, 0)
+		GameState.save_run()
+		AudioService.play_sfx(Sfx.CLICK)
+		_refresh()
+		return
 	if GameState.scout_corner(_corner.id) != Scouting.Result.OK:
 		_refresh()
 		return
@@ -140,6 +193,15 @@ func _scout() -> void:
 
 func _attack() -> void:
 	var corner := _corner
+	var run := GameState.run
+	if Corners.holds(run, corner.id):
+		_close()
+		var msg := "Pick how many reserve men to station on %s. Posted men get %s." % [corner.display_name, "2.5x stronghold defense" if corner.stronghold else "1.5x cover defense"]
+		GameOverlay.pick_crew(corner.display_name, msg, "Post %d", "Cancel", func(picked_deploy: Dictionary) -> void:
+			var add_count := Army.deployed_count(picked_deploy)
+			Corners.post_garrison(run, corner.id, Corners.garrison(run, corner.id) + add_count)
+			GameState.save_run(), Callable())
+		return
 	_close()
 	WarTalk.plan(corner)
 

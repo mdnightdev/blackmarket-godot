@@ -15,9 +15,28 @@ if [[ ! -d "$source_dir/.godot/imported" ]]; then
 fi
 
 mkdir -p "$target_dir/.godot"
-rsync -rt --delete --exclude '.godot/' "$source_dir/" "$target_dir/"
-rsync -rt --delete "$source_dir/.godot/imported/" "$target_dir/.godot/imported/"
+rm -rf "$target_dir/.godot/editor"
 for cache in global_script_class_cache.cfg uid_cache.bin; do
+	rm -f "$target_dir/.godot/$cache"
 	cp "$source_dir/.godot/$cache" "$target_dir/.godot/$cache"
 done
+for top_file in project.godot export_presets.cfg .gutconfig.json; do
+	if [[ -f "$source_dir/$top_file" ]]; then
+		rm -f "$target_dir/$top_file"
+		cp "$source_dir/$top_file" "$target_dir/$top_file"
+	fi
+done
+for code_dir in scripts ui data theme tests; do
+	if [[ -d "$source_dir/$code_dir" ]]; then
+		rm -rf "$target_dir/$code_dir"
+		cp -r "$source_dir/$code_dir" "$target_dir/$code_dir"
+	fi
+done
+for asset_dir in addons assets audio; do
+	if [[ -d "$source_dir/$asset_dir" ]]; then
+		mkdir -p "$target_dir/$asset_dir"
+		rsync -r --size-only --delete "$source_dir/$asset_dir/" "$target_dir/$asset_dir/"
+	fi
+done
+rsync -r --size-only --delete "$source_dir/.godot/imported/" "$target_dir/.godot/imported/"
 echo "Synced $source_dir -> $target_dir"

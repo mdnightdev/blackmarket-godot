@@ -32,6 +32,24 @@ func _ready() -> void:
 		more.theme_type_variation = &"PinLabel"
 		more.text = "+%d" % (people.size() - MAX_FACES)
 		_faces.add_child(more)
+	if GameState.run != null and corner != null and Corners.holds(GameState.run, corner.id):
+		_add_garrison_bar(GameState.run)
+
+
+func _add_garrison_bar(run: RunState) -> void:
+	var posted := Corners.garrison(run, corner.id)
+	var cap := maxi(1, Rivals.max_garrison(corner))
+	var ratio := clampf(float(posted + Corners.DEFAULT_LOOKOUTS) / float(cap), 0.08, 1.0)
+	var track := ColorRect.new()
+	track.custom_minimum_size = Vector2(96.0, 5.0)
+	track.color = Color(0.08, 0.09, 0.12, 0.85)
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fill := ColorRect.new()
+	fill.color = Palette.RISK_LOW if posted > 0 else TurfBar.PLAYER_COLOR
+	fill.size = Vector2(96.0 * ratio, 5.0)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	track.add_child(fill)
+	_name_label.get_parent().add_child(track)
 
 
 func place_at(map_point: Vector2) -> void:
