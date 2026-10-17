@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bqqeseinn4ok2"
-path.s3tc="res://.godot/imported/map_city.jpg-90fc64192a2791ece08fe38a8eac8d7f.s3tc.ctex"
-path.etc2="res://.godot/imported/map_city.jpg-90fc64192a2791ece08fe38a8eac8d7f.etc2.ctex"
+path="res://.godot/imported/map_city.jpg-90fc64192a2791ece08fe38a8eac8d7f.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/backgrounds/map_city.jpg"
-dest_files=["res://.godot/imported/map_city.jpg-90fc64192a2791ece08fe38a8eac8d7f.s3tc.ctex", "res://.godot/imported/map_city.jpg-90fc64192a2791ece08fe38a8eac8d7f.etc2.ctex"]
+dest_files=["res://.godot/imported/map_city.jpg-90fc64192a2791ece08fe38a8eac8d7f.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

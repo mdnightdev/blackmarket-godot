@@ -36,7 +36,9 @@ func show_corners(run: RunState, district: DistrictDef) -> void:
 static func holder_color(run: RunState, district_id: StringName, corner: CornerDef) -> Color:
 	if Corners.holds(run, corner.id):
 		return TurfBar.PLAYER_COLOR
-	var gang := Gangs.owner(district_id)
+	if not Turf.is_contested(district_id):
+		return TurfBar.OPEN_COLOR
+	var gang := Corners.gang_of(corner.id)
 	return gang.color if gang != null else TurfBar.OPEN_COLOR
 
 

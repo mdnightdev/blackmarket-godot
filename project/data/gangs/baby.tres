@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="GangDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/gang_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"baby"
+display_name = "Baby"
+crew_name = "Baby's crew"
+boss = &"baby"
+style = 0
+turf = Array[StringName]([&"slums", &"docks"])
+gear = 1
+color = Color(0.6863, 0.3608, 0.549, 1)
+gate_title = "Baby's alley toll"
+gate_line = "These alleys in %s belong to my crew. Pay the toll on your bag, or walk home bleeding."
+hunt_title = "Baby's blades found you"
+hunt_line = "You kept skipping out on my lookouts. Settle the tab right now or we carve it out of you."
+ambush_line = "Voronin's crate passes through my alleys, it pays my rate. Hand over a share or we open it here."
+dealer_line = "Baby's crew taxes every stall down here. I pay her first, so I pay you less."
+victory_title = "Baby is out"
+victory_line = "Alright, alright. Keep the alleys. I'm catching a flight back to Singapore before the rain starts. My lockbox has %s inside."
+max_gate_chance = 0.35
+bribe_base = 220
+bribe_per_anger = 100
+hunt_fee = 550
+victory_reward = 5500

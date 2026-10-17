@@ -25,7 +25,7 @@ func _ready() -> void:
 		SceneRouter.go_to.call_deferred(SceneRouter.TITLE_SCREEN)
 		return
 
-	SafeArea.apply_top_margin(_margin, 40)
+	SafeArea.apply_top_margin(_margin, 64)
 	for district in Content.districts():
 		var pin: MapPin = MAP_PIN.instantiate()
 		pin.district = district

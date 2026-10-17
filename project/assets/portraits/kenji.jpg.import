@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vofbrd2lnxeu"
-path.s3tc="res://.godot/imported/kenji.jpg-1d10d092361abb09796750d0ef8a59b2.s3tc.ctex"
-path.etc2="res://.godot/imported/kenji.jpg-1d10d092361abb09796750d0ef8a59b2.etc2.ctex"
+path="res://.godot/imported/kenji.jpg-1d10d092361abb09796750d0ef8a59b2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/portraits/kenji.jpg"
-dest_files=["res://.godot/imported/kenji.jpg-1d10d092361abb09796750d0ef8a59b2.s3tc.ctex", "res://.godot/imported/kenji.jpg-1d10d092361abb09796750d0ef8a59b2.etc2.ctex"]
+dest_files=["res://.godot/imported/kenji.jpg-1d10d092361abb09796750d0ef8a59b2.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

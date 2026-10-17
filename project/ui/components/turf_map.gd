@@ -144,11 +144,15 @@ func _zone_color(district: DistrictDef) -> Color:
 func _status_text(district: DistrictDef) -> String:
 	var run := GameState.run
 	if not Turf.is_contested(district.id):
-		return "Open city"
+		var family := Turf.home_family(district.id)
+		return family.chinese_name if family != null else "Open city"
 	var share := Turf.share(run, district.id)
+	var owners := Gangs.owners(district.id)
 	match Turf.holder(run, district.id):
 		Turf.Holder.PLAYER:
 			return "Yours %d%%" % share
 		Turf.Holder.GANG:
-			return "%s %d%%" % [Gangs.owner(district.id).display_name, 100 - share]
+			if owners.size() > 1:
+				return "%s / %s" % [owners[0].display_name, owners[1].display_name]
+			return "%s %d%%" % [owners[0].display_name, 100 - share]
 	return "Contested %d%%" % share

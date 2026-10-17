@@ -86,7 +86,7 @@ static func corners(run: RunState, gang: GangDef) -> Array[CornerDef]:
 	var held: Array[CornerDef] = []
 	for district_id in gang.turf:
 		for corner in Corners.of(district_id):
-			if not Corners.holds(run, corner.id):
+			if not Corners.holds(run, corner.id) and Corners.gang_of(corner.id) == gang:
 				held.append(corner)
 	return held
 

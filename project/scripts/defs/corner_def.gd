@@ -12,6 +12,8 @@ extends Resource
 @export var moves: String
 ## The dealer who works the corner, empty when nobody deals from it.
 @export var seller: StringName
+## Gang holding this corner when a district is split between two crews. Empty uses the district's primary gang.
+@export var gang: StringName = &""
 ## The gang's strongest corner, fought for last.
 @export var stronghold := false
 ## The seller's rent for the spot, paid to whoever holds the corner.

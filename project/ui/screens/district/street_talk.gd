@@ -19,8 +19,11 @@ static func talk_to(character: CharacterDef) -> void:
 		CharacterDef.Role.INFORMANT:
 			_talk_to_informant(character)
 		CharacterDef.Role.RIVAL:
-			if character.id == Loan.VEX_LENDER and not Campaign.is_act_two(GameState.run):
-				VexTalk.play(character)
+			if character.id == Loan.VEX_LENDER:
+				if Campaign.is_act_two(GameState.run):
+					VexTalk.play_enforcer(character)
+				else:
+					VexTalk.play(character)
 			else:
 				_talk_turf(character, character.line)
 		CharacterDef.Role.POLICE:

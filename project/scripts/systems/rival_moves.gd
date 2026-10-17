@@ -18,8 +18,10 @@ const COP_STOP_BONUS := 0.15
 
 const PERSONALITIES := {
 	&"vex": { "anger": 1.5, "greed": 1.0, "cunning": 0.6 },
+	&"baby": { "anger": 1.4, "greed": 1.2, "cunning": 0.9 },
 	&"jackal": { "anger": 1.0, "greed": 1.5, "cunning": 0.8 },
 	&"celeste": { "anger": 0.7, "greed": 1.2, "cunning": 1.5 },
+	&"lucyferek": { "anger": 1.2, "greed": 1.3, "cunning": 1.4 },
 }
 const DEFAULT_PERSONALITY := { "anger": 1.0, "greed": 1.0, "cunning": 1.0 }
 
@@ -160,7 +162,7 @@ static func morning(run: RunState, rng: RandomNumberGenerator) -> Array[Dictiona
 	var notices: Array[Dictionary] = []
 	if not Campaign.is_act_two(run):
 		return notices
-	for gang in Gangs.active(run):
+	for gang in Gangs.confronting(run):
 		var chosen := pick_move(run, gang, rng)
 		var notice := execute_move(run, gang, chosen, rng)
 		if not notice.is_empty():
@@ -176,12 +178,12 @@ static func is_baited(run: RunState, corner_id: StringName) -> bool:
 	return Rivals.bait_corner(run, gang) == corner_id
 
 
-## Extra police stop chance in a district when the owning rival has bribed local cops.
+## Extra police stop chance in a district when an owning rival has bribed local cops.
 static func cop_bribe_bonus(run: RunState, district_id: StringName) -> float:
-	var gang := Gangs.owner(district_id)
-	if gang == null or Gangs.is_gone(run, gang):
-		return 0.0
-	return COP_STOP_BONUS if Rivals.cop_bribe_until(run, gang) > run.day else 0.0
+	for gang in Gangs.owners(district_id):
+		if not Gangs.is_gone(run, gang) and Rivals.cop_bribe_until(run, gang) > run.day:
+			return COP_STOP_BONUS
+	return 0.0
 
 
 static func _has_delivery_in_turf(run: RunState, gang: GangDef) -> bool:

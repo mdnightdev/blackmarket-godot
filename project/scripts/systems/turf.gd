@@ -28,7 +28,9 @@ const FIGHT_EDGE_PER_SHARE := 0.008
 static func contested() -> Array[StringName]:
 	var districts: Array[StringName] = []
 	for gang in Content.gangs():
-		districts.append_array(gang.turf)
+		for district_id in gang.turf:
+			if not districts.has(district_id):
+				districts.append(district_id)
 	return districts
 
 
@@ -41,11 +43,12 @@ static func share(run: RunState, district_id: StringName) -> int:
 
 
 static func holder(run: RunState, district_id: StringName) -> Holder:
-	var gang := Gangs.owner(district_id)
-	if gang == null:
+	var gangs := Gangs.owners(district_id)
+	if gangs.is_empty():
 		return Holder.NOBODY
+	var all_gone := gangs.all(func(g: GangDef) -> bool: return Gangs.is_gone(run, g))
 	var player_share := share(run, district_id)
-	if player_share >= HOLD_SHARE or Gangs.is_gone(run, gang):
+	if player_share >= HOLD_SHARE or all_gone:
 		return Holder.PLAYER
 	if player_share <= GANG_HOLD_SHARE:
 		return Holder.GANG
@@ -57,7 +60,12 @@ static func held_count(run: RunState) -> int:
 
 
 static func holds(run: RunState, district_id: StringName) -> bool:
-	return holder(run, district_id) == Holder.PLAYER
+	if is_contested(district_id):
+		return holder(run, district_id) == Holder.PLAYER
+	var family := home_family(district_id)
+	if family != null and Families.tier(run, family.id) >= Families.Tier.TRUSTED:
+		return true
+	return Corners.share(run, district_id) >= HOLD_SHARE
 
 
 static func business_slots(run: RunState, district_id: StringName) -> int:
@@ -84,7 +92,7 @@ static func sell_factor(run: RunState, district_id: StringName) -> float:
 
 
 static func stop_factor(run: RunState, district_id: StringName) -> float:
-	return HELD_STOP_FACTOR if holds(run, district_id) else 1.0
+	return HELD_STOP_FACTOR if holder(run, district_id) == Holder.PLAYER else 1.0
 
 
 ## Rent and protection from every corner the player holds.
@@ -111,6 +119,8 @@ static func check_victory(run: RunState) -> void:
 	if not run.pending_encounter.is_empty():
 		return
 	for gang in Gangs.active(run):
+		if gang.id == War.VEX_GANG:
+			continue
 		if not Rivals.corners(run, gang).is_empty():
 			continue
 		run.gangs_gone.append(gang.id)

@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bn1aahv2ag5lk"
-path.s3tc="res://.godot/imported/player_tariq.jpg-01d0252783f6b8aa39da67f9779dd7d1.s3tc.ctex"
-path.etc2="res://.godot/imported/player_tariq.jpg-01d0252783f6b8aa39da67f9779dd7d1.etc2.ctex"
+path="res://.godot/imported/player_tariq.jpg-01d0252783f6b8aa39da67f9779dd7d1.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/portraits/player_tariq.jpg"
-dest_files=["res://.godot/imported/player_tariq.jpg-01d0252783f6b8aa39da67f9779dd7d1.s3tc.ctex", "res://.godot/imported/player_tariq.jpg-01d0252783f6b8aa39da67f9779dd7d1.etc2.ctex"]
+dest_files=["res://.godot/imported/player_tariq.jpg-01d0252783f6b8aa39da67f9779dd7d1.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

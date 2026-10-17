@@ -6,12 +6,12 @@ const HEAT_MEDIUM := Heat.NOTICED
 const HEAT_HIGH := Heat.WATCHED
 const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 
+@onready var _city_label: Label = %CityLabel
 @onready var _cash_value: Label = %CashValue
 @onready var _clean_box: Control = %Clean
 @onready var _clean_value: Label = %CleanValue
 @onready var _clean_divider: Control = %CleanDivider
 @onready var _debt_box: Control = %Debt
-@onready var _debt_caption: Label = %DebtCaption
 @onready var _debt_value: Label = %DebtValue
 @onready var _heat_icon: TextureRect = %HeatIcon
 @onready var _heat_bar: ProgressBar = %HeatBar
@@ -31,7 +31,19 @@ func _ready() -> void:
 	_debt_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	_debt_box.gui_input.connect(_on_debt_input)
 	visibility_changed.connect(_on_visibility_changed)
+	_apply_safe_area()
 	_sync()
+
+
+func _apply_safe_area() -> void:
+	var inset := int(SafeArea.top_inset(get_viewport()))
+	if inset > 0:
+		var style := get_theme_stylebox("panel")
+		if style is StyleBoxFlat:
+			var copy: StyleBoxFlat = style.duplicate()
+			copy.content_margin_top = maxi(6.0, inset + 4.0)
+			add_theme_stylebox_override("panel", copy)
+			custom_minimum_size.y = 56 + inset
 
 
 func _on_visibility_changed() -> void:
@@ -55,6 +67,9 @@ func refresh() -> void:
 	var run := GameState.run
 	if run == null:
 		return
+	var district := Content.district(run.district_id)
+	if district != null and _city_label != null:
+		_city_label.text = district.display_name.to_upper()
 	_day_text = "%d %s" % [run.day, PHASE_LETTERS[run.phase]]
 	if run.clean > 0 or run.career:
 		_clean_box.show()
@@ -64,11 +79,11 @@ func refresh() -> void:
 		_clean_box.hide()
 		_clean_divider.hide()
 	if run.debt > 0:
-		_debt_caption.text = "Debt"
-		_debt_value.text = Format.money_short(run.debt)
+		_debt_value.text = "-%s" % Format.money_short(run.debt)
+		_debt_value.add_theme_color_override("font_color", Palette.RISK_HIGH)
 	else:
-		_debt_caption.text = "Cred"
 		_debt_value.text = StreetCred.rank_name(StreetCred.rank(run))
+		_debt_value.add_theme_color_override("font_color", Palette.TEXT_CREAM)
 	var heat_color := _heat_color(run.heat, run.heat_timer > 0.0)
 	_heat_bar.value = run.heat
 	_heat_fill.bg_color = heat_color
@@ -87,7 +102,10 @@ func _update_clock() -> void:
 
 func _on_debt_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-		GameOverlay.open_loan()
+		if GameState.run != null and GameState.run.debt > 0:
+			GameOverlay.open_loan()
+		else:
+			GameOverlay.open_profile()
 
 
 func _count_cash_to(target: int) -> void:

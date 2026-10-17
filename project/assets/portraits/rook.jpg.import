@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cvpxsdkork6oo"
-path.s3tc="res://.godot/imported/rook.jpg-7959a88e7116fea8b22a70a426179ae8.s3tc.ctex"
-path.etc2="res://.godot/imported/rook.jpg-7959a88e7116fea8b22a70a426179ae8.etc2.ctex"
+path="res://.godot/imported/rook.jpg-7959a88e7116fea8b22a70a426179ae8.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/portraits/rook.jpg"
-dest_files=["res://.godot/imported/rook.jpg-7959a88e7116fea8b22a70a426179ae8.s3tc.ctex", "res://.godot/imported/rook.jpg-7959a88e7116fea8b22a70a426179ae8.etc2.ctex"]
+dest_files=["res://.godot/imported/rook.jpg-7959a88e7116fea8b22a70a426179ae8.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

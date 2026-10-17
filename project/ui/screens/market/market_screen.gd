@@ -58,7 +58,7 @@ func _ready() -> void:
 		SceneRouter.go_to.call_deferred(SceneRouter.TITLE_SCREEN if district == null else SceneRouter.DISTRICT_SCREEN)
 		return
 
-	SafeArea.apply_top_margin(_margin, 40)
+	SafeArea.apply_top_margin(_margin, 64)
 	_background.texture = district.background
 	_dealer_label.text = _dealer.display_name
 	_district_pill.text = district.display_name

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="GangDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/gang_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lucyferek"
+display_name = "Lucyferek"
+crew_name = "Lucyferek's crew"
+boss = &"lucyferek"
+style = 0
+turf = Array[StringName]([&"north_port", &"docks"])
+gear = 3
+color = Color(0.7686, 0.6588, 0.4314, 1)
+gate_title = "Lucyferek's harbour tariff"
+gate_line = "My syndicate runs the water in %s. Every bag that moves through here pays clearance."
+hunt_title = "Lucyferek's men cornered you"
+hunt_line = "In Gdansk we sink people who dodge the tariff. Pay the arrears or my riflemen finish this."
+ambush_line = "Voronin knows my rules on the water. Leave a cut of that crate on the pier or nobody leaves."
+dealer_line = "Lucyferek's syndicate taxes every berth on the water. Her cut comes off the top."
+victory_title = "Lucyferek is out"
+victory_line = "Zrozumiano. You have the men to hold the water. The harbour office and its safe are yours, %s inside."
+max_gate_chance = 0.3
+bribe_base = 450
+bribe_per_anger = 150
+hunt_fee = 950
+victory_reward = 10000

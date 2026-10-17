@@ -35,8 +35,9 @@ done
 for asset_dir in addons assets audio; do
 	if [[ -d "$source_dir/$asset_dir" ]]; then
 		mkdir -p "$target_dir/$asset_dir"
-		rsync -r --size-only --delete "$source_dir/$asset_dir/" "$target_dir/$asset_dir/"
+		rsync -rt --delete "$source_dir/$asset_dir/" "$target_dir/$asset_dir/"
 	fi
 done
-rsync -r --size-only --delete "$source_dir/.godot/imported/" "$target_dir/.godot/imported/"
+rm -f "$source_dir/.godot/imported/"*.etc2.ctex "$source_dir/.godot/imported/"*.s3tc.ctex
+rsync -rt --delete "$source_dir/.godot/imported/" "$target_dir/.godot/imported/"
 echo "Synced $source_dir -> $target_dir"

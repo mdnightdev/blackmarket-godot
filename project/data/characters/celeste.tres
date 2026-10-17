@@ -13,4 +13,4 @@ portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
 line = "Everyone up here has a secret. Yours is cheaper to keep than most."
 blurb = "Celeste Marchand trades in secrets across the wealthy districts. Refuse her hush money and the police hear about you."
-route = Array[StringName]([&"west_end", &"the_heights"])
+route = Array[StringName]([&"west_end", &"riverside"])

@@ -21,8 +21,10 @@ func _jackal() -> GangDef:
 
 func test_each_rival_starts_with_its_own_weapons() -> void:
 	assert_eq(Rivals.gear(_run, Content.gang(&"vex")), Armory.Grade.BLADE)
+	assert_eq(Rivals.gear(_run, Content.gang(&"baby")), Armory.Grade.BLADE)
 	assert_eq(Rivals.gear(_run, _jackal()), Armory.Grade.HANDGUN)
 	assert_eq(Rivals.gear(_run, Content.gang(&"celeste")), Armory.Grade.RIFLE)
+	assert_eq(Rivals.gear(_run, Content.gang(&"lucyferek")), Armory.Grade.RIFLE)
 	assert_almost_eq(Rivals.power_per_man(_run, _jackal()), Armory.power_of(Armory.Grade.HANDGUN) * Rivals.SKILL, 0.001)
 
 

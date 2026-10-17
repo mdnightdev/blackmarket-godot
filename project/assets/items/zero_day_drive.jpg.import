@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hplence0catg"
-path.s3tc="res://.godot/imported/zero_day_drive.jpg-bd3577b999a5005afe13a256200e5b7b.s3tc.ctex"
-path.etc2="res://.godot/imported/zero_day_drive.jpg-bd3577b999a5005afe13a256200e5b7b.etc2.ctex"
+path="res://.godot/imported/zero_day_drive.jpg-bd3577b999a5005afe13a256200e5b7b.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/items/zero_day_drive.jpg"
-dest_files=["res://.godot/imported/zero_day_drive.jpg-bd3577b999a5005afe13a256200e5b7b.s3tc.ctex", "res://.godot/imported/zero_day_drive.jpg-bd3577b999a5005afe13a256200e5b7b.etc2.ctex"]
+dest_files=["res://.godot/imported/zero_day_drive.jpg-bd3577b999a5005afe13a256200e5b7b.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
