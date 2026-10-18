@@ -101,12 +101,14 @@ func test_unrequired_crew_adds_nothing() -> void:
 
 
 func test_district_family_helps_its_own() -> void:
-	_hire_for(_van)
-	var crewed := Heists.success_chance(_run, _van)
+	var heist: HeistDef = _van.duplicate()
+	heist.district_id = &"the_heights"
+	_hire_for(heist)
+	var crewed := Heists.success_chance(_run, heist)
 	_run.family_standing[RED_LOTUS] = Families.TRUSTED_AT
-	assert_almost_eq(Heists.success_chance(_run, _van), crewed, 0.0001)
+	assert_almost_eq(Heists.success_chance(_run, heist), crewed, 0.0001)
 	_run.family_standing[RED_LOTUS] = Families.FAMILY_AT
-	assert_almost_eq(Heists.success_chance(_run, _van), crewed + Heists.FAMILY_BONUS, 0.0001)
+	assert_almost_eq(Heists.success_chance(_run, heist), crewed + Heists.FAMILY_BONUS, 0.0001)
 
 
 func test_family_does_not_help_rob_itself() -> void:

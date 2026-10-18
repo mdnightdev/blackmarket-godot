@@ -112,9 +112,10 @@ func test_no_muggings_on_held_turf() -> void:
 
 func test_taking_every_corner_drives_the_gang_out() -> void:
 	var gang := _jackal()
-	_hold_turf(gang)
-	var last_corner: CornerDef = Rivals.corners(_run, gang)[-1]
-	Corners.lose(_run, last_corner.id)
+	var all_corners := Rivals.corners(_run, gang)
+	for corner in all_corners.slice(0, all_corners.size() - 1):
+		Corners.take(_run, corner.id)
+	var last_corner: CornerDef = all_corners[-1]
 	Turf.check_victory(_run)
 	assert_false(Gangs.is_gone(_run, gang), "one corner left")
 	Corners.take(_run, last_corner.id)

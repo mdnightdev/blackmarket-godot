@@ -54,10 +54,12 @@ func test_probit_and_bell_from_roll_follow_gaussian_symmetry() -> void:
 func test_softmax_pick_favors_higher_scores_without_being_deterministic() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 4242
-	var scores := { &"high": 6.0, &"medium": 4.5, &"low": 1.0 }
+	var keys: Array[StringName] = [&"high", &"medium", &"low"]
+	var scores: Array[float] = [6.0, 4.5, 1.0]
 	var counts := { &"high": 0, &"medium": 0, &"low": 0 }
 	for i in 500:
-		var pick := Odds.softmax_pick(rng, scores, 1.0, 0.5)
+		var idx := Odds.softmax_pick(rng, scores, 1.0, 0.5)
+		var pick := keys[idx]
 		counts[pick] = int(counts[pick]) + 1
 	assert_gt(int(counts[&"high"]), int(counts[&"medium"]), "top utility move is picked most often")
 	assert_gt(int(counts[&"medium"]), 20, "second choice still fires unpredictably")

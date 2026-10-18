@@ -47,10 +47,26 @@ const PHASE_TINTS := {
 @onready var _venue_sheet: VenueSheet = %VenueSheet
 @onready var _day_card: DayCard = %DayCard
 @onready var _logout_dialog: ConfirmDialog = %LogoutDialog
+@onready var _toast: Label = %Toast
+var _toast_tween: Tween
+
 
 var _tilt_offset := 0.0
 var _tint_tween: Tween
 var _shows_corner_map := false
+
+func _show_toast(message: String) -> void:
+	_toast.text = message
+	_toast.reset_size()
+	_toast.position.x = (size.x - _toast.size.x) / 2.0
+	if _toast_tween:
+		_toast_tween.kill()
+	_toast_tween = create_tween()
+	_toast_tween.tween_property(_toast, "modulate:a", 1.0, 0.2)
+	_toast_tween.tween_interval(1.8)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.4)
+
+
 
 
 func _ready() -> void:
@@ -248,7 +264,7 @@ func _hand_over_crate(pay: int, invoiced: bool, _report: String) -> void:
 	AudioService.play_sfx(Sfx.CRATE_DROP)
 	if not invoiced:
 		AudioService.play_sfx(Sfx.COINS_IN)
-
+	_show_toast("Crate delivered: +%s" % Format.money(pay))
 
 func _enter_casino(casino: CasinoDef, host: CharacterDef) -> void:
 	var run := GameState.run

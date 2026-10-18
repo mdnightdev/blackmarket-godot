@@ -95,14 +95,23 @@ func _refresh() -> void:
 	var bounds := Scouting.power_range(_corner, report) if known else Vector2.ZERO
 	_strength_bar.show_strength(Army.power(run, deployment), bounds, known, their_color)
 
+	var district_id := Corners.district_of(_corner.id)
+	var can_invade := War.can_invade_district(run, district_id)
+	var lock_reason := War.invasion_lock_reason(run, district_id)
+
 	var reading := Scouting.reading(run, _corner, deployment)
-	_reading_label.text = reading.to_upper()
-	_reading_label.add_theme_color_override("font_color", READING_COLORS.get(reading, Palette.TEXT_MUTED))
-	_report_label.text = _report_note(run, report)
+	if not can_invade:
+		_reading_label.text = "TERRITORY LOCKED"
+		_reading_label.add_theme_color_override("font_color", Palette.TEXT_MUTED)
+		_report_label.text = lock_reason
+	else:
+		_reading_label.text = reading.to_upper()
+		_reading_label.add_theme_color_override("font_color", READING_COLORS.get(reading, Palette.TEXT_MUTED))
+		_report_label.text = _report_note(run, report)
 
 	var price := Scouting.cost(_corner)
 	_scout_button.text = "Scout %s" % Format.money(price)
-	_scout_button.disabled = run.cash < price
+	_scout_button.disabled = run.cash < price or not War.is_target(run, _corner)
 	_attack_button.text = "Attack"
 	_attack_button.disabled = not War.can_attack(run, _corner)
 
