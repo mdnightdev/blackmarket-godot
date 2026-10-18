@@ -43,9 +43,9 @@ func test_others_get_raided_without_a_lookout() -> void:
 
 func test_jin_knows_where_a_boss_goes_next_phase() -> void:
 	_as(&"jin")
-	var vex := Content.gang(&"vex")
-	var next := Gangs.boss_location(_run, vex, Calendar.stamp(_run) + 1)
-	assert_eq(Edges.boss_next_phase(_run, next), vex)
+	var baby := Content.gang(&"baby")
+	var next := Gangs.boss_location(_run, baby, Calendar.stamp(_run) + 1)
+	assert_eq(Edges.boss_next_phase(_run, next), baby)
 	_as(&"kade")
 	assert_null(Edges.boss_next_phase(_run, next))
 

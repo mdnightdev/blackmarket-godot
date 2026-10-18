@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://2ivddtbabkv0"
-path.s3tc="res://.godot/imported/officer_talk.jpg-fa1d7c3fac98b6a63a11d310d8a5c341.s3tc.ctex"
-path.etc2="res://.godot/imported/officer_talk.jpg-fa1d7c3fac98b6a63a11d310d8a5c341.etc2.ctex"
+path="res://.godot/imported/officer_talk.jpg-fa1d7c3fac98b6a63a11d310d8a5c341.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/portraits/officer_talk.jpg"
-dest_files=["res://.godot/imported/officer_talk.jpg-fa1d7c3fac98b6a63a11d310d8a5c341.s3tc.ctex", "res://.godot/imported/officer_talk.jpg-fa1d7c3fac98b6a63a11d310d8a5c341.etc2.ctex"]
+dest_files=["res://.godot/imported/officer_talk.jpg-fa1d7c3fac98b6a63a11d310d8a5c341.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

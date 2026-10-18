@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://ui/components/hud_bar.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/banknote.svg" id="3_cash"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="4_heat"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/landmark.svg" id="4_bank"]
+[ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="5_heat"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_track"]
 bg_color = Color(0.1333, 0.149, 0.1804, 1)
@@ -19,21 +20,45 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [node name="HudBar" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 56)
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+grow_horizontal = 2
 theme_type_variation = &"HudStrip"
 script = ExtResource("1_hud")
 
 [node name="Row" type="HBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
+
+[node name="City" type="HBoxContainer" parent="Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CityLabel" type="Label" parent="Row/City"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudStripValue"
+theme_override_colors/font_color = Color(0.9608, 0.7686, 0.6902, 1)
+text = "CITY"
+
+[node name="CityDivider" type="ColorRect" parent="Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 24)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+color = Color(0.1804, 0.1961, 0.2314, 1)
 
 [node name="Cash" type="HBoxContainer" parent="Row"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Icon" type="TextureRect" parent="Row/Cash"]
 modulate = Color(0.4431, 0.5451, 0.4784, 1)
-custom_minimum_size = Vector2(22, 22)
+custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -43,12 +68,13 @@ stretch_mode = 5
 
 [node name="CashValue" type="Label" parent="Row/Cash"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_type_variation = &"HudStripValue"
 text = "$0"
 
 [node name="CashDivider" type="ColorRect" parent="Row"]
-custom_minimum_size = Vector2(1, 28)
+custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -58,7 +84,7 @@ color = Color(0.1804, 0.1961, 0.2314, 1)
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 5
 
 [node name="CleanIcon" type="TextureRect" parent="Row/Clean"]
 modulate = Color(0.702, 0.776, 0.886, 1)
@@ -66,12 +92,13 @@ custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-texture = ExtResource("3_cash")
+texture = ExtResource("4_bank")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="CleanValue" type="Label" parent="Row/Clean"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 0)
 layout_mode = 2
 theme_type_variation = &"HudStripValue"
 theme_override_colors/font_color = Color(0.702, 0.776, 0.886, 1)
@@ -80,7 +107,7 @@ text = "$0"
 [node name="CleanDivider" type="ColorRect" parent="Row"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(1, 28)
+custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -89,21 +116,21 @@ color = Color(0.1804, 0.1961, 0.2314, 1)
 [node name="Heat" type="HBoxContainer" parent="Row"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 5
 
 [node name="HeatIcon" type="TextureRect" parent="Row/Heat"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(18, 18)
+custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-texture = ExtResource("4_heat")
+texture = ExtResource("5_heat")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="HeatBar" type="ProgressBar" parent="Row/Heat"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(40, 8)
+custom_minimum_size = Vector2(36, 7)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -113,7 +140,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_heat_fill")
 show_percentage = false
 
 [node name="HeatDivider" type="ColorRect" parent="Row"]
-custom_minimum_size = Vector2(1, 28)
+custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -123,26 +150,19 @@ color = Color(0.1804, 0.1961, 0.2314, 1)
 visible = false
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="DebtCaption" type="Label" parent="Row/Debt"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"HudCaptionLabel"
-theme_override_font_sizes/font_size = 16
-text = "Debt"
+theme_override_constants/separation = 4
 
 [node name="DebtValue" type="Label" parent="Row/Debt"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"HudCaptionLabel"
+theme_type_variation = &"HudStripValue"
 theme_override_font_sizes/font_size = 16
 text = "$0"
 
 [node name="DebtDivider" type="ColorRect" parent="Row"]
 visible = false
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1, 28)
+custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -156,7 +176,7 @@ theme_override_constants/separation = 4
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
-text = "West End"
+text = ""
 
 [node name="DistrictDivider" type="ColorRect" parent="Row"]
 custom_minimum_size = Vector2(1, 28)
@@ -171,5 +191,5 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
 theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 text = "1 M 5:00"

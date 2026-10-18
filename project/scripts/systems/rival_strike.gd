@@ -33,7 +33,7 @@ static func targets(run: RunState, gang: GangDef) -> Array[CornerDef]:
 		if district_id == Corners.HOME and not War.is_open(run):
 			continue
 		for corner in Corners.of(district_id):
-			if corner.id != Corners.MAMA_LIN and Corners.holds(run, corner.id):
+			if corner.id != Corners.MAMA_LIN and Corners.holds(run, corner.id) and Corners.gang_of(corner.id) == gang:
 				list.append(corner)
 	return list
 
@@ -41,7 +41,8 @@ static func targets(run: RunState, gang: GangDef) -> Array[CornerDef]:
 ## The corner the raiders leave from: the gang's corner with the most men in the target's district, or anywhere on
 ## its turf when it holds nothing there.
 static func source(run: RunState, gang: GangDef, target: CornerDef) -> CornerDef:
-	var nearby := Corners.of(Corners.district_of(target.id)).filter(func(corner: CornerDef) -> bool: return not Corners.holds(run, corner.id))
+	var nearby := Corners.of(Corners.district_of(target.id)).filter(
+		func(corner: CornerDef) -> bool: return not Corners.holds(run, corner.id) and Corners.gang_of(corner.id) == gang)
 	var pool: Array = nearby if not nearby.is_empty() else Rivals.corners(run, gang)
 	var best: CornerDef = null
 	for corner: CornerDef in pool:
@@ -52,9 +53,11 @@ static func source(run: RunState, gang: GangDef, target: CornerDef) -> CornerDef
 
 ## A third of the gang's men in the source's district, never more than the source holds.
 static func raiders(run: RunState, from: CornerDef) -> int:
+	var gang := Corners.gang_of(from.id)
 	var standing := 0
 	for corner in Corners.of(Corners.district_of(from.id)):
-		standing += War.defenders(run, corner)
+		if Corners.gang_of(corner.id) == gang:
+			standing += War.defenders(run, corner)
 	return clampi(roundi(standing * RAIDING_SHARE), 1, War.defenders(run, from))
 
 

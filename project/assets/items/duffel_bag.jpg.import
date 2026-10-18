@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvrkfntatax5y"
-path.s3tc="res://.godot/imported/duffel_bag.jpg-4615435c250a9627cb2b4de8cc0daf84.s3tc.ctex"
-path.etc2="res://.godot/imported/duffel_bag.jpg-4615435c250a9627cb2b4de8cc0daf84.etc2.ctex"
+path="res://.godot/imported/duffel_bag.jpg-4615435c250a9627cb2b4de8cc0daf84.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/items/duffel_bag.jpg"
-dest_files=["res://.godot/imported/duffel_bag.jpg-4615435c250a9627cb2b4de8cc0daf84.s3tc.ctex", "res://.godot/imported/duffel_bag.jpg-4615435c250a9627cb2b4de8cc0daf84.etc2.ctex"]
+dest_files=["res://.godot/imported/duffel_bag.jpg-4615435c250a9627cb2b4de8cc0daf84.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

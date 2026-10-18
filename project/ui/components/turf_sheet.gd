@@ -36,8 +36,9 @@ const DISTRICT_BUSINESSES: Array[Dictionary] = [
 	{ "district": &"warehouse_row", "business": &"car_wash" },
 	{ "district": &"riverside", "business": &"gym" },
 	{ "district": &"west_end", "business": &"restaurant" },
+	{ "district": &"north_port", "business": &"restaurant" },
 	{ "district": &"downtown", "business": &"shark" },
-	{ "district": &"north_port", "business": &"lounge" },
+	{ "district": &"downtown", "business": &"lounge" },
 	{ "district": &"the_heights", "business": &"boutique" },
 	{ "district": &"golden_mile", "business": &"nightclub" },
 ]
@@ -193,10 +194,21 @@ func _add_districts(run: RunState) -> void:
 func _talk_about_district(district: DistrictDef) -> void:
 	var run := GameState.run
 	if not Turf.is_contested(district.id):
+		var family := Turf.home_family(district.id)
+		if family != null:
+			var f_hint := "Earn Trusted standing with the %s to open high-end fronts in %s." % [family.english_name, district.display_name]
+			if Turf.holds(run, district.id):
+				f_hint = "The %s trusts you. You can open up to %d front%s here." % [
+					family.english_name, Turf.business_slots(run, district.id), "" if Turf.business_slots(run, district.id) == 1 else "s"]
+			GameOverlay.talk(Content.player(run.player_id), "%s belongs to the %s. Street crews do not fight for corners here." % [district.display_name, family.english_name], [_close_choice()], _end_talk, f_hint)
+			return
 		GameOverlay.talk(Content.player(run.player_id), "%s is open city. Nobody runs these streets." % district.display_name, [_close_choice()], _end_talk)
 		return
-	var line := "I hold %d of the %d corners in %s. %s has the rest." % [
-		Corners.held_count(run, district.id), Corners.of(district.id).size(), district.display_name, Gangs.owner(district.id).display_name]
+	var owners := Gangs.owners(district.id)
+	var rival_names := "%s and %s" % [owners[0].display_name, owners[1].display_name] if owners.size() > 1 else owners[0].display_name
+	var verb := "split" if owners.size() > 1 else "has"
+	var line := "I hold %d of the %d corners in %s. %s %s the rest." % [
+		Corners.held_count(run, district.id), Corners.of(district.id).size(), district.display_name, rival_names, verb]
 	var hint := "Take %d%% of the corners to hold it. Scout a corner first, then hit it." % Turf.HOLD_SHARE
 	if Turf.holds(run, district.id):
 		hint = "Yours. The police stop you less and there is room for %d business%s." % [
@@ -218,9 +230,13 @@ func _add_crew(run: RunState) -> void:
 		_add_row(LOCK_ICON, "Crew", "", CAREER_LOCK, LOCKED)
 		return
 	var roles := Crew.roles(run)
-	if roles.is_empty():
+	if roles.is_empty() and not Campaign.is_act_two(run):
 		_add_note("Auntie Tran knows people. Hire crew at her bar in Old Market.")
 		return
+	if Campaign.is_act_two(run):
+		var proven := VexTalk.passed_rabbit_test(run)
+		_add_row(SKILL_ICONS[&"muscle"], "Enforcer, Vex", "Free",
+			"Runs your Enforcer Desk in Old Market." if proven else "Rabbit wants you to take one corner outside Old Market before Vex opens her desk.")
 	for role in roles:
 		if Crew.is_free_role(run, role.id):
 			_add_row(role.icon, "%s, %s" % [role.display_name, "the Shark" if run.shark_bought else "午夜兔子"], "Free", Crew.effects(role))
@@ -295,7 +311,11 @@ func _add_businesses(run: RunState) -> void:
 		else:
 			var result := Businesses.check_buy(run, business, dist_id)
 			if result == Businesses.Result.NOT_HELD:
-				_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), "Hold %s to open" % district.display_name, LOCKED, Palette.TEXT_MUTED)
+				var home_fam := Turf.home_family(dist_id)
+				var lock_msg := "Hold %s to open" % district.display_name
+				if not Turf.is_contested(dist_id) and home_fam != null:
+					lock_msg = "Requires Trusted with %s" % home_fam.english_name
+				_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), lock_msg, LOCKED, Palette.TEXT_MUTED)
 			elif result == Businesses.Result.RANK_TOO_LOW:
 				_add_row(business.icon, "%s in %s" % [business.display_name, district.display_name], Format.money(business.price), "Requires %s" % StreetCred.rank_name(business.min_rank), LOCKED, Palette.TEXT_MUTED)
 			else:

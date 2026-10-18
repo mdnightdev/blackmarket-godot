@@ -106,6 +106,9 @@ offset_bottom = 26.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_traveller")
 
+[node name="HudBar" parent="." instance=ExtResource("3_hud")]
+layout_mode = 1
+
 [node name="Margin" type="MarginContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -116,7 +119,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 40
+theme_override_constants/margin_top = 64
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 40
 
@@ -124,9 +127,6 @@ theme_override_constants/margin_bottom = 40
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
-
-[node name="HudBar" parent="Margin/Layout" instance=ExtResource("3_hud")]
-layout_mode = 2
 
 [node name="LocationChip" type="PanelContainer" parent="Margin/Layout"]
 visible = false

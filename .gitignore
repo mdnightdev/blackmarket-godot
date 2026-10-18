@@ -1,21 +1,22 @@
-AGENTS.md
-DESIGN.md
-Figma/
-/assets/
-/screen.jpg
-/AndroidManifest*.xml
+# System / OS
+.DS_Store
+Thumbs.db
+
+# Godot engine artifacts
+.godot/
+*.translation
+
+# Build artifacts & packages
 build/
+bin/
 *.apk
 *.aab
-*.idsig
-*.pck
-*.zip
-*.keystore
-*.bak
-Godot_*
-.import/
-.godot/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
 tools/__pycache__/
+
 ACT1_SCRIPT.md
 Battle.md
 CARTEL_VISION.md

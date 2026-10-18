@@ -11,5 +11,5 @@ pinyin = "Hónglián Táng"
 english_name = "Red Lotus Hall"
 lieutenant = &"chen_lian"
 rival = &"azure_dragon"
-home_districts = Array[StringName]([&"old_market", &"slums"])
+home_districts = Array[StringName]([&"the_heights"])
 emblem = ExtResource("2_emblem")

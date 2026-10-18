@@ -307,27 +307,27 @@ func test_selling_moves_the_most_valuable_goods_first() -> void:
 	var sim_price := Businesses.sale_price(_run, entry, _sims)
 	assert_gt(watch_price, sim_price)
 	var gross := watch_price * 2 + sim_price * (_shop.sales_per_phase - 2)
-	var net := gross - floori(gross * Businesses.PROTECTION_CUT)
 	var cash_before := _run.cash
 
-	assert_eq(Businesses.sell_phase(_run), net)
-	assert_eq(_run.cash, cash_before + net)
-	assert_eq(_run.profit, net - 400 * 2 - 50 * (_shop.sales_per_phase - 2))
+	assert_eq(Businesses.sell_phase(_run), gross)
+	assert_eq(_run.cash, cash_before + gross)
+	assert_eq(_run.profit, gross - 400 * 2 - 50 * (_shop.sales_per_phase - 2))
 	assert_eq(Businesses.stocked(entry, _watches.id), 0)
 	assert_eq(Businesses.stocked(entry, _sims.id), 5 - (_shop.sales_per_phase - 2))
 
 
 func test_trusted_families_take_no_protection_cut() -> void:
-	var entry := _open(_shop)
+	_hold(&"downtown")
+	var entry := _open(_shop, &"downtown")
 	_stock(entry, _sims, 5, 50)
-	Families.shift(_run, Turf.home_family(&"old_market").id, Families.TRUSTED_AT)
-	assert_false(Businesses.pays_protection(_run, &"old_market"))
+	Families.shift(_run, Turf.home_family(&"downtown").id, Families.TRUSTED_AT)
+	assert_false(Businesses.pays_protection(_run, &"downtown"))
 	var expected := Businesses.sale_price(_run, entry, _sims) * _shop.sales_per_phase
 	assert_eq(Businesses.sell_phase(_run), expected)
 
 
 func test_neutral_families_take_a_protection_cut() -> void:
-	assert_true(Businesses.pays_protection(_run, &"old_market"))
+	assert_true(Businesses.pays_protection(_run, &"downtown"))
 	assert_false(Businesses.pays_protection(_run, &"warehouse_row"), "no family runs it")
 
 
@@ -373,9 +373,10 @@ func test_raid_chance_rises_with_heat_and_falls_on_held_turf() -> void:
 
 
 func test_hostile_home_family_doubles_the_raid_chance() -> void:
-	var entry := _open(_shop)
+	_hold(&"downtown")
+	var entry := _open(_shop, &"downtown")
 	var calm := Businesses.raid_chance(_run, entry)
-	Families.shift(_run, Turf.home_family(&"old_market").id, Families.HOSTILE_AT)
+	Families.shift(_run, Turf.home_family(&"downtown").id, Families.HOSTILE_AT)
 	assert_almost_eq(Businesses.raid_chance(_run, entry), calm * Businesses.HOSTILE_RAID_FACTOR, 0.0001)
 
 
@@ -469,8 +470,7 @@ func test_selling_skips_goods_outside_dealer_tier() -> void:
 	entry.stock[String(high_tier.id)] = 2
 	_stock(entry, _sims, 2, 50)
 	var gross := Businesses.sale_price(_run, entry, _sims) * 2
-	var net := gross - floori(gross * Businesses.PROTECTION_CUT)
 	var earned := Businesses.sell_phase(_run)
-	assert_eq(earned, net)
+	assert_eq(earned, gross)
 	assert_eq(Businesses.stocked(entry, high_tier.id), 2)
 	assert_eq(Businesses.stocked(entry, _sims.id), 0)

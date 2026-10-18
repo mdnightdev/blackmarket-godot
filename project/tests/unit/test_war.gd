@@ -186,8 +186,8 @@ func test_a_rival_fights_with_what_it_carries() -> void:
 func test_taking_a_rivals_last_corner_drives_it_out() -> void:
 	_open_act_two()
 	var jackal := Content.gang(&"jackal")
-	for district_id in jackal.turf:
-		Corners.take_all(_run, district_id)
+	for corner in Rivals.corners(_run, jackal):
+		Corners.take(_run, corner.id)
 	Corners.lose(_run, &"loading_bay")
 	_run.army_level = 2
 	_enlist(Army.Tier.GUARDS, 2000)

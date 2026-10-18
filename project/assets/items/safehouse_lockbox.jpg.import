@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwmyh00w3grh7"
-path.s3tc="res://.godot/imported/safehouse_lockbox.jpg-5d8f3a349b75c4aa3716cea31c3c6e1a.s3tc.ctex"
-path.etc2="res://.godot/imported/safehouse_lockbox.jpg-5d8f3a349b75c4aa3716cea31c3c6e1a.etc2.ctex"
+path="res://.godot/imported/safehouse_lockbox.jpg-5d8f3a349b75c4aa3716cea31c3c6e1a.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/items/safehouse_lockbox.jpg"
-dest_files=["res://.godot/imported/safehouse_lockbox.jpg-5d8f3a349b75c4aa3716cea31c3c6e1a.s3tc.ctex", "res://.godot/imported/safehouse_lockbox.jpg-5d8f3a349b75c4aa3716cea31c3c6e1a.etc2.ctex"]
+dest_files=["res://.godot/imported/safehouse_lockbox.jpg-5d8f3a349b75c4aa3716cea31c3c6e1a.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/defs/character_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/lucyferek.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/lucyferek_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"lucyferek"
+display_name = "Lucyferek"
+role = 4
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+line = "Nothing comes off the water without my stamp on the manifest. Pay your harbour fee."
+blurb = "Polish syndicate boss who runs North Port and the northern cranes of The Docks. Miss her cut and her gunmen board you before sunrise."
+route = Array[StringName]([&"north_port", &"docks"])

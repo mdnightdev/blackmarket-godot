@@ -269,20 +269,13 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_strip"]
-content_margin_left = 16.0
+content_margin_left = 12.0
 content_margin_top = 6.0
-content_margin_right = 8.0
+content_margin_right = 12.0
 content_margin_bottom = 6.0
-bg_color = Color(0.0471, 0.0549, 0.0706, 0.82)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
+bg_color = Color(0.0471, 0.0549, 0.0706, 0.95)
 border_width_bottom = 1
-border_color = Color(0.1333, 0.149, 0.1804, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+border_color = Color(0.1804, 0.1961, 0.2314, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sheet"]
 content_margin_left = 18.0

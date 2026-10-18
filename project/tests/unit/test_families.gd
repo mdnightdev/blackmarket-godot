@@ -8,7 +8,7 @@ var _run: RunState
 func before_each() -> void:
 	_run = RunState.new()
 	_run.price_seed = 2024
-	_run.district_id = &"docks"
+	_run.district_id = &"golden_mile"
 	_run.cash = 5000
 
 
@@ -82,10 +82,10 @@ func test_hostile_families_refuse_business() -> void:
 
 
 func test_shakedowns_only_happen_on_hostile_home_turf() -> void:
-	assert_null(Families.hostile_family_in(_run, &"docks"))
+	assert_null(Families.hostile_family_in(_run, &"golden_mile"))
 	assert_true(Families.shakedown(_run).is_empty())
 	_run.family_standing[WHITE_TIGER] = Families.HOSTILE_AT
-	assert_eq(Families.hostile_family_in(_run, &"docks").id, WHITE_TIGER)
+	assert_eq(Families.hostile_family_in(_run, &"golden_mile").id, WHITE_TIGER)
 	assert_null(Families.hostile_family_in(_run, &"old_market"))
 	var shakedown := Families.shakedown(_run)
 	assert_eq(shakedown.type, Families.SHAKEDOWN)

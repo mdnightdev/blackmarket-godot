@@ -18,23 +18,16 @@ const RABBIT_LINES: Array[String] = [
 ]
 
 
-## people is everyone working the corner this phase, from Corners.people_at. Rival corners open the target card.
 static func open(corner: CornerDef, people: Array[SpeakerDef]) -> void:
-	var run := GameState.run
-	if War.is_target(run, corner) or (Corners.holds(run, corner.id) and (War.is_open(run) or Campaign.is_act_two(run))):
-		GameOverlay.show_target(corner, people)
-		return
-	var gang := Corners.gang_of(corner.id)
-	var holder := "You hold it." if Corners.holds(run, corner.id) else "%s holds it." % (gang.display_name if gang != null else "Nobody")
-	var line := "%s. %s It moves %s." % [corner.display_name, holder, corner.moves.to_lower()]
-	var choices: Array[DialogueChoice] = []
-	for person in people:
-		choices.append(DialogueChoice.new(person.id, "Talk to %s" % person.display_name))
-	var hint := "Pays %s rent and %s protection every morning to whoever holds it." % [Format.money(corner.rent), Format.money(corner.protection)]
-	if corner.rent == 0:
-		hint = "Pays %s protection every morning to whoever holds it." % Format.money(corner.protection)
-	choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
-	GameOverlay.talk(Content.player(run.player_id), line, choices, _on_corner_choice.bind(people), hint)
+	if people.size() == 1:
+		var person := people[0]
+		if person is DealerDef:
+			DealerTalk.talk_to(person)
+			return
+		elif person is CharacterDef:
+			StreetTalk.talk_to(person)
+			return
+	GameOverlay.show_target(corner, people)
 
 
 static func _on_corner_choice(choice: StringName, people: Array[SpeakerDef]) -> void:

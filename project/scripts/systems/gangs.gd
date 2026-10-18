@@ -62,6 +62,15 @@ static func owner(district_id: StringName) -> GangDef:
 	return null
 
 
+## Every gang contesting corners in the district, in catalog order.
+static func owners(district_id: StringName) -> Array[GangDef]:
+	var list: Array[GangDef] = []
+	for gang in Content.gangs():
+		if gang.turf.has(district_id):
+			list.append(gang)
+	return list
+
+
 static func for_boss(character_id: StringName) -> GangDef:
 	for gang in Content.gangs():
 		if gang.boss == character_id:
@@ -88,10 +97,10 @@ static func in_district(run: RunState, district_id: StringName, stamp: int) -> G
 	return null
 
 
-## Gangs that stop the player in the street. In Act 1 only Vex does; the others stay in the background.
+## Gangs that stop the player in the street. In Act 1 only Vex does; in Act 2 Vex is the player's enforcer.
 static func confronting(run: RunState) -> Array[GangDef]:
 	if Campaign.is_act_two(run):
-		return active(run)
+		return active(run).filter(func(gang: GangDef) -> bool: return gang.id != War.VEX_GANG)
 	return active(run).filter(func(gang: GangDef) -> bool: return gang.id == War.VEX_GANG)
 
 
@@ -117,7 +126,7 @@ static func gate_due(run: RunState, gang: GangDef, roll: float) -> bool:
 
 static func gate_chance(run: RunState, gang: GangDef) -> float:
 	var location := boss_location(run, gang, Calendar.stamp(run))
-	if location != run.district_id or owner(location) != gang:
+	if location != run.district_id or not gang.turf.has(location):
 		return 0.0
 	var crew_lead := Turf.EVEN_SHARE - Turf.share(run, location)
 	return gang.max_gate_chance * maxf(0.0, crew_lead) / Turf.EVEN_SHARE
@@ -175,7 +184,7 @@ static func backer(run: RunState) -> FamilyDef:
 ## A hunt is fought where the player stands, or over their strongest district of the gang's turf when they
 ## stand outside it.
 static func fight_district(run: RunState, gang: GangDef) -> StringName:
-	if owner(run.district_id) == gang:
+	if gang.turf.has(run.district_id):
 		return run.district_id
 	var strongest: StringName = gang.turf[0]
 	for district_id in gang.turf:

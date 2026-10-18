@@ -41,12 +41,15 @@ static func is_target(run: RunState, corner: CornerDef) -> bool:
 	if Corners.holds(run, corner.id):
 		return false
 	var district_id := Corners.district_of(corner.id)
+	if not Turf.is_contested(district_id):
+		return false
 	if district_id == Corners.HOME:
 		return is_open(run)
 	var district := Content.district(district_id)
+	var gang := Corners.gang_of(corner.id)
 	return Campaign.is_act_two(run) \
 		and district != null \
-		and not Gangs.is_gone(run, Gangs.owner(district_id)) \
+		and not Gangs.is_gone(run, gang) \
 		and not Travel.is_locked(run, district)
 
 
@@ -136,10 +139,11 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 static func _fallback_survivors(run: RunState, lost_corner: CornerDef, original_defenders: int) -> void:
 	if not Campaign.is_act_two(run) or original_defenders <= 0:
 		return
+	var gang := Corners.gang_of(lost_corner.id)
 	var district_id := Corners.district_of(lost_corner.id)
 	var retreat_targets: Array[CornerDef] = []
 	for other in Corners.of(district_id):
-		if other.id != lost_corner.id and not Corners.holds(run, other.id):
+		if other.id != lost_corner.id and not Corners.holds(run, other.id) and Corners.gang_of(other.id) == gang:
 			retreat_targets.append(other)
 	if retreat_targets.is_empty():
 		return

@@ -75,7 +75,7 @@ func _ready() -> void:
 		SceneRouter.go_to.call_deferred(SceneRouter.TITLE_SCREEN if district == null else SceneRouter.DISTRICT_SCREEN)
 		return
 
-	SafeArea.apply_top_margin(_margin, 40)
+	SafeArea.apply_top_margin(_margin, 64)
 	_background.texture = _casino.background if _casino.background != null else district.background
 	_venue_label.text = _casino.display_name.to_upper()
 	_host_label.text = _host.display_name

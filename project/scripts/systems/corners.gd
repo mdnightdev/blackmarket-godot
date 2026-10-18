@@ -58,6 +58,9 @@ static func district_of(corner_id: StringName) -> StringName:
 
 ## The gang fighting for the corner, or null.
 static func gang_of(corner_id: StringName) -> GangDef:
+	var corner := find(corner_id)
+	if corner != null and not corner.gang.is_empty():
+		return Content.gang(corner.gang)
 	return Gangs.owner(district_of(corner_id))
 
 
@@ -146,7 +149,11 @@ static func migrate_turf(run: RunState, shares: Variant) -> void:
 			if district_id == HOME:
 				continue
 			var share := int(saved.get(String(district_id), saved.get(district_id, 0)))
-			if Gangs.is_gone(run, gang) or share >= MIGRATED_ALL_AT:
+			if Gangs.is_gone(run, gang):
+				for corner in of(district_id):
+					if gang_of(corner.id) == gang:
+						take(run, corner.id)
+			elif share >= MIGRATED_ALL_AT:
 				take_all(run, district_id)
 			elif share >= MIGRATED_HOLD_SHARE:
 				var plain_first := of(district_id).filter(func(corner: CornerDef) -> bool: return not corner.stronghold)

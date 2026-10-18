@@ -35,9 +35,6 @@ const PHASE_TINTS := {
 @onready var _background: TextureRect = %Background
 @onready var _effects: Node2D = %Effects
 @onready var _margin: MarginContainer = %Margin
-@onready var _title_block: Control = %TitleBlock
-@onready var _name_label: Label = %NameLabel
-@onready var _tagline_label: Label = %TaglineLabel
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _around_block: Control = %AroundBlock
 @onready var _people_list: HBoxContainer = %PeopleList
@@ -61,15 +58,13 @@ func _ready() -> void:
 		SceneRouter.go_to.call_deferred(SceneRouter.TITLE_SCREEN)
 		return
 
-	SafeArea.apply_top_margin(_margin, 40)
+	SafeArea.apply_top_margin(_margin, 64)
 	_shows_corner_map = district.corner_map != null
 	_background.texture = district.corner_map if _shows_corner_map else district.background
 	_corner_map.visible = _shows_corner_map
 	_background.self_modulate = PHASE_TINTS[GameState.run.phase]
 	if district.ambient_effect != null:
 		_effects.add_child(district.ambient_effect.instantiate())
-	_name_label.text = district.display_name
-	_tagline_label.text = district.tagline
 	_news_line.show_for(district.id)
 	_build_people_strip()
 	_build_venue_fabs(district)
@@ -79,7 +74,7 @@ func _ready() -> void:
 	_crate_button.pressed.connect(_deliver_crate)
 	_map_fab.pressed.connect(SceneRouter.go_to.bind(SceneRouter.MAP_SCREEN))
 	_logout_dialog.confirmed.connect(_log_out)
-	_turf_bar.pressed.connect(StreetTalk.talk_about_turf)
+	_turf_bar.pressed.connect(GameOverlay.open_turf)
 	_corner_map.corner_tapped.connect(CornerTalk.open)
 	GameState.run_changed.connect(_on_run_changed)
 	GameState.day_started.connect(_on_day_started)
@@ -244,19 +239,13 @@ func _on_meet_choice(choice: StringName) -> void:
 	_hand_over_crate(GameState.meet_crate_buyer(), invoiced, report)
 
 
-## report is the job's pay breakdown, shown under the line.
-func _hand_over_crate(pay: int, invoiced: bool, report: String) -> void:
+func _hand_over_crate(pay: int, invoiced: bool, _report: String) -> void:
+	GameOverlay.end_talk()
 	if pay <= 0:
-		GameOverlay.end_talk()
 		return
 	AudioService.play_sfx(Sfx.CRATE_DROP)
-	var line := "Voronin's contact checks the seals, loads the crate into a van and counts out %s." % Format.money(pay)
-	if invoiced:
-		line = "Voronin's contact checks the seals and loads the crate into a van. The buyer owes me %s, due in %d days." % [Format.money(pay), Invoices.DAYS_TO_PAY]
-	else:
+	if not invoiced:
 		AudioService.play_sfx(Sfx.COINS_IN)
-	var choices: Array[DialogueChoice] = [DialogueChoice.new(&"continue", "Continue", true, true)]
-	GameOverlay.talk(Content.player(GameState.run.player_id), line, choices, func(_choice: StringName) -> void: GameOverlay.end_talk(), report)
 
 
 func _enter_casino(casino: CasinoDef, host: CharacterDef) -> void:
@@ -316,10 +305,8 @@ func _log_out() -> void:
 func _play_entrance() -> void:
 	var fabs: Array[Node] = _venue_fabs.get_children()
 	fabs.append(_map_fab)
-	_title_block.modulate.a = 0.0
 	for fab: Control in fabs:
 		fab.modulate.a = 0.0
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_title_block, "modulate:a", 1.0, 0.6).set_delay(0.15)
 	for index in fabs.size():
 		tween.tween_property(fabs[index], "modulate:a", 1.0, 0.35).set_delay(0.35 + index * 0.08)

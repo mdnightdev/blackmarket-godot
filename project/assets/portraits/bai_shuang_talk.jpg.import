@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b8y07l5xbvbtg"
-path.s3tc="res://.godot/imported/bai_shuang_talk.jpg-5160642466ca52c82fb02857682b611f.s3tc.ctex"
-path.etc2="res://.godot/imported/bai_shuang_talk.jpg-5160642466ca52c82fb02857682b611f.etc2.ctex"
+path="res://.godot/imported/bai_shuang_talk.jpg-5160642466ca52c82fb02857682b611f.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/portraits/bai_shuang_talk.jpg"
-dest_files=["res://.godot/imported/bai_shuang_talk.jpg-5160642466ca52c82fb02857682b611f.s3tc.ctex", "res://.godot/imported/bai_shuang_talk.jpg-5160642466ca52c82fb02857682b611f.etc2.ctex"]
+dest_files=["res://.godot/imported/bai_shuang_talk.jpg-5160642466ca52c82fb02857682b611f.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

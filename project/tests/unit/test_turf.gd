@@ -19,8 +19,8 @@ func _hold_corners(district_id: StringName, count: int) -> void:
 
 
 func _hold_turf(gang: GangDef) -> void:
-	for district_id in gang.turf:
-		Corners.take_all(_run, district_id)
+	for corner in Rivals.corners(_run, gang):
+		Corners.take(_run, corner.id)
 
 
 func _set_rank(rank_number: int) -> void:
@@ -33,6 +33,8 @@ func test_every_rival_district_starts_with_the_gang() -> void:
 			continue
 		assert_eq(Turf.share(_run, district_id), 0, String(district_id))
 		assert_eq(Turf.holder(_run, district_id), Turf.Holder.GANG, String(district_id))
+	assert_eq(Turf.holder(_run, &"downtown"), Turf.Holder.NOBODY)
+	assert_eq(Turf.holder(_run, &"the_heights"), Turf.Holder.NOBODY)
 	assert_eq(Turf.holder(_run, &"golden_mile"), Turf.Holder.NOBODY)
 	assert_eq(Turf.held_count(_run), 0)
 
@@ -50,9 +52,10 @@ func test_the_share_is_the_corners_held() -> void:
 
 func test_sell_factor_depends_on_who_holds_the_district() -> void:
 	_hold_corners(&"docks", 3)
-	_hold_corners(&"downtown", 2)
+	_hold_corners(&"riverside", 2)
 	assert_eq(Turf.sell_factor(_run, &"docks"), Turf.HELD_SELL_FACTOR)
 	assert_eq(Turf.sell_factor(_run, &"slums"), Turf.GANG_SELL_FACTOR)
+	assert_eq(Turf.sell_factor(_run, &"riverside"), 1.0)
 	assert_eq(Turf.sell_factor(_run, &"downtown"), 1.0)
 	assert_eq(Turf.sell_factor(_run, &"golden_mile"), 1.0)
 
@@ -100,19 +103,21 @@ func test_a_second_business_needs_the_rank() -> void:
 
 
 func test_no_muggings_on_held_turf() -> void:
+	_run.district_id = &"docks"
 	var mugging: EventDef = Content.events().filter(func(event: EventDef) -> bool: return event.effect == EventDef.Effect.MUGGING)[0]
 	assert_false(StreetEvents.prepare(_run, mugging, RandomNumberGenerator.new()).is_empty())
-	_hold_corners(&"downtown", 3)
+	_hold_corners(&"docks", 3)
 	assert_true(StreetEvents.prepare(_run, mugging, RandomNumberGenerator.new()).is_empty())
 
 
 func test_taking_every_corner_drives_the_gang_out() -> void:
 	var gang := _jackal()
 	_hold_turf(gang)
-	Corners.lose(_run, Corners.of(gang.turf[-1])[-1].id)
+	var last_corner: CornerDef = Rivals.corners(_run, gang)[-1]
+	Corners.lose(_run, last_corner.id)
 	Turf.check_victory(_run)
 	assert_false(Gangs.is_gone(_run, gang), "one corner left")
-	Corners.take_all(_run, gang.turf[-1])
+	Corners.take(_run, last_corner.id)
 	Turf.check_victory(_run)
 	assert_true(Gangs.is_gone(_run, gang))
 	assert_eq(_run.cash, 10000 + gang.victory_reward)
@@ -120,15 +125,13 @@ func test_taking_every_corner_drives_the_gang_out() -> void:
 	assert_eq(Gangs.boss_location(_run, gang, Calendar.stamp(_run)), &"")
 
 
-func test_vex_needs_old_market_too() -> void:
-	for district_id in _vex().turf:
-		if district_id != Corners.HOME:
-			Corners.take_all(_run, district_id)
-	Turf.check_victory(_run)
-	assert_false(Gangs.is_gone(_run, _vex()))
+func test_vex_stays_in_old_market_as_enforcer_and_passes_rabbit_test() -> void:
 	Corners.take_all(_run, Corners.HOME)
 	Turf.check_victory(_run)
-	assert_true(Gangs.is_gone(_run, _vex()))
+	assert_false(Gangs.is_gone(_run, _vex()))
+	assert_false(VexTalk.passed_rabbit_test(_run))
+	Corners.take(_run, Corners.of(&"slums")[0].id)
+	assert_true(VexTalk.passed_rabbit_test(_run))
 
 
 func test_victory_ends_with_a_summary_of_what_was_won() -> void:
@@ -151,9 +154,9 @@ func test_victory_waits_for_the_pending_encounter() -> void:
 
 
 func test_a_gone_gang_leaves_its_districts_to_the_player() -> void:
-	_run.gangs_gone.append(&"vex")
+	_run.gangs_gone.append(&"baby")
 	assert_eq(Turf.holder(_run, &"slums"), Turf.Holder.PLAYER)
-	assert_false(Gangs.gate_due(_run, _vex(), 0.0))
+	assert_false(Gangs.gate_due(_run, _baby(), 0.0))
 
 
 func test_old_saves_turn_their_shares_into_corners() -> void:
@@ -167,13 +170,17 @@ func test_old_saves_turn_their_shares_into_corners() -> void:
 		"the stronghold stays with the gang")
 	assert_eq(Corners.held_count(restored, &"slums"), 4)
 	assert_eq(Corners.held_count(restored, &"downtown"), 0)
-	assert_eq(Corners.held_count(restored, &"riverside"), 0)
-	assert_eq(Corners.held_count(restored, &"the_heights"), 4, "Celeste was already gone")
+	assert_eq(Corners.held_count(restored, &"riverside"), 2, "Celeste's two Riverside corners transfer")
+	assert_eq(Corners.held_count(restored, &"west_end"), 4, "Celeste was already gone")
 	assert_false(restored.to_dict().has("turf"))
 
 
 func _vex() -> GangDef:
 	return Content.gang(&"vex")
+
+
+func _baby() -> GangDef:
+	return Content.gang(&"baby")
 
 
 func _jackal() -> GangDef:

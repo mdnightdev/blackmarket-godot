@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4fu1sl2bcrif"
-path.s3tc="res://.godot/imported/arjun_talk.jpg-3631607e3c6672ec3db8ecc7db45b811.s3tc.ctex"
-path.etc2="res://.godot/imported/arjun_talk.jpg-3631607e3c6672ec3db8ecc7db45b811.etc2.ctex"
+path="res://.godot/imported/arjun_talk.jpg-3631607e3c6672ec3db8ecc7db45b811.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/portraits/arjun_talk.jpg"
-dest_files=["res://.godot/imported/arjun_talk.jpg-3631607e3c6672ec3db8ecc7db45b811.s3tc.ctex", "res://.godot/imported/arjun_talk.jpg-3631607e3c6672ec3db8ecc7db45b811.etc2.ctex"]
+dest_files=["res://.godot/imported/arjun_talk.jpg-3631607e3c6672ec3db8ecc7db45b811.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

@@ -38,9 +38,17 @@ func show_district(run: RunState, district_id: StringName) -> void:
 	_gang_color = gang.color
 	_corner_colors.clear()
 	for corner in Corners.of(district_id):
-		_corner_colors.append(PLAYER_COLOR if Corners.holds(run, corner.id) else gang.color)
+		var corner_gang := Corners.gang_of(corner.id)
+		var rival_color := corner_gang.color if corner_gang != null else gang.color
+		_corner_colors.append(PLAYER_COLOR if Corners.holds(run, corner.id) else rival_color)
+	var owners := Gangs.owners(district_id)
 	if not _corner_colors.is_empty():
-		_share_label.text = "CORNERS  You %d   %s %d" % [Corners.held_count(run, district_id), gang.display_name, _corner_colors.size() - Corners.held_count(run, district_id)]
+		var parts: PackedStringArray = ["CORNERS  You %d" % Corners.held_count(run, district_id)]
+		for g in owners:
+			var count := Corners.of(district_id).filter(
+				func(c: CornerDef) -> bool: return not Corners.holds(run, c.id) and Corners.gang_of(c.id) == g).size()
+			parts.append("%s %d" % [g.display_name, count])
+		_share_label.text = "   ".join(parts)
 	elif Gangs.is_gone(run, gang):
 		_share_label.text = "TURF  %s has left the city" % gang.display_name
 	else:
@@ -49,7 +57,10 @@ func show_district(run: RunState, district_id: StringName) -> void:
 		Turf.Holder.PLAYER:
 			_status_label.text = "YOURS"
 		Turf.Holder.GANG:
-			_status_label.text = "%s HOLDS" % gang.display_name.to_upper()
+			if owners.size() > 1:
+				_status_label.text = "%s / %s" % [owners[0].display_name.to_upper(), owners[1].display_name.to_upper()]
+			else:
+				_status_label.text = "%s HOLDS" % gang.display_name.to_upper()
 		_:
 			_status_label.text = "CONTESTED"
 	_bar.queue_redraw()

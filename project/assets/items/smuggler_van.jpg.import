@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cd1u030qmbjri"
-path.s3tc="res://.godot/imported/smuggler_van.jpg-4a178847a345338423c93da6fbe7354b.s3tc.ctex"
-path.etc2="res://.godot/imported/smuggler_van.jpg-4a178847a345338423c93da6fbe7354b.etc2.ctex"
+path="res://.godot/imported/smuggler_van.jpg-4a178847a345338423c93da6fbe7354b.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/items/smuggler_van.jpg"
-dest_files=["res://.godot/imported/smuggler_van.jpg-4a178847a345338423c93da6fbe7354b.s3tc.ctex", "res://.godot/imported/smuggler_van.jpg-4a178847a345338423c93da6fbe7354b.etc2.ctex"]
+dest_files=["res://.godot/imported/smuggler_van.jpg-4a178847a345338423c93da6fbe7354b.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
