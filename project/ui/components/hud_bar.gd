@@ -12,10 +12,12 @@ const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 @onready var _clean_divider: Control = %CleanDivider
 @onready var _debt_box: Control = %Debt
 @onready var _debt_caption: Label = %DebtCaption
+@onready var _debt_divider: Control = %DebtDivider
 @onready var _debt_value: Label = %DebtValue
 @onready var _heat_icon: TextureRect = %HeatIcon
 @onready var _heat_bar: ProgressBar = %HeatBar
 @onready var _day_label: Label = %DayLabel
+@onready var _district_label: Label = %DistrictLabel
 
 var _shown_cash := 0
 var _cash_tween: Tween
@@ -63,18 +65,28 @@ func refresh() -> void:
 	else:
 		_clean_box.hide()
 		_clean_divider.hide()
-	if run.debt > 0:
-		_debt_caption.text = "Debt"
-		_debt_value.text = Format.money_short(run.debt)
-	else:
-		_debt_caption.text = "Cred"
-		_debt_value.text = StreetCred.rank_name(StreetCred.rank(run))
+		if run.debt > 0:
+			_debt_box.show()
+			_debt_divider.show()
+			_debt_caption.text = "Debt"
+			_debt_caption.add_theme_color_override("font_color", Palette.RISK_HIGH)
+			_debt_value.text = Format.money_short(run.debt)
+			_debt_value.add_theme_color_override("font_color", Palette.RISK_HIGH)
+		else:
+			_debt_box.hide()
+			_debt_divider.hide()
+
 	var heat_color := _heat_color(run.heat, run.heat_timer > 0.0)
 	_heat_bar.value = run.heat
 	_heat_fill.bg_color = heat_color
 	_heat_icon.modulate = heat_color
 	_count_cash_to(run.cash)
 	_update_clock()
+
+	var district := GameState.current_district()
+	if district != null:
+		_district_label.text = district.display_name
+
 
 
 func _update_clock() -> void:

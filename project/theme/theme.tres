@@ -2,7 +2,7 @@
 
 [ext_resource type="FontFile" path="res://theme/fonts/Inter-Regular.woff2" id="1_inter_regular"]
 [ext_resource type="FontFile" path="res://theme/fonts/Inter-SemiBold.woff2" id="2_inter_semibold"]
-[ext_resource type="FontFile" path="res://theme/fonts/Cinzel-Bold.woff2" id="3_cinzel"]
+[ext_resource type="FontFile" path="res://theme/fonts/Inter-SemiBold.woff2" id="3_inter_semibold"]
 [ext_resource type="FontFile" path="res://theme/fonts/RubikDirt-Regular.woff2" id="4_rubik_dirt"]
 [ext_resource type="FontFile" path="res://theme/fonts/NotoSansSC-Subset.otf" id="5_noto_sc"]
 
@@ -13,7 +13,7 @@ spacing_glyph = 1
 
 [sub_resource type="FontVariation" id="FontVariation_display"]
 fallbacks = Array[Font]([ExtResource("5_noto_sc")])
-base_font = ExtResource("3_cinzel")
+base_font = ExtResource("3_inter_semibold")
 spacing_glyph = 1
 
 [sub_resource type="FontVariation" id="FontVariation_logo"]

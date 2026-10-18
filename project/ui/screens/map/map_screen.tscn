@@ -129,6 +129,7 @@ theme_override_constants/separation = 10
 layout_mode = 2
 
 [node name="LocationChip" type="PanelContainer" parent="Margin/Layout"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 mouse_filter = 2
