@@ -31,12 +31,63 @@ const BOOK_BURNED := "shark_book_burned"
 const VEX_GANG: StringName = &"vex"
 
 
+const INVASION_ORDER: Array[StringName] = [
+	&"old_market",
+	&"slums",
+	&"warehouse_row",
+	&"west_end",
+	&"north_port",
+	&"docks",
+	&"riverside",
+]
+
+const INVASION_PREREQUISITES: Dictionary = {
+	&"slums": &"old_market",
+	&"warehouse_row": &"slums",
+	&"west_end": &"warehouse_row",
+	&"north_port": &"west_end",
+	&"docks": &"north_port",
+	&"riverside": &"north_port",
+}
+
+
 static func is_open(run: RunState) -> bool:
 	return Corners.holds(run, Corners.MAMA_LIN) and not Story.has(run, VEX_FELL)
 
 
+static func can_invade_district(run: RunState, district_id: StringName) -> bool:
+	if district_id == Corners.HOME:
+		return is_open(run)
+	if not Campaign.is_act_two(run):
+		return false
+	if district_id == &"slums":
+		return true
+	var prereq: StringName = INVASION_PREREQUISITES.get(district_id, &"")
+	if prereq.is_empty():
+		return false
+	return Turf.holds(run, prereq) or Corners.held_count(run, district_id) > 0
+
+
+static func invasion_lock_reason(run: RunState, district_id: StringName) -> String:
+	if district_id == Corners.HOME:
+		if not Corners.holds(run, Corners.MAMA_LIN):
+			return "Buy Mama Lin's corner first"
+		return ""
+	if not Campaign.is_act_two(run):
+		return "Defeat Vex in Old Market first"
+	var district := Content.district(district_id)
+	if district != null and Travel.is_locked(run, district):
+		return "Needs %s rank" % StreetCred.rank_name(district.min_rank)
+	var prereq: StringName = INVASION_PREREQUISITES.get(district_id, &"")
+	if not prereq.is_empty() and not Turf.holds(run, prereq) and Corners.held_count(run, district_id) <= 0:
+		var prev_dist := Content.district(prereq)
+		var prev_name := prev_dist.display_name if prev_dist != null else String(prereq)
+		return "Hold %s first" % prev_name
+	return ""
+
+
 ## A rival corner the player could hit or scout: Old Market's during the war, any other in Act 2 once the district
-## is open to the player.
+## is open to the player and invasion progression order has reached it.
 static func is_target(run: RunState, corner: CornerDef) -> bool:
 	if Corners.holds(run, corner.id):
 		return false
@@ -50,7 +101,8 @@ static func is_target(run: RunState, corner: CornerDef) -> bool:
 	return Campaign.is_act_two(run) \
 		and district != null \
 		and not Gangs.is_gone(run, gang) \
-		and not Travel.is_locked(run, district)
+		and not Travel.is_locked(run, district) \
+		and can_invade_district(run, district_id)
 
 
 static func can_attack(run: RunState, corner: CornerDef) -> bool:

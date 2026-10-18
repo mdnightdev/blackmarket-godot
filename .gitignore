@@ -24,3 +24,16 @@ CHECK_ERRORS.md
 CODE_DUPLICATION_ANALYSIS.md
 PLAN.md
 SESSION_NOTES.md
+DESIGN.md
+AGENTS.md
+Godot_v4.3-stable_linux.arm64
+release.keystore
+godot_linux.zip
+
+# Generated Godot export artifacts
+/AndroidManifest.xml
+/AndroidManifest-godot-portrait.xml
+/assets/*.pck
+
+check_errors.sh
+run_tests.sh

@@ -60,4 +60,4 @@ func test_only_vex_confronts_the_player_in_act_one() -> void:
 	assert_eq(gangs.size(), 1)
 	assert_eq(gangs[0].id, War.VEX_GANG)
 	Story.mark(_run, War.VEX_FELL)
-	assert_eq(Gangs.confronting(_run).size(), Gangs.active(_run).size())
+	assert_eq(Gangs.confronting(_run).size(), Gangs.active(_run).size() - 1, "Vex stops confronting the player in Act 2")

@@ -25,11 +25,15 @@ func test_only_corners_the_player_could_hit_can_be_scouted() -> void:
 	assert_eq(Scouting.scout(_run, Corners.MAMA_LIN, 0.9, 0.5), Scouting.Result.NOT_A_TARGET, "already held")
 	assert_eq(Scouting.scout(_run, STEPS, 0.9, 0.5), Scouting.Result.OK)
 	_open_act_two()
+	assert_eq(Scouting.scout(_run, &"steam_grate_alley", 0.9, 0.5), Scouting.Result.OK, "The Slums opens in Act 2")
+	assert_eq(Scouting.scout(_run, BAY, 0.9, 0.5), Scouting.Result.NOT_A_TARGET, "Warehouse Row requires holding The Slums first")
+	Corners.take_all(_run, &"slums")
 	assert_eq(Scouting.scout(_run, BAY, 0.9, 0.5), Scouting.Result.OK)
 
 
 func test_a_scout_costs_more_in_richer_districts() -> void:
 	_open_act_two()
+	Corners.take_all(_run, &"slums")
 	var riverside := Corners.find(&"under_the_bridge")
 	assert_eq(Scouting.cost(riverside), Scouting.COST_PER_TIER * 2)
 	Scouting.scout(_run, BAY, 0.9, 0.5)

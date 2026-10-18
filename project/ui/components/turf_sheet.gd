@@ -213,6 +213,8 @@ func _talk_about_district(district: DistrictDef) -> void:
 	if Turf.holds(run, district.id):
 		hint = "Yours. The police stop you less and there is room for %d business%s." % [
 			Turf.business_slots(run, district.id), "" if Turf.business_slots(run, district.id) == 1 else "es"]
+	elif not War.can_invade_district(run, district.id):
+		hint = "Invasion locked: %s." % War.invasion_lock_reason(run, district.id)
 	GameOverlay.talk(Content.player(run.player_id), line, [_close_choice()], _end_talk, hint)
 
 

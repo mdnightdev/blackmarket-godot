@@ -71,7 +71,7 @@ static func play_enforcer(vex: CharacterDef) -> void:
 			var intro_pages: Array[Dictionary] = [
 				{ "speaker": vex.id, "line": "You spared me at the Red Lantern. That makes my blade yours, boss. Point me at a district." },
 				{ "speaker": RABBIT, "line": "Not yet. Taking orders in Old Market is easy. Take one corner outside this market first. I want to see her bleed for our crew before she touches the books." },
-				{ "speaker": vex.id, "line": "Fair enough, soldier. Pick a corner in The Slums, The Docks, or Warehouse Row. Take it, and I'll run your street protection." },
+				{ "speaker": vex.id, "line": "Fair enough, soldier. Pick a corner in The Slums. Take it, and I'll run your street protection." },
 			]
 			_show_dialogue_pages(intro_pages, 0, func() -> void: _open_test_pending(vex))
 			return
@@ -93,8 +93,8 @@ static func _open_test_pending(vex: CharacterDef) -> void:
 		DialogueChoice.new(INTEL, "Size up the rival crews"),
 		DialogueChoice.new(LEAVE, "Leave", true, true),
 	]
-	var line := "Rabbit is watching me. Take one corner outside Old Market and I'll open your enforcer desk."
-	var hint := "Hit a corner in The Slums, The Docks, or Warehouse Row to prove Vex's loyalty."
+	var line := "Rabbit is watching me. Take one corner in The Slums and I'll open your enforcer desk."
+	var hint := "Hit a corner in The Slums to prove Vex's loyalty."
 	GameOverlay.talk(vex, line, choices, func(choice: StringName) -> void:
 		if choice == INTEL:
 			_show_rival_intel(vex, func() -> void: _open_test_pending(vex))
