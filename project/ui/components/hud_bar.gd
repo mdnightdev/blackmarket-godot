@@ -11,7 +11,6 @@ const PHASE_LETTERS: Array[String] = ["M", "N", "E", "S"]
 @onready var _clean_value: Label = %CleanValue
 @onready var _clean_divider: Control = %CleanDivider
 @onready var _debt_box: Control = %Debt
-@onready var _debt_caption: Label = %DebtCaption
 @onready var _debt_divider: Control = %DebtDivider
 @onready var _debt_value: Label = %DebtValue
 @onready var _heat_icon: TextureRect = %HeatIcon
@@ -68,8 +67,6 @@ func refresh() -> void:
 		if run.debt > 0:
 			_debt_box.show()
 			_debt_divider.show()
-			_debt_caption.text = "Debt"
-			_debt_caption.add_theme_color_override("font_color", Palette.RISK_HIGH)
 			_debt_value.text = Format.money_short(run.debt)
 			_debt_value.add_theme_color_override("font_color", Palette.RISK_HIGH)
 		else:
