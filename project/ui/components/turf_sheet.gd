@@ -237,8 +237,8 @@ func _add_crew(run: RunState) -> void:
 		return
 	if Campaign.is_act_two(run):
 		var proven := VexTalk.passed_rabbit_test(run)
-		_add_row(SKILL_ICONS[&"muscle"], "Enforcer, Vex", "Free",
-			"Runs your Enforcer Desk in Old Market." if proven else "Rabbit wants you to take one corner outside Old Market before Vex opens her desk.")
+		_add_row(SKILL_ICONS[&"muscle"], "Lieutenant, Vex", "Free",
+			"Stationed in Old Market managing district protection and lookouts." if proven else "Rabbit wants you to take one corner in The Slums before Vex opens her desk.")
 	for role in roles:
 		if Crew.is_free_role(run, role.id):
 			_add_row(role.icon, "%s, %s" % [role.display_name, "the Shark" if run.shark_bought else "午夜兔子"], "Free", Crew.effects(role))

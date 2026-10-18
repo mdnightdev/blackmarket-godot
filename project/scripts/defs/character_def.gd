@@ -35,5 +35,11 @@ func title() -> String:
 	return role_name()
 
 
+func role_title(run: RunState = null) -> String:
+	if run != null and id == &"rival" and Campaign.is_act_two(run):
+		return "Lieutenant"
+	return role_name()
+
+
 func role_name() -> String:
 	return ROLE_NAMES[role]
