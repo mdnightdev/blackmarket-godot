@@ -35,6 +35,7 @@ const PHASE_TINTS := {
 @onready var _background: TextureRect = %Background
 @onready var _effects: Node2D = %Effects
 @onready var _margin: MarginContainer = %Margin
+@onready var _tagline_label: Label = %TaglineLabel
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _around_block: Control = %AroundBlock
 @onready var _people_list: HBoxContainer = %PeopleList
@@ -65,6 +66,7 @@ func _ready() -> void:
 	_background.self_modulate = PHASE_TINTS[GameState.run.phase]
 	if district.ambient_effect != null:
 		_effects.add_child(district.ambient_effect.instantiate())
+	_tagline_label.text = district.tagline
 	_news_line.show_for(district.id)
 	_build_people_strip()
 	_build_venue_fabs(district)

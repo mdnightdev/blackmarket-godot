@@ -15,7 +15,6 @@ const CRATE_ROUTE_COLOR := Color(Palette.PEACH, 0.55)
 @onready var _margin: MarginContainer = %Margin
 @onready var _input_blocker: Control = %InputBlocker
 @onready var _district_sheet: DistrictSheet = %DistrictSheet
-@onready var _location_label: Label = %LocationLabel
 
 var _pins: Array[MapPin] = []
 
@@ -34,7 +33,6 @@ func _ready() -> void:
 		_city_view.add_pin(pin)
 		_pins.append(pin)
 	_show_crate_route()
-	_location_label.text = "You are in %s" % GameState.current_district().display_name
 	_city_view.focus_on(GameState.current_district().map_position, CityView.START_ZOOM)
 	_city_view.district_tapped.connect(_on_district_selected)
 
@@ -137,12 +135,10 @@ func _wait_out_roadblock(destination: DistrictDef) -> void:
 	var open := GameState.wait_out_roadblock(destination.id)
 	var tween := create_tween().set_trans(Tween.TRANS_SINE)
 	for stamp in range(start + 1, Calendar.stamp(run) + 1):
-		tween.tween_callback(_location_label.set_text.bind("Lying low. %s" % Calendar.describe(stamp)))
 		tween.tween_property(_city_view, "modulate", LAPSE_DIM, LAPSE_PHASE_SECONDS / 2.0)
 		tween.tween_property(_city_view, "modulate", Color.WHITE, LAPSE_PHASE_SECONDS / 2.0)
 	tween.tween_interval(0.0)
 	await tween.finished
-	_location_label.text = "You are in %s" % GameState.current_district().display_name
 	_input_blocker.hide()
 	if open and not Encounters.has_pending(run):
 		_travel(destination, false)

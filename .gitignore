@@ -24,3 +24,14 @@ CHECK_ERRORS.md
 CODE_DUPLICATION_ANALYSIS.md
 PLAN.md
 SESSION_NOTES.md
+
+AGENTS.md
+        AndroidManifest-godot-portrait.xml
+        AndroidManifest.xml
+        DESIGN.md
+        Godot_v4.3-stable_linux.arm64
+        assets/
+        
+        godot_linux.zip
+        release.keystore
+        
