@@ -137,6 +137,21 @@ static func answer_haggle(run: RunState, order: Dictionary, accept_counter: bool
 	return walked
 
 
+## Hands over the order via hired runner from anywhere in the city.
+static func deliver_by_runner(run: RunState, order: Dictionary) -> int:
+	if not is_stocked(run, order):
+		return 0
+	var item := Content.item(StringName(str(order.item)))
+	var quantity := int(order.quantity)
+	var unit_price := int(order.unit_price)
+	if item == null or Trade.sell(run, item, quantity, unit_price) != Trade.Result.OK:
+		return 0
+	run.customer_orders.erase(order)
+	StreetCred.add(run, StreetCred.ORDER_DELIVERED)
+	DailyTasks.record_sale(run, StringName(str(order.district)), unit_price * quantity)
+	return unit_price * quantity
+
+
 static func hold_firm_chance(run: RunState) -> float:
 	return Odds.contest(HOLD_FIRM_EDGE + Talk.cred_edge(run))
 

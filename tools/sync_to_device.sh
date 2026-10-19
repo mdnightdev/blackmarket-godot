@@ -26,6 +26,11 @@ for top_file in project.godot export_presets.cfg .gutconfig.json; do
 		cp "$source_dir/$top_file" "$target_dir/$top_file"
 	fi
 done
+for top_scene in "$source_dir"/*.tscn; do
+	if [[ -f "$top_scene" ]]; then
+		cp -f "$top_scene" "$target_dir/"
+	fi
+done
 for code_dir in scripts ui data theme tests; do
 	if [[ -d "$source_dir/$code_dir" ]]; then
 		rm -rf "$target_dir/$code_dir"

@@ -289,3 +289,73 @@ func test_crew_report_and_runner_survive_a_save() -> void:
 	var restored := RunState.from_dict(JSON.parse_string(JSON.stringify(_run.to_dict())))
 	assert_eq(restored.crew_report, _run.crew_report)
 	assert_false(Crew.runner_ready(restored))
+
+
+func test_runner_delivers_customer_order() -> void:
+	Crew.hire(_run, RUNNER)
+	var order := {
+		"id": "order:1", "customer": "chen", "item": "burner_phones", "quantity": 2,
+		"unit_price": 300, "street_price": 250, "district": "old_market",
+		"temperament": 0, "rush": false, "lead": 3, "posted_stamp": 0,
+		"expires_stamp": 3, "due_stamp": 3, "counter_price": 0, "countered": false,
+	}
+	_run.customer_orders.append(order)
+	Inventory.add_units(_run, &"burner_phones", 2)
+	var cash := _run.cash
+	var pay := Crew.send_runner(_run, order)
+	assert_eq(pay, 600)
+	assert_eq(_run.cash, cash + 600)
+	assert_true(_run.customer_orders.is_empty())
+	assert_false(Crew.runner_ready(_run))
+
+
+func test_muscle_collects_debt_errand() -> void:
+	Crew.hire(_run, MUSCLE)
+	var errand := {
+		"id": "errand:1", "kind": Errands.COLLECTION, "flavor": "package", "sender": "shark",
+		"district": "old_market", "pickup_district": "", "drop_district": "",
+		"debtor": "Benny Tsai", "owed": 1000, "pay": 400, "lead": 3,
+		"posted_stamp": 0, "expires_stamp": 3, "due_stamp": 3, "picked_up": false,
+	}
+	_run.errands.append(errand)
+	assert_true(Crew.muscle_ready(_run))
+	var cash := _run.cash
+	var pay := Crew.send_muscle(_run, errand)
+	assert_gt(pay, 0)
+	assert_true(_run.errands.is_empty())
+	assert_false(Crew.muscle_ready(_run))
+	assert_eq(Crew.send_muscle(_run, errand), 0, "muscle on cooldown this phase")
+
+
+func test_runner_arrest_and_bail() -> void:
+	Crew.hire(_run, RUNNER)
+	assert_false(Crew.is_jailed(_run, RUNNER))
+	var idx := Crew._index_of(_run, RUNNER)
+	_run.crew[idx]["jailed"] = true
+	_run.crew[idx]["bail"] = 800
+	assert_true(Crew.is_jailed(_run, RUNNER))
+	assert_null(Crew.runner(_run), "jailed runner cannot be assigned")
+	assert_false(Crew.runner_ready(_run))
+	_run.cash = 1000
+	assert_true(Crew.bail_member(_run, RUNNER))
+	assert_eq(_run.cash, 200)
+	assert_false(Crew.is_jailed(_run, RUNNER))
+	assert_not_null(Crew.runner(_run))
+
+
+func test_informant_increases_police_stops() -> void:
+	Crew.hire(_run, DRIVER)
+	var normal_factor := Crew.stop_factor(_run)
+	var idx := Crew._index_of(_run, DRIVER)
+	_run.crew[idx]["informant"] = true
+	assert_true(Crew.is_informant(_run, DRIVER))
+	assert_gt(Crew.stop_factor(_run), normal_factor)
+
+
+func test_morning_operational_risks_resolve() -> void:
+	Crew.hire(_run, RUNNER)
+	_run.heat = 60
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 42
+	var notices := Crew.morning(_run, rng)
+	assert_not_null(notices)

@@ -283,7 +283,29 @@ func _add_errands(run: RunState) -> void:
 		var caption := "For %s by %s" % [sender.display_name, Calendar.describe(int(errand.due_stamp)).to_lower()]
 		var place := Content.district(Errands.target_district(errand))
 		var hint := "GO TO %s" % place.display_name.to_upper() if place != null else ""
-		_add_row(sender.portrait, Errands.describe(errand), Errands.pay_label(errand), caption, hint)
+		var row := _add_row(sender.portrait, Errands.describe(errand), Errands.pay_label(errand), caption, hint)
+		if Campaign.is_act_two(run):
+			var kind := str(errand.get("kind", ""))
+			if kind == Errands.COLLECTION and Crew.muscle_ready(run):
+				var muscle := Crew.muscle(run)
+				row.set_hint("SEND %s" % muscle.display_name.to_upper(), Palette.TEXT_CREAM)
+				row.set_tappable(true)
+				row.pressed.connect(_ask.bind(
+					"Send %s to collect?" % muscle.display_name.to_lower(),
+					"Your %s visits %s in %s to collect the %s. No travel or heat required." % [muscle.display_name.to_lower(), str(errand.debtor), place.display_name if place != null else "", Format.money(int(errand.owed))],
+					"Send",
+					_send_muscle.bind(errand)
+				))
+			elif kind == Errands.DELIVERY and bool(errand.get("picked_up", false)) and Crew.runner_ready(run):
+				var runner := Crew.runner(run)
+				row.set_hint("SEND %s" % runner.display_name.to_upper(), Palette.TEXT_CREAM)
+				row.set_tappable(true)
+				row.pressed.connect(_ask.bind(
+					"Send your %s?" % runner.display_name.to_lower(),
+					"Your %s drops the %s in %s. No trip and no heat." % [runner.display_name.to_lower(), Errands.noun(errand), place.display_name if place != null else ""],
+					"Send",
+					_send_runner.bind(errand)
+				))
 
 
 ## Short of goods the row opens where to buy them. With the goods it heads to the customer or hands over here.
@@ -302,6 +324,15 @@ func _add_customer_orders(run: RunState) -> void:
 		elif Customers.can_hand_over(run, order):
 			row.set_hint("HAND OVER HERE", Palette.TEXT_CREAM)
 			row.pressed.connect(_head_to_customer.bind(order))
+		elif Campaign.is_act_two(run) and Crew.runner_ready(run):
+			var runner := Crew.runner(run)
+			row.set_hint("SEND %s" % runner.display_name.to_upper(), Palette.TEXT_CREAM)
+			row.pressed.connect(_ask.bind(
+				"Send your %s?" % runner.display_name.to_lower(),
+				"Your %s takes the %d %s to %s and brings back %s. No trip and no heat." % [runner.display_name.to_lower(), int(order.quantity), Content.item(StringName(str(order.item))).display_name, place, Format.money(Customers.total(order))],
+				"Send",
+				_send_runner.bind(order)
+			))
 		else:
 			var spot := Content.district(Meetings.spot(order))
 			row.set_hint("MEET IN %s" % spot.display_name.to_upper() if spot != null else "GO TO %s" % place.to_upper(), Palette.TEXT_CREAM)
@@ -326,6 +357,12 @@ func _send_runner(job: Dictionary) -> void:
 	var pay := GameState.send_runner(job)
 	if pay > 0:
 		AudioService.play_sfx(Sfx.FAVOUR_DONE)
+
+
+func _send_muscle(errand: Dictionary) -> void:
+	var pay := GameState.send_muscle(errand)
+	if pay > 0:
+		AudioService.play_sfx(Sfx.COINS_IN)
 
 
 func _add_heists(run: RunState) -> void:

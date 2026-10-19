@@ -14,6 +14,8 @@ const MIN_STOP_FACTOR := 0.2
 const DELIVERIES: StringName = &"deliveries"
 const DELIVERY_PAY: StringName = &"delivery_pay"
 const RAIDS_WARNED: StringName = &"raids_warned"
+const COLLECTIONS: StringName = &"collections"
+const COLLECTION_PAY: StringName = &"collection_pay"
 
 
 ## One crew slot, plus one for every safehouse upgrade.
@@ -46,6 +48,40 @@ static func join_free(run: RunState, role_id: StringName) -> void:
 
 static func has(run: RunState, role_id: StringName) -> bool:
 	return _index_of(run, role_id) >= 0
+
+
+static func is_jailed(run: RunState, role_id: StringName) -> bool:
+	var index := _index_of(run, role_id)
+	return index >= 0 and bool(run.crew[index].get("jailed", false))
+
+
+static func is_informant(run: RunState, role_id: StringName) -> bool:
+	var index := _index_of(run, role_id)
+	return index >= 0 and bool(run.crew[index].get("informant", false))
+
+
+static func bail_cost(run: RunState, role_id: StringName) -> int:
+	var index := _index_of(run, role_id)
+	return maxi(0, int(run.crew[index].get("bail", 0))) if index >= 0 else 0
+
+
+static func bail_member(run: RunState, role_id: StringName) -> bool:
+	var index := _index_of(run, role_id)
+	if index < 0 or not bool(run.crew[index].get("jailed", false)):
+		return false
+	var cost := bail_cost(run, role_id)
+	if run.cash < cost:
+		return false
+	run.cash -= cost
+	run.crew[index]["jailed"] = false
+	run.crew[index]["bail"] = 0
+	return true
+
+
+static func max_delegations(run: RunState) -> int:
+	if not Campaign.is_act_two(run):
+		return 1
+	return clampi(1 + (StreetCred.rank(run) - 1) / 3, 1, 3)
 
 
 ## Hired roles in the order they were taken on.
@@ -129,7 +165,8 @@ static func pay_wages(run: RunState) -> Array[CrewRoleDef]:
 static func capacity_bonus(run: RunState) -> int:
 	var total := 0
 	for role in roles(run):
-		total += role.capacity_bonus
+		if not is_jailed(run, role.id):
+			total += role.capacity_bonus
 	return total
 
 
@@ -137,21 +174,27 @@ static func capacity_bonus(run: RunState) -> int:
 static func stop_factor(run: RunState) -> float:
 	var reduction := 0.0
 	for role in roles(run):
-		reduction += role.stop_reduction
-	return maxf(MIN_STOP_FACTOR, 1.0 - reduction)
+		if not is_jailed(run, role.id):
+			reduction += role.stop_reduction
+	var factor := maxf(MIN_STOP_FACTOR, 1.0 - reduction)
+	if run.crew.any(func(m: Dictionary) -> bool: return bool(m.get("informant", false))):
+		factor = minf(2.0, factor * 1.8)
+	return factor
 
 
 static func escape_bonus(run: RunState) -> float:
 	var total := 0.0
 	for role in roles(run):
-		total += role.escape_bonus
+		if not is_jailed(run, role.id):
+			total += role.escape_bonus
 	return total
 
 
 static func fight_bonus(run: RunState) -> float:
 	var total := 0.0
 	for role in roles(run):
-		total += role.fight_bonus
+		if not is_jailed(run, role.id):
+			total += role.fight_bonus
 	return total
 
 
@@ -159,18 +202,19 @@ static func fight_bonus(run: RunState) -> float:
 static func mugging_factor(run: RunState) -> float:
 	var factor := 1.0
 	for role in roles(run):
-		factor *= role.mugging_factor
+		if not is_jailed(run, role.id):
+			factor *= role.mugging_factor
 	return factor
 
 
 static func scouts_routes(run: RunState) -> bool:
-	return roles(run).any(func(role: CrewRoleDef) -> bool: return role.scouts_routes)
+	return roles(run).any(func(role: CrewRoleDef) -> bool: return not is_jailed(run, role.id) and role.scouts_routes)
 
 
 static func can_warn_of_raid(run: RunState) -> bool:
 	if run.raid_warning_day == run.day:
 		return false
-	return roles(run).any(func(role: CrewRoleDef) -> bool: return role.warns_of_raids)
+	return roles(run).any(func(role: CrewRoleDef) -> bool: return not is_jailed(run, role.id) and role.warns_of_raids)
 
 
 static func use_raid_warning(run: RunState) -> void:
@@ -178,10 +222,10 @@ static func use_raid_warning(run: RunState) -> void:
 	note(run, RAIDS_WARNED)
 
 
-## The hired role that runs deliveries, null when there is none.
+## The hired role that runs deliveries, null when there is none or when jailed.
 static func runner(run: RunState) -> CrewRoleDef:
 	for role in roles(run):
-		if role.delivers_jobs:
+		if not is_jailed(run, role.id) and role.delivers_jobs:
 			return role
 	return null
 
@@ -190,7 +234,19 @@ static func runner_ready(run: RunState) -> bool:
 	return runner(run) != null and run.runner_stamp != Calendar.stamp(run)
 
 
-## Hands over a bar order or favour from the bag without the trip, so it adds no heat.
+## The hired role that handles collections, null when there is none or when jailed.
+static func muscle(run: RunState) -> CrewRoleDef:
+	for role in roles(run):
+		if not is_jailed(run, role.id) and role.id == &"muscle":
+			return role
+	return null
+
+
+static func muscle_ready(run: RunState) -> bool:
+	return muscle(run) != null and run.muscle_stamp != Calendar.stamp(run)
+
+
+## Hands over a bar order, favour, customer order, or delivery errand without travel.
 ## Returns the pay, 0 when it could not be done.
 static func send_runner(run: RunState, job: Dictionary) -> int:
 	if not runner_ready(run):
@@ -204,6 +260,13 @@ static func send_runner(run: RunState, job: Dictionary) -> int:
 		pay = Favours.total(job)
 		if not Favours.deliver(run, job):
 			return 0
+	elif run.customer_orders.has(job):
+		pay = Customers.deliver_by_runner(run, job)
+		if pay <= 0:
+			return 0
+	elif run.errands.has(job) and str(job.get("kind", "")) == Errands.DELIVERY and bool(job.get("picked_up", false)):
+		pay = int(job.get("pay", 0))
+		Errands.complete(run, job)
 	else:
 		return 0
 	use_runner(run, pay)
@@ -214,6 +277,25 @@ static func use_runner(run: RunState, pay: int) -> void:
 	run.runner_stamp = Calendar.stamp(run)
 	note(run, DELIVERIES)
 	note(run, DELIVERY_PAY, pay)
+
+
+## Dispatches muscle to collect dues from a debtor without player travel.
+## Returns the pay, 0 when it could not be done.
+static func send_muscle(run: RunState, errand: Dictionary) -> int:
+	if not muscle_ready(run):
+		return 0
+	if not run.errands.has(errand) or str(errand.get("kind", "")) != Errands.COLLECTION:
+		return 0
+	var paid := Errands.complete(run, errand, 1.0)
+	var pay := int(paid.get("cash", 0)) + int(paid.get("debt", 0))
+	use_muscle(run, int(errand.get("owed", pay)))
+	return pay
+
+
+static func use_muscle(run: RunState, amount: int) -> void:
+	run.muscle_stamp = Calendar.stamp(run)
+	note(run, COLLECTIONS)
+	note(run, COLLECTION_PAY, amount)
 
 
 static func note(run: RunState, key: StringName, amount := 1) -> void:
@@ -227,12 +309,72 @@ static func report_line(run: RunState) -> String:
 	var deliveries := int(run.crew_report.get(DELIVERIES, 0))
 	if deliveries > 0:
 		parts.append("your runner made %d %s worth %s" % [deliveries, "delivery" if deliveries == 1 else "deliveries", Format.money(int(run.crew_report.get(DELIVERY_PAY, 0)))])
+	var collections := int(run.crew_report.get(COLLECTIONS, 0))
+	if collections > 0:
+		parts.append("your muscle made %d %s collecting %s" % [collections, "collection" if collections == 1 else "collections", Format.money(int(run.crew_report.get(COLLECTION_PAY, 0)))])
 	var warned := int(run.crew_report.get(RAIDS_WARNED, 0))
 	if warned > 0:
 		parts.append("your lookout warned you of %d %s" % [warned, "raid" if warned == 1 else "raids"])
 	if parts.is_empty():
 		return ""
 	return "Yesterday %s." % ", ".join(parts)
+
+
+## Morning operational street risks: runner arrests, mugging ambushes, and police informants.
+static func morning(run: RunState, rng: RandomNumberGenerator) -> Array[Dictionary]:
+	var notices: Array[Dictionary] = []
+	if not Campaign.is_act_two(run):
+		return notices
+
+	# 1. Runner arrest risk if runner is active and not already jailed
+	if has(run, &"runner") and not is_jailed(run, &"runner"):
+		var arrest_risk := 0.05 + (float(run.heat) / 250.0)
+		if rng.randf() < arrest_risk:
+			var idx := _index_of(run, &"runner")
+			if idx >= 0:
+				var bail := maxi(500, 250 * StreetCred.rank(run))
+				run.crew[idx]["jailed"] = true
+				run.crew[idx]["bail"] = bail
+				notices.append({
+					"line": "Your runner was caught in a street sweep overnight and booked.",
+					"hint": "Bail is %s. Post bail in your Crew roster to release them." % Format.money(bail),
+				})
+
+	# 2. Mugging ambush if rival gangs are active and deliveries/collections happened
+	if not Gangs.confronting(run).is_empty():
+		var total_jobs := int(run.crew_report.get(DELIVERIES, 0)) + int(run.crew_report.get(COLLECTIONS, 0))
+		if total_jobs > 0 and rng.randf() < 0.15:
+			if has(run, &"muscle") and not is_jailed(run, &"muscle"):
+				notices.append({
+					"line": "Rival gang raiders attempted to ambush your crew routes overnight.",
+					"hint": "Your muscle held the line and drove them back with no losses.",
+				})
+			else:
+				var stolen := mini(run.cash, 250 + 75 * StreetCred.rank(run))
+				if stolen > 0:
+					run.cash -= stolen
+					notices.append({
+						"line": "Rival thugs jumped your runner in an alley and took %s." % Format.money(stolen),
+						"hint": "Hire muscle to protect your runners from street ambushes.",
+					})
+
+	# 3. Informant flip if heat >= 50
+	if run.heat >= 50 and rng.randf() < 0.12:
+		var candidates: Array[Dictionary] = []
+		for member in run.crew:
+			if not is_free(member) and not bool(member.get("informant", false)):
+				candidates.append(member)
+		if not candidates.is_empty():
+			var flipped: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
+			flipped["informant"] = true
+			var role := Content.crew_role(StringName(str(flipped.get("role", ""))))
+			var name := role.display_name.to_lower() if role != null else "crew member"
+			notices.append({
+				"line": "Street rumor: Detective Ramos was seen leaning hard on your %s." % name,
+				"hint": "Suspected informant. They are leaking route intel. Fire them from Crew to stop the leak.",
+			})
+
+	return notices
 
 
 ## The role's effects, for example "+15 bag slots, delivers 1 job a phase". Odds are described, never quoted.
@@ -270,6 +412,11 @@ static func sanitize(entry: Dictionary) -> Dictionary:
 	}
 	if is_free(entry):
 		clean["free"] = true
+	if bool(entry.get("jailed", false)):
+		clean["jailed"] = true
+		clean["bail"] = maxi(0, int(entry.get("bail", 0)))
+	if bool(entry.get("informant", false)):
+		clean["informant"] = true
 	return clean
 
 

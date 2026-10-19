@@ -115,6 +115,7 @@ var crew: Array[Dictionary] = []
 var crew_report: Dictionary = {}
 ## Phase stamp of the runner's last delivery.
 var runner_stamp: int = -1
+var muscle_stamp: int = -1
 ## Pay owed for jobs delivered on credit. See Invoices for the entry layout.
 var invoices: Array[Dictionary] = []
 ## Owned businesses. See Businesses for the entry layout.
@@ -272,6 +273,7 @@ func to_dict() -> Dictionary:
 		"crew": crew,
 		"crew_report": _string_keys(crew_report),
 		"runner_stamp": runner_stamp,
+		"muscle_stamp": muscle_stamp,
 		"invoices": invoices,
 		"businesses": businesses,
 		"daily_tasks": daily_tasks,
@@ -460,6 +462,7 @@ static func from_dict(data: Dictionary) -> RunState:
 			state.crew.append(clean)
 	state.crew_report = _positive_counts(data.get("crew_report"))
 	state.runner_stamp = int(data.get("runner_stamp", -1))
+	state.muscle_stamp = int(data.get("muscle_stamp", -1))
 	for invoice in _dictionaries(data.get("invoices")):
 		var clean := Invoices.sanitize(invoice)
 		if not clean.is_empty():

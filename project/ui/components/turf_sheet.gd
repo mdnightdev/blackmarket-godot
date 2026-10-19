@@ -240,6 +240,24 @@ func _add_crew(run: RunState) -> void:
 		_add_row(SKILL_ICONS[&"muscle"], "Enforcer, Vex", "Free",
 			"Runs your Enforcer Desk in Old Market." if proven else "Rabbit wants you to take one corner outside Old Market before Vex opens her desk.")
 	for role in roles:
+		if Crew.is_jailed(run, role.id):
+			var bail := Crew.bail_cost(run, role.id)
+			_add_row(role.icon, "%s (In Jail)" % role.display_name, "Bail: %s" % Format.money(bail),
+				"Booked in custody. Inactive until bail is posted.", "TAP TO BAIL OUT", Palette.RISK_HIGH,
+				_ask.bind("Post bail for %s?" % role.display_name.to_lower(), "Pay %s to release them from custody immediately." % Format.money(bail), "Pay bail",
+					func() -> void:
+						if GameState.bail_crew(role.id):
+							AudioService.play_sfx(Sfx.COINS_OUT)
+							_rebuild(), true))
+			continue
+		if Crew.is_informant(run, role.id):
+			_add_row(role.icon, "%s (Suspected Informant)" % role.display_name, "%s a day" % Format.money(role.daily_wage),
+				"Leaking movement intel to Detective Ramos (+80% police stop chance).", "FIRE TO PLUG LEAK", Palette.RISK_HIGH,
+				_ask.bind("Fire suspected informant?", "Let %s go to plug the police leak. Hiring again costs %s." % [role.display_name.to_lower(), Format.money(role.hire_cost)], "Fire",
+					func() -> void:
+						GameState.fire_crew(role.id)
+						_rebuild(), true))
+			continue
 		if Crew.is_free_role(run, role.id):
 			_add_row(role.icon, "%s, %s" % [role.display_name, "the Shark" if run.shark_bought else "午夜兔子"], "Free", Crew.effects(role))
 			continue

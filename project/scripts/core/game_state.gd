@@ -394,6 +394,22 @@ func send_runner(job: Dictionary) -> int:
 	return pay
 
 
+## Dispatches muscle to collect from a debtor. Returns the pay, 0 when it could not be done.
+func send_muscle(errand: Dictionary) -> int:
+	var pay := Crew.send_muscle(run, errand)
+	if pay <= 0:
+		return 0
+	_commit(false)
+	return pay
+
+
+func bail_crew(role_id: StringName) -> bool:
+	if not Crew.bail_member(run, role_id):
+		return false
+	_commit(false)
+	return true
+
+
 func drop_order(order: Dictionary) -> void:
 	Orders.drop(run, order)
 	_commit(false)
@@ -790,6 +806,7 @@ func _start_morning() -> Array[Dictionary]:
 	notices.append_array(Lending.settle(run))
 	notices.append_array(Rivals.morning(run))
 	notices.append_array(RivalMoves.morning(run, _rng))
+	notices.append_array(Crew.morning(run, _rng))
 	for role in Crew.pay_wages(run):
 		notices.append({
 			"line": "Your %s walked out after two days without pay." % role.display_name.to_lower(),
