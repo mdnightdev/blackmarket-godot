@@ -69,7 +69,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Ch
 
 
 ## Returns the line to show, empty when the next scene speaks for itself.
-static func resolve(run: RunState, encounter: Dictionary, choice: StringName) -> String:
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, _roll: float = 0.0) -> String:
 	if str(encounter.get("type", "")) == RELEASED:
 		var page := int(encounter.get("page", 0)) + 1
 		if page < RELEASE_LINES.size():

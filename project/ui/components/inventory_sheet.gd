@@ -69,9 +69,7 @@ func _on_run_changed() -> void:
 
 func _rebuild() -> void:
 	var run := GameState.run
-	for child in _grid.get_children():
-		_grid.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(_grid)
 	_goods_by_title.clear()
 
 	_capacity_label.text = "%d / %d" % [Inventory.used(run), Inventory.capacity(run)]

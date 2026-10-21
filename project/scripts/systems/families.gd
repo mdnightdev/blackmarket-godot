@@ -123,6 +123,18 @@ static func shakedown(run: RunState) -> Dictionary:
 	}
 
 
+static func choices(run: RunState, encounter: Dictionary = {}) -> Array[Encounters.Choice]:
+	var demand := int(encounter.get("demand", shakedown_cost(run)))
+	return [
+		Encounters.Choice.new(PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand),
+		Encounters.Choice.new(REFUSE, "Refuse"),
+	]
+
+
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, _roll: float = 0.0) -> String:
+	return resolve_shakedown(run, encounter, choice)
+
+
 static func resolve_shakedown(run: RunState, encounter: Dictionary, choice: StringName) -> String:
 	var family_id := StringName(str(encounter.get("family", "")))
 	match choice:

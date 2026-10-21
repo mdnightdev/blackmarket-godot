@@ -57,7 +57,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Ch
 
 ## Applies the answer. Returns the outcome text, empty when the card can simply close.
 ## The roll must be in the range [0, 1).
-static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float) -> String:
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float = 0.0) -> String:
 	var order := Customers.find(run, str(encounter.get("order", "")))
 	if order.is_empty():
 		return ""

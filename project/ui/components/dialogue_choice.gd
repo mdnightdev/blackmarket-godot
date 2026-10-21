@@ -1,6 +1,13 @@
 class_name DialogueChoice
 extends RefCounted
 
+const LEAVE: StringName = &"leave"
+const ACCEPT: StringName = &"accept"
+const DECLINE: StringName = &"decline"
+const TRADE: StringName = &"trade"
+const ASK: StringName = &"ask"
+const CONTINUE: StringName = &"continue"
+
 var id: StringName
 var label: String
 var enabled: bool

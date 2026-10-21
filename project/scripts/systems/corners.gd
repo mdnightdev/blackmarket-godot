@@ -234,7 +234,7 @@ static func choices(_run: RunState, _encounter: Dictionary) -> Array[Encounters.
 	return [Encounters.Choice.new(Encounters.CONTINUE, "Continue")]
 
 
-static func resolve(_run: RunState, encounter: Dictionary, _choice: StringName) -> String:
+static func resolve(_run: RunState, encounter: Dictionary, _choice: StringName, _roll: float = 0.0) -> String:
 	return str(encounter.get("losses", ""))
 
 

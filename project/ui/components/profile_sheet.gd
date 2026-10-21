@@ -56,9 +56,7 @@ func _refresh() -> void:
 	var district := GameState.current_district()
 	_where_label.text = "Day %d, %s. %s" % [run.day, RunState.phase_name(run.phase), district.display_name if district != null else ""]
 
-	for child in _rows.get_children():
-		_rows.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(_rows)
 	_add_stat("Cash", Format.money(run.cash))
 	if run.stashed_cash > 0:
 		_add_stat("In the stash", Format.money(run.stashed_cash))

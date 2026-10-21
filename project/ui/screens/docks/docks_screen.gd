@@ -1,4 +1,4 @@
-extends Control
+extends BaseScreen
 
 const ITEM_ROW := preload("res://ui/components/item_row.tscn")
 const GREETING_DELAY := 0.35
@@ -77,10 +77,8 @@ func _host_says(line: String) -> void:
 
 func _refresh() -> void:
 	var run := GameState.run
-	_bag_button.text = "Bag %d/%d" % [Inventory.used(run), Inventory.capacity(run)]
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	_bag_button.text = Inventory.bag_text(run)
+	Utils.clear_container(_list)
 
 	_add_label("THIS PHASE'S SHIPMENT", &"ListHeading")
 	_add_shipment_row(Hijacks.target(run))
@@ -267,8 +265,4 @@ func _end_talk(_choice: StringName) -> void:
 
 
 func _play_entrance() -> void:
-	_header.modulate.a = 0.0
-	_scroll.modulate.a = 0.0
-	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_header, "modulate:a", 1.0, 0.4)
-	tween.tween_property(_scroll, "modulate:a", 1.0, 0.45).set_delay(0.12)
+	play_screen_entrance(_header, _scroll)

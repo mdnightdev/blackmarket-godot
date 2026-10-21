@@ -1,4 +1,4 @@
-extends Control
+extends BaseScreen
 
 const FAB_BUTTON := preload("res://ui/components/fab_button.tscn")
 const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")

@@ -121,9 +121,7 @@ func _on_run_changed() -> void:
 
 func _rebuild() -> void:
 	var run := GameState.run
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(_list)
 	_cred_label.text = "%s  %d cred" % [StreetCred.rank_name(StreetCred.rank(run)), run.street_cred]
 	_title.text = SECTION_TITLES.get(_section, "Turf")
 	_headquarters.visible = _section == BLOCK

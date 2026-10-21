@@ -1,4 +1,4 @@
-extends Control
+extends BaseScreen
 
 const MAP_PIN := preload("res://ui/components/map_pin.tscn")
 const ROUTE_SECONDS := 1.1

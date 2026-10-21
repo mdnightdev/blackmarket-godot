@@ -169,9 +169,7 @@ func _clear_choices() -> void:
 		_mark_tween.kill()
 	_awaiting_advance = false
 	_continue_mark.modulate.a = 0.0
-	for child in _choice_list.get_children():
-		_choice_list.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(_choice_list)
 
 
 func _animate(alpha: float, offset_y: float, duration: float, easing: Tween.EaseType) -> Tween:

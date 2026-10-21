@@ -58,7 +58,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Ch
 
 
 ## Applies the answer and pays the player's cut. The roll must be in the range [0, 1).
-static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float) -> String:
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float = 0.0) -> String:
 	var errand := Errands.find(run, str(encounter.get("errand", "")))
 	if errand.is_empty():
 		return ""
