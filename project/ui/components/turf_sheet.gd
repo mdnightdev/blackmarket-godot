@@ -121,9 +121,7 @@ func _on_run_changed() -> void:
 
 func _rebuild() -> void:
 	var run := GameState.run
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(_list)
 	_cred_label.text = "%s  %d cred" % [StreetCred.rank_name(StreetCred.rank(run)), run.street_cred]
 	_title.text = SECTION_TITLES.get(_section, "Turf")
 	_headquarters.visible = _section == BLOCK
@@ -237,8 +235,8 @@ func _add_crew(run: RunState) -> void:
 		return
 	if Campaign.is_act_two(run):
 		var proven := VexTalk.passed_rabbit_test(run)
-		_add_row(SKILL_ICONS[&"muscle"], "Enforcer, Vex", "Free",
-			"Runs your Enforcer Desk in Old Market." if proven else "Rabbit wants you to take one corner outside Old Market before Vex opens her desk.")
+		_add_row(SKILL_ICONS[&"muscle"], "Lieutenant, Vex", "Free",
+			"Stationed in Old Market managing district protection and lookouts." if proven else "Rabbit wants you to take one corner in The Slums before Vex opens her desk.")
 	for role in roles:
 		if Crew.is_jailed(run, role.id):
 			var bail := Crew.bail_cost(run, role.id)

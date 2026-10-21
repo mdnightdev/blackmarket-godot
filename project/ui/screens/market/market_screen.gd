@@ -1,4 +1,4 @@
-extends Control
+extends BaseScreen
 
 enum Tab { BUY, SELL }
 
@@ -161,7 +161,7 @@ func _refresh() -> void:
 	_mood_label.text = "Mood: %s" % Haggle.mood_label(mood)
 	_mood_label.add_theme_color_override("font_color", _mood_color(mood))
 	_news_line.show_for(run.district_id)
-	_bag_button.text = "Bag %d/%d" % [Inventory.used(run), Inventory.capacity(run)]
+	_bag_button.text = Inventory.bag_text(run)
 	_bag_bar.max_value = Inventory.capacity(run)
 	_bag_bar.value = Inventory.used(run)
 	var family := Families.family_of(_dealer)
@@ -382,8 +382,4 @@ func _show_toast(message: String) -> void:
 
 
 func _play_entrance() -> void:
-	_header.modulate.a = 0.0
-	_scroll.modulate.a = 0.0
-	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_header, "modulate:a", 1.0, 0.4)
-	tween.tween_property(_scroll, "modulate:a", 1.0, 0.45).set_delay(0.12)
+	play_screen_entrance(_header, _scroll)

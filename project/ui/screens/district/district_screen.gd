@@ -1,4 +1,4 @@
-extends Control
+extends BaseScreen
 
 const FAB_BUTTON := preload("res://ui/components/fab_button.tscn")
 const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
@@ -152,8 +152,9 @@ func _build_people_strip() -> void:
 		var chip := _add_person_chip(dealer.portrait, dealer.display_name, role, Palette.RISK_LOW)
 		chip.pressed.connect(DealerTalk.talk_to.bind(dealer))
 	for character in Roster.characters_at(run, run.district_id, stamp):
-		var color: Color = ROLE_COLORS.get(character.role, Palette.TEXT_MUTED)
-		var chip := _add_person_chip(character.portrait, character.display_name, character.role_name().to_upper(), color)
+		var is_vex_act_two := character.id == Loan.VEX_LENDER and Campaign.is_act_two(run)
+		var color: Color = Palette.PEACH_BRIGHT if is_vex_act_two else ROLE_COLORS.get(character.role, Palette.TEXT_MUTED)
+		var chip := _add_person_chip(character.portrait, character.display_name, character.role_title(run).to_upper(), color)
 		chip.pressed.connect(StreetTalk.talk_to.bind(character))
 	_around_block.visible = _people_list.get_child_count() > 0
 

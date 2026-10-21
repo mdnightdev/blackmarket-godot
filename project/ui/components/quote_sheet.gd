@@ -39,9 +39,7 @@ func _on_run_changed() -> void:
 func _rebuild() -> bool:
 	var run := GameState.run
 	var order := Customers.find(run, _order_id)
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(_list)
 	if order.is_empty():
 		return false
 	_title_label.text = Customers.job_title(order)

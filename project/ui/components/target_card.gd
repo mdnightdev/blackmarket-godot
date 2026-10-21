@@ -172,8 +172,7 @@ func _report_note(run: RunState, report: Dictionary) -> String:
 
 
 func _show_people(people: Array[SpeakerDef]) -> void:
-	for child in _people.get_children():
-		child.queue_free()
+	Utils.clear_container(_people)
 	for person in people:
 		var button := GameButton.new()
 		button.theme_type_variation = &"SmallButton"

@@ -238,13 +238,11 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 		Corners.TIP, Corners.STALL_SMASHED:
 			list.append_array(Corners.choices(run, encounter))
 		Ramos.TIP:
-			list.append_array(Ramos.choices(run))
+			list.append_array(Ramos.choices(run, encounter))
 		RivalStrike.TYPE:
-			list.append_array(RivalStrike.choices(run))
+			list.append_array(RivalStrike.choices(run, encounter))
 		Families.SHAKEDOWN:
-			var demand := int(encounter.demand)
-			list.append(Choice.new(Families.PAY_UP, "Pay %s" % Format.money(demand), run.cash >= demand))
-			list.append(Choice.new(Families.REFUSE, "Refuse"))
+			list.append_array(Families.choices(run, encounter))
 		Lending.SALE_OFFER:
 			list.append(Choice.new(Lending.VISIT_SHARK, "Go to his desk"))
 			list.append(Choice.new(CONTINUE, "Later"))
@@ -264,9 +262,21 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Choice]:
 
 
 ## Applies the player's answer and clears the encounter. Returns the outcome text, empty when there is nothing more to say.
-## The roll decides gambles and must be in the range [0, 1).
-static func resolve(run: RunState, choice: StringName, roll: float) -> String:
-	var encounter := run.pending_encounter
+## Supports both resolve(run, choice, roll) and resolve(run, encounter, choice, roll).
+static func resolve(run: RunState, arg1: Variant, arg2: Variant = null, arg3: float = 0.0) -> String:
+	var encounter: Dictionary
+	var choice: StringName
+	var roll: float
+
+	if arg1 is Dictionary:
+		encounter = arg1
+		choice = StringName(str(arg2))
+		roll = arg3
+	else:
+		encounter = run.pending_encounter
+		choice = StringName(str(arg1))
+		roll = float(arg2) if arg2 != null else 0.0
+
 	var allowed := choices(run, encounter).filter(func(entry: Choice) -> bool: return entry.id == choice and entry.enabled)
 	if allowed.is_empty():
 		return ""
@@ -281,17 +291,17 @@ static func resolve(run: RunState, choice: StringName, roll: float) -> String:
 		CustomerHandover.TYPE:
 			return CustomerHandover.resolve(run, encounter, choice, roll)
 		Families.SHAKEDOWN:
-			return Families.resolve_shakedown(run, encounter, choice)
+			return Families.resolve(run, encounter, choice, roll)
 		Turf.VICTORY:
 			return Turf.victory_summary(Gangs.of_encounter(encounter))
 		DebtSale.DEBT_SOLD, DebtSale.VEX_TERMS, DebtSale.RABBIT_OFFER:
-			return DebtSale.resolve(run, encounter, choice)
+			return DebtSale.resolve(run, encounter, choice, roll)
 		RabbitCells.MISSING, RabbitCells.RELEASED:
-			return RabbitCells.resolve(run, encounter, choice)
+			return RabbitCells.resolve(run, encounter, choice, roll)
 		Corners.TIP, Corners.STALL_SMASHED:
-			return Corners.resolve(run, encounter, choice)
+			return Corners.resolve(run, encounter, choice, roll)
 		Ramos.TIP:
-			return Ramos.outcome_text(Ramos.resolve(run, choice))
+			return Ramos.resolve_encounter(run, encounter, choice, roll)
 		RivalStrike.TYPE:
 			return RivalStrike.resolve(run, encounter, choice, roll)
 		Lending.SALE_OFFER:

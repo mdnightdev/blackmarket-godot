@@ -48,6 +48,8 @@ const ENFORCER_INTRO := "vex_enforcer_intro"
 const VEX_PROVEN := "vex_proven_enforcer"
 const INTEL: StringName = &"intel"
 const FORTIFY: StringName = &"fortify"
+const RECALL: StringName = &"recall"
+const SWEEP: StringName = &"sweep"
 const LEAVE: StringName = &"leave"
 const RABBIT: StringName = &"midnight_rabbit"
 
@@ -102,13 +104,26 @@ static func _open_test_pending(vex: CharacterDef) -> void:
 			GameOverlay.end_talk(), hint)
 
 
+static func sweep_payout(run: RunState) -> int:
+	return 350 * StreetCred.rank(run)
+
+
+static func sweep_flag(run: RunState) -> String:
+	return "vex_sweep_day_%d" % run.day
+
+
+static func can_sweep(run: RunState) -> bool:
+	return not Story.has(run, sweep_flag(run))
+
+
 static func _open_enforcer_desk(vex: CharacterDef) -> void:
 	var run := GameState.run
 	var held_corners := run.corners_held.size()
 	var held_districts := Turf.held_count(run)
 	var reserve := Army.reserve(run)
 	var unposted := _unposted_held_corners(run)
-	var line := "Your desk, boss. We hold %d corners across %d/%d contested districts (+%s/day). %s men in reserve." % [
+	var total_posted := Corners.total_garrisoned(run)
+	var line := "Old Market Command, boss. %d corners held across %d/%d contested districts (+%s/day). %s men in reserve." % [
 		held_corners, held_districts, Turf.contested().size(), Format.money(Turf.daily_cut(run)), Format.count(reserve)
 	]
 	var choices: Array[DialogueChoice] = []
@@ -118,9 +133,21 @@ static func _open_enforcer_desk(vex: CharacterDef) -> void:
 		"Post 10 lookouts on %d unguarded corner%s" % [unposted.size(), "" if unposted.size() == 1 else "s"] if not unposted.is_empty() else "All held corners fortified",
 		can_fortify
 	))
-	choices.append(DialogueChoice.new(INTEL, "Brief me on the rival crews"))
+	choices.append(DialogueChoice.new(
+		RECALL,
+		"Recall all garrisons to reserve (%d posted)" % total_posted,
+		total_posted > 0
+	))
+	var sweep_open := can_sweep(run)
+	var sweep_text := "Run Old Market protection sweep (+%s)" % Format.money(sweep_payout(run)) if sweep_open else "Protection sweep completed today"
+	choices.append(DialogueChoice.new(
+		SWEEP,
+		sweep_text,
+		sweep_open
+	))
+	choices.append(DialogueChoice.new(INTEL, "Brief me on rival syndicates"))
 	choices.append(DialogueChoice.new(LEAVE, "Leave", true, true))
-	var hint := "Enforcer Desk: manage street protection and track the four rival crews."
+	var hint := "Lieutenant Desk: Old Market administration, street protection, and rival intelligence."
 	GameOverlay.talk(vex, line, choices, func(choice: StringName) -> void:
 		if choice == FORTIFY:
 			for c in unposted:
@@ -128,6 +155,21 @@ static func _open_enforcer_desk(vex: CharacterDef) -> void:
 			GameState.save_run()
 			AudioService.play_sfx(Sfx.FAVOUR_TAKEN)
 			_open_enforcer_desk(vex)
+		elif choice == RECALL:
+			for id_str in run.corners_held:
+				Corners.post_garrison(run, StringName(str(id_str)), 0)
+			GameState.save_run()
+			AudioService.play_sfx(Sfx.FAVOUR_TAKEN)
+			_open_enforcer_desk(vex)
+		elif choice == SWEEP:
+			var take := sweep_payout(run)
+			run.cash += take
+			Story.mark(run, sweep_flag(run))
+			GameState.save_run()
+			AudioService.play_sfx(Sfx.COINS_IN)
+			var sweep_text_response := "Swept Noodle Alley, Holy City, and the perimeter stalls. Collected %s in protection dues, and verified your street lookouts." % Format.money(take)
+			var choices_back: Array[DialogueChoice] = [DialogueChoice.new(NEXT, "Back", true, false, true)]
+			GameOverlay.talk(vex, sweep_text_response, choices_back, func(_c: StringName) -> void: _open_enforcer_desk(vex))
 		elif choice == INTEL:
 			_show_rival_intel(vex, func() -> void: _open_enforcer_desk(vex))
 		else:
@@ -145,14 +187,23 @@ static func _unposted_held_corners(run: RunState) -> Array[CornerDef]:
 
 static func _show_rival_intel(vex: CharacterDef, then: Callable) -> void:
 	var run := GameState.run
+	var stamp := Calendar.stamp(run)
 	var reports: PackedStringArray = []
 	for gang in Gangs.confronting(run):
 		var left := Rivals.corners(run, gang).size()
 		var weapon := str(Armory.GRADE_NAMES[Rivals.gear(run, gang)]).to_lower()
-		reports.append("%s holds %d corner%s with %s" % [gang.display_name, left, "" if left == 1 else "s", weapon])
-	var text := "Every rival crew is out of the city. The streets are yours." if reports.is_empty() else ". ".join(reports) + "."
+		var boss_loc := Gangs.boss_location(run, gang, stamp)
+		var loc_text := "in %s" % Content.district(boss_loc).display_name if not boss_loc.is_empty() and Content.district(boss_loc) != null else "lying low"
+		var threat_targets := RivalStrike.targets(run, gang)
+		var threat_text := ""
+		if not threat_targets.is_empty():
+			threat_text = ", raiders probing %s" % threat_targets[0].display_name
+		reports.append("%s (%s): %d corners with %s [Boss %s%s]" % [
+			gang.display_name, gang.boss, left, weapon, loc_text, threat_text
+		])
+	var text := "Every rival crew is out of the city. The streets are yours." if reports.is_empty() else "\n\n".join(reports)
 	var choices: Array[DialogueChoice] = [DialogueChoice.new(NEXT, "Back", true, false, true)]
-	GameOverlay.talk(vex, text, choices, func(_c: StringName) -> void: then.call())
+	GameOverlay.talk(vex, text, choices, func(_c: StringName) -> void: then.call(), "Tactical Syndicate Intel")
 
 
 static func _show_dialogue_pages(pages: Array[Dictionary], index: int, then: Callable) -> void:

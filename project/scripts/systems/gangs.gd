@@ -224,7 +224,7 @@ static func choices(run: RunState, encounter: Dictionary) -> Array[Encounters.Ch
 
 
 ## Applies the answer. The roll decides a fight and must be in the range [0, 1).
-static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float) -> String:
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float = 0.0) -> String:
 	var gang := of_encounter(encounter)
 	if gang == null:
 		return ""

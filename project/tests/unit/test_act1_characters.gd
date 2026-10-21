@@ -71,3 +71,14 @@ func test_rook_talks_guns_once_then_opens_rooms() -> void:
 	_run.rook_spent = int(Armory.ROOM_SPEND[Armory.Room.MILITARY])
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.MILITARY_LINE)
 	assert_eq(WeaponsTalk.opening_line(_run), WeaponsTalk.SHOP_LINE)
+
+
+func test_vex_becomes_lieutenant_in_act_two() -> void:
+	var vex := Content.character(&"rival")
+	assert_eq(vex.role_title(_run), "Rival")
+	Story.mark(_run, War.VEX_FELL)
+	assert_eq(vex.role_title(_run), "Lieutenant")
+	assert_true(VexTalk.can_sweep(_run))
+	assert_gt(VexTalk.sweep_payout(_run), 0)
+	Story.mark(_run, VexTalk.sweep_flag(_run))
+	assert_false(VexTalk.can_sweep(_run), "sweep only once per day")

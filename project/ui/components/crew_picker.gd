@@ -73,8 +73,7 @@ func _close() -> void:
 
 
 func _build_rows(run: RunState) -> void:
-	for child in _tiers.get_children():
-		child.queue_free()
+	Utils.clear_container(_tiers)
 	_sliders.clear()
 	_count_labels.clear()
 	for tier in Army.DEPLOY_ORDER:

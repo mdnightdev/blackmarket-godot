@@ -73,11 +73,16 @@ static func tip(run: RunState) -> Dictionary:
 	}
 
 
-static func choices(run: RunState) -> Array[Encounters.Choice]:
+static func choices(run: RunState, _encounter: Dictionary = {}) -> Array[Encounters.Choice]:
 	return [
 		Encounters.Choice.new(CLEAR_OUT, "Clear out everything"),
 		Encounters.Choice.new(LEAVE_GOODS, "Leave some goods for Brandt", Inventory.used(run) > 0),
 	]
+
+
+## Standardized encounter resolve contract
+static func resolve_encounter(run: RunState, _encounter: Dictionary, choice: StringName, _roll: float = 0.0) -> String:
+	return outcome_text(resolve(run, choice))
 
 
 ## Brandt raids either way. Returns what he found as { found, units, quiet }.

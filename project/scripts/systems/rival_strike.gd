@@ -111,7 +111,7 @@ static func start(run: RunState, gang: GangDef, target: CornerDef, from: CornerD
 
 
 ## Settles the strike without the countdown screen. Returns what happened in one line.
-static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float) -> String:
+static func resolve(run: RunState, encounter: Dictionary, choice: StringName, roll: float = 0.0) -> String:
 	var delegated := choice == DELEGATE
 	var deployment := rabbit_deployment(run) if delegated else Army.deployment(run)
 	return summary(defend(run, encounter, deployment, delegated, roll, 0.5))
@@ -134,7 +134,7 @@ static func rabbit_deployment(run: RunState) -> Dictionary:
 	return Army.deployment(run)
 
 
-static func choices(run: RunState) -> Array[Encounters.Choice]:
+static func choices(run: RunState, _encounter: Dictionary = {}) -> Array[Encounters.Choice]:
 	var rabbit := Content.speaker(RABBIT)
 	return [
 		Encounters.Choice.new(DELEGATE, "Leave it to %s" % (rabbit.display_name if rabbit != null else "Rabbit")),

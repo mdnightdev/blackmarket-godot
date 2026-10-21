@@ -1,4 +1,4 @@
-extends Control
+extends BaseScreen
 
 enum Game { SIC_BO, BLACKJACK, SLOTS }
 
@@ -380,9 +380,7 @@ func _reveal_dealer() -> void:
 
 func _clear_hand(row: HBoxContainer) -> void:
 	row.add_theme_constant_override("separation", CARD_GAP)
-	for child in row.get_children():
-		row.remove_child(child)
-		child.queue_free()
+	Utils.clear_container(row)
 
 
 func _update_hand_labels() -> void:

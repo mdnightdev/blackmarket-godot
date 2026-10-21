@@ -1,5 +1,5 @@
 class_name VenueScreen
-extends Control
+extends BaseScreen
 
 ## Shared layout for venue screens: a speaking header, a list of rows, and Bag and Leave buttons.
 ## Subclasses call setup() from _ready and fill the list in _refresh() after calling super().
@@ -61,10 +61,8 @@ func says(line: String) -> void:
 
 func _refresh() -> void:
 	var run := GameState.run
-	_bag_button.text = "Bag %d/%d" % [Inventory.used(run), Inventory.capacity(run)]
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	_bag_button.text = Inventory.bag_text(run)
+	Utils.clear_container(_list)
 
 
 func _add_row() -> ItemRow:
@@ -82,8 +80,7 @@ func _add_label(text: String, variation: StringName) -> void:
 
 
 func _leave_choice() -> Array[DialogueChoice]:
-	var choices: Array[DialogueChoice] = [DialogueChoice.new(LEAVE, "Leave", true, true)]
-	return choices
+	return [DialogueChoice.new(LEAVE, "Leave", true, true)]
 
 
 func _end_talk(_choice: StringName) -> void:
@@ -91,8 +88,4 @@ func _end_talk(_choice: StringName) -> void:
 
 
 func _play_entrance() -> void:
-	_header.modulate.a = 0.0
-	_scroll.modulate.a = 0.0
-	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_header, "modulate:a", 1.0, 0.4)
-	tween.tween_property(_scroll, "modulate:a", 1.0, 0.45).set_delay(0.12)
+	play_screen_entrance(_header, _scroll)

@@ -15,6 +15,11 @@ static func capacity(run: RunState) -> int:
 	return BASE_CAPACITY + Gear.capacity_bonus(run) + Skills.capacity_bonus(run) + Crew.capacity_bonus(run)
 
 
+## Formatted bag string like "Bag 12/20" for HUD elements and buttons.
+static func bag_text(run: RunState) -> String:
+	return "Bag %d/%d" % [used(run), capacity(run)]
+
+
 static func used(run: RunState) -> int:
 	return _slots_used(run.inventory) + Smuggling.slots_used(run)
 
