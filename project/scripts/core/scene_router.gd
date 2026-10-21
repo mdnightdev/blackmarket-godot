@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 signal transition_started
+signal scene_changed(scene_path: String)
 
 const TITLE_SCREEN := "res://ui/screens/title/title_screen.tscn"
 const SETTINGS_SCREEN := "res://ui/screens/settings/settings_screen.tscn"
@@ -87,6 +88,7 @@ func go_to(scene_path: String, queue_if_busy := false) -> void:
 	if error != OK:
 		push_error("Scene change to %s failed: %s" % [scene_path, error_string(error)])
 	await get_tree().process_frame
+	scene_changed.emit(scene_path)
 	await _slide_shutter(open_y, OPEN_SECONDS, Tween.EASE_IN_OUT).finished
 
 	_shutter.visible = false

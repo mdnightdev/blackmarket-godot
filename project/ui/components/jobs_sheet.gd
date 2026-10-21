@@ -39,7 +39,7 @@ func _ready() -> void:
 
 
 func open_jobs() -> void:
-	SafeArea.apply_top_margin(_margin, 24)
+	SafeArea.apply_top_margin(_margin)
 	_tab = Tab.ACTIVE
 	_active_tab.button_pressed = true
 	_do_not_disturb_toggle.set_pressed_no_signal(Settings.do_not_disturb)

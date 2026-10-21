@@ -91,7 +91,7 @@ func open_turf() -> void:
 	if visible:
 		_show_section(BLOCK)
 		return
-	SafeArea.apply_top_margin(_margin, 24)
+	SafeArea.apply_top_margin(_margin)
 	_section = BLOCK
 	_rebuild()
 	open_sheet()

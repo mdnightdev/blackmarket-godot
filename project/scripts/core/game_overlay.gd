@@ -14,6 +14,7 @@ const TRAINING_PICKER := preload("res://ui/components/training_picker.tscn")
 const WEAPON_PICKER := preload("res://ui/components/weapon_picker.tscn")
 const TARGET_CARD := preload("res://ui/components/target_card.tscn")
 const BATTLE_SCENE := preload("res://ui/battle/battle_scene.tscn")
+const HUD_BAR := preload("res://ui/components/hud_bar.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -28,6 +29,8 @@ const RAID_VIBRATE_MS := 350
 const BAIL_LINE := "Bail's paid. Don't thank me, just stop carrying through Brandt's street."
 
 var _dialogue: DialoguePanel
+var _hud_margin: MarginContainer
+var _hud_bar: HudBar
 var _loan_sheet: LoanSheet
 var _inventory_sheet: InventorySheet
 var _turf_sheet: TurfSheet
@@ -82,6 +85,15 @@ func _ready() -> void:
 	add_child(_profile_sheet)
 	add_child(_quote_sheet)
 	add_child(_loan_sheet)
+
+	_hud_margin = MarginContainer.new()
+	_hud_margin.name = "HudMargin"
+	_hud_margin.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_hud_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hud_bar = HUD_BAR.instantiate()
+	_hud_margin.add_child(_hud_bar)
+	add_child(_hud_margin)
+
 	add_child(_banner)
 	add_child(_target_card)
 	add_child(_dialogue)
@@ -101,7 +113,10 @@ func _ready() -> void:
 	GameState.offers_posted.connect(_queue_offers)
 	GameState.customer_offers_posted.connect(_queue_offers)
 	GameState.run_changed.connect(_on_run_changed)
-	GameState.run_loaded.connect(_forget_filled_orders)
+	GameState.run_loaded.connect(func() -> void:
+		_forget_filled_orders()
+		_update_hud_visibility()
+	)
 	GameState.run_started.connect(func() -> void:
 		_missed_orders.clear()
 		_missed_favours.clear()
@@ -110,7 +125,15 @@ func _ready() -> void:
 		_offers.clear()
 		_forget_filled_orders()
 		_banner.retract()
+		_update_hud_visibility()
 	)
+	GameState.run_ended.connect(func(_outcome: RunState.Outcome) -> void:
+		_update_hud_visibility()
+	)
+	_update_hud_safe_margins()
+	get_tree().root.size_changed.connect(_update_hud_safe_margins)
+	SceneRouter.scene_changed.connect(_on_scene_changed)
+	_update_hud_visibility()
 
 
 ## Screens opt in by defining can_present_encounter(), so encounters never interrupt animations or other modals.
@@ -380,9 +403,45 @@ func _open_offer(offer_id: String) -> void:
 
 func _on_run_changed() -> void:
 	var run := GameState.run
+	_update_hud_visibility()
 	if _banner.is_showing() and not _is_open_offer(run, _banner.offer_id):
 		_banner.retract()
 	_filled_orders.append_array(_stocked_orders.check(run))
+
+
+func set_hud_visible(visible_state: bool) -> void:
+	if _hud_margin != null:
+		_hud_margin.visible = visible_state
+
+
+func _on_scene_changed(scene_path: String) -> void:
+	_update_hud_visibility(scene_path)
+
+
+func _update_hud_visibility(scene_path: String = "") -> void:
+	if _hud_margin == null:
+		return
+	if GameState.run == null:
+		_hud_margin.visible = false
+		return
+	var current := scene_path
+	if current.is_empty():
+		var cs := get_tree().current_scene
+		current = cs.scene_file_path if cs != null else ""
+	if current == SceneRouter.TITLE_SCREEN or current == SceneRouter.CHARACTER_SELECT:
+		_hud_margin.visible = false
+		return
+	_hud_margin.visible = true
+	_hud_bar.refresh()
+
+
+func _update_hud_safe_margins() -> void:
+	if _hud_margin == null:
+		return
+	var inset := int(SafeArea.top_inset(get_viewport()))
+	_hud_margin.add_theme_constant_override("margin_top", inset)
+	_hud_margin.add_theme_constant_override("margin_left", 16)
+	_hud_margin.add_theme_constant_override("margin_right", 16)
 
 
 func _is_open_offer(run: RunState, offer_id: String) -> bool:

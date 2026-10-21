@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://ui/screens/bar/bar_screen.gd" id="1_screen"]
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
-[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="3_hud"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
 [ext_resource type="Script" path="res://ui/components/talking_portrait.gd" id="6_portrait"]
 [ext_resource type="Script" path="res://ui/components/typewriter.gd" id="7_typewriter"]
@@ -40,9 +39,6 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="Vignette" parent="." instance=ExtResource("2_vignette")]
-layout_mode = 1
-
-[node name="HudBar" parent="." instance=ExtResource("3_hud")]
 layout_mode = 1
 
 [node name="Margin" type="MarginContainer" parent="."]

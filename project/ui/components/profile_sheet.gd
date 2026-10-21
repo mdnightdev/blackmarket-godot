@@ -31,7 +31,7 @@ func _ready() -> void:
 
 
 func open_profile() -> void:
-	SafeArea.apply_top_margin(_margin, 24)
+	SafeArea.apply_top_margin(_margin)
 	_refresh()
 	open_sheet()
 

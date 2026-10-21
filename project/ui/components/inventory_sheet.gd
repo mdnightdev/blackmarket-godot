@@ -48,7 +48,7 @@ func close_modal() -> bool:
 
 
 func open_inventory() -> void:
-	SafeArea.apply_top_margin(_margin, 24)
+	SafeArea.apply_top_margin(_margin)
 	_selected_title = ""
 	_filter = Filter.ALL
 	_all_tab.button_pressed = true

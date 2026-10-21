@@ -1,7 +1,6 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://ui/components/inventory_sheet.gd" id="1_sheet"]
-[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
 [ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
 [ext_resource type="PackedScene" path="res://ui/components/trade_sheet.tscn" id="4_trade"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="5_button"]
@@ -76,9 +75,6 @@ theme_override_constants/margin_bottom = 8
 [node name="Top" type="VBoxContainer" parent="Sheet/Page/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 12
-
-[node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
-layout_mode = 2
 
 [node name="Header" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2

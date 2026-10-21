@@ -1,7 +1,6 @@
 [gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://ui/components/jobs_sheet.gd" id="1_sheet"]
-[ext_resource type="PackedScene" path="res://ui/components/hud_bar.tscn" id="2_hud"]
 [ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
 [ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="4_confirm"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="5_button"]
@@ -53,9 +52,6 @@ theme_override_constants/margin_bottom = 4
 [node name="Top" type="VBoxContainer" parent="Sheet/Page/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 12
-
-[node name="HudBar" parent="Sheet/Page/Margin/Top" instance=ExtResource("2_hud")]
-layout_mode = 2
 
 [node name="TitleRow" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2
