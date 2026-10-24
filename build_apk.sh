@@ -1,19 +1,21 @@
 #!/bin/bash
 
-# Read version from export_presets.cfg
-VERSION=$(grep "^version/name=" project/export_presets.cfg | cut -d'"' -f2)
+# Auto-bump version code and update git hash in export_presets.cfg
+OLD_CODE=$(grep "^version/code=" project/export_presets.cfg | cut -d'=' -f2)
+NEW_CODE=$((OLD_CODE + 1))
+GIT_HASH=$(git rev-parse --short HEAD)
+NEW_VERSION="1.0.0-dev+${GIT_HASH}"
 
-# Accept custom name as argument, or auto-increment based on version
+sed -i "s/^version\/code=.*/version\/code=${NEW_CODE}/" project/export_presets.cfg
+sed -i "s/^version\/name=.*/version\/name=\"${NEW_VERSION}\"/" project/export_presets.cfg
+
+echo "Building version code ${NEW_CODE} (${NEW_VERSION})..."
+
+# Accept custom name or build from updated version
 if [ -n "$1" ]; then
-  APK_NAME="$black-market"
+    APK_NAME="$1.apk"
 else
-  # Auto-increment: v1.0.0-dev.test1.apk, v1.0.0-dev.test2.apk, etc.
-  BASE_NAME="${VERSION}-dev.test"
-  count=1
-  while [ -f "build/${BASE_NAME}${count}.apk" ]; do
-    count=$((count + 1))
-  done
-  APK_NAME="${BASE_NAME}${count}.apk"
+    APK_NAME="blackmarket-v${NEW_CODE}-${GIT_HASH}.apk"
 fi
 
 cd project
