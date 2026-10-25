@@ -132,3 +132,27 @@ func test_corners_survive_a_save_and_drop_unknown_ids() -> void:
 	data.corners_held.append("nowhere")
 	var loaded := RunState.from_dict(JSON.parse_string(JSON.stringify(data)))
 	assert_eq(loaded.corners_held, ["mama_lin_corner"] as Array[String])
+
+
+func test_corners_sync_purges_orphaned_garrisons_and_clamps_to_army() -> void:
+	Corners.take(_run, Corners.MAMA_LIN)
+	Army.add(_run, Army.Tier.GUARDS, Army.State.ACTIVE, 100)
+	assert_true(Corners.post_garrison(_run, Corners.MAMA_LIN, 50))
+	assert_eq(Corners.garrison(_run, Corners.MAMA_LIN), 50)
+
+	# Inject orphaned garrison for unheld corner
+	_run.player_garrisons["unheld_corner"] = 40
+	Corners.sync(_run)
+	assert_false(_run.player_garrisons.has("unheld_corner"), "unheld corner garrison is purged")
+	assert_eq(Corners.garrison(_run, Corners.MAMA_LIN), 50)
+
+	# When army is reduced below garrison allocation, sync clamps garrison
+	_run.army[Army.Tier.GUARDS][Army.State.ACTIVE] = 30
+	Corners.sync(_run)
+	assert_eq(Corners.garrison(_run, Corners.MAMA_LIN), 30, "clamped to active army total")
+
+	# Losing corner drops garrison completely
+	Corners.lose(_run, Corners.MAMA_LIN)
+	assert_false(Corners.holds(_run, Corners.MAMA_LIN))
+	assert_eq(Corners.garrison(_run, Corners.MAMA_LIN), 0)
+	assert_false(_run.player_garrisons.has(String(Corners.MAMA_LIN)))

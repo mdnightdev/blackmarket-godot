@@ -526,15 +526,6 @@ func queue_handover(id: String) -> bool:
 
 ## Returns the Customers.hand_over result, empty when the handover cannot happen now. An undercover buyer leaves a
 ## police stop pending. A haggler's counter offer waits for answer_haggle.
-func hand_over_customer_order(id: String) -> Dictionary:
-	var order := Customers.find(run, id)
-	if order.is_empty():
-		return {}
-	CustomerHandover.dismiss(run, id)
-	if Encounters.has_pending(run):
-		return {}
-	return _finish_handover(Customers.hand_over(run, order, _rng.randf()))
-
 
 ## Takes the haggler's lower price, or holds firm when accept is false. Returns the same layout as hand_over_customer_order.
 func answer_haggle(id: String, accept: bool) -> Dictionary:
@@ -660,38 +651,6 @@ func withdraw_clean(amount: int) -> bool:
 
 
 ## Fills the shelves from the bag, most valuable goods first. Returns the units moved.
-func stock_business(entry: Dictionary) -> int:
-	if run.district_id != Businesses.district_of(entry):
-		return 0
-	var moved := 0
-	for item in _carried_by_value():
-		var units := Businesses.max_load(run, entry, item)
-		if units > 0 and Businesses.load_stock(run, entry, item, units) == Businesses.Result.OK:
-			moved += units
-	if moved > 0:
-		_commit(false)
-	return moved
-
-
-## Packs the shelves back into the bag, most valuable goods first. Returns the units moved.
-func unstock_business(entry: Dictionary) -> int:
-	if run.district_id != Businesses.district_of(entry):
-		return 0
-	var moved := 0
-	var items: Array[ItemDef] = []
-	for item_id: String in entry.get("stock", {}):
-		var item := Content.item(StringName(item_id))
-		if item != null:
-			items.append(item)
-	items.sort_custom(_by_value)
-	for item in items:
-		var units := Businesses.max_unload(run, entry, item)
-		if units > 0 and Businesses.unload_stock(run, entry, item, units) == Businesses.Result.OK:
-			moved += units
-	if moved > 0:
-		_commit(false)
-	return moved
-
 
 ## Returns { success, payout, lost_role }. Nothing happens when Heists.check() does not pass.
 func pull_heist(heist: HeistDef) -> Dictionary:

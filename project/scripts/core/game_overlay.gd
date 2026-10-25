@@ -266,10 +266,6 @@ func play_raid(officer: SpeakerDef, result_line: String, on_done: Callable) -> v
 	_raid.play(officer, result_line)
 
 
-func is_talking() -> bool:
-	return _dialogue.visible
-
-
 func handle_back() -> bool:
 	if _battle != null or _raid != null or _ambush_alert != null:
 		return true
@@ -393,11 +389,6 @@ func _on_run_changed() -> void:
 	if _banner.is_showing() and not _is_open_offer(run, _banner.offer_id):
 		_banner.retract()
 	_filled_orders.append_array(_stocked_orders.check(run))
-
-
-func set_hud_visible(visible_state: bool) -> void:
-	if _hud_margin != null:
-		_hud_margin.visible = visible_state
 
 
 func _on_scene_changed(scene_path: String) -> void:

@@ -109,10 +109,6 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 	_refresh_limits()
 
 
-func shows(item: ItemDef) -> bool:
-	return _item == item
-
-
 func _show_intel() -> void:
 	_intel_label.visible = _mode != Mode.GEAR
 	if _mode == Mode.GEAR:

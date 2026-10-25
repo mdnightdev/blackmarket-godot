@@ -259,14 +259,6 @@ static func take_losses(run: RunState, deployment: Dictionary, losses: Dictionar
 					Armory.lose(run, grade, roundi(int(carried[tier][grade]) * share))
 
 
-static func describe(deployment: Dictionary) -> String:
-	var parts: PackedStringArray = []
-	for tier in DEPLOY_ORDER:
-		if int(deployment.get(tier, 0)) > 0:
-			parts.append("%d %s" % [int(deployment[tier]), TIER_NAMES[tier]])
-	return ", ".join(parts)
-
-
 ## Saves written before the tiers kept one count of men, all of them Lunatics, plus Rabbit's unit as a story flag.
 ## Those saves are also older than WAR_SCALE, so the unit is counted at the old scale and multiplied up on load.
 static func from_legacy(men: int, unit_hired: bool) -> Dictionary:

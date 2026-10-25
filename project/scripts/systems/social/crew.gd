@@ -78,11 +78,6 @@ static func bail_member(run: RunState, role_id: StringName) -> bool:
 	return true
 
 
-static func max_delegations(run: RunState) -> int:
-	if not Campaign.is_act_two(run):
-		return 1
-	return clampi(1 + (StreetCred.rank(run) - 1) / 3, 1, 3)
-
 
 ## Hired roles in the order they were taken on.
 static func roles(run: RunState) -> Array[CrewRoleDef]:

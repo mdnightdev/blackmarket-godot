@@ -58,10 +58,6 @@ static func activate_frenzy(run: RunState, duration: float) -> void:
 	run.heat_timer = maxf(run.heat_timer, duration)
 
 
-static func is_frenzy(run: RunState) -> bool:
-	return run.heat_timer > 0.0
-
-
 static func tick_frenzy(run: RunState, delta: float) -> void:
 	if run.heat_timer > 0.0:
 		run.heat_timer = maxf(0.0, run.heat_timer - delta)

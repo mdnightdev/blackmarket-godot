@@ -86,6 +86,7 @@ const STRONGHOLD_GARRISON_FACTOR := 2.5
 static func take(run: RunState, corner_id: StringName) -> void:
 	if find(corner_id) != null and not holds(run, corner_id):
 		run.corners_held.append(String(corner_id))
+		run.player_garrisons.erase(String(corner_id))
 
 
 static func take_all(run: RunState, district_id: StringName) -> void:
@@ -285,11 +286,30 @@ static func sanitize_garrisons(run: RunState, source: Variant) -> Dictionary:
 	var clean := {}
 	if not source is Dictionary:
 		return clean
+	var total_active := Army.active(run)
+	var allocated := 0
 	for key: Variant in source:
 		var corner_id := StringName(str(key))
 		var corner := find(corner_id)
 		if corner != null and holds(run, corner_id):
 			var amount := clampi(int(source[key]), 0, Rivals.max_garrison(corner))
+			if total_active > 0 and allocated + amount > total_active:
+				amount = maxi(0, total_active - allocated)
 			if amount > 0:
 				clean[String(corner_id)] = amount
+				allocated += amount
 	return clean
+
+
+## Synchronizes territory ownership and garrisons to prevent state desync.
+## Purges orphaned garrisons for unheld corners and clamps posted men to army limits.
+static func sync(run: RunState) -> void:
+	if run == null:
+		return
+	var valid_held: Array[String] = []
+	for corner_id_str in run.corners_held:
+		var corner := find(StringName(corner_id_str))
+		if corner != null and not valid_held.has(corner_id_str):
+			valid_held.append(corner_id_str)
+	run.corners_held = valid_held
+	run.player_garrisons = sanitize_garrisons(run, run.player_garrisons)

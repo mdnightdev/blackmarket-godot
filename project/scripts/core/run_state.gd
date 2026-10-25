@@ -545,6 +545,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.hospital_level = clampi(int(data.get("hospital_size", 0)), 0, Hospital.LEVELS.size() - 1)
 	state.corner_defenders = War.sanitize_defenders(data.get("corner_defenders"))
 	state.player_garrisons = Corners.sanitize_garrisons(state, data.get("player_garrisons"))
+	Corners.sync(state)
 	state.rivals = Rivals.sanitize(data.get("rivals"))
 	var last_ambush_day := maxi(0, int(data.get("last_ambush_day", 0)))
 	if not data.has("rivals") and last_ambush_day > 0:
