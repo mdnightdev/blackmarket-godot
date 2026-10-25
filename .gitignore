@@ -36,16 +36,9 @@ godot_linux.zip
 /AndroidManifest-godot-portrait.xml
 /assets/*.pck
 
-<<<<<<< Updated upstream
 check_errors.sh
 run_tests.sh
-<<<<<<< Updated upstream
-=======
 
 # Local-only notes
-=======
-
->>>>>>> Stashed changes
 MASTER_PLAN.md
 Roadmap.md
->>>>>>> Stashed changes

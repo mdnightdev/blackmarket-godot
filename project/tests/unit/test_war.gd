@@ -216,7 +216,7 @@ func test_posted_garrison_draws_from_reserve_and_gains_cover_multiplier() -> voi
 	assert_eq(Army.reserve(_run), 90, "posted men are committed to the corner")
 	assert_eq(Army.deployed_count(Army.deployment(_run)), 90)
 	var mama := Corners.find(Corners.MAMA_LIN)
-	assert_gt(Corners.garrison_power(_run, mama), 60 * Army.SKILL[Army.Tier.GUARDS]
+	assert_eq(Corners.garrison_power(_run, mama), 60 * Army.SKILL[Army.Tier.GUARDS]
 	 * Corners.GARRISON_FACTOR)
 	Corners.take(_run, LANTERN)
 	assert_true(Corners.post_garrison(_run, LANTERN, 50))

@@ -124,12 +124,15 @@ func test_arrest_takes_half_of_each_stack_rounded_up_but_not_the_stash() -> void
 	Inventory.add_units(_run, _phones.id, 5)
 	Inventory.add_units(_run, _papers.id, 1)
 	_run.stash[_papers.id] = 2
-	_run.stashed_cash = 500
+	_run.stashed_cash = 50000
+	_run.cash = 30000
 	Police.arrest(_run)
 	assert_eq(Inventory.count(_run, _phones.id), 2)
 	assert_eq(Inventory.count(_run, _papers.id), 0)
 	assert_eq(Inventory.stashed(_run, _papers.id), 2)
-	assert_eq(_run.stashed_cash, 500)
+	assert_eq(_run.stashed_cash, 50000, "vault stash is never seized")
+	assert_lt(_run.cash, 30000, "carried dirty cash above threshold is partially seized")
+	assert_gte(_run.cash, Money.CARRIED_DIRTY_THRESHOLD, "carried threshold is protected")
 	assert_eq(_run.heat, Police.HEAT_AFTER_ARREST)
 	assert_eq(_run.busts, 1)
 
@@ -141,11 +144,7 @@ func test_police_stay_away_during_the_first_days() -> void:
 	assert_false(Police.is_quiet(_run))
 
 
-func test_police_stay_away_for_a_full_day_after_an_arrest() -> void:
+func test_arrest_or_raid_grants_no_immunity_shield() -> void:
 	_run.day = Police.GRACE_DAYS + 1
 	Police.arrest(_run)
-	for phase in Police.QUIET_PHASES_AFTER_ARREST:
-		Calendar.advance_phase(_run)
-		assert_true(Police.is_quiet(_run))
-	Calendar.advance_phase(_run)
-	assert_false(Police.is_quiet(_run))
+	assert_false(Police.is_quiet(_run), "no immunity shield granted after arrest or raid")

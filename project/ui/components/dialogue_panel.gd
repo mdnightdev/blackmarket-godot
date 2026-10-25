@@ -3,7 +3,7 @@ extends Control
 
 signal choice_selected(choice_id: StringName)
 
-const CHOICE_HEIGHT := 40
+const CHOICE_HEIGHT := 48
 const CHOICE_FONT_SIZE := 17
 const OPEN_SECONDS := 0.28
 const CLOSE_SECONDS := 0.18
@@ -37,6 +37,7 @@ var _mark_tween: Tween
 
 func _ready() -> void:
 	hide()
+	_skip_button.custom_minimum_size.y = CHOICE_HEIGHT
 	_line.finished.connect(_show_choices)
 	_dim.gui_input.connect(_on_tap)
 	_box.gui_input.connect(_on_tap)
