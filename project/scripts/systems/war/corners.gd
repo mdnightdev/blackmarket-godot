@@ -78,9 +78,9 @@ static func share(run: RunState, district_id: StringName) -> int:
 	return roundi(100.0 * held_count(run, district_id) / total) if total > 0 else 0
 
 
-const DEFAULT_LOOKOUTS := 50
 const GARRISON_FACTOR := 1.5
 const STRONGHOLD_GARRISON_FACTOR := 2.5
+const CORNER_GARRISON_CAP := 50000
 
 
 static func take(run: RunState, corner_id: StringName) -> void:
@@ -120,7 +120,7 @@ static func post_garrison(run: RunState, corner_id: StringName, men: int) -> boo
 		return false
 	var current := garrison(run, corner_id)
 	var available := Army.reserve(run) + current
-	var clamped := clampi(men, 0, mini(available, Rivals.max_garrison(corner)))
+	var clamped := clampi(men, 0, mini(available, CORNER_GARRISON_CAP))
 	if clamped > 0:
 		run.player_garrisons[String(corner_id)] = clamped
 	else:
@@ -128,17 +128,16 @@ static func post_garrison(run: RunState, corner_id: StringName, men: int) -> boo
 	return true
 
 
-## Defensive combat power of a held corner: base street lookouts plus posted men with home/stronghold cover multiplier.
+## Defensive combat power of a held corner: posted men with home/stronghold cover multiplier.
 static func garrison_power(run: RunState, corner: CornerDef) -> float:
 	if corner == null or not holds(run, corner.id):
 		return 0.0
-	var lookout_power := DEFAULT_LOOKOUTS * Armory.power_of(Armory.Grade.BLADE)
 	var posted := garrison(run, corner.id)
 	var factor := STRONGHOLD_GARRISON_FACTOR if corner.stronghold else GARRISON_FACTOR
 	if posted <= 0:
-		return lookout_power * factor
+		return 0.0
 	var garrison_deploy := Army.garrison_deployment(run, posted)
-	return (lookout_power + Army.power(run, garrison_deploy)) * factor
+	return Army.power(run, garrison_deploy) * factor
 
 
 ## Hands out corners for a save that kept a share per district. Districts of a gang already driven out are the
@@ -292,7 +291,7 @@ static func sanitize_garrisons(run: RunState, source: Variant) -> Dictionary:
 		var corner_id := StringName(str(key))
 		var corner := find(corner_id)
 		if corner != null and holds(run, corner_id):
-			var amount := clampi(int(source[key]), 0, Rivals.max_garrison(corner))
+			var amount := clampi(int(source[key]), 0, CORNER_GARRISON_CAP)
 			if total_active > 0 and allocated + amount > total_active:
 				amount = maxi(0, total_active - allocated)
 			if amount > 0:

@@ -38,8 +38,8 @@ func _ready() -> void:
 
 func _add_garrison_bar(run: RunState) -> void:
 	var posted := Corners.garrison(run, corner.id)
-	var cap := maxi(1, Rivals.max_garrison(corner))
-	var ratio := clampf(float(posted + Corners.DEFAULT_LOOKOUTS) / float(cap), 0.08, 1.0)
+	var cap := Corners.CORNER_GARRISON_CAP
+	var ratio := clampf(float(posted) / float(cap), 0.08, 1.0) if posted > 0 else 0.0
 	var track := ColorRect.new()
 	track.custom_minimum_size = Vector2(96.0, 5.0)
 	track.color = Color(0.08, 0.09, 0.12, 0.85)
