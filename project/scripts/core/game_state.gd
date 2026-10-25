@@ -678,9 +678,16 @@ func dealer_walked_out(dealer: DealerDef) -> void:
 	_commit(false)
 
 
+var _last_save_frame := -1
+
+
 func save_run() -> void:
 	if run == null:
 		return
+	var current_frame := Engine.get_process_frames()
+	if current_frame == _last_save_frame:
+		return
+	_last_save_frame = current_frame
 	var error := _store.write(run.to_dict())
 	if error != OK:
 		push_error("Run save failed: %s" % error_string(error))

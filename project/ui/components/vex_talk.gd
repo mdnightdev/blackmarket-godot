@@ -31,7 +31,6 @@ static func lines(run: RunState) -> Array[String]:
 
 static func play(vex: CharacterDef) -> void:
 	var pages := lines(GameState.run)
-	GameState.save_run()
 	_show(vex, pages, 0)
 
 
