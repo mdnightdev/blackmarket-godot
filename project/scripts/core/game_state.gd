@@ -45,6 +45,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if run == null or not clock_active:
 		return
+	Heat.tick_frenzy(run, delta)
 	if Police.release_if_served(run):
 		_commit(false)
 	if Encounters.has_pending(run) or Campaign.is_over(run):

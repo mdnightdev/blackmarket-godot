@@ -14,7 +14,7 @@ const TRAINING_PICKER := preload("res://ui/components/training_picker.tscn")
 const WEAPON_PICKER := preload("res://ui/components/weapon_picker.tscn")
 const TARGET_CARD := preload("res://ui/components/target_card.tscn")
 const BATTLE_SCENE := preload("res://ui/battle/battle_scene.tscn")
-const HUD_BAR := preload("res://ui/components/hud_bar.tscn")
+const HUD_BAR := preload("res://ui/chrome/hud_bar.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -106,30 +106,16 @@ func _ready() -> void:
 	_dialogue.add_backdrop_layer(_lights)
 	for sheet in _sheets():
 		SceneRouter.transition_started.connect(sheet.close)
-	GameState.orders_missed.connect(func(orders: Array[Dictionary]) -> void: _missed_orders.append_array(orders))
-	GameState.favours_missed.connect(func(favours: Array[Dictionary]) -> void: _missed_favours.append_array(favours))
-	GameState.crate_lost.connect(func(crate: Dictionary) -> void: _lost_crates.append(crate))
-	GameState.notices_posted.connect(func(notices: Array[Dictionary]) -> void: _notices.append_array(notices))
+	GameState.orders_missed.connect(_on_orders_missed)
+	GameState.favours_missed.connect(_on_favours_missed)
+	GameState.crate_lost.connect(_on_crate_lost)
+	GameState.notices_posted.connect(_on_notices_posted)
 	GameState.offers_posted.connect(_queue_offers)
 	GameState.customer_offers_posted.connect(_queue_offers)
 	GameState.run_changed.connect(_on_run_changed)
-	GameState.run_loaded.connect(func() -> void:
-		_forget_filled_orders()
-		_update_hud_visibility()
-	)
-	GameState.run_started.connect(func() -> void:
-		_missed_orders.clear()
-		_missed_favours.clear()
-		_lost_crates.clear()
-		_notices.clear()
-		_offers.clear()
-		_forget_filled_orders()
-		_banner.retract()
-		_update_hud_visibility()
-	)
-	GameState.run_ended.connect(func(_outcome: RunState.Outcome) -> void:
-		_update_hud_visibility()
-	)
+	GameState.run_loaded.connect(_on_run_loaded)
+	GameState.run_started.connect(_on_run_started)
+	GameState.run_ended.connect(_on_run_ended)
 	_update_hud_safe_margins()
 	get_tree().root.size_changed.connect(_update_hud_safe_margins)
 	SceneRouter.scene_changed.connect(_on_scene_changed)
@@ -451,6 +437,42 @@ func _is_open_offer(run: RunState, offer_id: String) -> bool:
 func _forget_filled_orders() -> void:
 	_filled_orders.clear()
 	_stocked_orders.clear()
+
+
+func _on_orders_missed(orders: Array[Dictionary]) -> void:
+	_missed_orders.append_array(orders)
+
+
+func _on_favours_missed(favours: Array[Dictionary]) -> void:
+	_missed_favours.append_array(favours)
+
+
+func _on_crate_lost(crate: Dictionary) -> void:
+	_lost_crates.append(crate)
+
+
+func _on_notices_posted(notices: Array[Dictionary]) -> void:
+	_notices.append_array(notices)
+
+
+func _on_run_loaded() -> void:
+	_forget_filled_orders()
+	_update_hud_visibility()
+
+
+func _on_run_started() -> void:
+	_missed_orders.clear()
+	_missed_favours.clear()
+	_lost_crates.clear()
+	_notices.clear()
+	_offers.clear()
+	_forget_filled_orders()
+	_banner.retract()
+	_update_hud_visibility()
+
+
+func _on_run_ended(_outcome: RunState.Outcome) -> void:
+	_update_hud_visibility()
 
 
 func _present_encounter(encounter: Dictionary) -> void:

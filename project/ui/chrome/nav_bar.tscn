@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://ui/components/nav_bar.gd" id="1_bar"]
+[ext_resource type="Script" path="res://ui/chrome/nav_bar.gd" id="1_bar"]
 [ext_resource type="PackedScene" path="res://ui/components/nav_tab.tscn" id="2_tab"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/flag.svg" id="3_turf"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/store.svg" id="4_market"]

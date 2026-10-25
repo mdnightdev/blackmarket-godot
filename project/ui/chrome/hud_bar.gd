@@ -46,9 +46,7 @@ func _sync() -> void:
 	refresh()
 
 
-func _process(delta: float) -> void:
-	if GameState.run != null:
-		Heat.tick_frenzy(GameState.run, delta)
+func _process(_delta: float) -> void:
 	_update_clock()
 
 

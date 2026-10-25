@@ -69,9 +69,9 @@ func _ready() -> void:
 	for tab_button: Button in [_buy_tab, _sell_tab]:
 		tab_button.button_group = tabs
 	_buy_tab.button_pressed = true
-	_buy_tab.pressed.connect(_select_tab.bind(Tab.BUY))
-	_sell_tab.pressed.connect(_select_tab.bind(Tab.SELL))
-	_back_button.pressed.connect(SceneRouter.go_to.bind(SceneRouter.DISTRICT_SCREEN))
+	_buy_tab.pressed.connect(_on_buy_tab_pressed)
+	_sell_tab.pressed.connect(_on_sell_tab_pressed)
+	_back_button.pressed.connect(_on_back_pressed)
 	_bag_button.pressed.connect(GameOverlay.open_bag)
 	_trade_form.completed.connect(_on_trade_completed)
 	_trade_form.dealer_said.connect(_dealer_says)
@@ -155,6 +155,18 @@ func _select_tab(tab: Tab) -> void:
 	_refresh()
 
 
+func _on_buy_tab_pressed() -> void:
+	_select_tab(Tab.BUY)
+
+
+func _on_sell_tab_pressed() -> void:
+	_select_tab(Tab.SELL)
+
+
+func _on_back_pressed() -> void:
+	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
+
+
 func _refresh() -> void:
 	var run := GameState.run
 	var mood := Haggle.mood(run, _dealer)
@@ -196,7 +208,8 @@ func _refresh() -> void:
 
 	GameState.remember_prices(_dealer)
 	_fill_order_list()
-	_lay_out(_buy_cards() if _tab == Tab.BUY else _sell_cards())
+	var cards := _buy_cards() if _tab == Tab.BUY else _sell_cards()
+	_lay_out(cards)
 
 
 func _show_notice(text: String) -> void:
@@ -218,8 +231,12 @@ func _fill_order_list() -> void:
 		var caption := "Bar order, %d wanted by %s" % [quantity, Calendar.describe(int(order.due)).to_lower()]
 		var detail := "DELIVER" if deliverable else "HAVE %d/%d" % [held, quantity]
 		row.display(item, Format.money(Orders.total(order)), caption, detail, Palette.RISK_LOW if deliverable else Palette.TEXT_MUTED)
-		row.item_selected.connect(func(_item: ItemDef) -> void: _deliver(order))
+		row.item_selected.connect(_on_order_selected.bind(order))
 	_order_list.visible = _order_list.get_child_count() > 0
+
+
+func _on_order_selected(order: Dictionary) -> void:
+	_deliver(order)
 
 
 func _deliver(order: Dictionary) -> void:

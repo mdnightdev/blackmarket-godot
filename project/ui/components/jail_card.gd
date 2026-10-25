@@ -16,6 +16,8 @@ const SIDE_MARGIN := 16.0
 @onready var _bail_button: Button = %BailButton
 
 var _nudge_tween: Tween
+var _last_seconds_left := -1
+var _last_bail := -1
 
 
 func _ready() -> void:
@@ -28,16 +30,26 @@ func _process(_delta: float) -> void:
 	var jailed := GameState.clock_active and run != null and Police.is_jailed(run)
 	if visible != jailed:
 		visible = jailed
+		if jailed:
+			_last_seconds_left = -1
+			_last_bail = -1
 	if not jailed:
 		return
 	_card.position.y = OfferBanner.below_top_bar(get_viewport())
 	# The wrapped note measures tall before the card has its width, and a card outside a container never shrinks back.
 	_card.size.y = 0.0
-	_time_label.text = Format.clock(Police.jail_seconds_left(run))
-	var rabbit := Content.speaker(RabbitCells.FRIEND)
-	var caller := rabbit.display_name if rabbit != null else "a friend"
-	_bail_button.text = "Call %s to post bail, %s" % [caller, Format.money(run.jail_bail)]
-	_bail_button.disabled = run.cash < run.jail_bail
+
+	var seconds_left := int(ceilf(Police.jail_seconds_left(run)))
+	if seconds_left != _last_seconds_left:
+		_last_seconds_left = seconds_left
+		_time_label.text = Format.clock(float(seconds_left))
+
+	if run.jail_bail != _last_bail or _bail_button.disabled != (run.cash < run.jail_bail):
+		_last_bail = run.jail_bail
+		var rabbit := Content.speaker(RabbitCells.FRIEND)
+		var caller := rabbit.display_name if rabbit != null else "a friend"
+		_bail_button.text = "Call %s to post bail, %s" % [caller, Format.money(run.jail_bail)]
+		_bail_button.disabled = run.cash < run.jail_bail
 
 
 ## Shakes the card when the player tries something a cell does not allow.

@@ -382,13 +382,13 @@ func test_hostile_home_family_doubles_the_raid_chance() -> void:
 
 func test_morning_pays_upkeep_and_cools_heat() -> void:
 	_open(_car_wash)
-	_run.cash = 1000
+	_run.cash = 10000
 	_run.heat = 20
 	var rolls: Array[float] = [0.99]
 	var report := Businesses.morning(_run, rolls)
-	assert_eq(report.upkeep, _car_wash.daily_upkeep)
+	assert_eq(report.upkeep, _car_wash.effective_upkeep(1))
 	assert_true(report.raided.is_empty())
-	assert_eq(_run.cash, 1000 - _car_wash.daily_upkeep)
+	assert_eq(_run.cash, 10000 - _car_wash.effective_upkeep(1))
 	assert_eq(_run.heat, 20 - _car_wash.daily_heat_drop)
 
 
@@ -402,12 +402,12 @@ func test_heat_never_drops_below_zero() -> void:
 
 func test_unpaid_upkeep_closes_the_business_for_the_day() -> void:
 	var entry := _open(_car_wash)
-	_run.cash = _car_wash.daily_upkeep - 1
+	_run.cash = _car_wash.effective_upkeep(1) - 1
 	_run.heat = 20
 	var rolls: Array[float] = []
 	var report := Businesses.morning(_run, rolls)
 	assert_eq(report.upkeep, 0)
-	assert_eq(_run.cash, _car_wash.daily_upkeep - 1)
+	assert_eq(_run.cash, _car_wash.effective_upkeep(1) - 1)
 	assert_eq(_run.heat, 20, "a closed business launders nothing")
 	assert_false(Businesses.is_open(_run, entry))
 	_run.day += 1
@@ -443,9 +443,10 @@ func test_each_roll_belongs_to_its_business() -> void:
 	var wash := _open(_car_wash)
 	_stock(shop, _watches, 2, 400)
 	_stock(wash, _sims, 6, 50)
+	_run.cash = 50000
 	var rolls: Array[float] = [0.99, 0.0]
 	var report := Businesses.morning(_run, rolls)
-	assert_eq(report.upkeep, _shop.daily_upkeep + _car_wash.daily_upkeep)
+	assert_eq(report.upkeep, _shop.effective_upkeep(1) + _car_wash.effective_upkeep(1))
 	assert_eq(report.raided, [_car_wash.display_name] as Array[String])
 	assert_eq(Businesses.stocked(shop, _watches.id), 2)
 	assert_eq(Businesses.stock_used(wash), 0)

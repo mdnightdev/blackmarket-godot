@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="DistrictDef" load_steps=10 format=3]
 
-[ext_resource type="Script" path="res://scripts/defs/district_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/models/district_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/districts/west_end.jpg" id="2_background"]
 [ext_resource type="PackedScene" path="res://ui/effects/fog.tscn" id="3_effect"]
-[ext_resource type="Script" path="res://scripts/defs/corner_def.gd" id="4_corner"]
+[ext_resource type="Script" path="res://scripts/models/corner_def.gd" id="4_corner"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/map_west_end.jpg" id="5_corner_map"]
 
 [sub_resource type="Resource" id="Corner_stage_door"]

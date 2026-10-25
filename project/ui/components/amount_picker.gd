@@ -4,6 +4,8 @@ extends Control
 ## A card that asks how many: men to train, weapons to buy or sell. Subclasses set the limit, describe the pick and
 ## carry it out.
 
+signal closed(done: bool)
+
 const OPEN_SECONDS := 0.18
 const CLOSE_SECONDS := 0.12
 const STEP := 100
@@ -100,6 +102,7 @@ func _close(done: bool) -> void:
 	var on_closed := _on_closed
 	_on_closed = Callable()
 	_animate(0.0, Vector2(0.96, 0.96), CLOSE_SECONDS).chain().tween_callback(hide)
+	closed.emit(done)
 	if on_closed.is_valid():
 		on_closed.call(done)
 

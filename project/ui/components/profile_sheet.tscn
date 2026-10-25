@@ -1,7 +1,7 @@
 [gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://ui/components/profile_sheet.gd" id="1_sheet"]
-[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
+[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="3_nav"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/backpack.svg" id="5_bag"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/clipboard-list.svg" id="6_jobs"]
