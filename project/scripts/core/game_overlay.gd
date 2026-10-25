@@ -391,7 +391,20 @@ func _on_run_changed() -> void:
 	_filled_orders.append_array(_stocked_orders.check(run))
 
 
+func _clear_transient_queues() -> void:
+	_missed_orders.clear()
+	_missed_favours.clear()
+	_lost_crates.clear()
+	_notices.clear()
+	_offers.clear()
+	_forget_filled_orders()
+	if _banner != null:
+		_banner.retract()
+
+
 func _on_scene_changed(scene_path: String) -> void:
+	if scene_path == SceneRouter.TITLE_SCREEN or scene_path == SceneRouter.CHARACTER_SELECT:
+		_clear_transient_queues()
 	_update_hud_visibility(scene_path)
 
 
@@ -447,18 +460,12 @@ func _on_notices_posted(notices: Array[Dictionary]) -> void:
 
 
 func _on_run_loaded() -> void:
-	_forget_filled_orders()
+	_clear_transient_queues()
 	_update_hud_visibility()
 
 
 func _on_run_started() -> void:
-	_missed_orders.clear()
-	_missed_favours.clear()
-	_lost_crates.clear()
-	_notices.clear()
-	_offers.clear()
-	_forget_filled_orders()
-	_banner.retract()
+	_clear_transient_queues()
 	_update_hud_visibility()
 
 
