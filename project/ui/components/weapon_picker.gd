@@ -10,7 +10,7 @@ var _selling := false
 
 
 ## on_closed gets true when the deal went through.
-func open(grade: Armory.Grade, selling: bool, on_closed: Callable) -> void:
+func open(grade: Armory.Grade, selling: bool, on_closed := Callable()) -> void:
 	var run := GameState.run
 	var weapon := str(Armory.GRADE_NAMES[grade]).to_lower()
 	_grade = grade

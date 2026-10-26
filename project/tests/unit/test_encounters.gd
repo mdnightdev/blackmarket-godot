@@ -33,17 +33,17 @@ func test_no_raid_or_stop_while_the_police_are_quiet() -> void:
 	_run.heat = Heat.MAX
 	Encounters.check_raid(_run)
 	assert_false(Encounters.has_pending(_run), "grace period")
+	var rng := RandomNumberGenerator.new()
+	Encounters.after_time_passes(_run, false, true, rng, _no_events)
+	assert_false(Encounters.has_pending(_run), "no raid during grace period")
+
+
+func test_no_immunity_shield_after_arrest() -> void:
 	_run.day = Police.GRACE_DAYS + 1
 	Police.arrest(_run)
 	_run.heat = Heat.MAX
-	var rng := RandomNumberGenerator.new()
-	for attempt in 50:
-		rng.seed = attempt
-		Encounters.after_time_passes(_run, false, true, rng, _no_events)
-		assert_ne(_run.pending_encounter.get("type"), Encounters.POLICE)
-		assert_ne(_run.pending_encounter.get("type"), Encounters.RAID)
-		_run.pending_encounter = {}
-		_run.heat = Heat.MAX
+	Encounters.check_raid(_run)
+	assert_true(Encounters.has_pending(_run), "arrest grants no immunity cooldown against max heat raids")
 
 
 func test_check_raid_only_at_max_heat() -> void:

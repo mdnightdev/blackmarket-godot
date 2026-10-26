@@ -126,9 +126,13 @@ func _set_bus_volume(bus_name: StringName, linear_volume: float) -> void:
 
 func _notification(what: int) -> void:
 	match what:
-		NOTIFICATION_APPLICATION_PAUSED:
-			_music_player.stream_paused = true
-			_siren_player.stream_paused = true
-		NOTIFICATION_APPLICATION_RESUMED:
-			_music_player.stream_paused = false
-			_siren_player.stream_paused = false
+		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT:
+			if _music_player and _music_player.playing:
+				_music_player.stream_paused = true
+			if _siren_player and _siren_player.playing:
+				_siren_player.stream_paused = true
+		NOTIFICATION_APPLICATION_RESUMED, NOTIFICATION_APPLICATION_FOCUS_IN:
+			if _music_player and _music_player.stream_paused:
+				_music_player.stream_paused = false
+			if _siren_player and _siren_player.stream_paused:
+				_siren_player.stream_paused = false

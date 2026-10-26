@@ -14,7 +14,7 @@ const TRAINING_PICKER := preload("res://ui/components/training_picker.tscn")
 const WEAPON_PICKER := preload("res://ui/components/weapon_picker.tscn")
 const TARGET_CARD := preload("res://ui/components/target_card.tscn")
 const BATTLE_SCENE := preload("res://ui/battle/battle_scene.tscn")
-const HUD_BAR := preload("res://ui/components/hud_bar.tscn")
+const HUD_BAR := preload("res://ui/chrome/hud_bar.tscn")
 const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
@@ -62,8 +62,19 @@ var _filled_orders: Array[String] = []
 var _stocked_orders := StockedOrders.new()
 
 
+var _is_setup := false
+
+
 func _ready() -> void:
 	layer = 50
+	if DisplayServer.get_name() == "headless":
+		ensure_setup()
+
+
+func ensure_setup() -> void:
+	if _is_setup:
+		return
+	_is_setup = true
 	_dialogue = DIALOGUE_PANEL.instantiate()
 	_loan_sheet = LOAN_SHEET.instantiate()
 	_inventory_sheet = INVENTORY_SHEET.instantiate()
@@ -106,30 +117,16 @@ func _ready() -> void:
 	_dialogue.add_backdrop_layer(_lights)
 	for sheet in _sheets():
 		SceneRouter.transition_started.connect(sheet.close)
-	GameState.orders_missed.connect(func(orders: Array[Dictionary]) -> void: _missed_orders.append_array(orders))
-	GameState.favours_missed.connect(func(favours: Array[Dictionary]) -> void: _missed_favours.append_array(favours))
-	GameState.crate_lost.connect(func(crate: Dictionary) -> void: _lost_crates.append(crate))
-	GameState.notices_posted.connect(func(notices: Array[Dictionary]) -> void: _notices.append_array(notices))
+	GameState.orders_missed.connect(_on_orders_missed)
+	GameState.favours_missed.connect(_on_favours_missed)
+	GameState.crate_lost.connect(_on_crate_lost)
+	GameState.notices_posted.connect(_on_notices_posted)
 	GameState.offers_posted.connect(_queue_offers)
 	GameState.customer_offers_posted.connect(_queue_offers)
 	GameState.run_changed.connect(_on_run_changed)
-	GameState.run_loaded.connect(func() -> void:
-		_forget_filled_orders()
-		_update_hud_visibility()
-	)
-	GameState.run_started.connect(func() -> void:
-		_missed_orders.clear()
-		_missed_favours.clear()
-		_lost_crates.clear()
-		_notices.clear()
-		_offers.clear()
-		_forget_filled_orders()
-		_banner.retract()
-		_update_hud_visibility()
-	)
-	GameState.run_ended.connect(func(_outcome: RunState.Outcome) -> void:
-		_update_hud_visibility()
-	)
+	GameState.run_loaded.connect(_on_run_loaded)
+	GameState.run_started.connect(_on_run_started)
+	GameState.run_ended.connect(_on_run_ended)
 	_update_hud_safe_margins()
 	get_tree().root.size_changed.connect(_update_hud_safe_margins)
 	SceneRouter.scene_changed.connect(_on_scene_changed)
@@ -138,6 +135,8 @@ func _ready() -> void:
 
 ## Screens opt in by defining can_present_encounter(), so encounters never interrupt animations or other modals.
 func _process(delta: float) -> void:
+	if not _is_setup:
+		return
 	_update_shake(delta)
 	if _lights.is_on() and not _dialogue.visible:
 		_stand_down()
@@ -169,27 +168,32 @@ func _process(delta: float) -> void:
 
 
 func open_loan(mode := LoanSheet.Mode.REPAY) -> void:
+	ensure_setup()
 	_loan_sheet.open_loan(mode)
 
 
 func open_bag() -> void:
+	ensure_setup()
 	_close_pages_except(_inventory_sheet)
 	if not _inventory_sheet.visible:
 		_inventory_sheet.open_inventory()
 
 
 func open_turf() -> void:
+	ensure_setup()
 	_close_pages_except(_turf_sheet)
 	_turf_sheet.open_turf()
 
 
 func open_jobs() -> void:
+	ensure_setup()
 	_close_pages_except(_jobs_sheet)
 	if not _jobs_sheet.visible:
 		_jobs_sheet.open_jobs()
 
 
 func open_profile() -> void:
+	ensure_setup()
 	_close_pages_except(_profile_sheet)
 	if not _profile_sheet.visible:
 		_profile_sheet.open_profile()
@@ -197,6 +201,7 @@ func open_profile() -> void:
 
 ## Where to buy the goods for an accepted customer order.
 func open_quotes(order_id: String) -> void:
+	ensure_setup()
 	_close_pages_except(_quote_sheet)
 	_quote_sheet.open_quotes(order_id)
 
@@ -210,6 +215,7 @@ func _close_pages_except(keep: BottomSheet) -> void:
 ## Opens a conversation that is not an encounter. See DialoguePanel.open for the callback contract.
 ## Nobody talks business with a player in a cell.
 func talk(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_choice: Callable, hint := "") -> void:
+	ensure_setup()
 	if blocked_by_jail():
 		return
 	_dialogue.open(speaker, line, choices, on_choice, hint)
@@ -217,6 +223,7 @@ func talk(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_
 
 ## True while the player sits in a cell, so the activity has to wait. Points the player at the jail card.
 func blocked_by_jail() -> bool:
+	ensure_setup()
 	if GameState.run == null or not Police.is_jailed(GameState.run):
 		return false
 	for sheet in _sheets():
@@ -226,6 +233,7 @@ func blocked_by_jail() -> bool:
 
 
 func say(line: String, choices: Array[DialogueChoice], on_choice: Callable, talking := true, hint := "") -> void:
+	ensure_setup()
 	_dialogue.say(line, choices, on_choice, talking, hint)
 
 
@@ -235,30 +243,35 @@ func end_talk() -> void:
 
 ## Asks the player who goes into a fight. on_sent receives the deployment. Back or cancel calls on_cancel.
 func pick_crew(title: String, message: String, send_format: String, cancel_text: String, on_sent: Callable, on_cancel: Callable) -> void:
+	ensure_setup()
 	_dialogue.close()
 	_crew_picker.open(title, message, send_format, cancel_text, on_sent, on_cancel)
 
 
 ## Asks how many men to put through a Gym course.
 func pick_training(course: Gym.Course) -> void:
+	ensure_setup()
 	_dialogue.close()
 	_training_picker.open(course)
 
 
 ## Sizes up a rival corner: the latest scouting report against the player's force, with Scout and Attack.
 func show_target(corner: CornerDef, people: Array[SpeakerDef]) -> void:
+	ensure_setup()
 	_dialogue.close()
 	_target_card.open(corner, people)
 
 
 ## Asks how many weapons to buy from Rook or sell back to him. on_closed gets true when the deal went through.
 func pick_weapons(grade: Armory.Grade, selling: bool, on_closed: Callable) -> void:
+	ensure_setup()
 	_dialogue.close()
 	_weapon_picker.open(grade, selling, on_closed)
 
 
 ## Plays a fight that is already decided over the current screen, then calls on_done.
 func play_battle(player_side: BattleSide, enemy_side: BattleSide, result_line: String, battle_seed: int, on_done: Callable) -> void:
+	ensure_setup()
 	_dialogue.close()
 	_battle = BATTLE_SCENE.instantiate()
 	add_child(_battle)
@@ -270,6 +283,7 @@ func play_battle(player_side: BattleSide, enemy_side: BattleSide, result_line: S
 
 
 func play_raid(officer: SpeakerDef, result_line: String, on_done: Callable) -> void:
+	ensure_setup()
 	_dialogue.close()
 	_raid = RaidScene.new()
 	add_child(_raid)
@@ -280,11 +294,9 @@ func play_raid(officer: SpeakerDef, result_line: String, on_done: Callable) -> v
 	_raid.play(officer, result_line)
 
 
-func is_talking() -> bool:
-	return _dialogue.visible
-
-
 func handle_back() -> bool:
+	if not _is_setup:
+		return false
 	if _battle != null or _raid != null or _ambush_alert != null:
 		return true
 	if _crew_picker.visible:
@@ -313,6 +325,8 @@ func handle_back() -> bool:
 
 
 func _sheets() -> Array[BottomSheet]:
+	if not _is_setup:
+		return []
 	var sheets: Array[BottomSheet] = [_quote_sheet, _loan_sheet, _inventory_sheet, _turf_sheet, _jobs_sheet, _profile_sheet]
 	return sheets
 
@@ -409,12 +423,20 @@ func _on_run_changed() -> void:
 	_filled_orders.append_array(_stocked_orders.check(run))
 
 
-func set_hud_visible(visible_state: bool) -> void:
-	if _hud_margin != null:
-		_hud_margin.visible = visible_state
+func _clear_transient_queues() -> void:
+	_missed_orders.clear()
+	_missed_favours.clear()
+	_lost_crates.clear()
+	_notices.clear()
+	_offers.clear()
+	_forget_filled_orders()
+	if _banner != null:
+		_banner.retract()
 
 
 func _on_scene_changed(scene_path: String) -> void:
+	if scene_path == SceneRouter.TITLE_SCREEN or scene_path == SceneRouter.CHARACTER_SELECT:
+		_clear_transient_queues()
 	_update_hud_visibility(scene_path)
 
 
@@ -451,6 +473,36 @@ func _is_open_offer(run: RunState, offer_id: String) -> bool:
 func _forget_filled_orders() -> void:
 	_filled_orders.clear()
 	_stocked_orders.clear()
+
+
+func _on_orders_missed(orders: Array[Dictionary]) -> void:
+	_missed_orders.append_array(orders)
+
+
+func _on_favours_missed(favours: Array[Dictionary]) -> void:
+	_missed_favours.append_array(favours)
+
+
+func _on_crate_lost(crate: Dictionary) -> void:
+	_lost_crates.append(crate)
+
+
+func _on_notices_posted(notices: Array[Dictionary]) -> void:
+	_notices.append_array(notices)
+
+
+func _on_run_loaded() -> void:
+	_clear_transient_queues()
+	_update_hud_visibility()
+
+
+func _on_run_started() -> void:
+	_clear_transient_queues()
+	_update_hud_visibility()
+
+
+func _on_run_ended(_outcome: RunState.Outcome) -> void:
+	_update_hud_visibility()
 
 
 func _present_encounter(encounter: Dictionary) -> void:

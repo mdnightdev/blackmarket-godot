@@ -214,14 +214,6 @@ static func check_carried_seizure(run: RunState, roll := -1.0) -> Dictionary:
 	}
 
 
-static func check_stash_seizure(run: RunState, roll := -1.0) -> Dictionary:
-	if run.stashed_cash <= 0:
-		return { "seized": 0, "level": 0, "share": 0.0 }
-	var seizure := roll_seizure(roll)
-	var seized := floori(run.stashed_cash * seizure.share)
-	run.stashed_cash -= seized
-	return {
-		"seized": seized,
-		"level": seizure.level,
-		"share": seizure.share,
-	}
+## Cash in the vault (stashed_cash) is secure and never seized.
+static func check_stash_seizure(_run: RunState, _roll := -1.0) -> Dictionary:
+	return { "seized": 0, "level": 0, "share": 0.0 }

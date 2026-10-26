@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://ui/components/inventory_sheet.gd" id="1_sheet"]
-[ext_resource type="PackedScene" path="res://ui/components/nav_bar.tscn" id="3_nav"]
+[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="3_nav"]
 [ext_resource type="PackedScene" path="res://ui/components/trade_sheet.tscn" id="4_trade"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="5_button"]
 
@@ -132,6 +132,16 @@ size_flags_horizontal = 3
 theme_type_variation = &"LineTab"
 toggle_mode = true
 text = "Gear"
+script = ExtResource("5_button")
+
+[node name="SpriteTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"LineTab"
+toggle_mode = true
+text = "Sprite"
 script = ExtResource("5_button")
 
 [node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]

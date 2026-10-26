@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/settings/settings_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
+[ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="3_confirm"]
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
@@ -35,103 +36,154 @@ theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 40
 
-[node name="Layout" type="VBoxContainer" parent="Margin"]
+[node name="Scroll" type="ScrollContainer" parent="Margin"]
 layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Layout" type="VBoxContainer" parent="Margin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="Header" type="Label" parent="Margin/Layout"]
+[node name="Header" type="Label" parent="Margin/Scroll/Layout"]
 layout_mode = 2
 theme_type_variation = &"HeaderLabel"
 text = "Settings"
 
-[node name="AudioHeading" type="Label" parent="Margin/Layout"]
+[node name="AudioHeading" type="Label" parent="Margin/Scroll/Layout"]
 layout_mode = 2
 theme_type_variation = &"ListHeading"
 text = "AUDIO"
 
-[node name="AudioCard" type="PanelContainer" parent="Margin/Layout"]
+[node name="AudioCard" type="PanelContainer" parent="Margin/Scroll/Layout"]
 layout_mode = 2
 theme_type_variation = &"Card"
 
-[node name="Rows" type="VBoxContainer" parent="Margin/Layout/AudioCard"]
+[node name="Rows" type="VBoxContainer" parent="Margin/Scroll/Layout/AudioCard"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="MusicRow" type="VBoxContainer" parent="Margin/Layout/AudioCard/Rows"]
+[node name="MusicRow" type="VBoxContainer" parent="Margin/Scroll/Layout/AudioCard/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="MusicLabel" type="Label" parent="Margin/Layout/AudioCard/Rows/MusicRow"]
+[node name="MusicLabel" type="Label" parent="Margin/Scroll/Layout/AudioCard/Rows/MusicRow"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "MUSIC"
 
-[node name="MusicSlider" type="HSlider" parent="Margin/Layout/AudioCard/Rows/MusicRow"]
+[node name="MusicSlider" type="HSlider" parent="Margin/Scroll/Layout/AudioCard/Rows/MusicRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 max_value = 1.0
 step = 0.05
 
-[node name="SfxRow" type="VBoxContainer" parent="Margin/Layout/AudioCard/Rows"]
+[node name="SfxRow" type="VBoxContainer" parent="Margin/Scroll/Layout/AudioCard/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SfxLabel" type="Label" parent="Margin/Layout/AudioCard/Rows/SfxRow"]
+[node name="SfxLabel" type="Label" parent="Margin/Scroll/Layout/AudioCard/Rows/SfxRow"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "SOUND EFFECTS"
 
-[node name="SfxSlider" type="HSlider" parent="Margin/Layout/AudioCard/Rows/SfxRow"]
+[node name="SfxSlider" type="HSlider" parent="Margin/Scroll/Layout/AudioCard/Rows/SfxRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 max_value = 1.0
 step = 0.05
 
-[node name="GameplayHeading" type="Label" parent="Margin/Layout"]
+[node name="GameplayHeading" type="Label" parent="Margin/Scroll/Layout"]
 layout_mode = 2
 theme_type_variation = &"ListHeading"
 text = "GAMEPLAY"
 
-[node name="GameplayCard" type="PanelContainer" parent="Margin/Layout"]
+[node name="GameplayCard" type="PanelContainer" parent="Margin/Scroll/Layout"]
 layout_mode = 2
 theme_type_variation = &"Card"
 
-[node name="Rows" type="VBoxContainer" parent="Margin/Layout/GameplayCard"]
+[node name="Rows" type="VBoxContainer" parent="Margin/Scroll/Layout/GameplayCard"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="VibrationToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
+[node name="VibrationToggle" type="CheckButton" parent="Margin/Scroll/Layout/GameplayCard/Rows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "Vibration"
 
-[node name="ShakeToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
+[node name="ShakeToggle" type="CheckButton" parent="Margin/Scroll/Layout/GameplayCard/Rows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "Screen shake"
 
-[node name="DoNotDisturbToggle" type="CheckButton" parent="Margin/Layout/GameplayCard/Rows"]
+[node name="DoNotDisturbToggle" type="CheckButton" parent="Margin/Scroll/Layout/GameplayCard/Rows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "Do not disturb (job offers wait in Jobs)"
+text = "Do not disturb"
 
-[node name="Spacer" type="Control" parent="Margin/Layout"]
+[node name="DataHeading" type="Label" parent="Margin/Scroll/Layout"]
 layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 2
+theme_type_variation = &"ListHeading"
+text = "DATA & PROGRESS"
 
-[node name="VersionLabel" type="Label" parent="Margin/Layout"]
+[node name="DataCard" type="PanelContainer" parent="Margin/Scroll/Layout"]
+layout_mode = 2
+theme_type_variation = &"Card"
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Scroll/Layout/DataCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NewGameButton" type="Button" parent="Margin/Scroll/Layout/DataCard/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Start New Game"
+script = ExtResource("2_button")
+
+[node name="BackupButton" type="Button" parent="Margin/Scroll/Layout/DataCard/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Backup Save to Device"
+script = ExtResource("2_button")
+
+[node name="RestoreButton" type="Button" parent="Margin/Scroll/Layout/DataCard/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Restore Save from Backup"
+script = ExtResource("2_button")
+
+[node name="WipeButton" type="Button" parent="Margin/Scroll/Layout/DataCard/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"DangerButton"
+text = "Wipe All Game Data"
+script = ExtResource("2_button")
+
+[node name="DataStatusLabel" type="Label" parent="Margin/Scroll/Layout/DataCard/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
 
-[node name="DoneButton" type="Button" parent="Margin/Layout"]
+[node name="Spacer" type="Control" parent="Margin/Scroll/Layout"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="DoneButton" type="Button" parent="Margin/Scroll/Layout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 48)
 layout_mode = 2
@@ -139,3 +191,14 @@ size_flags_horizontal = 4
 theme_type_variation = &"SecondaryButton"
 text = "Done"
 script = ExtResource("2_button")
+
+[node name="VersionLabel" type="Label" parent="Margin/Scroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+
+[node name="ConfirmDialog" parent="." instance=ExtResource("3_confirm")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

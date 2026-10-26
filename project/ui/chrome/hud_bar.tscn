@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://ui/components/hud_bar.gd" id="1_hud"]
+[ext_resource type="Script" path="res://ui/chrome/hud_bar.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/banknote.svg" id="3_cash"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/landmark.svg" id="4_bank"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="5_heat"]

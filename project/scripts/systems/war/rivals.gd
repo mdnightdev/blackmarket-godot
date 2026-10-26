@@ -60,10 +60,6 @@ static func cop_bribe_until(run: RunState, gang: GangDef) -> int:
 	return int(state(run, gang).cop_bribe_until)
 
 
-static func set_cop_bribe(run: RunState, gang: GangDef, until_day: int) -> void:
-	_store(run, gang, "cop_bribe_until", maxi(0, until_day))
-
-
 static func bait_corner(run: RunState, gang: GangDef) -> StringName:
 	return StringName(str(state(run, gang).bait_corner))
 

@@ -17,7 +17,13 @@ func _ready() -> void:
 	GameState.run_changed.connect(_refresh_tabs)
 	Settings.changed.connect(_refresh_tabs)
 	visibility_changed.connect(_refresh_tabs)
+	_apply_safe_area()
+	get_tree().root.size_changed.connect(_apply_safe_area)
 	_refresh_tabs()
+
+
+func _apply_safe_area() -> void:
+	SafeArea.apply_bottom_margin(self, 10)
 
 
 func _refresh_tabs() -> void:

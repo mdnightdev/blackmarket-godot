@@ -3,32 +3,32 @@ extends GutTest
 
 func test_buy_offer_inside_tolerance_is_accepted() -> void:
 	var response := Haggle.respond(1000, 920, true, 0.1)
-	assert_eq(response.outcome, Haggle.Outcome.ACCEPTED)
-	assert_eq(response.price, 920)
+	assert_eq(response[0], Haggle.Outcome.ACCEPTED)
+	assert_eq(response[1], 920)
 
 
 func test_greedy_buy_offer_gets_counter_at_dealer_limit() -> void:
 	var response := Haggle.respond(1000, 850, true, 0.1, 0.5)
-	assert_eq(response.outcome, Haggle.Outcome.COUNTERED)
-	assert_eq(response.price, 900)
+	assert_eq(response[0], Haggle.Outcome.COUNTERED)
+	assert_eq(response[1], 900)
 
 
 func test_greedy_offer_can_cause_walk_out() -> void:
 	var response := Haggle.respond(1000, 850, true, 0.1, 0.1)
-	assert_eq(response.outcome, Haggle.Outcome.WALKED)
-	assert_eq(response.price, 1000)
+	assert_eq(response[0], Haggle.Outcome.WALKED)
+	assert_eq(response[1], 1000)
 
 
 func test_insulting_buy_offer_ends_the_talk() -> void:
-	assert_eq(Haggle.respond(1000, 750, true, 0.1).outcome, Haggle.Outcome.WALKED)
+	assert_eq(Haggle.respond(1000, 750, true, 0.1)[0], Haggle.Outcome.WALKED)
 
 
 func test_sell_offers_mirror_buy_offers() -> void:
-	assert_eq(Haggle.respond(1000, 1080, false, 0.1).outcome, Haggle.Outcome.ACCEPTED)
+	assert_eq(Haggle.respond(1000, 1080, false, 0.1)[0], Haggle.Outcome.ACCEPTED)
 	var counter := Haggle.respond(1000, 1150, false, 0.1, 0.5)
-	assert_eq(counter.outcome, Haggle.Outcome.COUNTERED)
-	assert_eq(counter.price, 1100)
-	assert_eq(Haggle.respond(1000, 1300, false, 0.1).outcome, Haggle.Outcome.WALKED)
+	assert_eq(counter[0], Haggle.Outcome.COUNTERED)
+	assert_eq(counter[1], 1100)
+	assert_eq(Haggle.respond(1000, 1300, false, 0.1)[0], Haggle.Outcome.WALKED)
 
 
 func test_offer_range_limits_haggling() -> void:

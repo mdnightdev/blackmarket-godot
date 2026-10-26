@@ -128,7 +128,7 @@ func _refresh_garrison(run: RunState) -> void:
 	_stronghold_tag.visible = _corner.stronghold
 
 	var posted := Corners.garrison(run, _corner.id)
-	_men_label.text = "%s posted + %d lookouts" % [Format.count(posted), Corners.DEFAULT_LOOKOUTS]
+	_men_label.text = "%s posted" % Format.count(posted) if posted > 0 else "No garrison posted"
 	var mult_text := "2.5x stronghold cover" if _corner.stronghold else "1.5x street cover"
 	_kit_label.text = "%s (%s in reserve)" % [mult_text, Format.count(Army.reserve(run))]
 
@@ -145,8 +145,8 @@ func _refresh_garrison(run: RunState) -> void:
 	var bounds := Vector2(threat_power * 0.85, threat_power * 1.25)
 	_strength_bar.show_strength(def_power, bounds, raiders > 0, their_color)
 
-	var locked_down := def_power >= threat_power * 1.25 or raiders <= 0
-	_reading_label.text = "LOCKED DOWN" if locked_down else ("GARRISONED" if posted > 0 else "LOOKOUTS ONLY")
+	var locked_down := def_power >= threat_power * 1.25 and def_power > 0.0 or (raiders <= 0 and posted > 0)
+	_reading_label.text = "LOCKED DOWN" if locked_down else ("GARRISONED" if posted > 0 else "UNPROTECTED")
 	_reading_label.add_theme_color_override("font_color", Palette.RISK_LOW if locked_down else (Palette.PEACH_BRIGHT if posted > 0 else Palette.RISK_HIGH))
 	_report_label.text = "Posted men hold this corner with %s and cannot join attacks." % mult_text
 
@@ -188,6 +188,7 @@ func _scout() -> void:
 	if Corners.holds(run, _corner.id):
 		Corners.post_garrison(run, _corner.id, 0)
 		GameState.save_run()
+		GameState.run_changed.emit()
 		AudioService.play_sfx(Sfx.CLICK)
 		_refresh()
 		return
@@ -205,12 +206,28 @@ func _attack() -> void:
 	var corner := _corner
 	var run := GameState.run
 	if Corners.holds(run, corner.id):
+		var current := Corners.garrison(run, corner.id)
+		var available_room := Corners.CORNER_GARRISON_CAP - current
+		var reserve := Army.reserve(run)
+		if available_room <= 0:
+			_reading_label.text = "CORNER FULL (%s MAX)" % Format.count(Corners.CORNER_GARRISON_CAP)
+			_reading_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
+			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
+			return
+		if reserve <= 0:
+			_reading_label.text = "NO RESERVE CREW AVAILABLE"
+			_reading_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
+			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
+			return
 		_close()
-		var msg := "Pick how many reserve men to station on %s. Posted men get %s." % [corner.display_name, "2.5x stronghold defense" if corner.stronghold else "1.5x cover defense"]
+		var msg := "Pick reserve men to station on %s (Room: %s, Reserve: %s)." % [corner.display_name, Format.count(available_room), Format.count(reserve)]
 		GameOverlay.pick_crew(corner.display_name, msg, "Post %d", "Cancel", func(picked_deploy: Dictionary) -> void:
 			var add_count := Army.deployed_count(picked_deploy)
-			Corners.post_garrison(run, corner.id, Corners.garrison(run, corner.id) + add_count)
-			GameState.save_run(), Callable())
+			if add_count > available_room:
+				add_count = available_room
+			Corners.post_garrison(run, corner.id, current + add_count)
+			GameState.save_run()
+			GameState.run_changed.emit(), Callable())
 		return
 	_close()
 	WarTalk.plan(corner)

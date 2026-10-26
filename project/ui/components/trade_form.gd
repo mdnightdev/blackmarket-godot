@@ -62,12 +62,12 @@ func _ready() -> void:
 		_price_box.hide()
 		_quantity_slider.hide()
 	_close_button.visible = closable
-	_close_button.pressed.connect(close_requested.emit)
-	_quantity_slider.value_changed.connect(func(value: float) -> void: _set_quantity(int(value)))
-	_minus_button.pressed.connect(func() -> void: _set_quantity(_quantity - 1))
-	_plus_button.pressed.connect(func() -> void: _set_quantity(_quantity + 1))
-	_max_button.pressed.connect(func() -> void: _set_quantity(_max_quantity()))
-	_offer_slider.value_changed.connect(func(_value: float) -> void: _refresh_offer_label())
+	_close_button.pressed.connect(_on_close_pressed)
+	_quantity_slider.value_changed.connect(_on_quantity_changed)
+	_minus_button.pressed.connect(_on_minus_pressed)
+	_plus_button.pressed.connect(_on_plus_pressed)
+	_max_button.pressed.connect(_on_max_pressed)
+	_offer_slider.value_changed.connect(_on_offer_changed)
 	_haggle_button.pressed.connect(_open_haggle)
 	_offer_button.pressed.connect(_make_offer)
 	_confirm_button.pressed.connect(_confirm)
@@ -107,10 +107,6 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 
 	_quantity = 1
 	_refresh_limits()
-
-
-func shows(item: ItemDef) -> bool:
-	return _item == item
 
 
 func _show_intel() -> void:
@@ -231,15 +227,17 @@ func _make_offer() -> void:
 	var response := Haggle.respond(_asking, offer, buying, tolerance)
 	_haggle_box.hide()
 	_result_label.show()
-	match response.outcome:
+	var outcome: Haggle.Outcome = response[0]
+	var price: int = response[1]
+	match outcome:
 		Haggle.Outcome.ACCEPTED:
-			_unit_price = response.price
+			_unit_price = price
 			_haggled = true
 			AudioService.play_sfx(Sfx.DEAL_ACCEPTED)
 			_show_result("%s takes it. %s each." % [_dealer.display_name, Format.money(_unit_price)], Palette.RISK_LOW)
 			dealer_said.emit("Fine. %s each, and we're square." % Format.money(_unit_price))
 		Haggle.Outcome.COUNTERED:
-			_unit_price = response.price
+			_unit_price = price
 			_haggled = true
 			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
 			_show_result("%s counters at %s each." % [_dealer.display_name, Format.money(_unit_price)], Palette.TEXT_CREAM)
@@ -284,3 +282,27 @@ func _confirm() -> void:
 		completed.emit(message, cash_delta, _haggled)
 	else:
 		_refresh_limits()
+
+
+func _on_close_pressed() -> void:
+	close_requested.emit()
+
+
+func _on_quantity_changed(value: float) -> void:
+	_set_quantity(int(value))
+
+
+func _on_minus_pressed() -> void:
+	_set_quantity(_quantity - 1)
+
+
+func _on_plus_pressed() -> void:
+	_set_quantity(_quantity + 1)
+
+
+func _on_max_pressed() -> void:
+	_set_quantity(_max_quantity())
+
+
+func _on_offer_changed(_value: float) -> void:
+	_refresh_offer_label()

@@ -91,7 +91,6 @@ static func _on_buy_back_choice(choice: StringName, rook: CharacterDef) -> void:
 static func _after_buying(bought: bool, rook: CharacterDef) -> void:
 	var line := opening_line(GameState.run)
 	_show_shop(rook, SOLD_LINE if bought and line == SHOP_LINE else line)
-	GameState.save_run()
 
 
 static func _after_selling(sold: bool, rook: CharacterDef) -> void:

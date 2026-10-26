@@ -3,6 +3,9 @@ extends Control
 
 ## Lets the player pick how many men of each tier go into a fight. The whole stays inside the expansion's limit.
 
+signal deployment_confirmed(deployment: Dictionary)
+signal deployment_cancelled
+
 const OPEN_SECONDS := 0.18
 const CLOSE_SECONDS := 0.12
 const ROW_SEPARATION := 4
@@ -34,7 +37,7 @@ func _ready() -> void:
 
 ## send_format takes the number of men picked, like "Attack with %d". on_sent receives the deployment. on_cancel may
 ## be empty.
-func open(title: String, message: String, send_format: String, cancel_text: String, on_sent: Callable, on_cancel: Callable) -> void:
+func open(title: String, message: String, send_format: String, cancel_text: String, on_sent := Callable(), on_cancel := Callable()) -> void:
 	var run := GameState.run
 	_title_label.text = title
 	_message_label.text = message
@@ -56,6 +59,7 @@ func cancel() -> void:
 	if not visible:
 		return
 	_close()
+	deployment_cancelled.emit()
 	if _on_cancel.is_valid():
 		_on_cancel.call()
 
@@ -65,7 +69,9 @@ func _send() -> void:
 	if deployment.is_empty():
 		return
 	_close()
-	_on_sent.call(deployment)
+	deployment_confirmed.emit(deployment)
+	if _on_sent.is_valid():
+		_on_sent.call(deployment)
 
 
 func _close() -> void:

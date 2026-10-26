@@ -1,7 +1,9 @@
 class_name DialoguePanel
 extends Control
 
-const CHOICE_HEIGHT := 40
+signal choice_selected(choice_id: StringName)
+
+const CHOICE_HEIGHT := 48
 const CHOICE_FONT_SIZE := 17
 const OPEN_SECONDS := 0.28
 const CLOSE_SECONDS := 0.18
@@ -35,6 +37,7 @@ var _mark_tween: Tween
 
 func _ready() -> void:
 	hide()
+	_skip_button.custom_minimum_size.y = CHOICE_HEIGHT
 	_line.finished.connect(_show_choices)
 	_dim.gui_input.connect(_on_tap)
 	_box.gui_input.connect(_on_tap)
@@ -50,7 +53,7 @@ func add_backdrop_layer(layer: Control) -> void:
 
 
 ## on_choice receives the picked choice id. It can call say() to continue or close() to finish.
-func open(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_choice: Callable, hint := "", backdrop: Texture2D = null) -> void:
+func open(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_choice := Callable(), hint := "", backdrop: Texture2D = null) -> void:
 	_portrait.show_speaker(speaker)
 	_name_label.text = speaker.display_name if speaker != null else ""
 	var role := speaker.title() if speaker != null else ""
@@ -67,7 +70,7 @@ func open(speaker: SpeakerDef, line: String, choices: Array[DialogueChoice], on_
 	say(line, choices, on_choice, true, hint)
 
 
-func say(line: String, choices: Array[DialogueChoice], on_choice: Callable, talking := true, hint := "") -> void:
+func say(line: String, choices: Array[DialogueChoice], on_choice := Callable(), talking := true, hint := "") -> void:
 	_choices = choices
 	_on_choice = on_choice
 	_clear_choices()
@@ -160,6 +163,7 @@ func _blink_continue_mark() -> void:
 
 
 func _pick(choice_id: StringName) -> void:
+	choice_selected.emit(choice_id)
 	if _on_choice.is_valid():
 		_on_choice.call(choice_id)
 

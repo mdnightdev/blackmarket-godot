@@ -2,8 +2,9 @@ class_name InventorySheet
 extends BottomSheet
 
 const BAG_TILE := preload("res://ui/components/bag_tile.tscn")
+const AtlasGenerator := preload("res://scripts/core/atlas_generator.gd")
 
-enum Filter { ALL, GOODS, GEAR }
+enum Filter { ALL, GOODS, GEAR, SPRITE }
 
 @onready var _margin: MarginContainer = %Margin
 @onready var _capacity_label: Label = %CapacityLabel
@@ -11,6 +12,7 @@ enum Filter { ALL, GOODS, GEAR }
 @onready var _all_tab: Button = %AllTab
 @onready var _goods_tab: Button = %GoodsTab
 @onready var _gear_tab: Button = %GearTab
+@onready var _sprite_tab: Button = %SpriteTab
 @onready var _grid: GridContainer = %Grid
 @onready var _empty_label: Label = %EmptyLabel
 @onready var _detail: Control = %Detail
@@ -33,11 +35,12 @@ func _ready() -> void:
 	GameState.run_changed.connect(_on_run_changed)
 	_sell_button.pressed.connect(_on_sell_pressed)
 	var tabs := ButtonGroup.new()
-	for tab_button: Button in [_all_tab, _goods_tab, _gear_tab]:
+	for tab_button: Button in [_all_tab, _goods_tab, _gear_tab, _sprite_tab]:
 		tab_button.button_group = tabs
 	_all_tab.pressed.connect(_select_filter.bind(Filter.ALL))
 	_goods_tab.pressed.connect(_select_filter.bind(Filter.GOODS))
 	_gear_tab.pressed.connect(_select_filter.bind(Filter.GEAR))
+	_sprite_tab.pressed.connect(_select_filter.bind(Filter.SPRITE))
 
 
 func close_modal() -> bool:
@@ -79,14 +82,22 @@ func _rebuild() -> void:
 		_capacity_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
 	else:
 		_capacity_label.remove_theme_color_override("font_color")
-	if _filter != Filter.GEAR:
-		_add_goods(run)
-	if _filter != Filter.GOODS:
-		for item in Gear.owned_items(run):
-			_add_tile(item.icon, "", item.display_name, Gear.describe(item), item.description)
+	if _filter == Filter.SPRITE:
+		_add_sprite_samples()
+	else:
+		if _filter != Filter.GEAR:
+			_add_goods(run)
+		if _filter != Filter.GOODS:
+			for item in Gear.owned_items(run):
+				_add_tile(item.icon, "", item.display_name, Gear.describe(item), item.description)
 
 	_empty_label.visible = _grid.get_child_count() == 0
 	_select_tile(_find_tile(_selected_title))
+
+
+func _add_sprite_samples() -> void:
+	for entry in AtlasGenerator.get_sample_entries():
+		_add_tile(entry["icon"], entry["count"], entry["title"], entry["tier"] + " • " + entry["price"], entry["desc"])
 
 
 func _add_goods(run: RunState) -> void:

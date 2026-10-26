@@ -28,8 +28,8 @@ const ESCAPED_HEAT := 10
 const COMPLY_HEAT_DROP := 15
 
 const GRACE_DAYS := 3
-const QUIET_PHASES_AFTER_ARREST := 4
-const HEAT_AFTER_ARREST := 20
+const QUIET_PHASES_AFTER_ARREST := 0
+const HEAT_AFTER_ARREST := 60
 const ARREST_SEIZED_SHARE := 0.5
 ## In Act 1 a bust takes less, but the Shark hears about it and the questioning eats into the phase.
 const ACT_ONE_SEIZED_SHARE := 0.3
@@ -41,11 +41,9 @@ const BAIL_SHARE := 0.5
 const MIN_BAIL := 1000
 
 
-## No stops or raids in the first days of a run, or for a full day after an arrest.
+## No stops or raids in the initial grace days of a run.
 static func is_quiet(run: RunState) -> bool:
-	if run.day <= GRACE_DAYS:
-		return true
-	return run.arrest_stamp >= 0 and Calendar.stamp(run) - run.arrest_stamp <= QUIET_PHASES_AFTER_ARREST
+	return run.day <= GRACE_DAYS
 
 
 ## Police only bother players who are carrying goods. A patrol in the district raises the odds,
@@ -189,10 +187,11 @@ static func _now(now: float) -> float:
 	return now if now >= 0.0 else Time.get_unix_time_from_system()
 
 
-## Takes any crate and the seized share of every stack in the bag, rounded up. Cash is left alone, and so is the
-## stash unless the raid knows where it is.
+## Takes any crate, a percentage of carried dirty cash above threshold, and the seized share of every stack in the bag.
+## Cash in the vault (stashed_cash) is secure and never seized.
 static func arrest(run: RunState, with_stash := false) -> void:
 	Smuggling.seize(run)
+	Money.check_carried_seizure(run)
 	for item_id: StringName in run.inventory.keys():
 		Inventory.discard(run, item_id, ceili(Inventory.count(run, item_id) * seized_share(run)))
 	if with_stash:
@@ -208,7 +207,7 @@ static func arrest(run: RunState, with_stash := false) -> void:
 	StreetCred.add(run, StreetCred.BUSTED)
 
 
-## Every raid, empty or not, cools the player down and keeps the police away for a while.
+## Raids maintain high heat surveillance and grant no immunity cooldown period.
 static func raided(run: RunState) -> void:
 	run.heat = HEAT_AFTER_ARREST
-	run.arrest_stamp = Calendar.stamp(run)
+	run.arrest_stamp = -1

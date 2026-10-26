@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="HeistDef" load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/defs/heist_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/models/heist_def.gd" id="1_def"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/truck.svg" id="2_icon"]
 
 [resource]

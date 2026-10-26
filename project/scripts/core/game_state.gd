@@ -45,6 +45,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if run == null or not clock_active:
 		return
+	Heat.tick_frenzy(run, delta)
 	if Police.release_if_served(run):
 		_commit(false)
 	if Encounters.has_pending(run) or Campaign.is_over(run):
@@ -100,6 +101,65 @@ func current_district() -> DistrictDef:
 func delete_run() -> void:
 	run = null
 	_store.delete()
+
+
+const BACKUP_LOCATIONS: Array[String] = [
+	"/storage/emulated/0/Documents/black_market_save.json",
+	"/data/data/com.termux/files/home/storage/shared/Documents/black_market_save.json",
+	"user://black_market_save_backup.json",
+]
+
+
+func backup_save() -> Dictionary:
+	if not has_saved_run():
+		return {"success": false, "message": "No active save data found to backup."}
+	var raw := FileAccess.get_file_as_string(SAVE_PATH)
+	if raw.is_empty():
+		return {"success": false, "message": "Failed to read current save file."}
+
+	for path in BACKUP_LOCATIONS:
+		var dir := path.get_base_dir()
+		if not dir.begins_with("user://") and not DirAccess.dir_exists_absolute(dir):
+			continue
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(raw)
+			file.close()
+			var display_name := "Documents/black_market_save.json" if "Documents" in path else path
+			return {"success": true, "message": "Save backed up to %s" % display_name, "path": path}
+
+	return {"success": false, "message": "Could not access backup storage."}
+
+
+func get_existing_backup_path() -> String:
+	for path in BACKUP_LOCATIONS:
+		if FileAccess.file_exists(path):
+			return path
+	return ""
+
+
+func has_backup() -> bool:
+	return not get_existing_backup_path().is_empty()
+
+
+func restore_save() -> Dictionary:
+	var backup_path := get_existing_backup_path()
+	if backup_path.is_empty():
+		return {"success": false, "message": "No backup file found on device."}
+
+	var raw := FileAccess.get_file_as_string(backup_path)
+	if raw.is_empty():
+		return {"success": false, "message": "Backup file is empty or unreadable."}
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		return {"success": false, "message": "Failed to write restored save file."}
+	file.store_string(raw)
+	file.close()
+
+	if load_saved_run():
+		return {"success": true, "message": "Save successfully restored from backup!"}
+	return {"success": false, "message": "Restored file was invalid."}
 
 
 func advance_phase() -> void:
@@ -525,15 +585,6 @@ func queue_handover(id: String) -> bool:
 
 ## Returns the Customers.hand_over result, empty when the handover cannot happen now. An undercover buyer leaves a
 ## police stop pending. A haggler's counter offer waits for answer_haggle.
-func hand_over_customer_order(id: String) -> Dictionary:
-	var order := Customers.find(run, id)
-	if order.is_empty():
-		return {}
-	CustomerHandover.dismiss(run, id)
-	if Encounters.has_pending(run):
-		return {}
-	return _finish_handover(Customers.hand_over(run, order, _rng.randf()))
-
 
 ## Takes the haggler's lower price, or holds firm when accept is false. Returns the same layout as hand_over_customer_order.
 func answer_haggle(id: String, accept: bool) -> Dictionary:
@@ -659,38 +710,6 @@ func withdraw_clean(amount: int) -> bool:
 
 
 ## Fills the shelves from the bag, most valuable goods first. Returns the units moved.
-func stock_business(entry: Dictionary) -> int:
-	if run.district_id != Businesses.district_of(entry):
-		return 0
-	var moved := 0
-	for item in _carried_by_value():
-		var units := Businesses.max_load(run, entry, item)
-		if units > 0 and Businesses.load_stock(run, entry, item, units) == Businesses.Result.OK:
-			moved += units
-	if moved > 0:
-		_commit(false)
-	return moved
-
-
-## Packs the shelves back into the bag, most valuable goods first. Returns the units moved.
-func unstock_business(entry: Dictionary) -> int:
-	if run.district_id != Businesses.district_of(entry):
-		return 0
-	var moved := 0
-	var items: Array[ItemDef] = []
-	for item_id: String in entry.get("stock", {}):
-		var item := Content.item(StringName(item_id))
-		if item != null:
-			items.append(item)
-	items.sort_custom(_by_value)
-	for item in items:
-		var units := Businesses.max_unload(run, entry, item)
-		if units > 0 and Businesses.unload_stock(run, entry, item, units) == Businesses.Result.OK:
-			moved += units
-	if moved > 0:
-		_commit(false)
-	return moved
-
 
 ## Returns { success, payout, lost_role }. Nothing happens when Heists.check() does not pass.
 func pull_heist(heist: HeistDef) -> Dictionary:
@@ -718,9 +737,16 @@ func dealer_walked_out(dealer: DealerDef) -> void:
 	_commit(false)
 
 
+var _last_save_frame := -1
+
+
 func save_run() -> void:
 	if run == null:
 		return
+	var current_frame := Engine.get_process_frames()
+	if current_frame == _last_save_frame:
+		return
+	_last_save_frame = current_frame
 	var error := _store.write(run.to_dict())
 	if error != OK:
 		push_error("Run save failed: %s" % error_string(error))

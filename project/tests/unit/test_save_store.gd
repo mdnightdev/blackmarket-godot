@@ -48,6 +48,22 @@ func test_newer_format_version_is_rejected() -> void:
 	assert_eq(_store.read(), {})
 
 
+func test_legacy_version_zero_is_migrated() -> void:
+	_write_raw(JSON.stringify({"version": 0, "data": {"district_id": "docks"}}))
+	var data := _store.read()
+	assert_eq(data.get("district_id"), "docks")
+	assert_eq(data.get("cash"), 0)
+	assert_eq(data.get("day"), 1)
+
+
+func test_raw_save_dictionary_without_wrapper_is_recovered() -> void:
+	_write_raw(JSON.stringify({"cash": 2500, "day": 4, "district_id": "old_market"}))
+	var data := _store.read()
+	assert_eq(data.get("district_id"), "old_market")
+	assert_eq(int(data.get("cash")), 2500)
+	assert_eq(int(data.get("day")), 4)
+
+
 func test_delete_removes_save() -> void:
 	_store.write({"cash": 1})
 	_store.delete()

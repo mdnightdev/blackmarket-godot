@@ -32,6 +32,7 @@ func write(data: Dictionary) -> Error:
 
 
 ## Returns an empty Dictionary when the save is missing, unreadable, or from a newer build.
+## Saves from earlier versions or unversioned saves are migrated with safe defaults instead of dropped.
 func read() -> Dictionary:
 	if not exists():
 		return {}
@@ -41,14 +42,28 @@ func read() -> Dictionary:
 		push_warning("Save at %s is not valid JSON" % path)
 		return {}
 	var version := int(parsed.get("version", 0))
-	if version < 1 or version > FORMAT_VERSION:
+	if version > FORMAT_VERSION:
 		push_warning("Save at %s has unsupported version %d" % [path, version])
 		return {}
 	var data: Variant = parsed.get("data")
 	if not data is Dictionary:
+		# Fallback: legacy save written directly without a data wrapper
+		if parsed.has("day") or parsed.has("cash") or parsed.has("district_id"):
+			return _migrate(parsed.duplicate(), 0)
 		push_warning("Save at %s has no data block" % path)
 		return {}
-	return data
+	return _migrate(data, version)
+
+
+## Upgrades older saves to the current structure with safe fallback defaults.
+func _migrate(data: Dictionary, from_version: int) -> Dictionary:
+	var migrated := data.duplicate()
+	if from_version < 1:
+		if not migrated.has("cash"):
+			migrated["cash"] = 0
+		if not migrated.has("day"):
+			migrated["day"] = 1
+	return migrated
 
 
 func delete() -> void:

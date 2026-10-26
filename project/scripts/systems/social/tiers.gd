@@ -28,10 +28,6 @@ static func goods(tier: int) -> Array[ItemDef]:
 	return list
 
 
-static func describe(tier: int) -> String:
-	return NAMES.get(tier, NAMES[STREET])
-
-
 ## What a dealer says when offered goods outside their tier. Empty when they would buy it.
 static func refusal(dealer: DealerDef, item: ItemDef) -> String:
 	if dealer.deals_in(item):

@@ -4,10 +4,8 @@ extends BottomSheet
 signal travel_requested(district: DistrictDef, walking: bool)
 signal enter_requested
 
-@onready var _preview: TextureRect = %Preview
 @onready var _name_label: Label = %NameLabel
 @onready var _tagline_label: Label = %TaglineLabel
-@onready var _description_label: Label = %DescriptionLabel
 @onready var _intel_label: Label = %IntelLabel
 @onready var _fare_value: Label = %FareValue
 @onready var _travel_button: Button = %TravelButton
@@ -31,10 +29,8 @@ func _on_travel_pressed() -> void:
 
 func show_district(district: DistrictDef, travel_check: Travel.Check) -> void:
 	_district = district
-	_preview.texture = district.background
 	_name_label.text = district.display_name
 	_tagline_label.text = district.tagline
-	_description_label.text = district.description
 	var gang := Edges.boss_next_phase(GameState.run, district.id)
 	_intel_label.text = "Word is %s will be here next phase." % Content.character(gang.boss).display_name if gang != null else ""
 	_intel_label.visible = gang != null
