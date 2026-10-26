@@ -110,38 +110,48 @@ theme_type_variation = &"CaptionLabel"
 text = "Goods. Secrets. Freedom."
 horizontal_alignment = 1
 
-[node name="Menu" type="VBoxContainer" parent="."]
+[node name="LoadingSection" type="MarginContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.5
+anchors_preset = 12
 anchor_top = 1.0
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -170.0
-offset_top = -500.0
-offset_right = 170.0
-offset_bottom = -130.0
+offset_top = -140.0
+offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="LoadingSection"]
+layout_mode = 2
 theme_override_constants/separation = 10
-alignment = 2
 
-[node name="ContinueButton" type="Button" parent="Menu"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+[node name="StatusRow" type="HBoxContainer" parent="LoadingSection/VBox"]
 layout_mode = 2
-theme_type_variation = &"PrimaryButton"
-text = "Continue"
-script = ExtResource("3_button")
 
-[node name="NewGameButton" type="Button" parent="Menu"]
+[node name="StatusLabel" type="Label" parent="LoadingSection/VBox/StatusRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "New Game"
-script = ExtResource("3_button")
+size_flags_horizontal = 3
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 14
+text = "Initializing Underworld Systems..."
+
+[node name="PercentLabel" type="Label" parent="LoadingSection/VBox/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 14
+text = "0%"
+
+[node name="ProgressBar" type="ProgressBar" parent="LoadingSection/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+show_percentage = false
 
 [node name="VersionLabel" type="Label" parent="."]
 unique_name_in_owner = true
@@ -151,8 +161,8 @@ anchors_preset = -1
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -72.0
-offset_bottom = -36.0
+offset_top = -168.0
+offset_bottom = -144.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_type_variation = &"CaptionLabel"

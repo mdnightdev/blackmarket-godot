@@ -9,66 +9,95 @@ const LOGO_SLIDE := 24.0
 @onready var _background: TextureRect = %Background
 @onready var _neon_glow: TextureRect = %NeonGlow
 @onready var _logo: Control = %Logo
-@onready var _menu: VBoxContainer = %Menu
-@onready var _continue_button: Button = %ContinueButton
-@onready var _new_game_button: Button = %NewGameButton
 @onready var _version_label: Label = %VersionLabel
-@onready var _confirm_dialog: ConfirmDialog = %ConfirmDialog
 @onready var _exit_dialog: ConfirmDialog = %ExitDialog
+
+@onready var _loading_section: MarginContainer = %LoadingSection
+@onready var _progress_bar: ProgressBar = %ProgressBar
+@onready var _status_label: Label = %StatusLabel
+@onready var _percent_label: Label = %PercentLabel
 
 
 func _ready() -> void:
-	_refresh_menu()
 	_version_label.text = "v%s" % ProjectSettings.get_setting("application/config/version", "")
-
-	_continue_button.pressed.connect(_on_continue_pressed)
-	_new_game_button.pressed.connect(_on_new_game_pressed)
-	_confirm_dialog.confirmed.connect(_start_new_game)
 	_exit_dialog.confirmed.connect(get_tree().quit)
 	resized.connect(_center_background_pivot)
 	_center_background_pivot()
+
+	_apply_theme_tokens()
 
 	AudioService.play_music(MUSIC)
 	_play_entrance()
 	_start_background_drift()
 	_flicker_neon()
 
+	# If content already loaded (e.g. headless tests or returning to welcome screen), enter game directly
+	if Content.is_loaded():
+		_enter_game()
+		return
+
+	# Yield two frames to paint the atmospheric city background, logo, and loading bar Frame 1
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_run_boot_sequence()
+
+
+func _apply_theme_tokens() -> void:
+	# Theming driven exclusively by Palette single source of truth
+	var bg_box := StyleBoxFlat.new()
+	bg_box.bg_color = Palette.PANEL
+	bg_box.border_color = Palette.LINE
+	bg_box.set_border_width_all(1)
+	bg_box.set_corner_radius_all(8)
+	_progress_bar.add_theme_stylebox_override("background", bg_box)
+
+	var fill_box := StyleBoxFlat.new()
+	fill_box.bg_color = Palette.PEACH_BRIGHT
+	fill_box.set_corner_radius_all(7)
+	_progress_bar.add_theme_stylebox_override("fill", fill_box)
+
+	_status_label.add_theme_color_override("font_color", Palette.TEXT_MUTED)
+	_percent_label.add_theme_color_override("font_color", Palette.PEACH_TITLE)
+
+
+func _run_boot_sequence() -> void:
+	var targets := [15.0, 35.0, 52.0, 68.0, 82.0, 92.0]
+	for step in range(6):
+		var status_text: String = Content.load_step(step)
+		_set_status(targets[step], status_text)
+		await get_tree().process_frame
+
+	_set_status(98.0, "Preparing Syndicate Interface...")
+	GameOverlay.ensure_setup()
+	await get_tree().process_frame
+
+	_set_status(100.0, "Welcome to Black Market")
+	await get_tree().create_timer(0.2).timeout
+
+	_enter_game()
+
+
+func _set_status(val: float, status: String) -> void:
+	_status_label.text = status
+	var from_val := _progress_bar.value
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(_progress_bar, "value", val, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_method(func(v: float) -> void: _percent_label.text = "%d%%" % int(v), from_val, val, 0.18)
+
+
+func _enter_game() -> void:
+	if GameState.has_saved_run() and GameState.load_saved_run():
+		SceneRouter.go_to(SceneRouter.END_SCREEN if Campaign.is_over(GameState.run) else SceneRouter.DISTRICT_SCREEN)
+	else:
+		SceneRouter.go_to(SceneRouter.CHARACTER_SELECT)
+
 
 func handle_back() -> bool:
-	if _confirm_dialog.visible:
-		_confirm_dialog.close()
-	elif _exit_dialog.visible:
+	if _exit_dialog.visible:
 		_exit_dialog.close()
 	else:
 		_exit_dialog.open("Exit game?", "Your run is saved." if GameState.has_saved_run() else "", "Yes")
 	return true
-
-
-func _refresh_menu() -> void:
-	var has_save := GameState.has_saved_run()
-	_continue_button.visible = has_save
-	_new_game_button.theme_type_variation = &"SecondaryButton" if has_save else &"PrimaryButton"
-
-
-func _on_continue_pressed() -> void:
-	if GameState.load_saved_run():
-		SceneRouter.go_to(SceneRouter.END_SCREEN if Campaign.is_over(GameState.run) else SceneRouter.DISTRICT_SCREEN)
-		return
-	_continue_button.hide()
-	_new_game_button.theme_type_variation = &"PrimaryButton"
-	_confirm_dialog.open("Save unreadable", "Your last save could not be loaded. Start a new run?", "New game")
-
-
-func _on_new_game_pressed() -> void:
-	if GameState.has_saved_run():
-		_confirm_dialog.open("Start over?", "Your current run will be lost.", "Start over", true)
-	else:
-		_start_new_game()
-
-
-## The old save stays until a character is picked, so backing out loses nothing.
-func _start_new_game() -> void:
-	SceneRouter.go_to(SceneRouter.CHARACTER_SELECT)
 
 
 func _center_background_pivot() -> void:
@@ -76,20 +105,17 @@ func _center_background_pivot() -> void:
 
 
 func _play_entrance() -> void:
-	var buttons := _menu.get_children().filter(func(node: Node) -> bool: return node is Control and node.visible)
 	_background.modulate.a = 0.0
 	_logo.modulate.a = 0.0
+	_loading_section.modulate.a = 0.0
 	var logo_rest_y := _logo.position.y
 	_logo.position.y -= LOGO_SLIDE
-	for button: Control in buttons:
-		button.modulate.a = 0.0
 
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_background, "modulate:a", 1.0, 0.9)
-	tween.tween_property(_logo, "modulate:a", 1.0, 0.8).set_delay(0.3)
-	tween.tween_property(_logo, "position:y", logo_rest_y, 0.8).set_delay(0.3)
-	for index in buttons.size():
-		tween.tween_property(buttons[index], "modulate:a", 1.0, 0.4).set_delay(0.7 + index * 0.08)
+	tween.tween_property(_logo, "modulate:a", 1.0, 0.8).set_delay(0.2)
+	tween.tween_property(_logo, "position:y", logo_rest_y, 0.8).set_delay(0.2)
+	tween.tween_property(_loading_section, "modulate:a", 1.0, 0.5).set_delay(0.4)
 
 
 func _start_background_drift() -> void:

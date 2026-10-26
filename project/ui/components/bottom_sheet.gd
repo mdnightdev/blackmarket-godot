@@ -31,7 +31,7 @@ func open_sheet() -> void:
 		_sheet.offset_bottom = 0.0
 		_sheet.offset_top = 0.0
 		await get_tree().process_frame
-	var rest_y := size.y - _sheet.size.y
+	var rest_y := (size.y - _sheet.size.y) * 0.5
 	_sheet.position.y = size.y
 	_sheet.modulate.a = 1.0
 	_animate(rest_y, 1.0, OPEN_SECONDS, Tween.EASE_OUT)

@@ -134,6 +134,16 @@ toggle_mode = true
 text = "Gear"
 script = ExtResource("5_button")
 
+[node name="SpriteTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"LineTab"
+toggle_mode = true
+text = "Sprite"
+script = ExtResource("5_button")
+
 [node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]
 layout_mode = 2
 size_flags_vertical = 3

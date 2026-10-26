@@ -103,6 +103,65 @@ func delete_run() -> void:
 	_store.delete()
 
 
+const BACKUP_LOCATIONS: Array[String] = [
+	"/storage/emulated/0/Documents/black_market_save.json",
+	"/data/data/com.termux/files/home/storage/shared/Documents/black_market_save.json",
+	"user://black_market_save_backup.json",
+]
+
+
+func backup_save() -> Dictionary:
+	if not has_saved_run():
+		return {"success": false, "message": "No active save data found to backup."}
+	var raw := FileAccess.get_file_as_string(SAVE_PATH)
+	if raw.is_empty():
+		return {"success": false, "message": "Failed to read current save file."}
+
+	for path in BACKUP_LOCATIONS:
+		var dir := path.get_base_dir()
+		if not dir.begins_with("user://") and not DirAccess.dir_exists_absolute(dir):
+			continue
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(raw)
+			file.close()
+			var display_name := "Documents/black_market_save.json" if "Documents" in path else path
+			return {"success": true, "message": "Save backed up to %s" % display_name, "path": path}
+
+	return {"success": false, "message": "Could not access backup storage."}
+
+
+func get_existing_backup_path() -> String:
+	for path in BACKUP_LOCATIONS:
+		if FileAccess.file_exists(path):
+			return path
+	return ""
+
+
+func has_backup() -> bool:
+	return not get_existing_backup_path().is_empty()
+
+
+func restore_save() -> Dictionary:
+	var backup_path := get_existing_backup_path()
+	if backup_path.is_empty():
+		return {"success": false, "message": "No backup file found on device."}
+
+	var raw := FileAccess.get_file_as_string(backup_path)
+	if raw.is_empty():
+		return {"success": false, "message": "Backup file is empty or unreadable."}
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		return {"success": false, "message": "Failed to write restored save file."}
+	file.store_string(raw)
+	file.close()
+
+	if load_saved_run():
+		return {"success": true, "message": "Save successfully restored from backup!"}
+	return {"success": false, "message": "Restored file was invalid."}
+
+
 func advance_phase() -> void:
 	if run == null or Encounters.has_pending(run) or Campaign.is_over(run):
 		return
