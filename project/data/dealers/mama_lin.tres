@@ -13,7 +13,9 @@ district_id = &"old_market"
 greeting = "Pay what it is worth, not what you hope."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"meds", &"papers"])
+stock_categories = Array[StringName]([&"meds", &"papers", &"comms", &"luxury"])
+route = Array[StringName]([&"old_market", &"docks", &"slums"])
+working_phases = Array[int]([0, 1, 2])
 price_bias = {
 &"meds": 0.75,
 &"papers": 0.9,

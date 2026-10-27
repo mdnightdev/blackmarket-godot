@@ -1,0 +1,123 @@
+{
+  "amara": {
+    "id": "amara",
+    "file": "amara.tres",
+    "display_name": "Marisol Vega",
+    "district_id": "north_port",
+    "greeting": "Quality costs. Everything else costs more later.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([arms",
+      "meds])"
+    ],
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/amara.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/amara_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"amara\"\ndisplay_name = \"Marisol Vega\"\ndistrict_id = &\"north_port\"\ngreeting = \"Quality costs. Everything else costs more later.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"arms\", &\"meds\"])\nprice_bias = {\n&\"meds\": 0.82,\n&\"arms\": 0.85,\n&\"luxury\": 1.05,\n&\"tech\": 1.05,\n&\"comms\": 1.07,\n&\"papers\": 1.1\n}\nroute = Array[StringName]([&\"north_port\", &\"docks\", &\"old_market\"])\nworking_phases = Array[int]([2, 3])\n"
+  },
+  "anya": {
+    "id": "anya",
+    "file": "anya.tres",
+    "display_name": "Anya Kovalenko",
+    "district_id": "old_market",
+    "greeting": "Quick. I never stay in one place long.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([comms",
+      "tech])"
+    ],
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/anya.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/anya_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"anya\"\ndisplay_name = \"Anya Kovalenko\"\ndistrict_id = &\"old_market\"\ngreeting = \"Quick. I never stay in one place long.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"comms\", &\"tech\"])\nprice_bias = {\n&\"comms\": 0.78,\n&\"tech\": 0.88,\n&\"papers\": 1.05,\n&\"luxury\": 1.07,\n&\"meds\": 1.1,\n&\"arms\": 1.15\n}\n"
+  },
+  "arjun": {
+    "id": "arjun",
+    "file": "arjun.tres",
+    "display_name": "Arjun Rao",
+    "district_id": "north_port",
+    "greeting": "Every number tells a story. Yours is short.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([luxury",
+      "papers])"
+    ],
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/arjun.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/arjun_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"arjun\"\ndisplay_name = \"Arjun Rao\"\ndistrict_id = &\"north_port\"\ngreeting = \"Every number tells a story. Yours is short.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"luxury\", &\"papers\"])\nprice_bias = {\n&\"luxury\": 0.8,\n&\"papers\": 0.85,\n&\"tech\": 1.02,\n&\"comms\": 1.05,\n&\"meds\": 1.1,\n&\"arms\": 1.15\n}\nroute = Array[StringName]([&\"north_port\", &\"old_market\", &\"slums\"])\nworking_phases = Array[int]([0, 1, 2])\n"
+  },
+  "dao": {
+    "id": "dao",
+    "file": "dao.tres",
+    "display_name": "Dao",
+    "district_id": "docks",
+    "greeting": "Boat leaves at dawn. So do I.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([arms",
+      "comms])"
+    ],
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/dao.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/dao_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"dao\"\ndisplay_name = \"Dao\"\ndistrict_id = &\"docks\"\ngreeting = \"Boat leaves at dawn. So do I.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"arms\", &\"comms\"])\nprice_bias = {\n&\"arms\": 0.75,\n&\"comms\": 0.9,\n&\"meds\": 1.05,\n&\"tech\": 1.07,\n&\"luxury\": 1.1,\n&\"papers\": 1.12\n}\nroute = Array[StringName]([&\"docks\", &\"slums\", &\"old_market\"])\nworking_phases = Array[int]([3, 0])\n"
+  },
+  "evelyn_ashworth": {
+    "id": "evelyn_ashworth",
+    "file": "evelyn_ashworth.tres",
+    "display_name": "Evelyn Ashworth",
+    "district_id": "the_heights",
+    "greeting": "Darling, provenance is a story. I tell excellent stories.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([art",
+      "luxury])"
+    ],
+    "tier": 3,
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/evelyn_ashworth.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/evelyn_ashworth_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"evelyn_ashworth\"\ndisplay_name = \"Evelyn Ashworth\"\ndistrict_id = &\"the_heights\"\ngreeting = \"Darling, provenance is a story. I tell excellent stories.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"art\", &\"luxury\"])\ntier = 3\nprice_bias = {\n&\"art\": 0.8,\n&\"luxury\": 0.9,\n&\"finance\": 1.1,\n&\"precious\": 1.05,\n&\"military\": 1.1\n}\n"
+  },
+  "isabella_conti": {
+    "id": "isabella_conti",
+    "file": "isabella_conti.tres",
+    "display_name": "Isabella Conti",
+    "district_id": "golden_mile",
+    "greeting": "Every stone has a past. I only buy its future.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([precious",
+      "luxury])"
+    ],
+    "tier": 3,
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/isabella_conti.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/isabella_conti_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"isabella_conti\"\ndisplay_name = \"Isabella Conti\"\ndistrict_id = &\"golden_mile\"\ngreeting = \"Every stone has a past. I only buy its future.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"precious\", &\"luxury\"])\ntier = 3\nprice_bias = {\n&\"precious\": 0.8,\n&\"luxury\": 0.9,\n&\"art\": 1.1,\n&\"finance\": 1.05,\n&\"military\": 1.05\n}\n"
+  },
+  "kenji": {
+    "id": "kenji",
+    "file": "kenji.tres",
+    "display_name": "Kenji Mori",
+    "district_id": "north_port",
+    "greeting": "No names. No receipts. No second offers.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([tech",
+      "comms])"
+    ],
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/kenji.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/kenji_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"kenji\"\ndisplay_name = \"Kenji Mori\"\ndistrict_id = &\"north_port\"\ngreeting = \"No names. No receipts. No second offers.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"tech\", &\"comms\"])\nprice_bias = {\n&\"tech\": 0.75,\n&\"comms\": 0.85,\n&\"luxury\": 1.05,\n&\"papers\": 1.07,\n&\"meds\": 1.1,\n&\"arms\": 1.12\n}\nroute = Array[StringName]([&\"north_port\", &\"docks\", &\"old_market\"])\nworking_phases = Array[int]([2, 3])\n"
+  },
+  "marcus_vane": {
+    "id": "marcus_vane",
+    "file": "marcus_vane.tres",
+    "display_name": "Marcus Vane",
+    "district_id": "the_heights",
+    "greeting": "Money has no smell. Mine does not even have a name.",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([finance",
+      "precious])"
+    ],
+    "tier": 3,
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/marcus_vane.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/marcus_vane_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"marcus_vane\"\ndisplay_name = \"Marcus Vane\"\ndistrict_id = &\"the_heights\"\ngreeting = \"Money has no smell. Mine does not even have a name.\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"finance\", &\"precious\"])\ntier = 3\nprice_bias = {\n&\"finance\": 0.8,\n&\"precious\": 0.95,\n&\"art\": 1.1,\n&\"luxury\": 1.05,\n&\"military\": 1.15\n}\n"
+  },
+  "rina_okafor": {
+    "id": "rina_okafor",
+    "file": "rina_okafor.tres",
+    "display_name": "Rina Halvorsen",
+    "district_id": "west_end",
+    "greeting": "Pawn shop out front, armoury out back. What do you need?",
+    "portrait_ext": "talk_portrait = ExtResource(\"3_talk\")",
+    "stock_categories": [
+      "Array[StringName]([weapons",
+      "auto_parts])"
+    ],
+    "tier": 2,
+    "raw_tres": "[gd_resource type=\"Resource\" script_class=\"DealerDef\" load_steps=4 format=3]\n\n[ext_resource type=\"Script\" path=\"res://scripts/models/dealer_def.gd\" id=\"1_def\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/rina_okafor.jpg\" id=\"2_portrait\"]\n[ext_resource type=\"Texture2D\" path=\"res://assets/portraits/rina_okafor_talk.jpg\" id=\"3_talk\"]\n\n[resource]\nscript = ExtResource(\"1_def\")\nid = &\"rina_okafor\"\ndisplay_name = \"Rina Halvorsen\"\ndistrict_id = &\"west_end\"\ngreeting = \"Pawn shop out front, armoury out back. What do you need?\"\nportrait = ExtResource(\"2_portrait\")\ntalk_portrait = ExtResource(\"3_talk\")\nstock_categories = Array[StringName]([&\"weapons\", &\"auto_parts\"])\ntier = 2\nprice_bias = {\n&\"weapons\": 0.8,\n&\"auto_parts\": 0.9,\n&\"computing\": 1.1,\n&\"biotech\": 1.05\n}\n"
+  }
+}

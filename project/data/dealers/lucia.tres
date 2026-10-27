@@ -12,7 +12,7 @@ district_id = &"docks"
 greeting = "I don't haggle twice. Make the first offer count."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"tech", &"luxury"])
+stock_categories = Array[StringName]([&"tech", &"luxury", &"arms", &"weapons"])
 price_bias = {
 &"tech": 0.82,
 &"luxury": 0.85,
@@ -21,5 +21,5 @@ price_bias = {
 &"meds": 1.07,
 &"arms": 1.12
 }
-route = Array[StringName]([&"docks", &"north_port", &"slums"])
+route = Array[StringName]([&"docks", &"old_market", &"slums"])
 working_phases = Array[int]([1, 2, 3])

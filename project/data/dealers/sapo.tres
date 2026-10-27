@@ -12,7 +12,7 @@ district_id = &"slums"
 greeting = "You buying, amigo, or just dripping on my floor?"
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"comms", &"meds", &"arms"])
+stock_categories = Array[StringName]([&"arms", &"meds", &"weapons", &"tool", &"comms"])
 price_bias = {
 &"meds": 0.92,
 &"arms": 0.95,

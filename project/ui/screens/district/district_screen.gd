@@ -132,7 +132,7 @@ func handle_back() -> bool:
 	elif _logout_dialog.visible:
 		_logout_dialog.close()
 	else:
-		_logout_dialog.open("Log out?", "Your run is saved. Continue from the title screen.", "Yes")
+		_logout_dialog.open("Exit game?", "Your run is saved.", "Yes")
 	return true
 
 
@@ -318,7 +318,7 @@ func _start_background_drift() -> void:
 
 func _log_out() -> void:
 	GameState.save_run()
-	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+	get_tree().quit()
 
 
 func _play_entrance() -> void:

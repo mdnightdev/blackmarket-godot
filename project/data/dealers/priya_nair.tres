@@ -12,7 +12,7 @@ district_id = &"riverside"
 greeting = "The lab counts everything twice. I count it once."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"biotech", &"computing"])
+stock_categories = Array[StringName]([&"biotech", &"computing", &"auto_parts", &"weapons"])
 tier = 2
 price_bias = {
 &"biotech": 0.75,

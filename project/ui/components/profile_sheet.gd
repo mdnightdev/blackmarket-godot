@@ -98,4 +98,4 @@ func _add_stat(caption: String, value: String) -> void:
 func _quit_to_title() -> void:
 	GameState.save_run()
 	close()
-	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+	get_tree().quit()

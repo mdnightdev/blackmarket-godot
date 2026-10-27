@@ -8,11 +8,13 @@
 script = ExtResource("1_def")
 id = &"ernesto"
 display_name = "Don Ernesto"
-district_id = &"north_port"
+district_id = &"old_market"
 greeting = "Everything has a price, mijo. Discretion costs extra."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"papers", &"comms"])
+stock_categories = Array[StringName]([&"papers", &"tech", &"comms", &"tool"])
+route = Array[StringName]([&"old_market", &"docks", &"slums"])
+working_phases = Array[int]([0, 1, 2])
 price_bias = {
 &"papers": 0.85,
 &"comms": 0.95,

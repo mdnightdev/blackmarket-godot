@@ -12,7 +12,7 @@ district_id = &"riverside"
 greeting = "Cars come in whole. They leave in pieces. Everybody wins."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"auto_parts", &"weapons"])
+stock_categories = Array[StringName]([&"auto_parts", &"weapons", &"arms", &"tool"])
 tier = 2
 price_bias = {
 &"auto_parts": 0.75,
