@@ -9,6 +9,6 @@ display_name = "Mr. Sterling"
 district_id = &"the_heights"
 line = "A collector, recently arrived. Very keen on diamonds. Very keen."
 wants = Array[StringName]([&"precious"])
-temperament = 6
+temperament = 5
 active_phases = Array[int]([1, 2, 3])
 min_rank = 7

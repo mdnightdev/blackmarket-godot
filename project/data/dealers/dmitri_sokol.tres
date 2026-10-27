@@ -20,4 +20,3 @@ price_bias = {
 &"biotech": 1.1,
 &"computing": 1.05
 }
-haggle_tolerance = 0.12

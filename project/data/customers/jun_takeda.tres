@@ -9,6 +9,6 @@ display_name = "Jun Takeda"
 district_id = &"downtown"
 line = "Good hardware at a fair price. I decide what fair means."
 wants = Array[StringName]([&"tech"])
-temperament = 4
+temperament = 1
 active_phases = Array[int]([0, 1, 2])
 min_rank = 2

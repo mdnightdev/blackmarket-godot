@@ -135,9 +135,9 @@ func _dealer_says(line: String) -> void:
 	_speech.type_text("\"%s\"" % line)
 
 
-func _on_trade_completed(message: String, cash_delta: int, haggled: bool) -> void:
+func _on_trade_completed(message: String, cash_delta: int) -> void:
 	_close_trade()
-	_deal_flash.play(cash_delta, haggled or absi(cash_delta) >= HANDSHAKE_MIN_TOTAL)
+	_deal_flash.play(cash_delta, absi(cash_delta) >= HANDSHAKE_MIN_TOTAL)
 	_show_toast(message)
 	_dealer_says(TierVoice.pick(TierVoice.CLOSING, _dealer.tier))
 
@@ -169,9 +169,7 @@ func _on_back_pressed() -> void:
 
 func _refresh() -> void:
 	var run := GameState.run
-	var mood := Haggle.mood(run, _dealer)
-	_mood_label.text = "Mood: %s" % Haggle.mood_label(mood)
-	_mood_label.add_theme_color_override("font_color", _mood_color(mood))
+	_mood_label.visible = false
 	_news_line.show_for(run.district_id)
 	_bag_button.text = Inventory.bag_text(run)
 	_bag_bar.max_value = Inventory.capacity(run)
@@ -334,14 +332,6 @@ func _risk_color(item: ItemDef) -> Color:
 	if item.risk < RISK_MEDIUM:
 		return Palette.RISK_LOW
 	if item.risk < RISK_HIGH:
-		return Palette.TEXT_MUTED
-	return Palette.RISK_HIGH
-
-
-func _mood_color(mood: float) -> Color:
-	if mood >= Haggle.RELAXED_MOOD:
-		return Palette.RISK_LOW
-	if mood >= Haggle.WARY_MOOD:
 		return Palette.TEXT_MUTED
 	return Palette.RISK_HIGH
 

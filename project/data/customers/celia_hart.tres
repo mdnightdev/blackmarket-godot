@@ -9,6 +9,6 @@ display_name = "Celia Hart"
 district_id = &"the_heights"
 line = "I know what things cost. Do you?"
 wants = Array[StringName]([&"luxury"])
-temperament = 4
+temperament = 1
 active_phases = Array[int]([0, 1, 2])
 min_rank = 7

@@ -9,6 +9,6 @@ display_name = "Olek Varn"
 district_id = &"north_port"
 line = "New in town. Looking for hardware and a friendly face."
 wants = Array[StringName]([&"arms"])
-temperament = 6
+temperament = 5
 active_phases = Array[int]([3, 0])
 min_rank = 4

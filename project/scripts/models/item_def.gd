@@ -1,6 +1,8 @@
 class_name ItemDef
 extends Resource
 
+const ItemsAtlasClass := preload("res://scripts/core/items_atlas.gd")
+
 enum Kind { TRADE_GOOD, EQUIPMENT }
 
 @export var id: StringName
@@ -15,12 +17,19 @@ enum Kind { TRADE_GOOD, EQUIPMENT }
 ## Street rank a player needs before anyone sells it to them. Jobs never ask for these goods.
 @export_range(0, 10) var min_rank: int = 0
 @export_multiline var description: String
-@export var icon: Texture2D
+@export var icon: Texture2D:
+	get:
+		if icon != null:
+			return icon
+		return ItemsAtlasClass.get_icon(id)
+
+
+func get_icon() -> Texture2D:
+	return icon
 
 @export_group("Equipment")
 @export_range(0, 500) var capacity_bonus: int = 0
 @export_range(0.0, 1.0, 0.01) var fare_discount: float = 0.0
-@export_range(0.0, 1.0, 0.01) var haggle_bonus: float = 0.0
 
 
 func is_equipment() -> bool:

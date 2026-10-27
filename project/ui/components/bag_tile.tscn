@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://ui/components/bag_tile.gd" id="1_tile"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile"]
-bg_color = Color(0.0824, 0.0902, 0.1176, 1)
+bg_color = Color(0.0667, 0.0745, 0.0941, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
 draw_center = false

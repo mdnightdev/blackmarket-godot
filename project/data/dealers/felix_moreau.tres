@@ -20,4 +20,3 @@ price_bias = {
 &"weapons": 1.1,
 &"auto_parts": 1.05
 }
-haggle_tolerance = 0.1

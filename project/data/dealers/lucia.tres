@@ -21,6 +21,5 @@ price_bias = {
 &"meds": 1.07,
 &"arms": 1.12
 }
-haggle_tolerance = 0.08
 route = Array[StringName]([&"docks", &"north_port", &"slums"])
 working_phases = Array[int]([1, 2, 3])

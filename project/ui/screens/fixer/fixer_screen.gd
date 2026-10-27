@@ -3,7 +3,11 @@ extends VenueScreen
 const CLEAN_UP: StringName = &"clean_up"
 const RESPEC: StringName = &"respec"
 const RESPEC_ICON: Texture2D = preload("res://assets/icons/hud/rotate-ccw.svg")
-const WEAPONS_ICON: Texture2D = preload("res://assets/items/ghost_pistol.jpg")
+const ItemsAtlasClass := preload("res://scripts/core/items_atlas.gd")
+
+var _weapons_icon: Texture2D:
+	get:
+		return ItemsAtlasClass.get_icon(&"ghost_pistol")
 const SOLD_LINES: Array[String] = [
 	"It's yours. Look after it.",
 	"Good choice. No receipts.",
@@ -78,7 +82,7 @@ func _add_weapons_row() -> void:
 	var caption := "Blades and handguns, any amount. He buys back at half." if Armory.room(run) == Armory.Room.FRONT else "The back room is open to you."
 	var owned := Armory.total(run)
 	var row := _add_row()
-	row.show_entry(WEAPONS_ICON, "Ask about weapons", "%s owned" % Format.count(owned) if owned > 0 else "", caption, "TAP TO TALK", Palette.TEXT_CREAM)
+	row.show_entry(_weapons_icon, "Ask about weapons", "%s owned" % Format.count(owned) if owned > 0 else "", caption, "TAP TO TALK", Palette.TEXT_CREAM)
 	row.item_selected.connect(func(_item: ItemDef) -> void: WeaponsTalk.open(_host))
 
 
@@ -142,6 +146,6 @@ func _on_clean_up_choice(choice: StringName) -> void:
 		GameOverlay.say("Come back when you have the cash.", _leave_choice(), _end_talk)
 
 
-func _on_gear_bought(_message: String, _cash_delta: int, _haggled: bool) -> void:
+func _on_gear_bought(_message: String, _cash_delta: int) -> void:
 	AudioService.play_sfx(Sfx.GEAR_BUY)
 	says(SOLD_LINES.pick_random())

@@ -2,7 +2,7 @@ extends Node
 
 const DISTRICTS_FOLDER := "res://data/districts"
 const VENUES_FOLDER := "res://data/venues"
-const ITEMS_FOLDER := "res://data/items"
+const ITEMS_FILE := "res://data/items_db.json"
 const DEALERS_FOLDER := "res://data/dealers"
 const EVENTS_FOLDER := "res://data/events"
 const CHARACTERS_FOLDER := "res://data/characters"
@@ -55,7 +55,7 @@ func load_step(step_idx: int) -> String:
 			_venues = Catalog.index_by_id(Catalog.load_folder(VENUES_FOLDER))
 			return "Mapping District Venues..."
 		1:
-			_items = Catalog.index_by_id(Catalog.load_folder(ITEMS_FOLDER))
+			_items = _load_items()
 			_dealers = Catalog.index_by_id(Catalog.load_folder(DEALERS_FOLDER))
 			for dealer: DealerDef in _dealers.values():
 				if dealer.is_resident():
@@ -255,3 +255,36 @@ func customers() -> Array[CustomerDef]:
 	list.assign(_customers.values())
 	list.sort_custom(func(a: CustomerDef, b: CustomerDef) -> bool: return String(a.id) < String(b.id))
 	return list
+
+
+func _load_items() -> Dictionary:
+	var loaded := {}
+	var file := FileAccess.open(ITEMS_FILE, FileAccess.READ)
+	if not file:
+		push_error("Failed to open %s" % ITEMS_FILE)
+		return loaded
+
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		push_error("Failed to parse %s" % ITEMS_FILE)
+		return loaded
+
+	var data: Dictionary = json.data
+	for id_str in data:
+		var d: Dictionary = data[id_str]
+		var item := ItemDef.new()
+		item.id = StringName(d.get("id", id_str))
+		item.display_name = d.get("display_name", "")
+		item.kind = d.get("kind", 0) as ItemDef.Kind
+		item.category = StringName(d.get("category", "goods"))
+		item.base_price = int(d.get("base_price", 100))
+		item.risk = int(d.get("risk", 10))
+		item.slots = int(d.get("slots", 1))
+		item.tier = int(d.get("tier", 1))
+		item.min_rank = int(d.get("min_rank", 0))
+		item.description = d.get("description", "")
+		item.capacity_bonus = int(d.get("capacity_bonus", 0))
+		item.fare_discount = float(d.get("fare_discount", 0.0))
+		loaded[item.id] = item
+
+	return loaded

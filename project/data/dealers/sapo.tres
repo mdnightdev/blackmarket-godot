@@ -21,4 +21,3 @@ price_bias = {
 &"tech": 1.1,
 &"luxury": 1.15
 }
-haggle_tolerance = 0.16

@@ -21,4 +21,3 @@ price_bias = {
 &"finance": 1.05,
 &"military": 1.05
 }
-haggle_tolerance = 0.08

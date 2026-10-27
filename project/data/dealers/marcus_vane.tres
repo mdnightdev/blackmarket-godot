@@ -21,4 +21,3 @@ price_bias = {
 &"luxury": 1.05,
 &"military": 1.15
 }
-haggle_tolerance = 0.07
