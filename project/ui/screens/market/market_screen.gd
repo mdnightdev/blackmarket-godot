@@ -233,7 +233,7 @@ func _fill_order_list() -> void:
 	_order_list.visible = _order_list.get_child_count() > 0
 
 
-func _on_order_selected(order: Dictionary) -> void:
+func _on_order_selected(_item: ItemDef, order: Dictionary) -> void:
 	_deliver(order)
 
 
