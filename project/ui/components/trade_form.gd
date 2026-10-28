@@ -83,7 +83,13 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 	_quantity_box.visible = mode != Mode.GEAR
 
 	var held := Inventory.count(GameState.run, item.id)
-	_held_value.text = ("Owned" if Gear.owns(GameState.run, item.id) else "No") if item.is_equipment() else str(held)
+	var reserved := Inventory.reserved_for_orders(GameState.run, item.id)
+	if item.is_equipment():
+		_held_value.text = "Owned" if Gear.owns(GameState.run, item.id) else "No"
+	elif reserved > 0:
+		_held_value.text = "%d (%d reserved)" % [held, reserved]
+	else:
+		_held_value.text = str(held)
 	var paid := int(GameState.run.cost_basis.get(item.id, 0))
 	_paid_box.visible = mode == Mode.SELL and paid > 0
 	_paid_value.text = Format.money(paid)
@@ -125,7 +131,7 @@ func _max_quantity() -> int:
 		Mode.BUY:
 			return Trade.max_buyable(GameState.run, _item, _unit_price)
 		Mode.SELL:
-			return Inventory.count(GameState.run, _item.id)
+			return Trade.max_sellable(GameState.run, _item)
 	return 1
 
 
@@ -138,8 +144,18 @@ func _refresh_limits() -> void:
 
 
 func _set_quantity(value: int) -> void:
-	var limit := maxi(1, _max_quantity())
-	_quantity = clampi(value, 1, limit)
+	var limit := _max_quantity()
+	if limit <= 0 and _mode == Mode.SELL:
+		_quantity = 0
+		_quantity_slider.set_value_no_signal(1)
+		_quantity_label.text = "0"
+		_minus_button.disabled = true
+		_plus_button.disabled = true
+		_max_button.disabled = true
+		_refresh_price_and_action()
+		return
+	var max_val := maxi(1, limit)
+	_quantity = clampi(value, 1, max_val)
 	_quantity_slider.set_value_no_signal(_quantity)
 	_quantity_label.text = str(_quantity)
 	_minus_button.disabled = _quantity <= 1
@@ -157,9 +173,16 @@ func _refresh_price_and_action() -> void:
 			_confirm_button.disabled = check != Trade.Result.OK
 			_confirm_button.text = _blocked_text(check, "Buy %d for %s" % [_quantity, Format.money(total)])
 		Mode.SELL:
-			var check := Trade.check_sell(GameState.run, _item, _quantity)
-			_confirm_button.disabled = check != Trade.Result.OK
-			_confirm_button.text = _blocked_text(check, "Sell %d for %s" % [_quantity, Format.money(total)])
+			var sellable := Trade.max_sellable(GameState.run, _item)
+			if sellable <= 0:
+				_confirm_button.disabled = true
+				_confirm_button.text = "Reserved for order"
+			else:
+				var check := Trade.check_sell(GameState.run, _item, _quantity)
+				if _quantity > sellable:
+					check = Trade.Result.NOT_ENOUGH_UNITS
+				_confirm_button.disabled = check != Trade.Result.OK
+				_confirm_button.text = _blocked_text(check, "Sell %d for %s" % [_quantity, Format.money(total)])
 		Mode.GEAR:
 			var check := Trade.check_gear(GameState.run, _item)
 			_confirm_button.disabled = check != Trade.Result.OK

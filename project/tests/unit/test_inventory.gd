@@ -72,3 +72,31 @@ func test_taking_from_stash_respects_bag_space() -> void:
 	_run.inventory = {&"burner_phones": Inventory.BASE_CAPACITY - 1}
 	_run.stash = {&"burner_sims": 5}
 	assert_eq(Inventory.max_from_stash(_run, Content.item(&"burner_sims")), 1)
+
+
+func test_order_reservation_counts_active_contracts() -> void:
+	_run.orders = [
+		{"item": "burner_phones", "quantity": 4},
+		{"item": "ghost_pistol", "quantity": 2},
+	]
+	_run.customer_orders = [
+		{"item": "burner_phones", "quantity": 3},
+	]
+	_run.favours = [
+		{"item": "burner_phones", "quantity": 1},
+	]
+	assert_eq(Inventory.reserved_for_orders(_run, &"burner_phones"), 8)
+	assert_eq(Inventory.reserved_for_orders(_run, &"ghost_pistol"), 2)
+	assert_eq(Inventory.reserved_for_orders(_run, &"ammo_9mm"), 0)
+
+
+func test_sellable_count_protects_reserved_goods() -> void:
+	_run.orders = [{"item": "burner_phones", "quantity": 5}]
+	_run.inventory = {&"burner_phones": 7}
+	assert_eq(Inventory.sellable_count(_run, &"burner_phones"), 2)
+
+	_run.inventory = {&"burner_phones": 5}
+	assert_eq(Inventory.sellable_count(_run, &"burner_phones"), 0)
+
+	_run.inventory = {&"burner_phones": 3}
+	assert_eq(Inventory.sellable_count(_run, &"burner_phones"), 0)

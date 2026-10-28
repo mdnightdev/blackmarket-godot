@@ -7,6 +7,26 @@ static func count(run: RunState, item_id: StringName) -> int:
 	return int(run.inventory.get(item_id, 0))
 
 
+## Total units of an item reserved across active dealer orders, customer orders, and family favours.
+static func reserved_for_orders(run: RunState, item_id: StringName) -> int:
+	var total := 0
+	for order in run.orders:
+		if StringName(str(order.get("item", ""))) == item_id:
+			total += int(order.get("quantity", 0))
+	for order in run.customer_orders:
+		if StringName(str(order.get("item", ""))) == item_id:
+			total += int(order.get("quantity", 0))
+	for favour in run.favours:
+		if StringName(str(favour.get("item", ""))) == item_id:
+			total += int(favour.get("quantity", 0))
+	return total
+
+
+## Units of an item available for general sale or disposal without breaking active contracts.
+static func sellable_count(run: RunState, item_id: StringName) -> int:
+	return maxi(0, count(run, item_id) - reserved_for_orders(run, item_id))
+
+
 static func stashed(run: RunState, item_id: StringName) -> int:
 	return int(run.stash.get(item_id, 0))
 

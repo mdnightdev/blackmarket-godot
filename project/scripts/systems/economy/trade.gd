@@ -48,6 +48,10 @@ static func check_sell(run: RunState, item: ItemDef, quantity: int) -> Result:
 	return Result.OK
 
 
+static func max_sellable(run: RunState, item: ItemDef) -> int:
+	return Inventory.sellable_count(run, item.id)
+
+
 static func sell(run: RunState, item: ItemDef, quantity: int, unit_price: int) -> Result:
 	var result := check_sell(run, item, quantity)
 	if result != Result.OK:

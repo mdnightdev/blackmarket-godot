@@ -106,7 +106,14 @@ func _add_goods(run: RunState) -> void:
 	for item_id: StringName in run.inventory:
 		var item := Content.item(item_id)
 		var paid := Format.money(int(run.cost_basis.get(item_id, 0)))
-		_add_tile(item.icon, "x%d" % run.inventory[item_id], item.display_name, "Paid %s each" % paid, item.description)
+		var held: int = run.inventory[item_id]
+		var reserved := Inventory.reserved_for_orders(run, item_id)
+		var count_str := "x%d" % held
+		var meta_str := "Paid %s each" % paid
+		if reserved > 0:
+			count_str = "x%d (%d reserved)" % [held, reserved]
+			meta_str = "Paid %s • %d held for orders" % [paid, reserved]
+		_add_tile(item.icon, count_str, item.display_name, meta_str, item.description)
 		_goods_by_title[item.display_name] = item
 
 
@@ -144,10 +151,17 @@ func _show_sell_button(item: ItemDef) -> void:
 	if item == null:
 		return
 	var run := GameState.run
+	var sellable := Inventory.sellable_count(run, item.id)
+	if sellable == 0 and Inventory.reserved_for_orders(run, item.id) > 0:
+		_sell_button.disabled = true
+		_sell_button.text = "Reserved for active orders"
+		return
 	_buyer = Market.best_local_buyer(run, item)
 	_sell_button.disabled = _buyer == null
 	if _buyer == null:
 		_sell_button.text = "Nobody here is buying"
+	elif Inventory.reserved_for_orders(run, item.id) > 0:
+		_sell_button.text = "Sell %d surplus to %s, %s each" % [sellable, _buyer.display_name, Format.money(Market.sell_price(run, _buyer, item))]
 	else:
 		_sell_button.text = "Sell to %s, %s each" % [_buyer.display_name, Format.money(Market.sell_price(run, _buyer, item))]
 

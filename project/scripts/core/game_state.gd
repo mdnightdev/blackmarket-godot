@@ -213,6 +213,9 @@ func buy(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
 
 
 func sell(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
+	var sellable := Inventory.sellable_count(run, item.id)
+	if quantity > sellable:
+		return Trade.Result.NOT_ENOUGH_UNITS
 	var sold := Trade.sell(run, item, quantity, unit_price)
 	if sold == Trade.Result.OK:
 		Tutorial.note(run, Tutorial.FIRST_SALE)
