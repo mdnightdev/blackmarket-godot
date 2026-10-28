@@ -3,11 +3,11 @@ extends RefCounted
 
 ## ItemsAtlas
 ## Central on-demand AtlasTexture resolver for all 100 Black Market items and street props.
-## 10 columns x 10 rows (2560x2560 px master atlas, 256x256 per tile).
+## 10 columns x 10 rows (1280x1280 px master atlas, 128x128 per tile).
 ## Pure flat matte dark neutral slate (#111318), zero glass, zero borders.
 
 const ATLAS_PATH := "res://assets/items/items_atlas.png"
-const TILE_SIZE := 256
+const TILE_SIZE := 128
 const COLS := 10
 const ROWS := 10
 

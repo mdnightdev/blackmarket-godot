@@ -26,7 +26,6 @@ func _ready() -> void:
 
 	_apply_theme_tokens()
 
-	AudioService.play_music(MUSIC)
 	_play_entrance()
 	_start_background_drift()
 	_flicker_neon()
@@ -86,6 +85,7 @@ func _set_status(val: float, status: String) -> void:
 
 
 func _enter_game() -> void:
+	AudioService.play_music(MUSIC)
 	if GameState.has_saved_run() and GameState.load_saved_run():
 		SceneRouter.go_to(SceneRouter.END_SCREEN if Campaign.is_over(GameState.run) else SceneRouter.DISTRICT_SCREEN)
 	else:
