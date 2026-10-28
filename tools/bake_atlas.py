@@ -128,8 +128,8 @@ slots = [
 COLS = 10
 ROWS = 10
 
-# 1. Standard Atlas (256x256 tiles -> 2560x2560 px)
-TILE = 256
+# 1. Standard Atlas (128x128 tiles -> 1280x1280 px)
+TILE = 128
 atlas = Image.new('RGB', (COLS * TILE, ROWS * TILE), color=(17, 19, 24))
 
 mapping = {

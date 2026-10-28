@@ -14,7 +14,7 @@ border_width_bottom = 1
 border_color = Color(0.1804, 0.1961, 0.2314, 1)
 
 [node name="BagTile" type="Button"]
-custom_minimum_size = Vector2(0, 156)
+custom_minimum_size = Vector2(0, 128)
 size_flags_horizontal = 3
 theme_override_styles/normal = SubResource("StyleBoxFlat_tile")
 theme_override_styles/hover = SubResource("StyleBoxFlat_tile")

@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
     COLS = 10
     ROWS = 10
-    TILE = 256
+    TILE = 128
 
     # Canvas: pure matte dark slate (#111318)
     atlas = Image.new("RGBA", (COLS * TILE, ROWS * TILE), color=(17, 19, 24, 255))
