@@ -6,14 +6,14 @@
 [ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="5_heat"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_track"]
-bg_color = Color(0.1333, 0.149, 0.1804, 1)
+bg_color = Color(0.1765, 0.1765, 0.2039, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_fill"]
-bg_color = Color(0.4431, 0.5451, 0.4784, 1)
+bg_color = Color(0.3961, 0.6196, 0.4471, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -58,7 +58,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.1804, 0.1961, 0.2314, 1)
+color = Color(0.251, 0.251, 0.2824, 1)
 
 [node name="Clean" type="HBoxContainer" parent="Row"]
 unique_name_in_owner = true
@@ -91,7 +91,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.1804, 0.1961, 0.2314, 1)
+color = Color(0.251, 0.251, 0.2824, 1)
 
 [node name="Heat" type="HBoxContainer" parent="Row"]
 layout_mode = 2
@@ -124,7 +124,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.1804, 0.1961, 0.2314, 1)
+color = Color(0.251, 0.251, 0.2824, 1)
 
 [node name="Debt" type="HBoxContainer" parent="Row"]
 visible = false
@@ -146,7 +146,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.1804, 0.1961, 0.2314, 1)
+color = Color(0.251, 0.251, 0.2824, 1)
 
 [node name="District" type="HBoxContainer" parent="Row"]
 layout_mode = 2
@@ -163,7 +163,7 @@ custom_minimum_size = Vector2(1, 28)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.1804, 0.1961, 0.2314, 1)
+color = Color(0.251, 0.251, 0.2824, 1)
 
 
 [node name="DayLabel" type="Label" parent="Row"]

@@ -5,9 +5,9 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sheet"]
 content_margin_top = 16.0
 content_margin_bottom = 24.0
-bg_color = Color(0.0627, 0.0706, 0.0941, 0.98)
+bg_color = Color(0.0784, 0.0784, 0.0863, 1)
 border_width_top = 1
-border_color = Color(0.1804, 0.1961, 0.2314, 1)
+border_color = Color(0.251, 0.251, 0.2824, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 

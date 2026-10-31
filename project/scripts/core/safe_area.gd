@@ -2,15 +2,13 @@ class_name SafeArea
 
 const HUD_HEIGHT := 56
 const HUD_GAP := 8
+const NAV_HEIGHT := 90
 
 
-## Height of the notch or camera cutout at the top of the screen, in viewport units.
-static func top_inset(viewport: Viewport) -> float:
-	var window_height := DisplayServer.window_get_size().y
-	if window_height <= 0:
-		return 0.0
-	var safe_top := DisplayServer.get_display_safe_area().position.y
-	return safe_top * viewport.get_visible_rect().size.y / window_height
+## Android already places the game window below the system camera cutout bar,
+## so no extra internal top inset is added above the persistent HUD bar.
+static func top_inset(_viewport: Viewport) -> float:
+	return 0.0
 
 
 ## Top margin required for screen content so it sits below the top notch and persistent HUD bar.
@@ -48,4 +46,3 @@ static func apply_bottom_margin(target: Control, base_margin: int = 0) -> void:
 			var dup := style.duplicate() as StyleBoxFlat
 			dup.content_margin_bottom = bottom
 			target.add_theme_stylebox_override("panel", dup)
-

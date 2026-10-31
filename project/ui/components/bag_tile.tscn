@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://ui/components/bag_tile.gd" id="1_tile"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile"]
-bg_color = Color(0.0667, 0.0745, 0.0941, 1)
+bg_color = Color(0.0784, 0.0784, 0.0863, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
 draw_center = false
@@ -11,7 +11,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.1804, 0.1961, 0.2314, 1)
+border_color = Color(0.251, 0.251, 0.2824, 1)
 
 [node name="BagTile" type="Button"]
 custom_minimum_size = Vector2(0, 128)

@@ -1,21 +1,22 @@
 extends CanvasLayer
 
-const DIALOGUE_PANEL := preload("res://ui/components/dialogue_panel.tscn")
-const LOAN_SHEET := preload("res://ui/components/loan_sheet.tscn")
-const INVENTORY_SHEET := preload("res://ui/components/inventory_sheet.tscn")
-const TURF_SHEET := preload("res://ui/components/turf_sheet.tscn")
-const JOBS_SHEET := preload("res://ui/components/jobs_sheet.tscn")
-const JAIL_CARD := preload("res://ui/components/jail_card.tscn")
-const OFFER_BANNER := preload("res://ui/components/offer_banner.tscn")
-const QUOTE_SHEET := preload("res://ui/components/quote_sheet.tscn")
-const PROFILE_SHEET := preload("res://ui/components/profile_sheet.tscn")
-const CREW_PICKER := preload("res://ui/components/crew_picker.tscn")
-const TRAINING_PICKER := preload("res://ui/components/training_picker.tscn")
-const WEAPON_PICKER := preload("res://ui/components/weapon_picker.tscn")
-const TARGET_CARD := preload("res://ui/components/target_card.tscn")
-const BATTLE_SCENE := preload("res://ui/battle/battle_scene.tscn")
-const HUD_BAR := preload("res://ui/chrome/hud_bar.tscn")
-const RAID_BACKDROP: Texture2D = preload("res://assets/scenes/raid.jpg")
+const DIALOGUE_PANEL := "res://ui/components/dialogue_panel.tscn"
+const LOAN_SHEET := "res://ui/components/loan_sheet.tscn"
+const INVENTORY_SHEET := "res://ui/components/inventory_sheet.tscn"
+const TURF_SHEET := "res://ui/components/turf_sheet.tscn"
+const JOBS_SHEET := "res://ui/components/jobs_sheet.tscn"
+const JAIL_CARD := "res://ui/components/jail_card.tscn"
+const OFFER_BANNER := "res://ui/components/offer_banner.tscn"
+const QUOTE_SHEET := "res://ui/components/quote_sheet.tscn"
+const PROFILE_SHEET := "res://ui/components/profile_sheet.tscn"
+const CREW_PICKER := "res://ui/components/crew_picker.tscn"
+const TRAINING_PICKER := "res://ui/components/training_picker.tscn"
+const WEAPON_PICKER := "res://ui/components/weapon_picker.tscn"
+const TARGET_CARD := "res://ui/components/target_card.tscn"
+const BATTLE_SCENE := "res://ui/battle/battle_scene.tscn"
+const HUD_BAR := "res://ui/chrome/hud_bar.tscn"
+const NAV_BAR := "res://ui/chrome/nav_bar.tscn"
+const RAID_BACKDROP := "res://assets/scenes/raid.jpg"
 ## Lets a new screen settle before an encounter slides over it.
 const SETTLE_SECONDS := 0.5
 const POLICE_LIGHTS := 0.55
@@ -31,6 +32,7 @@ const BAIL_LINE := "Bail's paid. Don't thank me, just stop carrying through Bran
 var _dialogue: DialoguePanel
 var _hud_margin: MarginContainer
 var _hud_bar: HudBar
+var _nav_bar: NavBar
 var _loan_sheet: LoanSheet
 var _inventory_sheet: InventorySheet
 var _turf_sheet: TurfSheet
@@ -67,6 +69,9 @@ var _is_setup := false
 
 func _ready() -> void:
 	layer = 50
+	Palette.sync_theme()
+	Palette.style_tree(get_tree().root)
+	get_tree().node_added.connect(Palette.on_node_added)
 	if DisplayServer.get_name() == "headless":
 		ensure_setup()
 
@@ -75,19 +80,19 @@ func ensure_setup() -> void:
 	if _is_setup:
 		return
 	_is_setup = true
-	_dialogue = DIALOGUE_PANEL.instantiate()
-	_loan_sheet = LOAN_SHEET.instantiate()
-	_inventory_sheet = INVENTORY_SHEET.instantiate()
-	_turf_sheet = TURF_SHEET.instantiate()
-	_jobs_sheet = JOBS_SHEET.instantiate()
-	_quote_sheet = QUOTE_SHEET.instantiate()
-	_profile_sheet = PROFILE_SHEET.instantiate()
-	_jail_card = JAIL_CARD.instantiate()
-	_crew_picker = CREW_PICKER.instantiate()
-	_training_picker = TRAINING_PICKER.instantiate()
-	_weapon_picker = WEAPON_PICKER.instantiate()
-	_target_card = TARGET_CARD.instantiate()
-	_banner = OFFER_BANNER.instantiate()
+	_dialogue = load(DIALOGUE_PANEL).instantiate()
+	_loan_sheet = load(LOAN_SHEET).instantiate()
+	_inventory_sheet = load(INVENTORY_SHEET).instantiate()
+	_turf_sheet = load(TURF_SHEET).instantiate()
+	_jobs_sheet = load(JOBS_SHEET).instantiate()
+	_quote_sheet = load(QUOTE_SHEET).instantiate()
+	_profile_sheet = load(PROFILE_SHEET).instantiate()
+	_jail_card = load(JAIL_CARD).instantiate()
+	_crew_picker = load(CREW_PICKER).instantiate()
+	_training_picker = load(TRAINING_PICKER).instantiate()
+	_weapon_picker = load(WEAPON_PICKER).instantiate()
+	_target_card = load(TARGET_CARD).instantiate()
+	_banner = load(OFFER_BANNER).instantiate()
 	_lights = PoliceLights.new()
 	add_child(_jail_card)
 	add_child(_inventory_sheet)
@@ -101,9 +106,14 @@ func ensure_setup() -> void:
 	_hud_margin.name = "HudMargin"
 	_hud_margin.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	_hud_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hud_bar = HUD_BAR.instantiate()
+	_hud_margin.z_index = 10
+	_hud_bar = load(HUD_BAR).instantiate()
 	_hud_margin.add_child(_hud_bar)
 	add_child(_hud_margin)
+
+	_nav_bar = load(NAV_BAR).instantiate()
+	_nav_bar.z_index = 10
+	add_child(_nav_bar)
 
 	add_child(_banner)
 	add_child(_target_card)
@@ -111,6 +121,8 @@ func ensure_setup() -> void:
 	add_child(_crew_picker)
 	add_child(_training_picker)
 	add_child(_weapon_picker)
+	for modal: CanvasItem in [_quote_sheet, _loan_sheet, _banner, _target_card, _dialogue, _crew_picker, _training_picker, _weapon_picker]:
+		modal.z_index = 20
 	_jail_card.bail_requested.connect(_post_bail)
 	_banner.opened.connect(_open_offer)
 	SceneRouter.transition_started.connect(_target_card.cancel)
@@ -206,9 +218,13 @@ func open_quotes(order_id: String) -> void:
 	_quote_sheet.open_quotes(order_id)
 
 
+func close_pages() -> void:
+	_close_pages_except(null)
+
+
 func _close_pages_except(keep: BottomSheet) -> void:
 	for page: BottomSheet in [_inventory_sheet, _turf_sheet, _jobs_sheet, _quote_sheet, _profile_sheet]:
-		if page != keep:
+		if page != null and page != keep:
 			page.close()
 
 
@@ -273,7 +289,7 @@ func pick_weapons(grade: Armory.Grade, selling: bool, on_closed: Callable) -> vo
 func play_battle(player_side: BattleSide, enemy_side: BattleSide, result_line: String, battle_seed: int, on_done: Callable) -> void:
 	ensure_setup()
 	_dialogue.close()
-	_battle = BATTLE_SCENE.instantiate()
+	_battle = load(BATTLE_SCENE).instantiate()
 	add_child(_battle)
 	_battle.finished.connect(func() -> void:
 		_battle.queue_free()
@@ -445,15 +461,22 @@ func _update_hud_visibility(scene_path: String = "") -> void:
 		return
 	if GameState.run == null:
 		_hud_margin.visible = false
+		if _nav_bar != null:
+			_nav_bar.visible = false
 		return
 	var current := scene_path
 	if current.is_empty():
 		var cs := get_tree().current_scene
 		current = cs.scene_file_path if cs != null else ""
-	if current == SceneRouter.TITLE_SCREEN or current == SceneRouter.CHARACTER_SELECT:
+	var hide_bars := current in [SceneRouter.TITLE_SCREEN, SceneRouter.CHARACTER_SELECT, SceneRouter.END_SCREEN, SceneRouter.SETTINGS_SCREEN]
+	if hide_bars:
 		_hud_margin.visible = false
+		if _nav_bar != null:
+			_nav_bar.visible = false
 		return
 	_hud_margin.visible = true
+	if _nav_bar != null:
+		_nav_bar.visible = true
 	_hud_bar.refresh()
 
 
@@ -462,8 +485,8 @@ func _update_hud_safe_margins() -> void:
 		return
 	var inset := int(SafeArea.top_inset(get_viewport()))
 	_hud_margin.add_theme_constant_override("margin_top", inset)
-	_hud_margin.add_theme_constant_override("margin_left", 16)
-	_hud_margin.add_theme_constant_override("margin_right", 16)
+	_hud_margin.add_theme_constant_override("margin_left", 0)
+	_hud_margin.add_theme_constant_override("margin_right", 0)
 
 
 func _is_open_offer(run: RunState, offer_id: String) -> bool:
@@ -518,7 +541,7 @@ func _present_encounter(encounter: Dictionary) -> void:
 		_sound_ambush(encounter)
 		return
 	var open_card := func() -> void:
-		_dialogue.open(speaker, str(encounter.get("body", "")), choices, _resolve_encounter, "", RAID_BACKDROP if type == Encounters.RAID else null)
+		_dialogue.open(speaker, str(encounter.get("body", "")), choices, _resolve_encounter, "", load(RAID_BACKDROP) if type == Encounters.RAID else null)
 		_raise_alarm(type)
 	if type == Encounters.RAID:
 		play_raid(speaker, "EVIDENCE BAGGED", open_card)

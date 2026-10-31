@@ -19,7 +19,8 @@ const CAMERA_GLIDE_SECONDS := 0.45
 const BOOKED_TRIP_DELAY_SECONDS := 0.7
 const LAPSE_PHASE_SECONDS := 0.6
 const LAPSE_DIM := Color(0.45, 0.42, 0.5)
-const CRATE_ROUTE_COLOR := Color(Palette.PEACH, 0.65)
+static var CRATE_ROUTE_COLOR: Color:
+	get: return Color(Palette.PEACH, 0.65)
 
 const COLOR_OCEAN := Color(0.027, 0.047, 0.078)
 const COLOR_COAST_RIM := Color(0.275, 0.376, 0.486)

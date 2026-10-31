@@ -59,6 +59,7 @@ func _ready() -> void:
 		return
 
 	SafeArea.apply_top_margin(_margin, 64)
+	SafeArea.apply_bottom_margin(_margin, SafeArea.NAV_HEIGHT + 12)
 	_background.texture = district.background
 	_dealer_label.text = _dealer.display_name
 	_district_pill.text = district.display_name

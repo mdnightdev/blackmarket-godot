@@ -39,7 +39,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0471, 0.0549, 0.0706, 1)
+color = Color(0.0392, 0.0392, 0.0431, 1)
 
 [node name="Background" type="TextureRect" parent="."]
 unique_name_in_owner = true
@@ -102,7 +102,7 @@ custom_minimum_size = Vector2(120, 2)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
-color = Color(0.7176, 0.4549, 0.4902, 0.7)
+color = Color(0.7216, 0.2314, 0.2588, 0.7)
 
 [node name="Tagline" type="Label" parent="Logo"]
 layout_mode = 2
@@ -168,11 +168,6 @@ grow_vertical = 0
 theme_type_variation = &"CaptionLabel"
 theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
-
-[node name="ConfirmDialog" parent="." instance=ExtResource("4_confirm")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
 
 [node name="ExitDialog" parent="." instance=ExtResource("4_confirm")]
 unique_name_in_owner = true

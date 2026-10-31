@@ -32,7 +32,8 @@ const END_HOLD_SECONDS := 1.8
 const FLASH_SECONDS := 0.12
 const TRACER_SECONDS := 0.1
 const TRACER_COLOR := Color(1.0, 0.86, 0.62, 0.75)
-const LOSS_COLOR := Palette.RISK_HIGH
+static var LOSS_COLOR: Color:
+	get: return Palette.RISK_HIGH
 const SHAKE_DECAY := 35.0
 
 @onready var _background: TextureRect = $Background

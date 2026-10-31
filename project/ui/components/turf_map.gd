@@ -15,7 +15,8 @@ const NAME_FONT_SIZE := 14
 const STATUS_FONT_SIZE := 12
 const LABEL_OUTLINE := 5
 const TAP_SLOP := 18.0
-const OPEN_CITY_COLOR := Palette.LINE_MUTED
+static var OPEN_CITY_COLOR: Color:
+	get: return Palette.LINE_MUTED
 
 const COLOR_OCEAN := Color(0.027, 0.047, 0.078)
 const COLOR_COAST_RIM := Color(0.275, 0.376, 0.486, 0.85)

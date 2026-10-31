@@ -25,6 +25,8 @@ func _ready() -> void:
 func open_sheet() -> void:
 	_sheet.modulate.a = 0.0
 	_dim.modulate.a = 0.0
+	if not _fits_content():
+		SafeArea.apply_bottom_margin(_sheet, SafeArea.NAV_HEIGHT)
 	show()
 	await get_tree().process_frame
 	if _fits_content():

@@ -5,12 +5,12 @@
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fab"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_circle"]
-bg_color = Color(0.0471, 0.0549, 0.0706, 0.88)
+bg_color = Color(0.0784, 0.0784, 0.0863, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.6627, 0.6784, 0.7255, 0.7)
+border_color = Color(0.251, 0.251, 0.2824, 1)
 corner_radius_top_left = 999
 corner_radius_top_right = 999
 corner_radius_bottom_right = 999

@@ -1,10 +1,12 @@
 extends Control
 
-const MUSIC: AudioStream = preload("res://audio/music/theme.mp3")
+const MUSIC_PATH := "res://audio/music/theme.mp3"
 const DRIFT_SCALE := Vector2(1.06, 1.06)
 const DRIFT_SECONDS := 22.0
 const GLOW_ALPHA := 0.16
-const LOGO_SLIDE := 24.0
+const BOOT_DELAY_SECONDS := 2.0
+
+var _music: AudioStream
 
 @onready var _background: TextureRect = %Background
 @onready var _neon_glow: TextureRect = %NeonGlow
@@ -26,7 +28,9 @@ func _ready() -> void:
 
 	_apply_theme_tokens()
 
-	_play_entrance()
+	_background.modulate.a = 1.0
+	_logo.modulate.a = 1.0
+	_loading_section.modulate.a = 1.0
 	_start_background_drift()
 	_flicker_neon()
 
@@ -35,9 +39,8 @@ func _ready() -> void:
 		_enter_game()
 		return
 
-	# Yield two frames to paint the atmospheric city background, logo, and loading bar Frame 1
-	await get_tree().process_frame
-	await get_tree().process_frame
+	# Immediately display the Title Screen and wait 2 seconds before the loading bar starts to load
+	await get_tree().create_timer(BOOT_DELAY_SECONDS).timeout
 	_run_boot_sequence()
 
 
@@ -67,11 +70,12 @@ func _run_boot_sequence() -> void:
 		await get_tree().process_frame
 
 	_set_status(98.0, "Preparing Syndicate Interface...")
+	_music = load(MUSIC_PATH)
 	GameOverlay.ensure_setup()
 	await get_tree().process_frame
 
 	_set_status(100.0, "Welcome to Black Market")
-	await get_tree().create_timer(0.2).timeout
+	await get_tree().create_timer(0.25).timeout
 
 	_enter_game()
 
@@ -85,7 +89,9 @@ func _set_status(val: float, status: String) -> void:
 
 
 func _enter_game() -> void:
-	AudioService.play_music(MUSIC)
+	if _music == null:
+		_music = load(MUSIC_PATH)
+	AudioService.play_music(_music)
 	if GameState.has_saved_run() and GameState.load_saved_run():
 		SceneRouter.go_to(SceneRouter.END_SCREEN if Campaign.is_over(GameState.run) else SceneRouter.DISTRICT_SCREEN)
 	else:
@@ -102,20 +108,6 @@ func handle_back() -> bool:
 
 func _center_background_pivot() -> void:
 	_background.pivot_offset = _background.size / 2.0
-
-
-func _play_entrance() -> void:
-	_background.modulate.a = 0.0
-	_logo.modulate.a = 0.0
-	_loading_section.modulate.a = 0.0
-	var logo_rest_y := _logo.position.y
-	_logo.position.y -= LOGO_SLIDE
-
-	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_background, "modulate:a", 1.0, 0.9)
-	tween.tween_property(_logo, "modulate:a", 1.0, 0.8).set_delay(0.2)
-	tween.tween_property(_logo, "position:y", logo_rest_y, 0.8).set_delay(0.2)
-	tween.tween_property(_loading_section, "modulate:a", 1.0, 0.5).set_delay(0.4)
 
 
 func _start_background_drift() -> void:

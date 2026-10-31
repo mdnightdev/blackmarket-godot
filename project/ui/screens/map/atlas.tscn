@@ -1,7 +1,6 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/map/atlas.gd" id="1_atlas"]
-[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="2_nav_bar"]
 [ext_resource type="PackedScene" path="res://ui/components/district_sheet.tscn" id="3_district_sheet"]
 
 [sub_resource type="Gradient" id="Gradient_top"]
@@ -43,7 +42,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0471, 0.0549, 0.0706, 1)
+color = Color(0.0392, 0.0392, 0.0431, 1)
 
 [node name="MapViewport" type="Control" parent="."]
 unique_name_in_owner = true
@@ -115,9 +114,6 @@ theme_override_constants/margin_bottom = 40
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
-
-[node name="NavBar" parent="." instance=ExtResource("2_nav_bar")]
-layout_mode = 1
 
 [node name="InputBlocker" type="Control" parent="."]
 unique_name_in_owner = true

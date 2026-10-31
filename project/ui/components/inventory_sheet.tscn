@@ -1,22 +1,21 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://ui/components/inventory_sheet.gd" id="1_sheet"]
-[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="3_nav"]
 [ext_resource type="PackedScene" path="res://ui/components/trade_sheet.tscn" id="4_trade"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="5_button"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
-bg_color = Color(0.0471, 0.0549, 0.0706, 1)
+bg_color = Color(0.0392, 0.0392, 0.0431, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track"]
-bg_color = Color(0.1333, 0.149, 0.1804, 1)
+bg_color = Color(0.1765, 0.1765, 0.2039, 1)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
-bg_color = Color(0.7176, 0.4549, 0.4902, 1)
+bg_color = Color(0.7216, 0.2314, 0.2588, 1)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
@@ -27,9 +26,9 @@ content_margin_left = 16.0
 content_margin_top = 12.0
 content_margin_right = 16.0
 content_margin_bottom = 12.0
-bg_color = Color(0.0627, 0.0706, 0.0941, 1)
+bg_color = Color(0.0784, 0.0784, 0.0863, 1)
 border_width_top = 1
-border_color = Color(0.1333, 0.149, 0.1804, 1)
+border_color = Color(0.1765, 0.1765, 0.2039, 1)
 
 [node name="InventorySheet" type="Control"]
 layout_mode = 3
@@ -213,10 +212,8 @@ size_flags_horizontal = 0
 theme_type_variation = &"SmallButton"
 script = ExtResource("5_button")
 
-[node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
-layout_mode = 2
-
 [node name="TradeSheet" parent="." instance=ExtResource("4_trade")]
 unique_name_in_owner = true
 visible = false
+z_index = 20
 layout_mode = 1

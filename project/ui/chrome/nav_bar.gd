@@ -46,5 +46,7 @@ func _offers_waiting_silently(run: RunState) -> bool:
 
 
 func _open_market() -> void:
+	GameOverlay.close_pages()
 	GameState.trading_with = &""
-	SceneRouter.go_to(SceneRouter.MARKET_SCREEN)
+	if get_tree().current_scene == null or get_tree().current_scene.scene_file_path != SceneRouter.MARKET_SCREEN:
+		SceneRouter.go_to(SceneRouter.MARKET_SCREEN)

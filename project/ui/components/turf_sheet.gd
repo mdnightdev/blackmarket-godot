@@ -13,12 +13,11 @@ const SKILL_ICONS := {
 	&"muscle": preload("res://assets/icons/hud/biceps-flexed.svg"),
 	&"smuggler": preload("res://assets/icons/hud/package.svg"),
 }
-const TIER_COLORS := {
-	Families.Tier.HOSTILE: Palette.RISK_HIGH,
-	Families.Tier.NEUTRAL: Palette.TEXT_MUTED,
-	Families.Tier.TRUSTED: Palette.RISK_LOW,
-	Families.Tier.FAMILY: Palette.RISK_LOW,
-}
+static func _tier_color(tier: Families.Tier) -> Color:
+	match tier:
+		Families.Tier.HOSTILE: return Palette.RISK_HIGH
+		Families.Tier.TRUSTED, Families.Tier.FAMILY: return Palette.RISK_LOW
+	return Palette.TEXT_MUTED
 const CAREER_LOCK := "Take Old Market from Vex to unlock"
 const ACT_ONE_STATUS := "Locked: take Old Market"
 const LOCKED := "LOCKED"
@@ -383,7 +382,7 @@ func _add_families(run: RunState) -> void:
 		if not favour.is_empty():
 			var item := Content.item(StringName(favour.item))
 			caption = "Owe %d %s by %s" % [int(favour.quantity), item.display_name, Calendar.describe(int(favour.due))]
-		_add_row(family.emblem, "%s %s" % [family.chinese_name, family.english_name], "%+d" % Families.standing(run, family.id), caption, Families.tier_name(tier).to_upper(), TIER_COLORS[tier])
+		_add_row(family.emblem, "%s %s" % [family.chinese_name, family.english_name], "%+d" % Families.standing(run, family.id), caption, Families.tier_name(tier).to_upper(), _tier_color(tier))
 
 
 func _manage_business(entry: Dictionary) -> void:

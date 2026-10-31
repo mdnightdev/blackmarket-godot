@@ -1,13 +1,15 @@
 class_name TurfBar
 extends GameButton
 
-const PLAYER_COLOR := Palette.RISK_LOW
-const OPEN_COLOR := Palette.TEXT_MUTED
+static var PLAYER_COLOR: Color:
+	get: return Palette.RISK_LOW
+static var OPEN_COLOR: Color:
+	get: return Palette.TEXT_MUTED
 const HOLD_MARK_COLOR := Color(1, 1, 1, 0.35)
 const PIP_GAP := 4.0
 
 var _share := 50
-var _gang_color := OPEN_COLOR
+var _gang_color := Color.WHITE
 var _corner_colors: Array[Color] = []
 
 @onready var _share_label: Label = %ShareLabel

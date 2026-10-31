@@ -23,12 +23,11 @@ const BUILDINGS: Array[Dictionary] = [
 	{ "id": &"donations", "title": "Donations", "icon": preload("res://assets/icons/hud/handshake.svg"), "at": Vector2(0.17, 0.635) },
 	{ "id": &"families", "title": "Families", "icon": preload("res://assets/icons/hud/users.svg"), "at": Vector2(0.72, 0.63) },
 ]
-const STATUS_COLORS := {
-	Status.OPEN: Palette.RISK_LOW,
-	Status.NEEDS_YOU: Palette.PEACH_BRIGHT,
-	Status.LOCKED: Palette.TEXT_MUTED,
-	Status.COMING_SOON: Palette.TEXT_MUTED,
-}
+static func _status_color(status: Status) -> Color:
+	match status:
+		Status.OPEN: return Palette.RISK_LOW
+		Status.NEEDS_YOU: return Palette.PEACH_BRIGHT
+	return Palette.TEXT_MUTED
 const COMING_SOON := "Coming soon"
 const EDGE_MARGIN := 6.0
 const BADGE_ALPHA := 0.86
@@ -72,7 +71,7 @@ func set_status(id: StringName, text: String, status: Status) -> void:
 	label.text = text
 	label.add_theme_color_override("font_color", Palette.PEACH_BRIGHT if status == Status.NEEDS_YOU else Palette.TEXT_MUTED)
 	var dot: Panel = _status_dots[id]
-	(dot.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = STATUS_COLORS[status]
+	(dot.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = _status_color(status)
 	badge.disabled = status == Status.COMING_SOON
 	badge.modulate = DIMMED if status in [Status.LOCKED, Status.COMING_SOON] else Color.WHITE
 	_layout.call_deferred()

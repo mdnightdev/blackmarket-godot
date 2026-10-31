@@ -1,23 +1,22 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://ui/components/profile_sheet.gd" id="1_sheet"]
-[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="3_nav"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/wrench.svg" id="7_settings"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/rotate-ccw.svg" id="8_quit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
-bg_color = Color(0.0471, 0.0549, 0.0706, 1)
+bg_color = Color(0.0392, 0.0392, 0.0431, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track"]
-bg_color = Color(0.1333, 0.149, 0.1804, 1)
+bg_color = Color(0.1765, 0.1765, 0.2039, 1)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
-bg_color = Color(0.7176, 0.4549, 0.4902, 1)
+bg_color = Color(0.7216, 0.2314, 0.2588, 1)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
@@ -252,6 +251,3 @@ layout_mode = 2
 theme_type_variation = &"MutedLabel"
 horizontal_alignment = 1
 autowrap_mode = 3
-
-[node name="NavBar" parent="Sheet/Page" instance=ExtResource("3_nav")]
-layout_mode = 2

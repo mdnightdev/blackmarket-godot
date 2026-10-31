@@ -6,13 +6,12 @@ extends Control
 
 const OPEN_SECONDS := 0.18
 const CLOSE_SECONDS := 0.12
-const READING_COLORS := {
-	"easy": Palette.RISK_LOW,
-	"good odds": Palette.RISK_LOW,
-	"even": Palette.PEACH_BRIGHT,
-	"risky": Palette.RISK_HIGH,
-	"suicide": Palette.RISK_HIGH,
-}
+static func _reading_color(reading: String) -> Color:
+	match reading:
+		"easy", "good odds": return Palette.RISK_LOW
+		"even": return Palette.PEACH_BRIGHT
+		"risky", "suicide": return Palette.RISK_HIGH
+	return Palette.TEXT_MUTED
 
 @onready var _dim: ColorRect = %Dim
 @onready var _card: PanelContainer = %Card
@@ -106,7 +105,7 @@ func _refresh() -> void:
 		_report_label.text = lock_reason
 	else:
 		_reading_label.text = reading.to_upper()
-		_reading_label.add_theme_color_override("font_color", READING_COLORS.get(reading, Palette.TEXT_MUTED))
+		_reading_label.add_theme_color_override("font_color", _reading_color(reading))
 		_report_label.text = _report_note(run, report)
 
 	var price := Scouting.cost(_corner)
