@@ -116,6 +116,7 @@ var crew_report: Dictionary = {}
 ## Phase stamp of the runner's last delivery.
 var runner_stamp: int = -1
 var muscle_stamp: int = -1
+var driver_stamp: int = -1
 ## Pay owed for jobs delivered on credit. See Invoices for the entry layout.
 var invoices: Array[Dictionary] = []
 ## Owned businesses. See Businesses for the entry layout.
@@ -208,6 +209,12 @@ var trades: int = 0
 var profit: int = 0
 var busts: int = 0
 
+## Single-use consumable state
+var fake_id_active: bool = false
+var clone_plates_active: bool = false
+var sniper_active: bool = false
+var rival_ransomware: Dictionary = {}
+
 
 static func phase_name(value: Phase) -> String:
 	return PHASE_NAMES[value]
@@ -274,6 +281,7 @@ func to_dict() -> Dictionary:
 		"crew_report": _string_keys(crew_report),
 		"runner_stamp": runner_stamp,
 		"muscle_stamp": muscle_stamp,
+		"driver_stamp": driver_stamp,
 		"invoices": invoices,
 		"businesses": businesses,
 		"daily_tasks": daily_tasks,
@@ -322,6 +330,10 @@ func to_dict() -> Dictionary:
 		"trades": trades,
 		"profit": profit,
 		"busts": busts,
+		"fake_id_active": fake_id_active,
+		"clone_plates_active": clone_plates_active,
+		"sniper_active": sniper_active,
+		"rival_ransomware": _string_keys(rival_ransomware),
 		"opening_done": opening_done,
 		"tutorial_completed": tutorial_completed,
 		"lessons_seen": lessons_seen,
@@ -463,6 +475,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.crew_report = _positive_counts(data.get("crew_report"))
 	state.runner_stamp = int(data.get("runner_stamp", -1))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
+	state.driver_stamp = int(data.get("driver_stamp", -1))
 	for invoice in _dictionaries(data.get("invoices")):
 		var clean := Invoices.sanitize(invoice)
 		if not clean.is_empty():
@@ -570,6 +583,13 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.trades = maxi(0, int(data.get("trades", state.trades)))
 	state.profit = int(data.get("profit", state.profit))
 	state.busts = maxi(0, int(data.get("busts", state.busts)))
+	state.fake_id_active = bool(data.get("fake_id_active", false))
+	state.clone_plates_active = bool(data.get("clone_plates_active", false))
+	state.sniper_active = bool(data.get("sniper_active", false))
+	var saved_ransomware: Variant = data.get("rival_ransomware", {})
+	if saved_ransomware is Dictionary:
+		for k in saved_ransomware:
+			state.rival_ransomware[StringName(str(k))] = int(saved_ransomware[k])
 	if state.career and not data.has("story_flags"):
 		Campaign.skip_act_one(state)
 	return state

@@ -72,7 +72,7 @@
   "ammo_9mm": {
     "id": "ammo_9mm",
     "display_name": "9mm Ammo Box",
-    "kind": 0,
+    "kind": 2,
     "category": "arms",
     "base_price": 80,
     "risk": 12,
@@ -81,7 +81,8 @@
     "min_rank": 0,
     "description": "Standard pistol brass. Easy flip.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "suppress"
   },
   "ancient_artifacts": {
     "id": "ancient_artifacts",
@@ -212,7 +213,7 @@
   "burner_sims": {
     "id": "burner_sims",
     "display_name": "Burner SIMs",
-    "kind": 0,
+    "kind": 2,
     "category": "comms",
     "base_price": 60,
     "risk": 10,
@@ -221,7 +222,8 @@
     "min_rank": 0,
     "description": "Talk once. Toss.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "block_trace"
   },
   "card_cloner": {
     "id": "card_cloner",
@@ -296,7 +298,7 @@
   "clone_plates": {
     "id": "clone_plates",
     "display_name": "Clone Plates",
-    "kind": 0,
+    "kind": 2,
     "category": "auto_parts",
     "base_price": 2800,
     "risk": 36,
@@ -305,7 +307,8 @@
     "min_rank": 0,
     "description": "Every car is someone else's.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "clone_plates"
   },
   "combat_shotgun": {
     "id": "combat_shotgun",
@@ -324,7 +327,7 @@
   "combat_stims": {
     "id": "combat_stims",
     "display_name": "Combat Stims",
-    "kind": 0,
+    "kind": 2,
     "category": "meds",
     "base_price": 800,
     "risk": 30,
@@ -333,7 +336,8 @@
     "min_rank": 0,
     "description": "Stay up, stay mean.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "rally"
   },
   "counterfeit_bills": {
     "id": "counterfeit_bills",
@@ -534,7 +538,7 @@
   "fake_ids": {
     "id": "fake_ids",
     "display_name": "Fake IDs",
-    "kind": 0,
+    "kind": 2,
     "category": "papers",
     "base_price": 180,
     "risk": 25,
@@ -543,7 +547,8 @@
     "min_rank": 0,
     "description": "Passable plastic. Do not flash the whole stack.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "pass_stop"
   },
   "fighter_jet": {
     "id": "fighter_jet",
@@ -842,7 +847,7 @@
   "network_tap": {
     "id": "network_tap",
     "display_name": "Network Tap",
-    "kind": 0,
+    "kind": 2,
     "category": "computing",
     "base_price": 3000,
     "risk": 28,
@@ -851,7 +856,8 @@
     "min_rank": 0,
     "description": "Invisible man-in-the-middle.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "network_tap"
   },
   "night_vision": {
     "id": "night_vision",
@@ -996,7 +1002,7 @@
   "ransomware_kit": {
     "id": "ransomware_kit",
     "display_name": "Ransomware Kit",
-    "kind": 0,
+    "kind": 2,
     "category": "computing",
     "base_price": 2500,
     "risk": 42,
@@ -1005,7 +1011,8 @@
     "min_rank": 0,
     "description": "Encrypt and invoice.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "freeze_rival"
   },
   "rare_sculpture": {
     "id": "rare_sculpture",
@@ -1206,7 +1213,7 @@
   "sniper_rifle": {
     "id": "sniper_rifle",
     "display_name": "Sniper Rifle",
-    "kind": 0,
+    "kind": 2,
     "category": "weapons",
     "base_price": 18000,
     "risk": 46,
@@ -1215,7 +1222,8 @@
     "min_rank": 0,
     "description": "Suppressed precision for quiet work.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "breach_stronghold"
   },
   "sports_car_engine": {
     "id": "sports_car_engine",
@@ -1262,7 +1270,7 @@
   "street_meds": {
     "id": "street_meds",
     "display_name": "Street Meds",
-    "kind": 0,
+    "kind": 2,
     "category": "meds",
     "base_price": 120,
     "risk": 18,
@@ -1271,7 +1279,8 @@
     "min_rank": 0,
     "description": "Painkillers and dirty gauze.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "heal_wounded"
   },
   "superyacht_papers": {
     "id": "superyacht_papers",
@@ -1388,7 +1397,7 @@
   "zero_day_drive": {
     "id": "zero_day_drive",
     "display_name": "Zero-Day Drive",
-    "kind": 0,
+    "kind": 2,
     "category": "tech",
     "base_price": 4000,
     "risk": 48,
@@ -1397,6 +1406,7 @@
     "min_rank": 0,
     "description": "An unpatched door into everything.",
     "capacity_bonus": 0,
-    "fare_discount": 0.0
+    "fare_discount": 0.0,
+    "effect": "wipe_heat"
   }
 }

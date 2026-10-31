@@ -78,3 +78,11 @@ static func estimate(run: RunState) -> int:
 	for tier in Army.DEPLOY_ORDER:
 		sum += Army.price_of(int(HEAL_PRICES[tier]), Army.count(run, tier, Army.State.WOUNDED))
 	return sum
+
+
+static func can_use_meds(run: RunState) -> bool:
+	return Consumables.can_use(run, Consumables.STREET_MEDS)
+
+
+static func use_meds(run: RunState) -> Dictionary:
+	return Consumables.use(run, Consumables.STREET_MEDS)

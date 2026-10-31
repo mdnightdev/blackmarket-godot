@@ -278,24 +278,36 @@ func _on_command_used(cmd_name: StringName) -> void:
 func _execute_suppress() -> void:
 	AudioService.play_sfx(Sfx.RAID_HIT, 0.22, -2.0)
 	_add_shake(4.5)
-	FloatingNumber.spawn(_field, Vector2(360.0, 700.0), "SUPPRESSIVE FIRE!", Palette.PRICE)
-	for i in 4:
+	var run := GameState.run
+	var has_ammo := Consumables.has(run, Consumables.AMMO_9MM) if run != null else false
+	if has_ammo:
+		Consumables.burn(run, Consumables.AMMO_9MM)
+		FloatingNumber.spawn(_field, Vector2(360.0, 700.0), "AMMO CONSUMED: MAXIMUM SUPPRESSION!", Palette.PRICE)
+	else:
+		FloatingNumber.spawn(_field, Vector2(360.0, 700.0), "SUPPRESSIVE FIRE!", Palette.PRICE)
+	for i in (6 if has_ammo else 4):
 		var shooter := _player.random_alive(_rng)
 		var victim := _enemy.random_alive(_rng)
 		if shooter and victim:
 			_shoot(shooter, victim)
-	var hits := roundi(Odds.bell(_rng, 1.0, 2.5, 5.0))
+	var hits := roundi(Odds.bell(_rng, 1.0, 2.5, 5.0) * (1.5 if has_ammo else 1.0))
 	_force_losses(_enemy, hits)
-	var scale_losses := maxi(1, roundi(float(_enemy.side.head_count) * Odds.bell(_rng, 0.04, 0.08, 0.15)))
+	var scale_losses := maxi(1, roundi(float(_enemy.side.head_count) * Odds.bell(_rng, 0.04, 0.08, 0.15) * (1.6 if has_ammo else 1.0)))
 	_enemy.side.survivors = maxi(0, _enemy.side.survivors - scale_losses)
-	_enemy_morale -= Odds.bell(_rng, 0.08, 0.14, 0.24)
+	_enemy_morale -= Odds.bell(_rng, 0.08, 0.14, 0.24) * (1.5 if has_ammo else 1.0)
 	_check_morale_rout()
 
 
 func _execute_rally() -> void:
 	AudioService.play_sfx(Sfx.TURF_WON, 0.12, -1.0)
-	FloatingNumber.spawn(_field, Vector2(360.0, 800.0), "SQUAD RALLIED!", Palette.PEACH_BRIGHT)
-	var saved := maxi(1, roundi(float(_player.side.head_count) * Odds.bell(_rng, 0.03, 0.07, 0.13)))
+	var run := GameState.run
+	var has_stims := Consumables.has(run, Consumables.COMBAT_STIMS) if run != null else false
+	if has_stims:
+		Consumables.burn(run, Consumables.COMBAT_STIMS)
+		FloatingNumber.spawn(_field, Vector2(360.0, 800.0), "STIMS INJECTED: RALLY BOOST!", Palette.PEACH_BRIGHT)
+	else:
+		FloatingNumber.spawn(_field, Vector2(360.0, 800.0), "SQUAD RALLIED!", Palette.PEACH_BRIGHT)
+	var saved := maxi(1, roundi(float(_player.side.head_count) * Odds.bell(_rng, 0.03, 0.07, 0.13) * (1.75 if has_stims else 1.0)))
 	_player.side.survivors = mini(_player.side.head_count, _player.side.survivors + saved)
 	_hud.set_counts(_player.existing_men(), _enemy.existing_men())
 	for fighter in _player.fighters:

@@ -141,6 +141,10 @@ func _show_sell_button(item: ItemDef) -> void:
 	if item == null:
 		return
 	var run := GameState.run
+	if item.is_consumable():
+		_sell_button.disabled = not Consumables.can_use(run, item.id)
+		_sell_button.text = "USE NOW (%s)" % Consumables.item_name(item.id)
+		return
 	var sellable := Inventory.sellable_count(run, item.id)
 	if sellable == 0 and Inventory.reserved_for_orders(run, item.id) > 0:
 		_sell_button.disabled = true
@@ -158,5 +162,15 @@ func _show_sell_button(item: ItemDef) -> void:
 
 func _on_sell_pressed() -> void:
 	var item: ItemDef = _goods_by_title.get(_selected_title)
-	if item != null and _buyer != null:
+	if item == null:
+		return
+	if item.is_consumable():
+		var run := GameState.run
+		var outcome := Consumables.use(run, item.id)
+		if outcome.get("ok", false):
+			AudioService.play_sfx(Sfx.FAVOUR_DONE)
+			GameOverlay.notify(str(outcome.get("message", "Item used.")))
+			_rebuild()
+		return
+	if _buyer != null:
 		_trade_sheet.show_trade(TradeForm.Mode.SELL, item, _buyer)

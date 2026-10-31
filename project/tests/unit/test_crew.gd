@@ -359,3 +359,32 @@ func test_morning_operational_risks_resolve() -> void:
 	rng.seed = 42
 	var notices := Crew.morning(_run, rng)
 	assert_not_null(notices)
+
+
+func test_driver_delivers_crate_and_respects_cooldown() -> void:
+	Crew.hire(_run, DRIVER)
+	assert_true(Crew.driver_ready(_run))
+	_run.crate = {
+		"id": "crate:1",
+		"destination": "slums",
+		"slots": 4,
+		"pay": 1000,
+		"lead": 3,
+		"due": 10,
+		"route": ["slums"],
+		"stop": 0,
+		"off_route": false,
+		"invoice": false,
+		"skimmed": 0.0,
+		"tolls": 0,
+		"fragile": false,
+	}
+	var cash := _run.cash
+	var pay := Crew.send_driver(_run)
+	assert_gt(pay, 0)
+	assert_eq(_run.cash, cash + pay)
+	assert_true(_run.crate.is_empty())
+	assert_false(Crew.driver_ready(_run))
+	assert_eq(Crew.send_driver(_run), 0, "driver on cooldown")
+	Calendar.advance_phase(_run)
+	assert_true(Crew.driver_ready(_run))

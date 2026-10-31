@@ -3,22 +3,22 @@ class_name Palette
 ## Single source of truth for the entire app palette.
 ## Editing any constant below automatically updates Theme (theme.tres), all screens, sheets, and HUD components on boot.
 
-const INK := Color("0a0a0b")
-const PANEL := Color("141416")
-const PANEL_LIFT := Color("1f1f23")
-const SURFACE_ACTIVE := Color("2a2a30")
-const LINE := Color("2d2d34")
-const LINE_MUTED := Color("404048")
-const TEXT := Color("ededed")
-const TEXT_MUTED := Color("a0a0aa")
-const TEXT_CREAM := Color("f7f4f0")
-const PEACH := Color("b83b42")
-const PEACH_TITLE := Color("d95b62")
-const PEACH_BRIGHT := Color("e84c55")
-const PEACH_BORDER := Color("a33238")
-const PRICE := Color("b8c4cc")
-const RISK_LOW := Color("659e72")
-const RISK_HIGH := Color("e03e46")
+const INK := Color("0c0e12")
+const PANEL := Color("101218")
+const PANEL_LIFT := Color("15171e")
+const SURFACE_ACTIVE := Color("1a1d24")
+const LINE := Color("22262e")
+const LINE_MUTED := Color("2e323b")
+const TEXT := Color("d8d9dc")
+const TEXT_MUTED := Color("a9adb9")
+const TEXT_CREAM := Color("ded6ce")
+const PEACH := Color("b7747d")
+const PEACH_TITLE := Color("d09aa0")
+const PEACH_BRIGHT := Color("e08a98")
+const PEACH_BORDER := Color("c47e8a")
+const PRICE := Color("9fb8c8")
+const RISK_LOW := Color("718b7a")
+const RISK_HIGH := Color("b85d68")
 
 
 static func sync_theme() -> void:

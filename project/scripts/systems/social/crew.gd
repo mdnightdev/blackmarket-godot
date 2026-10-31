@@ -16,6 +16,8 @@ const DELIVERY_PAY: StringName = &"delivery_pay"
 const RAIDS_WARNED: StringName = &"raids_warned"
 const COLLECTIONS: StringName = &"collections"
 const COLLECTION_PAY: StringName = &"collection_pay"
+const DRIVER_DELIVERIES: StringName = &"driver_deliveries"
+const DRIVER_PAY: StringName = &"driver_pay"
 
 
 ## One crew slot, plus one for every safehouse upgrade.
@@ -241,6 +243,41 @@ static func muscle_ready(run: RunState) -> bool:
 	return muscle(run) != null and run.muscle_stamp != Calendar.stamp(run)
 
 
+## The hired role that handles vehicle crate transit, null when there is none or when jailed.
+static func driver(run: RunState) -> CrewRoleDef:
+	for role in roles(run):
+		if not is_jailed(run, role.id) and role.id == &"driver":
+			return role
+	return null
+
+
+static func driver_ready(run: RunState) -> bool:
+	return driver(run) != null and run.driver_stamp != Calendar.stamp(run)
+
+
+## Dispatches driver to run Voronin's crate to destination without player travel.
+## Returns the pay, 0 when it could not be done.
+static func send_driver(run: RunState) -> int:
+	if not driver_ready(run) or not Smuggling.is_carrying(run):
+		return 0
+	var full_payout := Smuggling.payout(run, run.crate)
+	var pay := roundi(full_payout * 0.8)
+	if run.clone_plates_active:
+		run.clone_plates_active = false
+	var delivered := Smuggling.deliver_by_driver(run, pay)
+	if delivered <= 0:
+		return 0
+	use_driver(run, delivered)
+	DailyTasks.record_delivery(run)
+	return delivered
+
+
+static func use_driver(run: RunState, pay: int) -> void:
+	run.driver_stamp = Calendar.stamp(run)
+	note(run, DRIVER_DELIVERIES)
+	note(run, DRIVER_PAY, pay)
+
+
 ## Hands over a bar order, favour, customer order, or delivery errand without travel.
 ## Returns the pay, 0 when it could not be done.
 static func send_runner(run: RunState, job: Dictionary) -> int:
@@ -307,6 +344,9 @@ static func report_line(run: RunState) -> String:
 	var collections := int(run.crew_report.get(COLLECTIONS, 0))
 	if collections > 0:
 		parts.append("your muscle made %d %s collecting %s" % [collections, "collection" if collections == 1 else "collections", Format.money(int(run.crew_report.get(COLLECTION_PAY, 0)))])
+	var driver_delivs := int(run.crew_report.get(DRIVER_DELIVERIES, 0))
+	if driver_delivs > 0:
+		parts.append("your driver moved %d %s worth %s" % [driver_delivs, "crate" if driver_delivs == 1 else "crates", Format.money(int(run.crew_report.get(DRIVER_PAY, 0)))])
 	var warned := int(run.crew_report.get(RAIDS_WARNED, 0))
 	if warned > 0:
 		parts.append("your lookout warned you of %d %s" % [warned, "raid" if warned == 1 else "raids"])

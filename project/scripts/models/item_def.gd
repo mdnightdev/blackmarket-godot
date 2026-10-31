@@ -3,7 +3,7 @@ extends Resource
 
 const ItemsAtlasClass := preload("res://scripts/core/items_atlas.gd")
 
-enum Kind { TRADE_GOOD, EQUIPMENT }
+enum Kind { TRADE_GOOD, EQUIPMENT, CONSUMABLE }
 
 @export var id: StringName
 @export var display_name: String
@@ -31,9 +31,16 @@ func get_icon() -> Texture2D:
 @export_range(0, 500) var capacity_bonus: int = 0
 @export_range(0.0, 1.0, 0.01) var fare_discount: float = 0.0
 
+@export_group("Consumable")
+@export var effect: StringName = &""
+
 
 func is_equipment() -> bool:
 	return kind == Kind.EQUIPMENT
+
+
+func is_consumable() -> bool:
+	return kind == Kind.CONSUMABLE
 
 
 func is_restricted() -> bool:

@@ -69,6 +69,7 @@ static func repay(run: RunState, amount: int) -> bool:
 		run.covered_day = run.day
 	if run.debt <= 0 and run.shark_sale_day == 0 and not run.shark_bought:
 		run.shark_sale_day = run.day + 7
+	DailyTasks.record_loan_payment(run)
 	return true
 
 

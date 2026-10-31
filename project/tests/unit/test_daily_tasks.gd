@@ -192,14 +192,43 @@ func test_tasks_from_another_day_are_ignored() -> void:
 func test_describe_and_progress_text() -> void:
 	var sale := _give(DailyTasks.SELL_VALUE, 2400, OLD_MARKET)
 	DailyTasks.record_sale(_run, OLD_MARKET, 900)
-	assert_eq(DailyTasks.describe(sale), "Sell $2,400 in Old Market")
+	var old_market_name := Content.district(OLD_MARKET).display_name
+	assert_eq(DailyTasks.describe(sale), "Sell $2,400 in %s" % old_market_name)
 	assert_eq(DailyTasks.progress_text(sale), "$900 / $2,400")
 	var visit := _give(DailyTasks.VISIT, 1, DOCKS)
-	assert_eq(DailyTasks.describe(visit), "Travel to The Docks")
+	var docks_name := Content.district(DOCKS).display_name
+	assert_eq(DailyTasks.describe(visit), "Travel to %s" % docks_name)
 	assert_eq(DailyTasks.progress_text(visit), "0 / 1")
 	assert_eq(DailyTasks.describe(_give(DailyTasks.DELIVER_JOB, 2)), "Complete 2 deliveries")
 	assert_eq(DailyTasks.describe(_give(DailyTasks.END_DAY_COOL, 1)), "End the day under %d heat" % DailyTasks.COOL_HEAT)
 	assert_eq(DailyTasks.describe(_give(DailyTasks.CASINO_WIN, 1)), "Win a casino game")
+	assert_eq(DailyTasks.describe(_give(DailyTasks.TAKE_CORNER, 1)), "Capture a rival corner")
+	assert_eq(DailyTasks.describe(_give(DailyTasks.SCOUT_CORNER, 1)), "Scout a rival corner")
+	assert_eq(DailyTasks.describe(_give(DailyTasks.POST_GARRISON, 1)), "Station a garrison at a corner")
+	assert_eq(DailyTasks.describe(_give(DailyTasks.PAY_LOAN, 1)), "Make a loan payment")
+	assert_eq(DailyTasks.describe(_give(DailyTasks.USE_CONSUMABLE, 1)), "Use an operational consumable")
+
+
+func test_new_task_hooks_advance_and_complete() -> void:
+	var corner_task := _give(DailyTasks.TAKE_CORNER, 1)
+	assert_eq(DailyTasks.record_corner_taken(_run), [corner_task] as Array[Dictionary])
+	assert_true(bool(corner_task.done))
+
+	var scout_task := _give(DailyTasks.SCOUT_CORNER, 1)
+	assert_eq(DailyTasks.record_scout(_run), [scout_task] as Array[Dictionary])
+	assert_true(bool(scout_task.done))
+
+	var garrison_task := _give(DailyTasks.POST_GARRISON, 1)
+	assert_eq(DailyTasks.record_garrison(_run), [garrison_task] as Array[Dictionary])
+	assert_true(bool(garrison_task.done))
+
+	var loan_task := _give(DailyTasks.PAY_LOAN, 1)
+	assert_eq(DailyTasks.record_loan_payment(_run), [loan_task] as Array[Dictionary])
+	assert_true(bool(loan_task.done))
+
+	var consumable_task := _give(DailyTasks.USE_CONSUMABLE, 1)
+	assert_eq(DailyTasks.record_use_consumable(_run), [consumable_task] as Array[Dictionary])
+	assert_true(bool(consumable_task.done))
 
 
 func test_tasks_survive_save_and_load() -> void:

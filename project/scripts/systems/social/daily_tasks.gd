@@ -22,7 +22,24 @@ const DELIVER_JOB: StringName = &"deliver_job"
 const END_DAY_COOL: StringName = &"end_day_cool"
 const CASINO_WIN: StringName = &"casino_win"
 const VISIT: StringName = &"visit"
-const KINDS: Array[StringName] = [SELL_VALUE, DELIVER_JOB, END_DAY_COOL, CASINO_WIN, VISIT]
+const TAKE_CORNER: StringName = &"take_corner"
+const SCOUT_CORNER: StringName = &"scout_corner"
+const POST_GARRISON: StringName = &"post_garrison"
+const PAY_LOAN: StringName = &"pay_loan"
+const USE_CONSUMABLE: StringName = &"use_consumable"
+
+const KINDS: Array[StringName] = [
+	SELL_VALUE,
+	DELIVER_JOB,
+	END_DAY_COOL,
+	CASINO_WIN,
+	VISIT,
+	TAKE_CORNER,
+	SCOUT_CORNER,
+	POST_GARRISON,
+	PAY_LOAN,
+	USE_CONSUMABLE,
+]
 
 
 ## Deals today's tasks unless they are already out. Seeded by the run, so a reload cannot reroll them.
@@ -74,6 +91,26 @@ static func record_arrival(run: RunState, district_id: StringName) -> Array[Dict
 	return _advance(run, VISIT, 1, district_id)
 
 
+static func record_corner_taken(run: RunState) -> Array[Dictionary]:
+	return _advance(run, TAKE_CORNER, 1)
+
+
+static func record_scout(run: RunState) -> Array[Dictionary]:
+	return _advance(run, SCOUT_CORNER, 1)
+
+
+static func record_garrison(run: RunState) -> Array[Dictionary]:
+	return _advance(run, POST_GARRISON, 1)
+
+
+static func record_loan_payment(run: RunState) -> Array[Dictionary]:
+	return _advance(run, PAY_LOAN, 1)
+
+
+static func record_use_consumable(run: RunState) -> Array[Dictionary]:
+	return _advance(run, USE_CONSUMABLE, 1)
+
+
 ## Must run while run.day and run.heat still belong to the finished day.
 static func close_day(run: RunState) -> Array[Dictionary]:
 	var completed: Array[Dictionary] = []
@@ -95,6 +132,16 @@ static func describe(task: Dictionary) -> String:
 			return "Win a casino game" if target == 1 else "Win %d casino games" % target
 		VISIT:
 			return "Travel to %s" % _district_name(task)
+		TAKE_CORNER:
+			return "Capture a rival corner"
+		SCOUT_CORNER:
+			return "Scout a rival corner"
+		POST_GARRISON:
+			return "Station a garrison at a corner"
+		PAY_LOAN:
+			return "Make a loan payment"
+		USE_CONSUMABLE:
+			return "Use an operational consumable"
 	return ""
 
 
@@ -163,6 +210,8 @@ static func _make(run: RunState, kind: StringName, rng: RandomNumberGenerator) -
 				return {}
 			var destination: DistrictDef = destinations[rng.randi_range(0, destinations.size() - 1)]
 			district_id = String(destination.id)
+		TAKE_CORNER, SCOUT_CORNER, POST_GARRISON, PAY_LOAN, USE_CONSUMABLE:
+			target = 1
 	return {
 		"id": "",
 		"kind": String(kind),

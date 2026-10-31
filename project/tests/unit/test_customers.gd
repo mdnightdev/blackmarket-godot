@@ -88,7 +88,7 @@ func test_pool_loads_and_every_customer_is_valid() -> void:
 	var customers := Content.customers()
 	assert_between(customers.size(), 36, 48)
 	var categories: Array[StringName] = []
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Content.tradable_items():
 		categories.append(item.category)
 	var districts: Array[StringName] = []
 	var temperaments: Array[int] = []

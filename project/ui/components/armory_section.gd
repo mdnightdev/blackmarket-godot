@@ -5,12 +5,7 @@ extends TurfSection
 ## Rook. Grades still in his back rooms stay locked until enough has been spent with him.
 
 const ART: Texture2D = preload("res://assets/scenes/armory.jpg")
-const WEAPON_ART := {
-	Armory.Grade.BLADE: preload("res://assets/weapons/blades.jpg"),
-	Armory.Grade.HANDGUN: preload("res://assets/weapons/handguns.jpg"),
-	Armory.Grade.RIFLE: preload("res://assets/weapons/rifles.jpg"),
-	Armory.Grade.MILITARY: preload("res://assets/weapons/military.jpg"),
-}
+const ItemsAtlasClass := preload("res://scripts/core/items_atlas.gd")
 const CHEAPEST_FIRST: Array[Armory.Grade] = [Armory.Grade.BLADE, Armory.Grade.HANDGUN, Armory.Grade.RIFLE, Armory.Grade.MILITARY]
 const TILE_HEIGHT := 230.0
 
@@ -38,7 +33,7 @@ func _add_tile(run: RunState, parent: Container, grade: Armory.Grade) -> void:
 	var on_sale := Armory.is_on_sale(run, grade)
 	var tile := _add_card(parent, TILE_HEIGHT)
 	var status := "%s each" % Format.money(int(Armory.UNIT_PRICES[grade])) if on_sale else "Spend more with Rook"
-	tile.show_art(WEAPON_ART[grade], str(Armory.GRADE_NAMES[grade]), Format.count(owned), status, not on_sale)
+	tile.show_art(ItemsAtlasClass.get_icon(Armory.item_id(grade)), str(Armory.GRADE_NAMES[grade]), Format.count(owned), status, not on_sale)
 	tile.disabled = not on_sale
 	tile.pressed.connect(GameOverlay.pick_weapons.bind(grade, false, Callable()))
 	if owned > int(_shown.get(grade, owned)):

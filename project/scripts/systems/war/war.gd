@@ -132,7 +132,10 @@ static func defenders(run: RunState, corner: CornerDef) -> int:
 static func enemy_power(run: RunState, corner: CornerDef) -> float:
 	var gang := Corners.gang_of(corner.id)
 	var per_man := Rivals.power_per_man(run, gang) if gang != null else Rivals.SKILL
-	return defenders(run, corner) * per_man * (STRONGHOLD_FACTOR if corner.stronghold else 1.0)
+	var factor := STRONGHOLD_FACTOR if corner.stronghold else 1.0
+	if corner.stronghold and run.sniper_active:
+		factor = 1.0
+	return defenders(run, corner) * per_man * factor
 
 
 ## Fights for a corner with the deployment from Army.deployment. roll and fate are in [0, 1): roll is the luck of the
@@ -145,6 +148,7 @@ static func attack(run: RunState, corner_id: StringName, deployment: Dictionary,
 	var luck_mult := Odds.bell_from_roll(roll, 1.0 - LUCK, 1.0, 1.0 + LUCK)
 	var mine := Army.power(run, deployment) * luck_mult
 	var theirs := enemy_power(run, corner)
+	run.sniper_active = false
 	var won := mine >= theirs
 	var hit_share := WIN_HIT_SHARE * minf(1.0, theirs / maxf(mine, 1.0)) if won else LOSS_HIT_SHARE
 	var fate_offset := Odds.bell_from_roll(fate, -0.5 * FATE_SWING, 0.0, 0.5 * FATE_SWING)

@@ -466,6 +466,17 @@ func send_muscle(errand: Dictionary) -> int:
 	return pay
 
 
+## Dispatches driver to deliver Voronin's crate. Returns the pay, 0 when it could not be done.
+func send_driver() -> int:
+	var pay := Crew.send_driver(run)
+	if pay <= 0:
+		return 0
+	var finished := DailyTasks.record_delivery(run)
+	_commit(false)
+	_report_tasks(finished)
+	return pay
+
+
 func bail_crew(role_id: StringName) -> bool:
 	if not Crew.bail_member(run, role_id):
 		return false

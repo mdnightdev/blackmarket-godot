@@ -115,6 +115,17 @@ func items(kind: ItemDef.Kind) -> Array[ItemDef]:
 	return list
 
 
+## Trade goods and consumables that can be bought and sold on the market.
+func tradable_items() -> Array[ItemDef]:
+	ensure_loaded()
+	var list: Array[ItemDef] = []
+	for entry: ItemDef in _items.values():
+		if entry.kind == ItemDef.Kind.TRADE_GOOD or entry.kind == ItemDef.Kind.CONSUMABLE:
+			list.append(entry)
+	list.sort_custom(func(a: ItemDef, b: ItemDef) -> bool: return a.base_price < b.base_price)
+	return list
+
+
 ## The resident dealer who always trades in a district.
 func dealer_in(district_id: StringName) -> DealerDef:
 	ensure_loaded()
@@ -285,6 +296,7 @@ func _load_items() -> Dictionary:
 		item.description = d.get("description", "")
 		item.capacity_bonus = int(d.get("capacity_bonus", 0))
 		item.fare_discount = float(d.get("fare_discount", 0.0))
+		item.effect = StringName(d.get("effect", ""))
 		loaded[item.id] = item
 
 	return loaded
