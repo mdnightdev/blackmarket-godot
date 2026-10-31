@@ -9,5 +9,5 @@ display_name = "Lazlo"
 district_id = &"slums"
 line = "Got a thing tonight. Need it before then. Probably."
 wants = Array[StringName]([&"arms"])
-temperament = 5
+temperament = 4
 active_phases = Array[int]([2, 3])

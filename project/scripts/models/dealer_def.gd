@@ -10,8 +10,6 @@ extends SpeakerDef
 @export_range(1, 3) var tier: int = 1
 ## Category to price multiplier. Missing categories trade at 1.0.
 @export var price_bias: Dictionary = {}
-## Discount fraction the dealer accepts on an average mood.
-@export_range(0.0, 0.3, 0.01) var haggle_tolerance: float = 0.1
 ## Market districts a travelling dealer picks from, one per day. Empty means a resident.
 @export var route: Array[StringName] = []
 ## RunState.Phase values this dealer works. Empty means every phase.

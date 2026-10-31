@@ -51,6 +51,8 @@ static func police_label(run: RunState, line: StringName) -> String:
 
 
 static func police_chance(run: RunState, line: StringName) -> float:
+	if line == SHOW_ID and run.fake_id_active:
+		return 1.0
 	var edge := PLAY_DUMB_EDGE
 	match line:
 		NAME_DROP:
@@ -67,6 +69,7 @@ static func resolve_police(run: RunState, line: StringName, roll: float) -> Dict
 			NAME_DROP:
 				return { "free": true, "text": "The name lands. He suddenly remembers somewhere else to be." }
 			SHOW_ID:
+				run.fake_id_active = false
 				return { "free": true, "text": "He studies the ID, hands it back and waves you on." }
 		return { "free": true, "text": "He squints at you for a long moment, then waves you on." }
 	match line:

@@ -3,7 +3,7 @@ extends BottomSheet
 
 ## A TradeForm sliding up from the bottom, for screens that list items without room to open one in place.
 
-signal completed(message: String, cash_delta: int, haggled: bool)
+signal completed(message: String, cash_delta: int)
 signal dealer_said(line: String)
 
 @onready var _form: TradeForm = %TradeForm
@@ -21,6 +21,6 @@ func show_trade(mode: TradeForm.Mode, item: ItemDef, dealer: DealerDef) -> void:
 	open_sheet()
 
 
-func _on_completed(message: String, cash_delta: int, haggled: bool) -> void:
-	completed.emit(message, cash_delta, haggled)
+func _on_completed(message: String, cash_delta: int) -> void:
+	completed.emit(message, cash_delta)
 	close()

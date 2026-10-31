@@ -50,7 +50,7 @@ defenders = 5000
 [resource]
 script = ExtResource("1_def")
 id = &"slums"
-display_name = "The Slums"
+display_name = "Kowloon Walled"
 tagline = "Narrow alleys, loose rules"
 description = "Stacked blocks and steaming grates. Police rarely come this far in, which is exactly why Baby runs her crew from here."
 background = ExtResource("2_background")

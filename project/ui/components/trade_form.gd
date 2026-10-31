@@ -4,8 +4,8 @@ extends VBoxContainer
 ## Buying, selling and haggling over one item. The host decides where it lives: the bottom TradeSheet, or open in
 ## place under the item on the Market.
 
-## cash_delta is positive when the player was paid. haggled is true when the price came from haggling.
-signal completed(message: String, cash_delta: int, haggled: bool)
+## cash_delta is positive when the player was paid.
+signal completed(message: String, cash_delta: int)
 ## The dealer's spoken reaction during haggling.
 signal dealer_said(line: String)
 signal close_requested
@@ -25,7 +25,6 @@ var _dealer: DealerDef
 var _asking := 0
 var _unit_price := 0
 var _quantity := 1
-var _haggled := false
 
 @onready var _header: Control = %Header
 @onready var _icon: TextureRect = %Icon
@@ -46,13 +45,6 @@ var _haggled := false
 @onready var _minus_button: Button = %MinusButton
 @onready var _plus_button: Button = %PlusButton
 @onready var _max_button: Button = %MaxButton
-@onready var _haggle_box: Control = %HaggleBox
-@onready var _mood_label: Label = %MoodLabel
-@onready var _offer_slider: HSlider = %OfferSlider
-@onready var _offer_label: Label = %OfferLabel
-@onready var _offer_button: Button = %OfferButton
-@onready var _result_label: Label = %ResultLabel
-@onready var _haggle_button: Button = %HaggleButton
 @onready var _confirm_button: Button = %ConfirmButton
 
 
@@ -67,9 +59,6 @@ func _ready() -> void:
 	_minus_button.pressed.connect(_on_minus_pressed)
 	_plus_button.pressed.connect(_on_plus_pressed)
 	_max_button.pressed.connect(_on_max_pressed)
-	_offer_slider.value_changed.connect(_on_offer_changed)
-	_haggle_button.pressed.connect(_open_haggle)
-	_offer_button.pressed.connect(_make_offer)
 	_confirm_button.pressed.connect(_confirm)
 
 
@@ -85,7 +74,6 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 		Mode.GEAR:
 			_asking = item.base_price
 	_unit_price = _asking
-	_haggled = false
 
 	_icon.texture = item.icon
 	_name_label.text = item.display_name
@@ -93,13 +81,15 @@ func show_trade(mode: Mode, item: ItemDef, dealer: DealerDef) -> void:
 	_caption_label.text = Gear.describe(item) if item.is_equipment() else "%s, %s" % [item.category_name(), item.risk_label().to_lower()]
 	_price_caption.text = "DEALER PAYS" if mode == Mode.SELL else "PRICE"
 	_quantity_box.visible = mode != Mode.GEAR
-	_haggle_box.hide()
-	_result_label.hide()
-	_haggle_button.visible = mode != Mode.GEAR
-	_haggle_button.disabled = false
 
 	var held := Inventory.count(GameState.run, item.id)
-	_held_value.text = ("Owned" if Gear.owns(GameState.run, item.id) else "No") if item.is_equipment() else str(held)
+	var reserved := Inventory.reserved_for_orders(GameState.run, item.id)
+	if item.is_equipment():
+		_held_value.text = "Owned" if Gear.owns(GameState.run, item.id) else "No"
+	elif reserved > 0:
+		_held_value.text = "%d (%d reserved)" % [held, reserved]
+	else:
+		_held_value.text = str(held)
 	var paid := int(GameState.run.cost_basis.get(item.id, 0))
 	_paid_box.visible = mode == Mode.SELL and paid > 0
 	_paid_value.text = Format.money(paid)
@@ -141,7 +131,7 @@ func _max_quantity() -> int:
 		Mode.BUY:
 			return Trade.max_buyable(GameState.run, _item, _unit_price)
 		Mode.SELL:
-			return Inventory.count(GameState.run, _item.id)
+			return Trade.max_sellable(GameState.run, _item)
 	return 1
 
 
@@ -154,8 +144,18 @@ func _refresh_limits() -> void:
 
 
 func _set_quantity(value: int) -> void:
-	var limit := maxi(1, _max_quantity())
-	_quantity = clampi(value, 1, limit)
+	var limit := _max_quantity()
+	if limit <= 0 and _mode == Mode.SELL:
+		_quantity = 0
+		_quantity_slider.set_value_no_signal(1)
+		_quantity_label.text = "0"
+		_minus_button.disabled = true
+		_plus_button.disabled = true
+		_max_button.disabled = true
+		_refresh_price_and_action()
+		return
+	var max_val := maxi(1, limit)
+	_quantity = clampi(value, 1, max_val)
 	_quantity_slider.set_value_no_signal(_quantity)
 	_quantity_label.text = str(_quantity)
 	_minus_button.disabled = _quantity <= 1
@@ -173,9 +173,16 @@ func _refresh_price_and_action() -> void:
 			_confirm_button.disabled = check != Trade.Result.OK
 			_confirm_button.text = _blocked_text(check, "Buy %d for %s" % [_quantity, Format.money(total)])
 		Mode.SELL:
-			var check := Trade.check_sell(GameState.run, _item, _quantity)
-			_confirm_button.disabled = check != Trade.Result.OK
-			_confirm_button.text = _blocked_text(check, "Sell %d for %s" % [_quantity, Format.money(total)])
+			var sellable := Trade.max_sellable(GameState.run, _item)
+			if sellable <= 0:
+				_confirm_button.disabled = true
+				_confirm_button.text = "Reserved for order"
+			else:
+				var check := Trade.check_sell(GameState.run, _item, _quantity)
+				if _quantity > sellable:
+					check = Trade.Result.NOT_ENOUGH_UNITS
+				_confirm_button.disabled = check != Trade.Result.OK
+				_confirm_button.text = _blocked_text(check, "Sell %d for %s" % [_quantity, Format.money(total)])
 		Mode.GEAR:
 			var check := Trade.check_gear(GameState.run, _item)
 			_confirm_button.disabled = check != Trade.Result.OK
@@ -199,68 +206,6 @@ func _blocked_text(result: Trade.Result, ready_text: String) -> String:
 	return ready_text
 
 
-func _open_haggle() -> void:
-	var buying := _mode == Mode.BUY
-	var bounds := Haggle.offer_range(_asking, buying)
-	_offer_slider.min_value = bounds.x
-	_offer_slider.max_value = bounds.y
-	_offer_slider.step = 1
-	_offer_slider.set_value_no_signal(bounds.x + (bounds.y - bounds.x) / 2.0)
-	var mood := Haggle.mood_label(Haggle.mood(GameState.run, _dealer)).to_lower()
-	_mood_label.text = "%s looks %s." % [_dealer.display_name, mood]
-	_refresh_offer_label()
-	_haggle_button.disabled = true
-	_haggle_box.show()
-
-
-func _refresh_offer_label() -> void:
-	var offer := int(_offer_slider.value)
-	var difference := absf(float(offer - _asking)) / _asking * 100.0
-	var direction := "under" if _mode == Mode.BUY else "over"
-	_offer_label.text = "Offer %s each, %d%% %s asking" % [Format.money(offer), roundi(difference), direction]
-
-
-func _make_offer() -> void:
-	var buying := _mode == Mode.BUY
-	var offer := int(_offer_slider.value)
-	var tolerance := Haggle.tolerance(GameState.run, _dealer, _item)
-	var response := Haggle.respond(_asking, offer, buying, tolerance)
-	_haggle_box.hide()
-	_result_label.show()
-	var outcome: Haggle.Outcome = response[0]
-	var price: int = response[1]
-	match outcome:
-		Haggle.Outcome.ACCEPTED:
-			_unit_price = price
-			_haggled = true
-			AudioService.play_sfx(Sfx.DEAL_ACCEPTED)
-			_show_result("%s takes it. %s each." % [_dealer.display_name, Format.money(_unit_price)], Palette.RISK_LOW)
-			dealer_said.emit("Fine. %s each, and we're square." % Format.money(_unit_price))
-		Haggle.Outcome.COUNTERED:
-			_unit_price = price
-			_haggled = true
-			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
-			_show_result("%s counters at %s each." % [_dealer.display_name, Format.money(_unit_price)], Palette.TEXT_CREAM)
-			dealer_said.emit("Not a chance. %s each, final offer." % Format.money(_unit_price))
-		Haggle.Outcome.WALKED:
-			_show_result("%s is done talking. Come back next phase." % _dealer.display_name, Palette.RISK_HIGH)
-			dealer_said.emit("You're wasting my time. We're done here.")
-			_confirm_button.disabled = true
-			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
-			var tree := get_tree()
-			GameState.dealer_walked_out(_dealer)
-			await tree.create_timer(WALK_AWAY_CLOSE_SECONDS).timeout
-			AudioService.play_sfx(Sfx.WALK_OUT)
-			close_requested.emit()
-			return
-	_refresh_limits()
-
-
-func _show_result(text: String, color: Color) -> void:
-	_result_label.text = text
-	_result_label.add_theme_color_override("font_color", color)
-
-
 func _confirm() -> void:
 	var total := _unit_price * _quantity
 	var result: Trade.Result
@@ -279,7 +224,7 @@ func _confirm() -> void:
 			message = "%s bought" % _item.display_name
 			cash_delta = -_unit_price
 	if result == Trade.Result.OK:
-		completed.emit(message, cash_delta, _haggled)
+		completed.emit(message, cash_delta)
 	else:
 		_refresh_limits()
 
@@ -302,7 +247,3 @@ func _on_plus_pressed() -> void:
 
 func _on_max_pressed() -> void:
 	_set_quantity(_max_quantity())
-
-
-func _on_offer_changed(_value: float) -> void:
-	_refresh_offer_label()

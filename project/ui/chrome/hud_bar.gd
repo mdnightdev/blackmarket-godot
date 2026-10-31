@@ -55,21 +55,22 @@ func refresh() -> void:
 	if run == null:
 		return
 	_day_text = "%d %s" % [run.day, PHASE_LETTERS[run.phase]]
-	if run.clean > 0 or run.career:
+	if run.clean > 0:
 		_clean_box.show()
 		_clean_divider.show()
 		_clean_value.text = Format.money_short(run.clean)
 	else:
 		_clean_box.hide()
 		_clean_divider.hide()
-		if run.debt > 0:
-			_debt_box.show()
-			_debt_divider.show()
-			_debt_value.text = Format.money_short(run.debt)
-			_debt_value.add_theme_color_override("font_color", Palette.RISK_HIGH)
-		else:
-			_debt_box.hide()
-			_debt_divider.hide()
+
+	if run.debt > 0:
+		_debt_box.show()
+		_debt_divider.show()
+		_debt_value.text = Format.money_short(run.debt)
+		_debt_value.add_theme_color_override("font_color", Palette.RISK_HIGH)
+	else:
+		_debt_box.hide()
+		_debt_divider.hide()
 
 	var heat_color := _heat_color(run.heat, run.heat_timer > 0.0)
 	_heat_bar.value = run.heat

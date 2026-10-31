@@ -9,6 +9,6 @@ display_name = "Vera Novak"
 district_id = &"west_end"
 line = "I'm with a consultancy. We pay cash, no receipts. Totally normal."
 wants = Array[StringName]([&"computing", &"biotech"])
-temperament = 6
+temperament = 5
 active_phases = Array[int]([1, 2, 3])
 min_rank = 4

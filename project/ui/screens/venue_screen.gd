@@ -23,6 +23,7 @@ const LEAVE: StringName = &"leave"
 
 func setup(background: Texture2D, venue_name: String, speaker: SpeakerDef, greeting: String) -> void:
 	SafeArea.apply_top_margin(_margin, 64)
+	SafeArea.apply_bottom_margin(_margin, SafeArea.NAV_HEIGHT + 12)
 	_background.texture = background
 	_venue_label.text = venue_name.to_upper()
 	_host_label.text = speaker.display_name

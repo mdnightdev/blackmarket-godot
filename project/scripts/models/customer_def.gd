@@ -2,7 +2,7 @@ class_name CustomerDef
 extends Resource
 
 ## How the customer prices and handles an order. See CustomerOffers.PROFILES for the numbers.
-enum Temperament { LOWBALLER, FAIR, GENEROUS, BULK, HAGGLER, FLAKY, STING }
+enum Temperament { LOWBALLER, FAIR, GENEROUS, BULK, FLAKY, STING }
 
 @export var id: StringName
 @export var display_name: String

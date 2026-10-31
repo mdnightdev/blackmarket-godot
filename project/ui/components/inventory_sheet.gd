@@ -2,9 +2,8 @@ class_name InventorySheet
 extends BottomSheet
 
 const BAG_TILE := preload("res://ui/components/bag_tile.tscn")
-const AtlasGenerator := preload("res://scripts/core/atlas_generator.gd")
 
-enum Filter { ALL, GOODS, GEAR, SPRITE }
+enum Filter { ALL, GOODS, GEAR }
 
 @onready var _margin: MarginContainer = %Margin
 @onready var _capacity_label: Label = %CapacityLabel
@@ -12,7 +11,6 @@ enum Filter { ALL, GOODS, GEAR, SPRITE }
 @onready var _all_tab: Button = %AllTab
 @onready var _goods_tab: Button = %GoodsTab
 @onready var _gear_tab: Button = %GearTab
-@onready var _sprite_tab: Button = %SpriteTab
 @onready var _grid: GridContainer = %Grid
 @onready var _empty_label: Label = %EmptyLabel
 @onready var _detail: Control = %Detail
@@ -35,12 +33,11 @@ func _ready() -> void:
 	GameState.run_changed.connect(_on_run_changed)
 	_sell_button.pressed.connect(_on_sell_pressed)
 	var tabs := ButtonGroup.new()
-	for tab_button: Button in [_all_tab, _goods_tab, _gear_tab, _sprite_tab]:
+	for tab_button: Button in [_all_tab, _goods_tab, _gear_tab]:
 		tab_button.button_group = tabs
 	_all_tab.pressed.connect(_select_filter.bind(Filter.ALL))
 	_goods_tab.pressed.connect(_select_filter.bind(Filter.GOODS))
 	_gear_tab.pressed.connect(_select_filter.bind(Filter.GEAR))
-	_sprite_tab.pressed.connect(_select_filter.bind(Filter.SPRITE))
 
 
 func close_modal() -> bool:
@@ -82,22 +79,15 @@ func _rebuild() -> void:
 		_capacity_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
 	else:
 		_capacity_label.remove_theme_color_override("font_color")
-	if _filter == Filter.SPRITE:
-		_add_sprite_samples()
-	else:
-		if _filter != Filter.GEAR:
-			_add_goods(run)
-		if _filter != Filter.GOODS:
-			for item in Gear.owned_items(run):
-				_add_tile(item.icon, "", item.display_name, Gear.describe(item), item.description)
+
+	if _filter != Filter.GEAR:
+		_add_goods(run)
+	if _filter != Filter.GOODS:
+		for item in Gear.owned_items(run):
+			_add_tile(item.icon, "", item.display_name, Gear.describe(item), item.description)
 
 	_empty_label.visible = _grid.get_child_count() == 0
 	_select_tile(_find_tile(_selected_title))
-
-
-func _add_sprite_samples() -> void:
-	for entry in AtlasGenerator.get_sample_entries():
-		_add_tile(entry["icon"], entry["count"], entry["title"], entry["tier"] + " • " + entry["price"], entry["desc"])
 
 
 func _add_goods(run: RunState) -> void:
@@ -106,7 +96,14 @@ func _add_goods(run: RunState) -> void:
 	for item_id: StringName in run.inventory:
 		var item := Content.item(item_id)
 		var paid := Format.money(int(run.cost_basis.get(item_id, 0)))
-		_add_tile(item.icon, "x%d" % run.inventory[item_id], item.display_name, "Paid %s each" % paid, item.description)
+		var held: int = run.inventory[item_id]
+		var reserved := Inventory.reserved_for_orders(run, item_id)
+		var count_str := "x%d" % held
+		var meta_str := "Paid %s each" % paid
+		if reserved > 0:
+			count_str = "x%d (%d reserved)" % [held, reserved]
+			meta_str = "Paid %s • %d held for orders" % [paid, reserved]
+		_add_tile(item.icon, count_str, item.display_name, meta_str, item.description)
 		_goods_by_title[item.display_name] = item
 
 
@@ -144,15 +141,36 @@ func _show_sell_button(item: ItemDef) -> void:
 	if item == null:
 		return
 	var run := GameState.run
+	if item.is_consumable():
+		_sell_button.disabled = not Consumables.can_use(run, item.id)
+		_sell_button.text = "USE NOW (%s)" % Consumables.item_name(item.id)
+		return
+	var sellable := Inventory.sellable_count(run, item.id)
+	if sellable == 0 and Inventory.reserved_for_orders(run, item.id) > 0:
+		_sell_button.disabled = true
+		_sell_button.text = "Reserved for active orders"
+		return
 	_buyer = Market.best_local_buyer(run, item)
 	_sell_button.disabled = _buyer == null
 	if _buyer == null:
 		_sell_button.text = "Nobody here is buying"
+	elif Inventory.reserved_for_orders(run, item.id) > 0:
+		_sell_button.text = "Sell %d surplus to %s, %s each" % [sellable, _buyer.display_name, Format.money(Market.sell_price(run, _buyer, item))]
 	else:
 		_sell_button.text = "Sell to %s, %s each" % [_buyer.display_name, Format.money(Market.sell_price(run, _buyer, item))]
 
 
 func _on_sell_pressed() -> void:
 	var item: ItemDef = _goods_by_title.get(_selected_title)
-	if item != null and _buyer != null:
+	if item == null:
+		return
+	if item.is_consumable():
+		var run := GameState.run
+		var outcome := Consumables.use(run, item.id)
+		if outcome.get("ok", false):
+			AudioService.play_sfx(Sfx.FAVOUR_DONE)
+			GameOverlay.notify(str(outcome.get("message", "Item used.")))
+			_rebuild()
+		return
+	if _buyer != null:
 		_trade_sheet.show_trade(TradeForm.Mode.SELL, item, _buyer)

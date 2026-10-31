@@ -148,6 +148,11 @@ static func execute_move(run: RunState, gang: GangDef, picked: Dictionary, rng: 
 					"hint": "+6 heat while crossing %s turf." % gang.display_name,
 				}
 		Move.RECRUIT_AND_ARM:
+			if int(run.rival_ransomware.get(gang.id, 0)) > run.day:
+				return {
+					"line": "%s recruit pool and communications remain locked by ransomware." % gang.crew_name,
+					"hint": "No enemy reinforcements recruited today.",
+				}
 			var held := Rivals.corners(run, gang)
 			if not held.is_empty():
 				var pool := roundi((100.0 + 120.0 * held.size()) * Odds.bell(rng, 0.75, 1.0, 1.35))

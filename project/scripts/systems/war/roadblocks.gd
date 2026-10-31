@@ -29,6 +29,8 @@ static func last_blocked_stamp(run: RunState, district_id: StringName, stamp: in
 
 
 static func push_risk(run: RunState) -> float:
+	if run.clone_plates_active:
+		return 0.0
 	return PUSH_RISK * Edges.push_risk_factor(run)
 
 

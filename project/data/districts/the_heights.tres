@@ -50,7 +50,7 @@ defenders = 30000
 [resource]
 script = ExtResource("1_def")
 id = &"the_heights"
-display_name = "The Heights"
+display_name = "Kabukicho"
 tagline = "Gates, guards and old fortunes"
 tier = 3
 description = "Mansions behind iron gates, looking down on the city. Buyers here spend six figures without blinking and never forget a face."
@@ -59,7 +59,7 @@ ambient_effect = ExtResource("3_effect")
 map_position = Vector2(0.14, 0.18)
 travel_cost = 800
 heat_multiplier = 1.6
-venues = Array[StringName]([&"market", &"vip_casino"])
+venues = Array[StringName]([&"vip_casino"])
 roads = Array[StringName]([&"west_end", &"north_port", &"golden_mile"])
 min_rank = 8
 corner_map = ExtResource("5_corner_map")

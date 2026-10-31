@@ -14,6 +14,12 @@ const GRADE_NAMES := {
 	Grade.RIFLE: "Rifles",
 	Grade.MILITARY: "Military kits",
 }
+const GRADE_ITEMS := {
+	Grade.BLADE: &"machete",
+	Grade.HANDGUN: &"pistol_45",
+	Grade.RIFLE: &"rifle_ar15",
+	Grade.MILITARY: &"anti_materiel_rifle",
+}
 ## What one weapon adds to the man carrying it, before his own skill.
 const POWER := {
 	Grade.BLADE: 1.0,
@@ -75,6 +81,10 @@ static func on_sale(run: RunState) -> Array[Grade]:
 		if is_on_sale(run, grade as Grade):
 			grades.append(grade as Grade)
 	return grades
+
+
+static func item_id(grade: Grade) -> StringName:
+	return GRADE_ITEMS.get(grade, &"machete")
 
 
 static func price(grade: Grade, amount: int) -> int:

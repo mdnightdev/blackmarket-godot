@@ -50,7 +50,7 @@ defenders = 10000
 [resource]
 script = ExtResource("1_def")
 id = &"north_port"
-display_name = "North Port"
+display_name = "Kwai Chung"
 tagline = "Old money on the water"
 description = "Private yachts and quiet lounges. The buyers here pay the most and forgive the least."
 background = ExtResource("2_background")
@@ -59,7 +59,7 @@ map_position = Vector2(0.44, 0.2)
 travel_cost = 200
 heat_multiplier = 1.6
 roads = Array[StringName]([&"warehouse_row", &"old_market", &"the_heights", &"golden_mile"])
-venues = Array[StringName]([&"market", &"vip_casino"])
+venues = Array[StringName]([&"vip_casino"])
 min_rank = 5
 corner_map = ExtResource("5_corner_map")
 corners = Array[ExtResource("4_corner")]([SubResource("Corner_marina_gate"), SubResource("Corner_harbour_lounge"), SubResource("Corner_fuel_dock"), SubResource("Corner_boathouse")])

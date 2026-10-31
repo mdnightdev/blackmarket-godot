@@ -1,11 +1,10 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/district/district_screen.gd" id="1_screen"]
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="2_vignette"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
 [ext_resource type="PackedScene" path="res://ui/components/venue_sheet.tscn" id="5_venue_sheet"]
 [ext_resource type="PackedScene" path="res://ui/components/day_card.tscn" id="6_day_card"]
-[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="7_nav_bar"]
 [ext_resource type="Script" path="res://ui/components/news_line.gd" id="8_news_line"]
 [ext_resource type="PackedScene" path="res://ui/components/turf_bar.tscn" id="9_turf_bar"]
 [ext_resource type="PackedScene" path="res://ui/components/fab_button.tscn" id="10_fab"]
@@ -30,7 +29,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0471, 0.0549, 0.0706, 1)
+color = Color(0.0392, 0.0392, 0.0431, 1)
 
 [node name="Background" type="TextureRect" parent="."]
 unique_name_in_owner = true
@@ -158,9 +157,6 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
 script = ExtResource("4_button")
-
-[node name="NavBar" parent="." instance=ExtResource("7_nav_bar")]
-layout_mode = 1
 
 [node name="VenueSheet" parent="." instance=ExtResource("5_venue_sheet")]
 unique_name_in_owner = true

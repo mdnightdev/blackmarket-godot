@@ -59,6 +59,7 @@ func _ready() -> void:
 		return
 
 	SafeArea.apply_top_margin(_margin, 64)
+	SafeArea.apply_bottom_margin(_margin, SafeArea.NAV_HEIGHT + 12)
 	_background.texture = district.background
 	_dealer_label.text = _dealer.display_name
 	_district_pill.text = district.display_name
@@ -135,9 +136,9 @@ func _dealer_says(line: String) -> void:
 	_speech.type_text("\"%s\"" % line)
 
 
-func _on_trade_completed(message: String, cash_delta: int, haggled: bool) -> void:
+func _on_trade_completed(message: String, cash_delta: int) -> void:
 	_close_trade()
-	_deal_flash.play(cash_delta, haggled or absi(cash_delta) >= HANDSHAKE_MIN_TOTAL)
+	_deal_flash.play(cash_delta, absi(cash_delta) >= HANDSHAKE_MIN_TOTAL)
 	_show_toast(message)
 	_dealer_says(TierVoice.pick(TierVoice.CLOSING, _dealer.tier))
 
@@ -169,9 +170,7 @@ func _on_back_pressed() -> void:
 
 func _refresh() -> void:
 	var run := GameState.run
-	var mood := Haggle.mood(run, _dealer)
-	_mood_label.text = "Mood: %s" % Haggle.mood_label(mood)
-	_mood_label.add_theme_color_override("font_color", _mood_color(mood))
+	_mood_label.visible = false
 	_news_line.show_for(run.district_id)
 	_bag_button.text = Inventory.bag_text(run)
 	_bag_bar.max_value = Inventory.capacity(run)
@@ -235,7 +234,7 @@ func _fill_order_list() -> void:
 	_order_list.visible = _order_list.get_child_count() > 0
 
 
-func _on_order_selected(order: Dictionary) -> void:
+func _on_order_selected(_item: ItemDef, order: Dictionary) -> void:
 	_deliver(order)
 
 
@@ -280,11 +279,21 @@ func _sell_cards() -> Array[Dictionary]:
 		if not _dealer.deals_in(item):
 			cards.append(_card(item, "", "You have %d" % held, "WON'T BUY"))
 			continue
+		var reserved := Inventory.reserved_for_orders(run, item.id)
+		var sellable := Inventory.sellable_count(run, item.id)
 		var offer := Market.sell_price(run, _dealer, item)
 		var paid := int(run.cost_basis.get(item.id, 0))
 		var margin := float(offer - paid) / paid if paid > 0 else 0.0
 		var detail := "%+d%%" % roundi(margin * 100.0)
-		cards.append(_card(item, Format.money(offer), "You have %d" % held, detail, Palette.RISK_LOW if margin >= 0.0 else Palette.RISK_HIGH))
+
+		var caption := "You have %d" % held
+		if reserved > 0:
+			caption = "%d held (%d reserved)" % [held, reserved]
+
+		if sellable == 0:
+			cards.append(_card(item, Format.money(offer), caption, "RESERVED", Palette.TEXT_MUTED))
+		else:
+			cards.append(_card(item, Format.money(offer), caption, detail, Palette.RISK_LOW if margin >= 0.0 else Palette.RISK_HIGH))
 	_show_notice("" if not cards.is_empty() else "Nothing in your bag to sell.")
 	return cards
 
@@ -334,14 +343,6 @@ func _risk_color(item: ItemDef) -> Color:
 	if item.risk < RISK_MEDIUM:
 		return Palette.RISK_LOW
 	if item.risk < RISK_HIGH:
-		return Palette.TEXT_MUTED
-	return Palette.RISK_HIGH
-
-
-func _mood_color(mood: float) -> Color:
-	if mood >= Haggle.RELAXED_MOOD:
-		return Palette.RISK_LOW
-	if mood >= Haggle.WARY_MOOD:
 		return Palette.TEXT_MUTED
 	return Palette.RISK_HIGH
 

@@ -50,7 +50,7 @@ defenders = 5000
 [resource]
 script = ExtResource("1_def")
 id = &"warehouse_row"
-display_name = "Warehouse Row"
+display_name = "Geylang"
 tagline = "Gear, parts, no questions"
 description = "Brick warehouses and roll-up doors. If you need a van, a weapon or a tool that is not on any receipt, ask here."
 background = ExtResource("2_background")

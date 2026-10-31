@@ -5,14 +5,14 @@
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tab"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
-bg_color = Color(0.7216, 0.3647, 0.4078, 1)
+bg_color = Color(0.8784, 0.2431, 0.2745, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [node name="NavTab" type="Button"]
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 76)
 size_flags_horizontal = 3
 theme_override_styles/normal = SubResource("StyleBoxEmpty_tab")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_tab")
@@ -36,8 +36,7 @@ alignment = 1
 
 [node name="Icon" type="TextureRect" parent="Content"]
 unique_name_in_owner = true
-modulate = Color(0.8706, 0.8392, 0.8078, 1)
-custom_minimum_size = Vector2(28, 28)
+custom_minimum_size = Vector2(42, 42)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2

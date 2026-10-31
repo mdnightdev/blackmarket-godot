@@ -87,6 +87,7 @@ static func take(run: RunState, corner_id: StringName) -> void:
 	if find(corner_id) != null and not holds(run, corner_id):
 		run.corners_held.append(String(corner_id))
 		run.player_garrisons.erase(String(corner_id))
+		DailyTasks.record_corner_taken(run)
 
 
 static func take_all(run: RunState, district_id: StringName) -> void:
@@ -123,6 +124,8 @@ static func post_garrison(run: RunState, corner_id: StringName, men: int) -> boo
 	var clamped := clampi(men, 0, mini(available, CORNER_GARRISON_CAP))
 	if clamped > 0:
 		run.player_garrisons[String(corner_id)] = clamped
+		if clamped > current:
+			DailyTasks.record_garrison(run)
 	else:
 		run.player_garrisons.erase(String(corner_id))
 	return true

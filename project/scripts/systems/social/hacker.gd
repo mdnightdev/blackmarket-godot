@@ -36,3 +36,11 @@ static func hack(run: RunState, district_id: StringName) -> Array[DealerDef]:
 	for dealer in dealers:
 		PriceIntel.record(run, dealer, goods)
 	return dealers
+
+
+static func can_use_zero_day(run: RunState) -> bool:
+	return Consumables.can_use(run, Consumables.ZERO_DAY_DRIVE)
+
+
+static func use_zero_day(run: RunState) -> Dictionary:
+	return Consumables.use(run, Consumables.ZERO_DAY_DRIVE)

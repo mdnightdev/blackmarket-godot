@@ -10,12 +10,12 @@ content_margin_right = 24.0
 content_margin_bottom = 16.0
 bg_color = Color(0, 0, 0, 0)
 border_width_bottom = 1
-border_color = Color(0.1333, 0.149, 0.1804, 1)
+border_color = Color(0.1765, 0.1765, 0.2039, 1)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tap"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tap_pressed"]
-bg_color = Color(0.8706, 0.8392, 0.8078, 0.05)
+bg_color = Color(0.1647, 0.1647, 0.1882, 0.65)
 
 [node name="JobRow" type="PanelContainer"]
 mouse_filter = 1

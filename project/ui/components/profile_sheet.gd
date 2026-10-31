@@ -24,6 +24,8 @@ func _ready() -> void:
 	_heat_bar.add_theme_stylebox_override("fill", _heat_fill)
 	_heat_bar.max_value = Heat.MAX
 	GameState.run_changed.connect(_on_run_changed)
+	%BagLink.icon = ItemsAtlas.get_icon(&"nav_bag")
+	%JobsLink.icon = ItemsAtlas.get_icon(&"nav_jobs")
 	%BagLink.pressed.connect(GameOverlay.open_bag)
 	%JobsLink.pressed.connect(GameOverlay.open_jobs)
 	%SettingsLink.pressed.connect(SceneRouter.go_to.bind(SceneRouter.SETTINGS_SCREEN))
@@ -98,4 +100,4 @@ func _add_stat(caption: String, value: String) -> void:
 func _quit_to_title() -> void:
 	GameState.save_run()
 	close()
-	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+	get_tree().quit()

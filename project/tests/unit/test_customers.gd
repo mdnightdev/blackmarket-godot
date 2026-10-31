@@ -88,7 +88,7 @@ func test_pool_loads_and_every_customer_is_valid() -> void:
 	var customers := Content.customers()
 	assert_between(customers.size(), 36, 48)
 	var categories: Array[StringName] = []
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Content.tradable_items():
 		categories.append(item.category)
 	var districts: Array[StringName] = []
 	var temperaments: Array[int] = []
@@ -135,10 +135,7 @@ func test_generated_offers_stay_in_bounds() -> void:
 				assert_between(int(offer.lead), CustomerOffers.MIN_RUSH_PHASES, CustomerOffers.MAX_RUSH_PHASES)
 			else:
 				assert_between(int(offer.lead), CustomerOffers.MIN_LEAD_PHASES, CustomerOffers.MAX_LEAD_PHASES)
-			if customer.temperament == CustomerDef.Temperament.HAGGLER:
-				assert_between(int(offer.counter_price), 1, int(offer.unit_price) - 1)
-			else:
-				assert_eq(int(offer.counter_price), 0)
+			assert_eq(int(offer.counter_price), 0)
 	var customer := Content.customers()[0]
 	assert_eq(CustomerOffers.generate(_run, customer), CustomerOffers.generate(_run, customer), "same seed and phase give the same offer")
 
@@ -434,7 +431,6 @@ func test_hand_over_pays_and_removes_the_goods() -> void:
 	var cred := _run.street_cred
 	var result := Customers.hand_over(_run, order, 0.5)
 	assert_eq(int(result.paid), Customers.total(order))
-	assert_false(bool(result.haggled))
 	assert_false(bool(result.sting))
 	assert_eq(_run.cash, cash + Customers.total(order))
 	assert_eq(Inventory.count(_run, item), 0)
@@ -449,60 +445,6 @@ func test_late_orders_cannot_be_handed_over() -> void:
 	_stand_ready(order)
 	_go_to_stamp(int(order.due_stamp) + 1)
 	assert_false(Customers.can_hand_over(_run, order))
-
-
-func test_haggler_counters_and_the_lower_price_can_be_taken() -> void:
-	var order := _take(CustomerDef.Temperament.HAGGLER)
-	_stand_ready(order)
-	var cash := _run.cash
-	var result := Customers.hand_over(_run, order, 0.0)
-	assert_true(bool(result.haggled))
-	assert_eq(int(result.paid), 0)
-	assert_eq(_run.cash, cash)
-	assert_true(bool(order.countered))
-	assert_eq(_run.customer_orders.size(), 1, "the order waits for an answer")
-	assert_true(bool(Customers.hand_over(_run, order, 0.999).haggled), "asking again gets the same counter")
-	var taken := Customers.answer_haggle(_run, order, true, 0.999)
-	assert_eq(int(taken.paid), int(order.counter_price) * int(order.quantity))
-	assert_eq(_run.cash, cash + int(taken.paid))
-	assert_true(_run.customer_orders.is_empty())
-
-
-func test_holding_firm_wins_the_full_price_or_loses_the_deal() -> void:
-	var order := _take(CustomerDef.Temperament.HAGGLER)
-	_stand_ready(order)
-	Customers.hand_over(_run, order, 0.0)
-	var cash := _run.cash
-	var won := Customers.answer_haggle(_run, order, false, 0.0)
-	assert_eq(int(won.paid), Customers.total(order))
-	assert_eq(_run.cash, cash + Customers.total(order))
-	var second := _take(CustomerDef.Temperament.HAGGLER)
-	_stand_ready(second)
-	Customers.hand_over(_run, second, 0.0)
-	cash = _run.cash
-	var cred := _run.street_cred
-	var lost := Customers.answer_haggle(_run, second, false, 0.999)
-	assert_true(bool(lost.walked))
-	assert_eq(int(lost.paid), 0)
-	assert_eq(_run.cash, cash)
-	assert_eq(_run.street_cred, cred, "a walkout costs no cred")
-	assert_eq(Inventory.count(_run, StringName(str(second.item))), int(second.quantity), "the goods stay in the bag")
-	assert_true(_run.customer_orders.is_empty())
-
-
-func test_holding_firm_gets_easier_with_cred() -> void:
-	var start := Customers.hold_firm_chance(_run)
-	_run.street_cred = StreetCred.MAX
-	assert_gt(Customers.hold_firm_chance(_run), start)
-
-
-func test_a_haggler_sometimes_pays_in_full() -> void:
-	var order := _take(CustomerDef.Temperament.HAGGLER)
-	_stand_ready(order)
-	var result := Customers.hand_over(_run, order, Customers.HAGGLE_TRY_CHANCE)
-	assert_false(bool(result.haggled))
-	assert_eq(int(result.paid), Customers.total(order))
-	assert_true(Customers.answer_haggle(_run, order, true, 0.0).is_empty(), "nothing left to answer")
 
 
 func test_flaky_customers_back_out_without_a_cred_loss() -> void:
@@ -586,20 +528,6 @@ func test_a_waiting_encounter_holds_the_handover_back() -> void:
 	assert_eq(str(_run.pending_encounter.type), Encounters.POLICE)
 
 
-func test_the_haggle_plays_out_as_a_second_card() -> void:
-	var order := _take(CustomerDef.Temperament.HAGGLER)
-	_stand_ready(order)
-	Customers.visit(_run)
-	Encounters.resolve(_run, CustomerHandover.HAND_OVER, 0.0)
-	assert_eq(str(_run.pending_encounter.stage), CustomerHandover.COUNTER_STAGE)
-	var ids := Encounters.choices(_run, _run.pending_encounter).map(func(choice: Encounters.Choice) -> StringName: return choice.id)
-	assert_eq(ids, [CustomerHandover.TAKE_COUNTER, CustomerHandover.HOLD_FIRM])
-	var cash := _run.cash
-	assert_ne(Encounters.resolve(_run, CustomerHandover.TAKE_COUNTER, 0.5), "")
-	assert_eq(_run.cash, cash + int(order.counter_price) * int(order.quantity))
-	assert_false(Encounters.has_pending(_run))
-
-
 func test_dismiss_only_clears_the_matching_card() -> void:
 	var order := _take(CustomerDef.Temperament.FAIR)
 	_stand_ready(order)
@@ -642,8 +570,7 @@ func test_sanitize_rejects_junk() -> void:
 
 
 func test_saved_orders_survive_a_reload_and_junk_is_dropped() -> void:
-	var order := _take(CustomerDef.Temperament.HAGGLER)
-	order.countered = true
+	var order := _take(CustomerDef.Temperament.FAIR)
 	var offer := _offer(CustomerDef.Temperament.BULK)
 	var data := _run.to_dict()
 	data.customer_orders.append({ "id": "junk" })

@@ -206,6 +206,13 @@ static func deliver(run: RunState) -> int:
 	return _hand_over(run, payout(run, run.crate))
 
 
+## Driver delivers the carried crate without requiring player travel.
+static func deliver_by_driver(run: RunState, pay: int) -> int:
+	if not is_carrying(run) or pay <= 0:
+		return 0
+	return _hand_over(run, pay)
+
+
 ## Hands the crate to the buyer at this stop for less pay. Returns the pay, or 0 when there is no meeting here.
 static func meet_halfway(run: RunState) -> int:
 	if not can_meet_halfway(run):

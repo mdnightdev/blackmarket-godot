@@ -9,5 +9,5 @@ display_name = "Lena Marsh"
 district_id = &"docks"
 line = "I keep a phone for every name I use. Running low on both."
 wants = Array[StringName]([&"comms", &"tech"])
-temperament = 4
+temperament = 1
 active_phases = Array[int]([1, 2])

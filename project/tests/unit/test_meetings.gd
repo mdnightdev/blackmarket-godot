@@ -85,15 +85,6 @@ func test_a_scammer_short_pays_at_the_meeting() -> void:
 	assert_true(Customers.find(_run, str(order.id)).is_empty())
 
 
-func test_hagglers_do_not_haggle_at_a_meeting() -> void:
-	var order := _customer_order(CustomerDef.Temperament.HAGGLER)
-	_set_scam(order, false)
-	Meetings.agree(order, _run.district_id)
-	var result := Customers.hand_over(_run, order, 0.0)
-	assert_false(bool(result.haggled))
-	assert_eq(int(result.paid), Customers.meeting_total(order))
-
-
 func test_a_bar_client_meets_the_player_for_less() -> void:
 	var order := _bar_order()
 	_set_scam(order, false)

@@ -3,11 +3,11 @@
 [ext_resource type="Script" path="res://ui/components/unit_card.gd" id="1_card"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.0824, 0.0902, 0.1176, 1)
+bg_color = Color(0.1216, 0.1216, 0.1373, 1)
 
 [sub_resource type="Gradient" id="Gradient_shade"]
 offsets = PackedFloat32Array(0, 0.45, 1)
-colors = PackedColorArray(0.0471, 0.0549, 0.0706, 0, 0.0471, 0.0549, 0.0706, 0.35, 0.0471, 0.0549, 0.0706, 0.95)
+colors = PackedColorArray(0.0392, 0.0392, 0.0431, 0, 0.0392, 0.0392, 0.0431, 0.35, 0.0392, 0.0392, 0.0431, 0.95)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_shade"]
 gradient = SubResource("Gradient_shade")
@@ -21,7 +21,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.1804, 0.1961, 0.2314, 1)
+border_color = Color(0.251, 0.251, 0.2824, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4

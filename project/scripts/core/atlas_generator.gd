@@ -1,7 +1,7 @@
 class_name AtlasGenerator
 extends RefCounted
 
-const TILE_SIZE := 256
+const TILE_SIZE := 128
 const COLS := 10
 const ROWS := 8
 const ATLAS_PATH := "res://assets/items/items_atlas.png"

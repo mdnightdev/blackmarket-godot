@@ -9,6 +9,6 @@ display_name = "Marek Hollis"
 district_id = &"old_market"
 line = "Bring the watches. We talk numbers when I can see them."
 wants = Array[StringName]([&"luxury"])
-temperament = 4
+temperament = 1
 active_phases = Array[int]([1, 2])
 min_rank = 2

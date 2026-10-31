@@ -213,6 +213,9 @@ func buy(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
 
 
 func sell(item: ItemDef, quantity: int, unit_price: int) -> Trade.Result:
+	var sellable := Inventory.sellable_count(run, item.id)
+	if quantity > sellable:
+		return Trade.Result.NOT_ENOUGH_UNITS
 	var sold := Trade.sell(run, item, quantity, unit_price)
 	if sold == Trade.Result.OK:
 		Tutorial.note(run, Tutorial.FIRST_SALE)
@@ -463,6 +466,17 @@ func send_muscle(errand: Dictionary) -> int:
 	return pay
 
 
+## Dispatches driver to deliver Voronin's crate. Returns the pay, 0 when it could not be done.
+func send_driver() -> int:
+	var pay := Crew.send_driver(run)
+	if pay <= 0:
+		return 0
+	var finished := DailyTasks.record_delivery(run)
+	_commit(false)
+	_report_tasks(finished)
+	return pay
+
+
 func bail_crew(role_id: StringName) -> bool:
 	if not Crew.bail_member(run, role_id):
 		return false
@@ -584,17 +598,7 @@ func queue_handover(id: String) -> bool:
 
 
 ## Returns the Customers.hand_over result, empty when the handover cannot happen now. An undercover buyer leaves a
-## police stop pending. A haggler's counter offer waits for answer_haggle.
-
-## Takes the haggler's lower price, or holds firm when accept is false. Returns the same layout as hand_over_customer_order.
-func answer_haggle(id: String, accept: bool) -> Dictionary:
-	var order := Customers.find(run, id)
-	if order.is_empty():
-		return {}
-	CustomerHandover.dismiss(run, id)
-	if Encounters.has_pending(run):
-		return {}
-	return _finish_handover(Customers.answer_haggle(run, order, accept, _rng.randf()))
+## police stop pending.
 
 
 func _finish_handover(result: Dictionary) -> Dictionary:

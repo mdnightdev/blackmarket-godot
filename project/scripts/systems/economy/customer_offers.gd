@@ -18,10 +18,6 @@ const RUSH_BONUS := 1.15
 ## Order value as a multiple of the district's job pay, before the temperament's size. The player keeps the margin.
 const ORDER_VALUE_PER_PAY := 1.75
 const MIN_QUANTITY := 2
-## Share a haggler knocks off the agreed price at the handover: the floor, the usual and the steep one.
-const HAGGLE_LOW := 0.08
-const HAGGLE_USUAL := 0.13
-const HAGGLE_HIGH := 0.2
 ## Undercover buyers only post once the police are active and the player is this hot or the district this strict.
 const STING_MIN_HEAT := 40
 const STING_HOT_DISTRICT := 1.4
@@ -32,7 +28,6 @@ const PROFILES := {
 	CustomerDef.Temperament.FAIR: { "price": [1.05, 1.11, 1.2], "size": 1.0, "rush": 0.2, "weight": 1.0 },
 	CustomerDef.Temperament.GENEROUS: { "price": [1.15, 1.23, 1.36], "size": 0.6, "rush": 0.35, "weight": 0.6 },
 	CustomerDef.Temperament.BULK: { "price": [0.97, 1.03, 1.1], "size": 2.5, "rush": 0.0, "weight": 0.8 },
-	CustomerDef.Temperament.HAGGLER: { "price": [1.12, 1.2, 1.32], "size": 1.0, "rush": 0.2, "weight": 1.0 },
 	CustomerDef.Temperament.FLAKY: { "price": [1.12, 1.2, 1.34], "size": 1.0, "rush": 0.2, "weight": 0.8 },
 	CustomerDef.Temperament.STING: { "price": [1.7, 1.9, 2.2], "size": 0.8, "rush": 0.0, "weight": 0.4 },
 }
@@ -112,8 +107,6 @@ static func generate(run: RunState, customer: CustomerDef) -> Dictionary:
 	var unit_price := maxi(1, roundi(street * factor))
 	var most := maxi(MIN_QUANTITY, floori(float(max_slots(run)) / item.slots))
 	var counter_price := 0
-	if customer.temperament == CustomerDef.Temperament.HAGGLER:
-		counter_price = maxi(1, roundi(unit_price * (1.0 - Odds.bell(rng, HAGGLE_LOW, HAGGLE_USUAL, HAGGLE_HIGH))))
 	var stamp := Calendar.stamp(run)
 	return {
 		"id": _id_for(stamp),

@@ -62,6 +62,7 @@ static func scout(run: RunState, corner_id: StringName, notice_roll: float, rang
 		"day": run.day,
 		"seen": seen,
 	}
+	DailyTasks.record_scout(run)
 	return Result.OK
 
 

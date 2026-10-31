@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="DealerDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/models/dealer_def.gd" id="1_def"]
+[ext_resource type="Texture2D" path="res://assets/portraits/amara.jpg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/portraits/amara_talk.jpg" id="3_talk"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"amara"
+display_name = "Marisol Vega"
+district_id = &"north_port"
+greeting = "Quality costs. Everything else costs more later."
+portrait = ExtResource("2_portrait")
+talk_portrait = ExtResource("3_talk")
+stock_categories = Array[StringName]([&"arms", &"meds"])
+price_bias = {
+&"meds": 0.82,
+&"arms": 0.85,
+&"luxury": 1.05,
+&"tech": 1.05,
+&"comms": 1.07,
+&"papers": 1.1
+}
+route = Array[StringName]([&"north_port", &"docks", &"old_market"])
+working_phases = Array[int]([2, 3])

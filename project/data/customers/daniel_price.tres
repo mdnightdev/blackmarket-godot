@@ -9,5 +9,5 @@ display_name = "Daniel Price"
 district_id = &"downtown"
 line = "Cash, any amount. I would just love to know where you get it."
 wants = Array[StringName]([&"tech", &"luxury"])
-temperament = 6
+temperament = 5
 active_phases = Array[int]([1, 2])

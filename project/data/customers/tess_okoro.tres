@@ -9,5 +9,5 @@ display_name = "Tess Calloway"
 district_id = &"old_market"
 line = "New name, new start. I just need the paperwork to agree."
 wants = Array[StringName]([&"papers"])
-temperament = 5
+temperament = 4
 active_phases = Array[int]([2, 3])

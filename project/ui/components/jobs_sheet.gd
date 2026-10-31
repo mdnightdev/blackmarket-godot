@@ -5,7 +5,6 @@ const JOB_ROW := preload("res://ui/components/job_row.tscn")
 const READY_HINT := "IN BAG"
 const TASK_ICON: Texture2D = preload("res://assets/icons/hud/list-checks.svg")
 const LOCK_ICON: Texture2D = preload("res://assets/icons/hud/lock.svg")
-const INVOICE_ICON: Texture2D = preload("res://assets/icons/hud/clipboard-list.svg")
 const HEADING_INDENT := 24
 const CONTINUE: StringName = &"continue"
 
@@ -248,12 +247,20 @@ func _meet_dealer(order: Dictionary) -> void:
 
 
 func _add_owed(run: RunState) -> void:
-	if run.invoices.is_empty():
+	if run.invoices.is_empty() and run.dealer_loans.is_empty():
 		return
 	_add_heading("OWED")
 	for invoice in run.invoices:
 		var due := "Due the morning of day %d. Some buyers never pay" % int(invoice.due_day)
-		_add_row(INVOICE_ICON, "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day))
+		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day))
+	for loan in run.dealer_loans:
+		var dealer := Content.dealer(StringName(str(loan.dealer)))
+		var name := dealer.display_name if dealer != null else str(loan.dealer)
+		var due_day := int(loan.due_day)
+		var caption := "Due day %d (lent %s). Shark collects on default." % [due_day, Format.money(int(loan.amount))]
+		var hint := "DUE TODAY" if run.day >= due_day else "DAY %d" % due_day
+		var hint_color := Palette.RISK_HIGH if run.day >= due_day else Palette.TEXT_CREAM
+		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Loan to %s" % name, Format.money(int(loan.repayment)), caption, hint, hint_color)
 
 
 ## Tapping the crate buys recon for this phase when the player has no eyes on the road yet.
@@ -261,6 +268,19 @@ func _add_crate(run: RunState) -> void:
 	var row := _add_row(Smuggling.CRATE_ICON, "Voronin's crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe_route(run, run.crate), "")
 	if Smuggling.can_deliver(run):
 		row.set_hint("DELIVER HERE", Palette.TEXT_CREAM)
+	elif Campaign.is_act_two(run) and Crew.driver_ready(run):
+		var driver := Crew.driver(run)
+		var dest := Smuggling.destination(run.crate)
+		var place := dest.display_name if dest != null else "destination"
+		var cut_pay := roundi(Smuggling.payout(run, run.crate) * 0.8)
+		row.set_hint("SEND %s" % driver.display_name.to_upper(), Palette.TEXT_CREAM)
+		row.set_tappable(true)
+		row.pressed.connect(_ask.bind(
+			"Send your %s?" % driver.display_name.to_lower(),
+			"Your %s drives the crate to %s and brings back %s. No trip and no heat." % [driver.display_name.to_lower(), place, Format.money(cut_pay)],
+			"Send",
+			_send_driver
+		))
 	elif bool(run.crate.get("off_route", false)):
 		row.set_hint("OFF ROUTE", Palette.RISK_HIGH)
 	elif not Routes.has_recon(run) and run.cash >= Routes.RECON_COST:
@@ -359,6 +379,12 @@ func _send_runner(job: Dictionary) -> void:
 
 func _send_muscle(errand: Dictionary) -> void:
 	var pay := GameState.send_muscle(errand)
+	if pay > 0:
+		AudioService.play_sfx(Sfx.COINS_IN)
+
+
+func _send_driver() -> void:
+	var pay := GameState.send_driver()
 	if pay > 0:
 		AudioService.play_sfx(Sfx.COINS_IN)
 

@@ -36,6 +36,7 @@ func _ready() -> void:
 		return
 
 	SafeArea.apply_top_margin(_margin, 64)
+	SafeArea.apply_bottom_margin(_margin, SafeArea.NAV_HEIGHT + 12)
 	_background.texture = _venue.background if _venue.background != null else district.background
 	_venue_label.text = _venue.display_name.to_upper()
 	_host_label.text = _host.display_name

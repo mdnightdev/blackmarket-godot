@@ -9,6 +9,6 @@ display_name = "Pike"
 district_id = &"warehouse_row"
 line = "Need it for a job. If the job is still on, you get paid."
 wants = Array[StringName]([&"tech", &"papers"])
-temperament = 5
+temperament = 4
 active_phases = Array[int]([3])
 min_rank = 2

@@ -12,7 +12,7 @@ district_id = &"west_end"
 greeting = "Hardware is hardware. Who owned it before is not my problem."
 portrait = ExtResource("2_portrait")
 talk_portrait = ExtResource("3_talk")
-stock_categories = Array[StringName]([&"computing", &"biotech"])
+stock_categories = Array[StringName]([&"biotech", &"computing", &"military", &"tool"])
 tier = 2
 price_bias = {
 &"computing": 0.8,
@@ -20,4 +20,3 @@ price_bias = {
 &"weapons": 1.1,
 &"auto_parts": 1.05
 }
-haggle_tolerance = 0.1

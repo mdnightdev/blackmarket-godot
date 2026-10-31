@@ -2,14 +2,13 @@ extends BaseScreen
 
 const FAB_BUTTON := preload("res://ui/components/fab_button.tscn")
 const PERSON_CHIP := preload("res://ui/components/person_chip.tscn")
-const ROLE_COLORS := {
-	CharacterDef.Role.LENDER: Palette.TEXT_CREAM,
-	CharacterDef.Role.POLICE: Palette.RISK_HIGH,
-	CharacterDef.Role.INFORMANT: Palette.PRICE,
-	CharacterDef.Role.RIVAL: Palette.PEACH_BRIGHT,
-	CharacterDef.Role.LIEUTENANT: Palette.TEXT_CREAM,
-	CharacterDef.Role.HACKER: Palette.PRICE,
-}
+static func _role_color(role: CharacterDef.Role) -> Color:
+	match role:
+		CharacterDef.Role.LENDER, CharacterDef.Role.LIEUTENANT: return Palette.TEXT_CREAM
+		CharacterDef.Role.POLICE: return Palette.RISK_HIGH
+		CharacterDef.Role.INFORMANT, CharacterDef.Role.HACKER: return Palette.PRICE
+		CharacterDef.Role.RIVAL: return Palette.PEACH_BRIGHT
+	return Palette.TEXT_MUTED
 const VENUE_ICONS := {
 	&"tran_bar": preload("res://assets/icons/hud/beer.svg"),
 	&"la_paloma": preload("res://assets/icons/hud/wine.svg"),
@@ -76,6 +75,7 @@ func _ready() -> void:
 		return
 
 	SafeArea.apply_top_margin(_margin, 64)
+	SafeArea.apply_bottom_margin(_margin, SafeArea.NAV_HEIGHT + 16)
 	_shows_corner_map = district.corner_map != null
 	_background.texture = district.corner_map if _shows_corner_map else district.background
 	_corner_map.visible = _shows_corner_map
@@ -132,7 +132,7 @@ func handle_back() -> bool:
 	elif _logout_dialog.visible:
 		_logout_dialog.close()
 	else:
-		_logout_dialog.open("Log out?", "Your run is saved. Continue from the title screen.", "Yes")
+		_logout_dialog.open("Exit game?", "Your run is saved.", "Yes")
 	return true
 
 
@@ -153,7 +153,7 @@ func _build_people_strip() -> void:
 		chip.pressed.connect(DealerTalk.talk_to.bind(dealer))
 	for character in Roster.characters_at(run, run.district_id, stamp):
 		var is_vex_act_two := character.id == Loan.VEX_LENDER and Campaign.is_act_two(run)
-		var color: Color = Palette.PEACH_BRIGHT if is_vex_act_two else ROLE_COLORS.get(character.role, Palette.TEXT_MUTED)
+		var color: Color = Palette.PEACH_BRIGHT if is_vex_act_two else _role_color(character.role)
 		var chip := _add_person_chip(character.portrait, character.display_name, character.role_title(run).to_upper(), color)
 		chip.pressed.connect(StreetTalk.talk_to.bind(character))
 	_around_block.visible = _people_list.get_child_count() > 0
@@ -318,7 +318,7 @@ func _start_background_drift() -> void:
 
 func _log_out() -> void:
 	GameState.save_run()
-	SceneRouter.go_to(SceneRouter.TITLE_SCREEN)
+	get_tree().quit()
 
 
 func _play_entrance() -> void:

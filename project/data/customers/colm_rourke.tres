@@ -9,6 +9,6 @@ display_name = "Colm Rourke"
 district_id = &"west_end"
 line = "Security business. Very private security."
 wants = Array[StringName]([&"weapons"])
-temperament = 4
+temperament = 1
 active_phases = Array[int]([2, 3])
 min_rank = 4

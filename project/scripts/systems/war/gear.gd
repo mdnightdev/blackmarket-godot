@@ -1,7 +1,6 @@
 class_name Gear
 
 const MAX_FARE_DISCOUNT := 0.8
-const MAX_HAGGLE_BONUS := 0.15
 
 
 static func owns(run: RunState, item_id: StringName) -> bool:
@@ -40,19 +39,10 @@ static func fare_discount(run: RunState) -> float:
 	return minf(best, MAX_FARE_DISCOUNT)
 
 
-static func haggle_bonus(run: RunState) -> float:
-	var total := 0.0
-	for item in owned_items(run):
-		total += item.haggle_bonus
-	return minf(total, MAX_HAGGLE_BONUS)
-
-
 static func describe(item: ItemDef) -> String:
 	var effects: Array[String] = []
 	if item.capacity_bonus > 0:
 		effects.append("+%d bag slots" % item.capacity_bonus)
 	if item.fare_discount > 0.0:
 		effects.append("Fares -%d%%" % roundi(item.fare_discount * 100.0))
-	if item.haggle_bonus > 0.0:
-		effects.append("Haggle +%d%%" % roundi(item.haggle_bonus * 100.0))
 	return ", ".join(effects)

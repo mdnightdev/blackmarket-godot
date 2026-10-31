@@ -10,7 +10,6 @@ const CRED_ICON: Texture2D = preload("res://assets/icons/hud/zap.svg")
 const CASH_ICON: Texture2D = preload("res://assets/icons/hud/banknote.svg")
 const INCOME_ICON: Texture2D = preload("res://assets/icons/hud/hand-coins.svg")
 const DEBT_ICON: Texture2D = preload("res://assets/icons/hud/landmark.svg")
-const CORNER_ICON: Texture2D = preload("res://assets/icons/hud/flag.svg")
 const DISTRICT_ICON: Texture2D = preload("res://assets/icons/hud/map.svg")
 const ARMY_ICON: Texture2D = preload("res://assets/icons/hud/swords.svg")
 const CREW_ICON: Texture2D = preload("res://assets/icons/hud/users.svg")
@@ -62,7 +61,7 @@ func _add_territory(run: RunState) -> void:
 			continue
 		var held := corners.filter(func(corner: CornerDef) -> bool: return Corners.holds(run, corner.id)).map(func(corner: CornerDef) -> String: return corner.display_name)
 		var district := Content.district(district_id)
-		_add_row(CORNER_ICON, "%s corners" % district.display_name, "%d/%d" % [held.size(), corners.size()], ", ".join(held) if not held.is_empty() else "None yet")
+		_add_row(ItemsAtlas.get_icon(&"nav_turf"), "%s corners" % district.display_name, "%d/%d" % [held.size(), corners.size()], ", ".join(held) if not held.is_empty() else "None yet")
 	_add_row(DISTRICT_ICON, "Districts", "%d/%d held" % [Turf.held_count(run), Turf.contested().size()], "The territory map, district by district",
 		VIEW, Palette.TEXT_CREAM, _open.bind(&"districts"))
 

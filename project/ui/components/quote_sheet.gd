@@ -5,7 +5,6 @@ extends BottomSheet
 ## hands it to CustomerTalk.pick_source.
 
 const JOB_ROW := preload("res://ui/components/job_row.tscn")
-const BAG_ICON: Texture2D = preload("res://assets/icons/hud/backpack.svg")
 const ROW_HEIGHT := 116
 const MAX_LIST_HEIGHT := 700
 const NOTE_INDENT := 24
@@ -56,7 +55,7 @@ func _rebuild() -> bool:
 func _add_quote(run: RunState, quote: Dictionary) -> void:
 	var is_bag := str(quote.source) == CustomerQuotes.BAG
 	var dealer := Content.dealer(StringName(str(quote.source)))
-	var icon: Texture2D = BAG_ICON if is_bag or dealer == null else dealer.portrait
+	var icon: Texture2D = ItemsAtlas.get_icon(&"nav_bag") if is_bag or dealer == null else dealer.portrait
 	var row: JobRow = JOB_ROW.instantiate()
 	_list.add_child(row)
 	row.show_job(icon, CustomerQuotes.source_name(quote), CustomerQuotes.profit_text(quote), _caption(run, quote), "")

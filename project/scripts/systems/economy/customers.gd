@@ -14,9 +14,6 @@ class_name Customers
 
 const MAX_OPEN_OFFERS := 3
 const MAX_ACTIVE := 3
-const HAGGLE_TRY_CHANCE := 0.8
-## Strength lead when holding firm against a haggler, before street cred.
-const HOLD_FIRM_EDGE := 0.0
 ## Chance per phase that a flaky customer calls off an accepted order.
 const FLAKE_CHANCE := 0.15
 ## Shown with every order so the player can read the customer before saying yes.
@@ -25,7 +22,6 @@ const TELLS := {
 	CustomerDef.Temperament.FAIR: "Pays a fair price. No games.",
 	CustomerDef.Temperament.GENEROUS: "Pays well and does not like to wait.",
 	CustomerDef.Temperament.BULK: "Big order, thin margin on every unit.",
-	CustomerDef.Temperament.HAGGLER: "Likes to renegotiate at the handover.",
 	CustomerDef.Temperament.FLAKY: "Has called off deals before.",
 	CustomerDef.Temperament.STING: "Pays too well. Asks too many questions.",
 }
@@ -92,11 +88,10 @@ static func is_stocked(run: RunState, order: Dictionary) -> bool:
 	return Inventory.count(run, StringName(str(order.get("item", "")))) >= int(order.get("quantity", 0))
 
 
-## Returns { paid, haggled, sting, walked, scammed, line, tasks }, empty when the handover cannot happen. paid is the
-## cash taken in and tasks the daily tasks the sale finished. A haggler who asks for less sets haggled and keeps the
-## order open until answer_haggle. An undercover buyer closes the order and queues a police stop. scammed means the
-## customer short-paid at a meeting.
-## The roll decides whether a haggler tries it on and must be in the range [0, 1).
+## Returns { paid, sting, walked, scammed, line, tasks }, empty when the handover cannot happen.
+## paid is the cash taken in and tasks the daily tasks the sale finished.
+## An undercover buyer closes the order and queues a police stop.
+## scammed means the customer short-paid at a meeting.
 static func hand_over(run: RunState, order: Dictionary, roll: float) -> Dictionary:
 	if not can_hand_over(run, order):
 		return {}
@@ -111,30 +106,7 @@ static func hand_over(run: RunState, order: Dictionary, roll: float) -> Dictiona
 		return sting
 	if is_meeting(run, order):
 		return _meet(run, order, name)
-	if temperament == CustomerDef.Temperament.HAGGLER and (bool(order.countered) or roll < HAGGLE_TRY_CHANCE):
-		order.countered = true
-		var haggled := _result("%s turns the goods over and frowns. \"%s a unit. Not a dollar more.\"" % [name, Format.money(int(order.counter_price))])
-		haggled.haggled = true
-		return haggled
 	return _complete(run, order, int(order.unit_price), "%s counts out %s and takes the goods." % [name, Format.money(total(order))])
-
-
-## Settles a haggler's counter offer: take the lower price, or hold firm and either get the full price or watch
-## the customer walk. Returns the same layout as hand_over, empty when there is no counter offer to answer.
-static func answer_haggle(run: RunState, order: Dictionary, accept_counter: bool, roll: float) -> Dictionary:
-	if not bool(order.get("countered", false)) or not can_hand_over(run, order):
-		return {}
-	var name := customer_name(order)
-	if accept_counter:
-		var lower := int(order.counter_price) * int(order.quantity)
-		return _complete(run, order, int(order.counter_price), "You take %s. %s pockets the goods, pleased with the deal." % [Format.money(lower), name])
-	if roll < hold_firm_chance(run):
-		return _complete(run, order, int(order.unit_price), "%s holds your stare, then pays the full %s." % [name, Format.money(total(order))])
-	run.customer_orders.erase(order)
-	Journal.mark_failed(run, str(order.id))
-	var walked := _result("%s shrugs and walks off. The deal is dead and the goods stay in your bag." % name)
-	walked.walked = true
-	return walked
 
 
 ## Hands over the order via hired runner from anywhere in the city.
@@ -150,10 +122,6 @@ static func deliver_by_runner(run: RunState, order: Dictionary) -> int:
 	StreetCred.add(run, StreetCred.ORDER_DELIVERED)
 	DailyTasks.record_sale(run, StringName(str(order.district)), unit_price * quantity)
 	return unit_price * quantity
-
-
-static func hold_firm_chance(run: RunState) -> float:
-	return Odds.contest(HOLD_FIRM_EDGE + Talk.cred_edge(run))
 
 
 ## Drops offers nobody answered, fails orders past their deadline and lets flaky customers back out.
@@ -303,4 +271,4 @@ static func _complete(run: RunState, order: Dictionary, unit_price: int, line: S
 
 static func _result(line: String) -> Dictionary:
 	var tasks: Array[Dictionary] = []
-	return { "paid": 0, "haggled": false, "sting": false, "walked": false, "scammed": false, "line": line, "tasks": tasks }
+	return { "paid": 0, "sting": false, "walked": false, "scammed": false, "line": line, "tasks": tasks }

@@ -48,3 +48,18 @@ func show_district(district: DistrictDef, travel_check: Travel.Check) -> void:
 			_travel_button.text = Travel.lock_reason(GameState.run, district)
 	_travel_button.disabled = travel_check == Travel.Check.LOCKED
 	open_sheet()
+
+
+func show_locked_sector(sector_name: String, tagline: String, intel := "") -> void:
+	_district = null
+	_is_here = false
+	_walking = false
+	_name_label.text = sector_name
+	_tagline_label.text = tagline
+	_intel_label.text = intel
+	_intel_label.visible = not intel.is_empty()
+	_fare_value.text = "--"
+	_travel_button.text = "Sector Locked"
+	_travel_button.disabled = true
+	open_sheet()
+
