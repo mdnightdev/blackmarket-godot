@@ -2,6 +2,19 @@
 
 All notable changes to BLACK MARKET are listed here. Versions follow [Semantic Versioning](https://semver.org/), and the format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.19.0] - 2026-10-31
+
+### Added
+- Consumable items in inventory: combat stims, medkits, trauma kits, ammo boxes, adrenaline shots, and smoke grenades can now be used directly from the bag.
+- Battle combat actions: Suppress enemy fire using ammo boxes and Rally crew using combat stims.
+- Driver crate deliveries: assign your hired Driver to deliver Voronin crates and Shark repayment runs directly from the Jobs sheet.
+- 10 daily tasks rotation with cash and street cred rewards.
+- Endless mode: continue building your criminal empire past Act 1 without hard caps.
+
+### Changed
+- Weapon grade icons in the armory now resolve directly from the unified item atlas.
+- Restored original muted dusty peach and slate palette across UI elements.
+
 ## [1.0.0] - 2026-10-12
 
 ### Added
