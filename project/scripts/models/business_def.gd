@@ -3,7 +3,11 @@ extends Resource
 
 @export var id: StringName
 @export var display_name: String
-@export var icon: Texture2D
+@export var icon: Texture2D:
+	get:
+		if icon != null:
+			return icon
+		return ItemsAtlas.get_icon(&"nav_market")
 @export_multiline var description: String
 @export_range(0, 10_000_000) var price: int = 0
 ## Street cred rank needed before this business can open in a district the player holds.

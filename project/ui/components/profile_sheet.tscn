@@ -1,10 +1,8 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://ui/components/profile_sheet.gd" id="1_sheet"]
 [ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="3_nav"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="4_button"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/backpack.svg" id="5_bag"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/clipboard-list.svg" id="6_jobs"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/wrench.svg" id="7_settings"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/rotate-ccw.svg" id="8_quit"]
 
@@ -210,7 +208,6 @@ theme_type_variation = &"ListRow"
 theme_override_constants/h_separation = 14
 theme_override_constants/icon_max_width = 22
 text = "Bag"
-icon = ExtResource("5_bag")
 alignment = 0
 script = ExtResource("4_button")
 
@@ -222,7 +219,6 @@ theme_type_variation = &"ListRow"
 theme_override_constants/h_separation = 14
 theme_override_constants/icon_max_width = 22
 text = "Journal"
-icon = ExtResource("6_jobs")
 alignment = 0
 script = ExtResource("4_button")
 

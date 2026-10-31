@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_def")
 id = &"golden_mile"
-display_name = "Golden Mile"
+display_name = "Macau Harbor"
 tagline = "Where the city keeps its gold"
 tier = 3
 description = "Flagship boutiques and private banks under warm gold light. Cheap goods get you laughed out of the street."

@@ -9,6 +9,11 @@ extends PanelContainer
 
 
 func _ready() -> void:
+	_turf_tab.set_icon(ItemsAtlas.get_icon(&"nav_turf"))
+	_market_tab.set_icon(ItemsAtlas.get_icon(&"nav_market"))
+	_bag_tab.set_icon(ItemsAtlas.get_icon(&"nav_bag"))
+	_jobs_tab.set_icon(ItemsAtlas.get_icon(&"nav_jobs"))
+	_menu_tab.set_icon(ItemsAtlas.get_icon(&"nav_menu"))
 	_turf_tab.pressed.connect(GameOverlay.open_turf)
 	_market_tab.pressed.connect(_open_market)
 	_bag_tab.pressed.connect(GameOverlay.open_bag)

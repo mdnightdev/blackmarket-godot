@@ -8,7 +8,6 @@ const BANK_ICON: Texture2D = preload("res://assets/icons/hud/landmark.svg")
 const CASH_ICON: Texture2D = preload("res://assets/icons/hud/banknote.svg")
 const SKILL_ICONS := {
 	&"haggler": preload("res://assets/icons/hud/hand-coins.svg"),
-	&"pack_mule": preload("res://assets/icons/hud/backpack.svg"),
 	&"cool_head": preload("res://assets/icons/hud/snowflake.svg"),
 	&"wheelman": preload("res://assets/icons/hud/car.svg"),
 	&"muscle": preload("res://assets/icons/hud/biceps-flexed.svg"),
@@ -371,7 +370,8 @@ func _add_skills(run: RunState) -> void:
 		if result == Skills.Result.OK:
 			action = _ask.bind("Learn %s?" % Skills.display_name(id), "%s. Only the Fixer can make you forget it." % caption, "Learn",
 				func() -> void: GameState.learn_skill(id))
-		_add_row(SKILL_ICONS.get(id, CRED_ICON), Skills.display_name(id), "%d/%d" % [rank, Skills.max_rank()], caption, detail, detail_color, action)
+		var skill_icon: Texture2D = ItemsAtlas.get_icon(&"nav_bag") if id == &"pack_mule" else SKILL_ICONS.get(id, CRED_ICON)
+		_add_row(skill_icon, Skills.display_name(id), "%d/%d" % [rank, Skills.max_rank()], caption, detail, detail_color, action)
 
 
 func _add_families(run: RunState) -> void:

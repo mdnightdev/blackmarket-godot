@@ -54,7 +54,7 @@ defenders = 12000
 [resource]
 script = ExtResource("1_def")
 id = &"riverside"
-display_name = "Riverside"
+display_name = "Huangpu Docks"
 tagline = "Lofts over the water"
 tier = 2
 description = "Old warehouses turned into lofts and labs. Chop shops hum under the bridges and nobody asks what the river carries."

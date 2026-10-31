@@ -54,7 +54,7 @@ defenders = 5000
 [resource]
 script = ExtResource("1_def")
 id = &"docks"
-display_name = "The Docks"
+display_name = "Kaohsiung Port"
 tagline = "Cargo moves at night"
 description = "Cranes, containers and harbour fog. Half the city's contraband passes through here before sunrise."
 background = ExtResource("2_background")

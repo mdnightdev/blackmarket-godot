@@ -51,7 +51,7 @@ defenders = 2000
 [resource]
 script = ExtResource("1_def")
 id = &"old_market"
-display_name = "Old Market"
+display_name = "Wanhua"
 tagline = "Where every deal starts"
 description = "Covered stalls, wet cobblestones and a hundred quiet conversations. Everyone here is selling something, and most of it fell off a truck."
 background = ExtResource("2_background")

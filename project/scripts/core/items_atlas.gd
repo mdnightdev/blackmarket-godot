@@ -9,7 +9,7 @@ extends RefCounted
 const ATLAS_PATH := "res://assets/items/items_atlas.png"
 const TILE_SIZE := 128
 const COLS := 10
-const ROWS := 10
+const ROWS := 11
 
 const ITEM_COORDINATES := {
 	&"alloy_wheels": Vector2i(0, 5),
@@ -127,6 +127,11 @@ const ITEM_COORDINATES := {
 	&"turbo_kit": Vector2i(8, 4),
 	&"uncut_diamonds": Vector2i(5, 7),
 	&"vials": Vector2i(2, 6),
+	&"nav_turf": Vector2i(0, 10),
+	&"nav_market": Vector2i(1, 10),
+	&"nav_bag": Vector2i(2, 10),
+	&"nav_jobs": Vector2i(3, 10),
+	&"nav_menu": Vector2i(4, 10),
 }
 
 static var _atlas_texture: Texture2D

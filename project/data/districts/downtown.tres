@@ -50,7 +50,7 @@ defenders = 5000
 [resource]
 script = ExtResource("1_def")
 id = &"downtown"
-display_name = "Downtown"
+display_name = "Wan Chai"
 tagline = "Neon, money and cameras"
 description = "Glass towers and a casino that never closes. The money is big, and so is the attention it brings."
 background = ExtResource("2_background")

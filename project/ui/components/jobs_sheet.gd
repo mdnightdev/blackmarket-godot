@@ -5,7 +5,6 @@ const JOB_ROW := preload("res://ui/components/job_row.tscn")
 const READY_HINT := "IN BAG"
 const TASK_ICON: Texture2D = preload("res://assets/icons/hud/list-checks.svg")
 const LOCK_ICON: Texture2D = preload("res://assets/icons/hud/lock.svg")
-const INVOICE_ICON: Texture2D = preload("res://assets/icons/hud/clipboard-list.svg")
 const HEADING_INDENT := 24
 const CONTINUE: StringName = &"continue"
 
@@ -253,7 +252,7 @@ func _add_owed(run: RunState) -> void:
 	_add_heading("OWED")
 	for invoice in run.invoices:
 		var due := "Due the morning of day %d. Some buyers never pay" % int(invoice.due_day)
-		_add_row(INVOICE_ICON, "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day))
+		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day))
 
 
 ## Tapping the crate buys recon for this phase when the player has no eyes on the road yet.

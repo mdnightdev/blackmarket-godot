@@ -50,7 +50,7 @@ defenders = 30000
 [resource]
 script = ExtResource("1_def")
 id = &"the_heights"
-display_name = "The Heights"
+display_name = "Kabukicho"
 tagline = "Gates, guards and old fortunes"
 tier = 3
 description = "Mansions behind iron gates, looking down on the city. Buyers here spend six figures without blinking and never forget a face."

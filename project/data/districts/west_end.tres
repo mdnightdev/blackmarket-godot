@@ -50,7 +50,7 @@ defenders = 12000
 [resource]
 script = ExtResource("1_def")
 id = &"west_end"
-display_name = "West End"
+display_name = "Mong Kok"
 tagline = "Theatres, cafes and quiet money"
 tier = 2
 description = "Brownstones and stage doors. The people here have salaries, lawyers and a taste for things that fell off better trucks."

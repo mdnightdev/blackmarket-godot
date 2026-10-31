@@ -1,11 +1,8 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://ui/screens/map/map_screen.gd" id="1_screen"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/map_city.jpg" id="2_map"]
-[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="4_nav_bar"]
-[ext_resource type="PackedScene" path="res://ui/components/district_sheet.tscn" id="5_district_sheet"]
-[ext_resource type="PackedScene" path="res://ui/components/city_view.tscn" id="6_city_view"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/map.svg" id="7_map_icon"]
+[ext_resource type="Script" path="res://ui/screens/map/atlas.gd" id="1_atlas"]
+[ext_resource type="PackedScene" path="res://ui/chrome/nav_bar.tscn" id="2_nav_bar"]
+[ext_resource type="PackedScene" path="res://ui/components/district_sheet.tscn" id="3_district_sheet"]
 
 [sub_resource type="Gradient" id="Gradient_top"]
 offsets = PackedFloat32Array(0, 1)
@@ -29,26 +26,14 @@ height = 128
 fill_from = Vector2(0, 0)
 fill_to = Vector2(0, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_traveller"]
-bg_color = Color(0.8706, 0.8392, 0.8078, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.8706, 0.8392, 0.8078, 1)
-corner_radius_top_left = 999
-corner_radius_top_right = 999
-corner_radius_bottom_right = 999
-corner_radius_bottom_left = 999
-
-[node name="MapScreen" type="Control"]
+[node name="Atlas" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_screen")
+script = ExtResource("1_atlas")
 
 [node name="Backdrop" type="ColorRect" parent="."]
 layout_mode = 1
@@ -60,10 +45,35 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.0471, 0.0549, 0.0706, 1)
 
-[node name="CityView" parent="." instance=ExtResource("6_city_view")]
+[node name="MapViewport" type="Control" parent="."]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="World" type="Node2D" parent="MapViewport"]
+unique_name_in_owner = true
+
+[node name="StaticLayer" type="Node2D" parent="MapViewport/World"]
+unique_name_in_owner = true
+
+[node name="DynamicLayer" type="Node2D" parent="MapViewport/World"]
+unique_name_in_owner = true
+
+[node name="LabelLayer" type="Control" parent="MapViewport"]
 unique_name_in_owner = true
 layout_mode = 1
-map_texture = ExtResource("2_map")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="TopShade" type="TextureRect" parent="."]
 layout_mode = 1
@@ -87,24 +97,6 @@ mouse_filter = 2
 texture = SubResource("GradientTexture2D_bottom")
 expand_mode = 1
 
-[node name="Route" type="Line2D" parent="."]
-unique_name_in_owner = true
-width = 6.0
-default_color = Color(0.8706, 0.8392, 0.8078, 0.9)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
-antialiased = true
-
-[node name="Traveller" type="Panel" parent="."]
-unique_name_in_owner = true
-visible = false
-layout_mode = 0
-offset_right = 26.0
-offset_bottom = 26.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_traveller")
-
 [node name="Margin" type="MarginContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -124,7 +116,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="NavBar" parent="." instance=ExtResource("4_nav_bar")]
+[node name="NavBar" parent="." instance=ExtResource("2_nav_bar")]
 layout_mode = 1
 
 [node name="InputBlocker" type="Control" parent="."]
@@ -137,7 +129,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DistrictSheet" parent="." instance=ExtResource("5_district_sheet")]
+[node name="DistrictSheet" parent="." instance=ExtResource("3_district_sheet")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1

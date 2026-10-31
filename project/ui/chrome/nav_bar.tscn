@@ -1,12 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/chrome/nav_bar.gd" id="1_bar"]
 [ext_resource type="PackedScene" path="res://ui/components/nav_tab.tscn" id="2_tab"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/flag.svg" id="3_turf"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/store.svg" id="4_market"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/backpack.svg" id="5_bag"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/clipboard-list.svg" id="6_jobs"]
-[ext_resource type="Texture2D" path="res://assets/icons/hud/menu.svg" id="7_menu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
 content_margin_left = 4.0
@@ -34,29 +29,24 @@ theme_override_constants/separation = 0
 [node name="TurfTab" parent="Row" instance=ExtResource("2_tab")]
 unique_name_in_owner = true
 layout_mode = 2
-icon_texture = ExtResource("3_turf")
 caption = "Turf"
 
 [node name="MarketTab" parent="Row" instance=ExtResource("2_tab")]
 unique_name_in_owner = true
 layout_mode = 2
-icon_texture = ExtResource("4_market")
 caption = "Market"
 
 [node name="BagTab" parent="Row" instance=ExtResource("2_tab")]
 unique_name_in_owner = true
 layout_mode = 2
-icon_texture = ExtResource("5_bag")
 caption = "Bag"
 
 [node name="JobsTab" parent="Row" instance=ExtResource("2_tab")]
 unique_name_in_owner = true
 layout_mode = 2
-icon_texture = ExtResource("6_jobs")
 caption = "Jobs"
 
 [node name="MenuTab" parent="Row" instance=ExtResource("2_tab")]
 unique_name_in_owner = true
 layout_mode = 2
-icon_texture = ExtResource("7_menu")
 caption = "Menu"
