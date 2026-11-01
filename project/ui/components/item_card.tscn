@@ -3,8 +3,7 @@
 [ext_resource type="Script" path="res://ui/components/item_card.gd" id="1_card"]
 
 [node name="ItemCard" type="Button"]
-custom_minimum_size = Vector2(0, 100)
-size_flags_horizontal = 3
+custom_minimum_size = Vector2(144, 144)
 mouse_filter = 1
 theme_type_variation = &"ItemCard"
 script = ExtResource("1_card")
@@ -17,80 +16,78 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
-[node name="Row" type="HBoxContainer" parent="Margin"]
+[node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 2
+alignment = 1
 
-[node name="IconFrame" type="PanelContainer" parent="Margin/Row"]
+[node name="IconFrame" type="PanelContainer" parent="Margin/Layout"]
 unique_name_in_owner = true
 clip_children = 1
-custom_minimum_size = Vector2(64, 64)
+custom_minimum_size = Vector2(84, 84)
 layout_mode = 2
+size_flags_horizontal = 4
 size_flags_vertical = 4
 mouse_filter = 2
 theme_type_variation = &"IconFrame"
 
-[node name="Icon" type="TextureRect" parent="Margin/Row/IconFrame"]
+[node name="Icon" type="TextureRect" parent="Margin/Layout/IconFrame"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Text" type="VBoxContainer" parent="Margin/Row"]
+[node name="NameLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
+theme_type_variation = &"HudValueLabel"
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="Numbers" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="NameLabel" type="Label" parent="Margin/Row/Text"]
+[node name="PriceLabel" type="Label" parent="Margin/Layout/Numbers"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
-theme_override_font_sizes/font_size = 17
-text_overrun_behavior = 3
+theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
 
-[node name="Numbers" type="HBoxContainer" parent="Margin/Row/Text"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 6
-
-[node name="PriceLabel" type="Label" parent="Margin/Row/Text/Numbers"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"HudValueLabel"
-theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
-theme_override_font_sizes/font_size = 21
-
-[node name="TrendIcon" type="TextureRect" parent="Margin/Row/Text/Numbers"]
+[node name="TrendIcon" type="TextureRect" parent="Margin/Layout/Numbers"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(16, 16)
+custom_minimum_size = Vector2(10, 10)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="DetailLabel" type="Label" parent="Margin/Row/Text/Numbers"]
+[node name="DetailLabel" type="Label" parent="Margin/Layout/Numbers"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 4
-theme_type_variation = &"HudCaptionLabel"
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 2
+theme_type_variation = &"PillLabel"
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
 
-[node name="CaptionLabel" type="Label" parent="Margin/Row/Text"]
+[node name="CaptionLabel" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 theme_type_variation = &"CaptionLabel"
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 10
 text_overrun_behavior = 3

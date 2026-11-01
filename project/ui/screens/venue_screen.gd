@@ -66,10 +66,33 @@ func _refresh() -> void:
 	Utils.clear_container(_list)
 
 
-func _add_row() -> ItemRow:
+func _add_row(parent: Container = null) -> ItemRow:
 	var row: ItemRow = ITEM_ROW.instantiate()
-	_list.add_child(row)
+	(parent if parent != null else _list).add_child(row)
 	return row
+
+
+## Adds a framed card to the list (Slot* theme variations) and returns it so a row can go inside.
+func _add_slot(variation: StringName) -> PanelContainer:
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_list.add_child(gap)
+	var slot := PanelContainer.new()
+	slot.theme_type_variation = variation
+	slot.mouse_filter = Control.MOUSE_FILTER_PASS
+	_list.add_child(slot)
+	return slot
+
+
+func _add_grid(columns: int = 2) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = columns
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	_list.add_child(grid)
+	return grid
 
 
 func _add_label(text: String, variation: StringName) -> void:

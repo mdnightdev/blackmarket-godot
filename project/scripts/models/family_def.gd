@@ -5,7 +5,11 @@ extends Resource
 @export var chinese_name: String
 @export var pinyin: String
 @export var english_name: String
-@export var emblem: Texture2D
+@export var emblem: Texture2D:
+	get:
+		if emblem != null:
+			return emblem
+		return ItemsAtlas.get_icon("family_" + String(id))
 ## Character who hands out favours and leads shakedowns.
 @export var lieutenant: StringName
 ## Family that loses standing when the player works for this one.

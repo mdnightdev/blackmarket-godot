@@ -39,7 +39,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0392, 0.0392, 0.0431, 1)
+color = Color(0.0314, 0.0353, 0.0471, 1)
 
 [node name="Background" type="TextureRect" parent="."]
 unique_name_in_owner = true

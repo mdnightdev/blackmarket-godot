@@ -10,7 +10,9 @@ class_name Smuggling
 
 enum Result { OK, CARRYING, NO_ROOM, TAKEN, BANNED, NO_ROUTE }
 
-const CRATE_ICON: Texture2D = preload("res://assets/items/sealed_crate.jpg")
+static var CRATE_ICON: Texture2D:
+	get:
+		return ItemsAtlas.get_icon(&"sealed_crate")
 const VENUE: StringName = &"docks"
 const ORIGIN: StringName = &"docks"
 const POSTED_PER_DAY := 3

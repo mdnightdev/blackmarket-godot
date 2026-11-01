@@ -3,22 +3,37 @@ class_name Palette
 ## Single source of truth for the entire app palette.
 ## Editing any constant below automatically updates Theme (theme.tres), all screens, sheets, and HUD components on boot.
 
-const INK := Color("0c0e12")
-const PANEL := Color("101218")
-const PANEL_LIFT := Color("15171e")
-const SURFACE_ACTIVE := Color("1a1d24")
-const LINE := Color("22262e")
-const LINE_MUTED := Color("2e323b")
-const TEXT := Color("d8d9dc")
-const TEXT_MUTED := Color("a9adb9")
-const TEXT_CREAM := Color("ded6ce")
-const PEACH := Color("b7747d")
-const PEACH_TITLE := Color("d09aa0")
-const PEACH_BRIGHT := Color("e08a98")
-const PEACH_BORDER := Color("c47e8a")
-const PRICE := Color("9fb8c8")
-const RISK_LOW := Color("718b7a")
-const RISK_HIGH := Color("b85d68")
+const INK := Color("08090c")
+const PANEL := Color("0f1217")
+const PANEL_LIFT := Color("151921")
+const SURFACE_ACTIVE := Color("1d232f")
+const LINE := Color("222938")
+const LINE_MUTED := Color("323b4e")
+const TEXT := Color("e2e6ee")
+const TEXT_MUTED := Color("7e899b")
+const TEXT_CREAM := Color("f0e6d2")
+
+## Primary Accent: Syndicate Gold
+const GOLD := Color("d4af37")
+const GOLD_TITLE := Color("ebc768")
+const GOLD_BRIGHT := Color("f5d88e")
+const GOLD_BORDER := Color("b8932a")
+
+## Legacy alias for codebase compatibility
+const PEACH := GOLD
+const PEACH_TITLE := GOLD_TITLE
+const PEACH_BRIGHT := GOLD_BRIGHT
+const PEACH_BORDER := GOLD_BORDER
+
+## Rarity Tones (Strictly for item slot rarity indicators, never general UI)
+const STEEL := Color("64748b")
+const CYAN := Color("38bdf8")
+const PURPLE := Color("a855f7")
+
+## Economy & Status
+const PRICE := Color("d4af37")
+const RISK_LOW := Color("4ade80")
+const RISK_HIGH := Color("ef4444")
 
 
 static func sync_theme() -> void:
@@ -31,7 +46,7 @@ static func sync_theme() -> void:
 	_set_flat(theme, &"Button", &"normal", PANEL, LINE_MUTED)
 	_set_flat(theme, &"Button", &"hover", PANEL_LIFT, LINE_MUTED)
 	_set_flat(theme, &"Button", &"pressed", SURFACE_ACTIVE, TEXT_MUTED)
-	_set_flat(theme, &"Button", &"disabled", Color(INK, 0.75), LINE)
+	_set_flat(theme, &"Button", &"disabled", INK, LINE)
 
 	_set_flat(theme, &"PrimaryButton", &"normal", PEACH, PEACH_TITLE)
 	_set_flat(theme, &"PrimaryButton", &"pressed", PEACH.darkened(0.2), PEACH_BORDER)
@@ -54,7 +69,7 @@ static func sync_theme() -> void:
 	_set_flat(theme, &"LineTab", &"pressed", Color.TRANSPARENT, PEACH_BRIGHT)
 
 	_set_flat(theme, &"ListRow", &"normal", Color.TRANSPARENT, LINE)
-	_set_flat(theme, &"ListRow", &"pressed", Color(SURFACE_ACTIVE, 0.65), LINE)
+	_set_flat(theme, &"ListRow", &"pressed", SURFACE_ACTIVE, LINE)
 
 	_set_flat(theme, &"ItemCard", &"normal", PANEL_LIFT, LINE)
 	_set_flat(theme, &"ItemCard", &"pressed", SURFACE_ACTIVE, PEACH_BORDER)
@@ -73,10 +88,10 @@ static func sync_theme() -> void:
 	_set_flat(theme, &"PillLabel", &"normal", SURFACE_ACTIVE, Color.TRANSPARENT)
 
 	_set_flat(theme, &"ThinBar", &"background", LINE, Color.TRANSPARENT)
-	_set_flat(theme, &"ThinBar", &"fill", RISK_LOW, Color.TRANSPARENT)
+	_set_flat(theme, &"ThinBar", &"fill", GOLD, Color.TRANSPARENT)
 	_set_flat(theme, &"HSlider", &"slider", LINE_MUTED, Color.TRANSPARENT)
-	_set_flat(theme, &"HSlider", &"grabber_area", PEACH, Color.TRANSPARENT)
-	_set_flat(theme, &"HSlider", &"grabber_area_highlight", PEACH_BRIGHT, Color.TRANSPARENT)
+	_set_flat(theme, &"HSlider", &"grabber_area", GOLD, Color.TRANSPARENT)
+	_set_flat(theme, &"HSlider", &"grabber_area_highlight", GOLD_BRIGHT, Color.TRANSPARENT)
 
 	var sep := theme.get_stylebox(&"separator", &"HSeparator") as StyleBoxLine
 	if sep != null:
@@ -91,6 +106,12 @@ static func sync_theme() -> void:
 	theme.set_color(&"font_pressed_color", &"Button", TEXT_CREAM)
 	theme.set_color(&"font_hover_pressed_color", &"Button", TEXT_CREAM)
 	theme.set_color(&"font_disabled_color", &"Button", TEXT_MUTED.darkened(0.35))
+
+	for t in [&"PrimaryButton"]:
+		theme.set_color(&"font_color", t, INK)
+		theme.set_color(&"font_hover_color", t, INK)
+		theme.set_color(&"font_pressed_color", t, INK)
+		theme.set_color(&"font_hover_pressed_color", t, INK)
 
 	for t in [&"CaptionLabel", &"MutedLabel", &"SectionLabel", &"HudCaptionLabel", &"ListHeading", &"PlaceLabel"]:
 		theme.set_color(&"font_color", t, TEXT_MUTED)
@@ -168,9 +189,9 @@ static func on_node_added(node: Node) -> void:
 	elif node is TextureRect:
 		var tex := node as TextureRect
 		if tex.name == &"Icon" and tex.get_parent() != null and tex.get_parent().name == &"Cash":
-			tex.modulate = RISK_LOW
+			tex.modulate = GOLD
 		elif tex.name == &"CleanIcon":
-			tex.modulate = PRICE
+			tex.modulate = GOLD
 	elif node is Label:
 		var lbl := node as Label
 		if lbl.name == &"CleanValue" or lbl.name == &"PriceLabel":

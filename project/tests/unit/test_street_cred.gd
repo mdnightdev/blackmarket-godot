@@ -65,3 +65,13 @@ func test_cred_survives_a_save() -> void:
 	assert_eq(restored.street_cred, 420)
 	assert_eq(restored.cred_day, 3)
 	assert_eq(restored.trading_cred_today, 12)
+
+
+func test_rank_up_grants_reward_packs() -> void:
+	var starting_cash := _run.cash
+	var pack := StreetCred.add(_run, 50)
+	assert_eq(StreetCred.rank(_run), 2)
+	assert_eq(str(pack.get("title", "")), "Corner Kid")
+	assert_eq(_run.cash, starting_cash + 5000)
+	assert_eq(Inventory.count(_run, &"burner_sims"), 2)
+	assert_eq(Inventory.count(_run, &"fake_ids"), 1)

@@ -32,7 +32,7 @@ static func hack(run: RunState, district_id: StringName) -> Array[DealerDef]:
 		return []
 	run.cash -= PRICE
 	run.hack_stamp = Calendar.stamp(run)
-	var goods := Content.items(ItemDef.Kind.TRADE_GOOD)
+	var goods := Content.tradable_items()
 	for dealer in dealers:
 		PriceIntel.record(run, dealer, goods)
 	return dealers

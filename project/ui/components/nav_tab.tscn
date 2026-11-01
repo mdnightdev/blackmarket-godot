@@ -5,11 +5,11 @@
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tab"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
-bg_color = Color(0.8784, 0.2431, 0.2745, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
+bg_color = Color(0.8314, 0.6863, 0.2157, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 
 [node name="NavTab" type="Button"]
 custom_minimum_size = Vector2(0, 76)

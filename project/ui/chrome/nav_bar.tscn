@@ -8,9 +8,9 @@ content_margin_left = 4.0
 content_margin_top = 4.0
 content_margin_right = 4.0
 content_margin_bottom = 10.0
-bg_color = Color(0.0392, 0.0392, 0.0431, 1)
+bg_color = Color(0.0314, 0.0353, 0.0471, 1)
 border_width_top = 2
-border_color = Color(0.251, 0.251, 0.2824, 1)
+border_color = Color(0.1333, 0.1608, 0.2196, 1)
 
 [node name="NavBar" type="PanelContainer"]
 anchors_preset = 12

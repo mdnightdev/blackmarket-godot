@@ -46,7 +46,7 @@ static func buy(run: RunState, venue_id: StringName) -> Dictionary:
 		return {}
 	run.cash -= PRICE
 	run.rumors_heard[venue_id] = Calendar.stamp(run)
-	PriceIntel.record(run, rumor.dealer, Content.items(ItemDef.Kind.TRADE_GOOD))
+	PriceIntel.record(run, rumor.dealer, Content.tradable_items())
 	return rumor
 
 

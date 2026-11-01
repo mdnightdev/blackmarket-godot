@@ -4,8 +4,8 @@ enum Tab { BUY, SELL }
 
 const ITEM_ROW := preload("res://ui/components/item_row.tscn")
 const ITEM_CARD := preload("res://ui/components/item_card.tscn")
-const CARDS_PER_ROW := 2
-const CARD_SPACING := 10
+const CARDS_PER_ROW := 4
+const CARD_SPACING := 6
 const SELECTED_CARD: StringName = &"ItemCardSelected"
 const STEADY_CHANGE := 0.005
 ## Item risk where the card caption turns from green to amber, and from amber to red. Matches ItemDef.risk_label.
@@ -77,7 +77,6 @@ func _ready() -> void:
 	_trade_form.completed.connect(_on_trade_completed)
 	_trade_form.dealer_said.connect(_dealer_says)
 	_trade_form.close_requested.connect(_close_trade)
-	_trade_panel.resized.connect(_keep_trade_in_view)
 	GameState.run_changed.connect(_refresh)
 
 	GameState.clock_active = true
@@ -88,19 +87,14 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	GameState.clock_active = false
-	if _trade_panel.get_parent() == null:
-		_trade_panel.queue_free()
 
 
 func can_present_encounter() -> bool:
-	return _selected == null and not _deal_flash.visible
+	return not _deal_flash.visible
 
 
 func handle_back() -> bool:
-	if _selected != null:
-		_close_trade()
-	else:
-		SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
+	SceneRouter.go_to(SceneRouter.DISTRICT_SCREEN)
 	return true
 
 
@@ -182,26 +176,28 @@ func _refresh() -> void:
 
 	for list in [_list, _order_list]:
 		for child: Node in list.get_children():
-			list.remove_child(child)
-			if child != _trade_panel:
-				child.queue_free()
+			child.queue_free()
 	_order_list.hide()
 
 	if not _dealer_is_here():
 		_selected = null
+		_trade_panel.hide()
 		_show_notice("%s has packed up and moved on." % _dealer.display_name)
 		return
 	if Families.refuses(run, _dealer):
 		_selected = null
+		_trade_panel.hide()
 		_show_notice("%s works for the %s. The family will not deal with you." % [_dealer.display_name, family.english_name])
 		return
 	if Lending.is_dealer_locked_down(run, _dealer.id):
 		_selected = null
+		_trade_panel.hide()
 		var days_left := maxi(1, int(run.dealer_lockdowns.get(_dealer.id, 0)) - run.day)
 		_show_notice("%s's stall is locked down by the Shark. Reopens in %d day(s)." % [_dealer.display_name, days_left])
 		return
 	if not Market.is_open(run, _dealer):
 		_selected = null
+		_trade_panel.hide()
 		_show_notice("%s will not deal with you until next phase." % _dealer.display_name)
 		return
 
@@ -252,7 +248,7 @@ func _deliver(order: Dictionary) -> void:
 func _buy_cards() -> Array[Dictionary]:
 	var run := GameState.run
 	var cards: Array[Dictionary] = []
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Content.tradable_items():
 		if not _dealer.sells(item):
 			continue
 		if not Trade.rank_allows(run, item):
@@ -272,7 +268,7 @@ func _buy_cards() -> Array[Dictionary]:
 func _sell_cards() -> Array[Dictionary]:
 	var run := GameState.run
 	var cards: Array[Dictionary] = []
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Content.tradable_items():
 		var held := Inventory.count(run, item.id)
 		if held == 0:
 			continue
@@ -302,14 +298,31 @@ func _card(item: ItemDef, price_text: String, caption: String, detail := "", det
 	return { "item": item, "price": price_text, "caption": caption, "detail": detail, "color": detail_color, "trend": 0, "caption_color": Palette.TEXT_MUTED }
 
 
-## Two cards to a row. The open trade sits under the row of the card it belongs to.
+## Four tactile stash slots to a row. The hero inspect dossier sits pinned at the top.
 func _lay_out(cards: Array[Dictionary]) -> void:
-	var trade_shown := false
+	if cards.is_empty():
+		_trade_panel.hide()
+		return
+
+	var available_items: Array[ItemDef] = []
+	for c in cards:
+		if c.item != null:
+			available_items.append(c.item)
+
+	if _selected == null or not available_items.has(_selected):
+		_selected = available_items[0] if not available_items.is_empty() else null
+
+	if _selected != null:
+		var mode := TradeForm.Mode.BUY if _tab == Tab.BUY else TradeForm.Mode.SELL
+		_trade_form.show_trade(mode, _selected, _dealer)
+		_trade_panel.show()
+	else:
+		_trade_panel.hide()
+
 	for start in range(0, cards.size(), CARDS_PER_ROW):
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", CARD_SPACING)
 		_list.add_child(row)
-		var holds_selected := false
 		for entry in cards.slice(start, start + CARDS_PER_ROW):
 			var card: ItemCard = ITEM_CARD.instantiate()
 			row.add_child(card)
@@ -319,18 +332,12 @@ func _lay_out(cards: Array[Dictionary]) -> void:
 			card.item_selected.connect(_on_item_selected)
 			if entry.item == _selected:
 				card.theme_type_variation = SELECTED_CARD
-				holds_selected = true
 		if row.get_child_count() < CARDS_PER_ROW:
-			var filler := Control.new()
-			filler.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			filler.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			row.add_child(filler)
-		if holds_selected:
-			_list.add_child(_trade_panel)
-			trade_shown = true
-	_trade_panel.visible = trade_shown
-	if not trade_shown:
-		_selected = null
+			for _i in range(CARDS_PER_ROW - row.get_child_count()):
+				var filler := Control.new()
+				filler.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				filler.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				row.add_child(filler)
 
 
 func _change_text(change: float) -> String:
@@ -360,31 +367,24 @@ func _on_item_selected(item: ItemDef) -> void:
 	if _tab == Tab.BUY and not Trade.rank_allows(GameState.run, item):
 		_dealer_says("%s? I sell those to a %s, not to you. Not yet." % [item.display_name, StreetCred.rank_name(item.min_rank)])
 		return
-	if item == _selected:
-		_close_trade()
-		return
 	_selected = item
 	var mode := TradeForm.Mode.BUY if _tab == Tab.BUY else TradeForm.Mode.SELL
 	_trade_form.show_trade(mode, item, _dealer)
-	_refresh()
-	_keep_trade_in_view()
+	_trade_panel.show()
+	_update_card_selection()
 
 
-## The form opens under its card and grows when haggling opens, so the card and the form's buttons are scrolled
-## back on screen.
-func _keep_trade_in_view() -> void:
-	await get_tree().process_frame
-	if _selected == null or not _trade_panel.is_inside_tree():
-		return
-	_scroll.ensure_control_visible(_trade_panel)
-	_scroll.ensure_control_visible(_list.get_child(_trade_panel.get_index() - 1))
+func _update_card_selection() -> void:
+	for row: Node in _list.get_children():
+		if not row is HBoxContainer:
+			continue
+		for child: Node in row.get_children():
+			if child is ItemCard:
+				child.theme_type_variation = SELECTED_CARD if child.item == _selected else &"ItemCard"
 
 
 func _close_trade() -> void:
-	if _selected == null:
-		return
-	_selected = null
-	_refresh()
+	pass
 
 
 func _show_toast(message: String) -> void:

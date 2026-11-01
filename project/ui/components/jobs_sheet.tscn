@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="5_button"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
-bg_color = Color(0.0392, 0.0392, 0.0431, 1)
+bg_color = Color(0.0314, 0.0353, 0.0471, 1)
 
 [node name="JobsSheet" type="Control"]
 layout_mode = 3
@@ -24,7 +24,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0314, 0.0353, 0.0471, 0.6)
+color = Color(0.0314, 0.0353, 0.0471, 1)
 
 [node name="Sheet" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -59,46 +59,46 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"HeaderLabel"
-text = "Jobs"
+text = "CONTRACTS & DIRECTIVES"
 
 [node name="DoNotDisturbToggle" type="CheckButton" parent="Sheet/Page/Margin/Top/TitleRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 4
-text = "Do not disturb"
+text = "Silent"
 
 [node name="Tabs" type="HBoxContainer" parent="Sheet/Page/Margin/Top"]
 layout_mode = 2
-theme_override_constants/separation = 0
+theme_override_constants/separation = 4
 
 [node name="ActiveTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"LineTab"
+theme_type_variation = &"TabButton"
 toggle_mode = true
-text = "Active"
+text = "ACTIVE"
 script = ExtResource("5_button")
 
 [node name="CompletedTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"LineTab"
+theme_type_variation = &"TabButton"
 toggle_mode = true
-text = "Completed"
+text = "ARCHIVE"
 script = ExtResource("5_button")
 
 [node name="FailedTab" type="Button" parent="Sheet/Page/Margin/Top/Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"LineTab"
+theme_type_variation = &"TabButton"
 toggle_mode = true
-text = "Failed"
+text = "FAILED"
 script = ExtResource("5_button")
 
 [node name="Scroll" type="ScrollContainer" parent="Sheet/Page"]

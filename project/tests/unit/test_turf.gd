@@ -121,7 +121,7 @@ func test_taking_every_corner_drives_the_gang_out() -> void:
 	Corners.take(_run, last_corner.id)
 	Turf.check_victory(_run)
 	assert_true(Gangs.is_gone(_run, gang))
-	assert_eq(_run.cash, 10000 + gang.victory_reward)
+	assert_eq(_run.cash, 10000 + gang.victory_reward + 5000)
 	assert_eq(_run.pending_encounter.type, Turf.VICTORY)
 	assert_eq(Gangs.boss_location(_run, gang, Calendar.stamp(_run)), &"")
 

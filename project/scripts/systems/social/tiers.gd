@@ -22,7 +22,7 @@ const OUT_OF_RANGE_LINES: Array[String] = [
 ## Trade goods a dealer of this tier deals in: its own tier and the one below.
 static func goods(tier: int) -> Array[ItemDef]:
 	var list: Array[ItemDef] = []
-	for item in Content.items(ItemDef.Kind.TRADE_GOOD):
+	for item in Content.tradable_items():
 		if item.tier == tier or item.tier == tier - 1:
 			list.append(item)
 	return list

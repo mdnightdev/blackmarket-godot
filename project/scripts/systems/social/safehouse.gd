@@ -3,8 +3,12 @@ class_name Safehouse
 ## The player's hideout, reachable from any district they hold: a stash raids never touch,
 ## a cash box nobody can take, and a place to lie low.
 
-const UPGRADE_ICON := preload("res://assets/items/safehouse_lockbox.jpg")
-const LIE_LOW_ICON := preload("res://assets/items/lie_low.jpg")
+static var UPGRADE_ICON: Texture2D:
+	get:
+		return ItemsAtlas.get_icon(&"safehouse_lockbox")
+static var LIE_LOW_ICON: Texture2D:
+	get:
+		return ItemsAtlas.get_icon(&"lie_low")
 const UPGRADES: Array[Dictionary] = [
 	{ "name": "Lockbox", "capacity": 80, "price": 2000 },
 	{ "name": "Strongroom", "capacity": 160, "price": 6000 },

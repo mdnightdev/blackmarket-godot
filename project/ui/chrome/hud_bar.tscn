@@ -6,18 +6,18 @@
 [ext_resource type="Texture2D" path="res://assets/icons/hud/flame.svg" id="5_heat"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_track"]
-bg_color = Color(0.1765, 0.1765, 0.2039, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+bg_color = Color(0.1333, 0.1608, 0.2196, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heat_fill"]
-bg_color = Color(0.3961, 0.6196, 0.4471, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+bg_color = Color(0.9373, 0.2667, 0.2667, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 
 [node name="HudBar" type="PanelContainer"]
 custom_minimum_size = Vector2(0, 56)
@@ -37,7 +37,7 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="Icon" type="TextureRect" parent="Row/Cash"]
-modulate = Color(0.4431, 0.5451, 0.4784, 1)
+modulate = Color(0.8314, 0.6863, 0.2157, 1)
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 size_flags_vertical = 4
@@ -58,7 +58,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.251, 0.251, 0.2824, 1)
+color = Color(0.1333, 0.1608, 0.2196, 1)
 
 [node name="Clean" type="HBoxContainer" parent="Row"]
 unique_name_in_owner = true
@@ -67,7 +67,7 @@ layout_mode = 2
 theme_override_constants/separation = 5
 
 [node name="CleanIcon" type="TextureRect" parent="Row/Clean"]
-modulate = Color(0.702, 0.776, 0.886, 1)
+modulate = Color(0.8314, 0.6863, 0.2157, 1)
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 size_flags_vertical = 4
@@ -81,7 +81,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(44, 0)
 layout_mode = 2
 theme_type_variation = &"HudStripValue"
-theme_override_colors/font_color = Color(0.702, 0.776, 0.886, 1)
+theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 text = "$0"
 
 [node name="CleanDivider" type="ColorRect" parent="Row"]
@@ -91,7 +91,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.251, 0.251, 0.2824, 1)
+color = Color(0.1333, 0.1608, 0.2196, 1)
 
 [node name="Heat" type="HBoxContainer" parent="Row"]
 layout_mode = 2
@@ -124,7 +124,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.251, 0.251, 0.2824, 1)
+color = Color(0.1333, 0.1608, 0.2196, 1)
 
 [node name="Debt" type="HBoxContainer" parent="Row"]
 visible = false
@@ -146,7 +146,7 @@ custom_minimum_size = Vector2(1, 24)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.251, 0.251, 0.2824, 1)
+color = Color(0.1333, 0.1608, 0.2196, 1)
 
 [node name="District" type="HBoxContainer" parent="Row"]
 layout_mode = 2
@@ -163,7 +163,7 @@ custom_minimum_size = Vector2(1, 28)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-color = Color(0.251, 0.251, 0.2824, 1)
+color = Color(0.1333, 0.1608, 0.2196, 1)
 
 
 [node name="DayLabel" type="Label" parent="Row"]

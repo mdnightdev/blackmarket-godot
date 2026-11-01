@@ -732,7 +732,7 @@ func casino_rng() -> RandomNumberGenerator:
 
 ## Saves without emitting run_changed, so screens can call it while refreshing.
 func remember_prices(dealer: DealerDef) -> void:
-	if PriceIntel.record(run, dealer, Content.items(ItemDef.Kind.TRADE_GOOD)):
+	if PriceIntel.record(run, dealer, Content.tradable_items()):
 		save_run()
 
 
@@ -871,6 +871,12 @@ func _task_notices(tasks: Array[Dictionary]) -> Array[Dictionary]:
 			"line": "Task done: %s." % DailyTasks.describe(task),
 			"hint": "+%s and %+d cred" % [Format.money(DailyTasks.reward(run)), StreetCred.TASK_DONE],
 		})
+		if task.has("rank_pack"):
+			var pack: Dictionary = task["rank_pack"]
+			notices.append({
+				"line": "RANK UP: %s!" % pack.get("title", ""),
+				"hint": "Unlocked: %s" % pack.get("reward", ""),
+			})
 	return notices
 
 
@@ -887,7 +893,7 @@ func _carried_by_value() -> Array[ItemDef]:
 	var items: Array[ItemDef] = []
 	for item_id: StringName in run.inventory:
 		var item := Content.item(item_id)
-		if item != null and item.kind == ItemDef.Kind.TRADE_GOOD:
+		if item != null and (item.kind == ItemDef.Kind.TRADE_GOOD or item.kind == ItemDef.Kind.CONSUMABLE):
 			items.append(item)
 	items.sort_custom(_by_value)
 	return items

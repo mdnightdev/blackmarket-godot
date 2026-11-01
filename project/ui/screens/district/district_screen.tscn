@@ -29,7 +29,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0392, 0.0392, 0.0431, 1)
+color = Color(0.0314, 0.0353, 0.0471, 1)
 
 [node name="Background" type="TextureRect" parent="."]
 unique_name_in_owner = true
@@ -90,7 +90,7 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
-theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
+theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 autowrap_mode = 3
 script = ExtResource("8_news_line")
 

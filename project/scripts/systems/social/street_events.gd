@@ -173,7 +173,7 @@ static func fight_bonus(run: RunState) -> float:
 
 static func _prepare_find(run: RunState, event: EventDef, rng: RandomNumberGenerator) -> Dictionary:
 	var free := Inventory.free_space(run)
-	var candidates := Content.items(ItemDef.Kind.TRADE_GOOD).filter(func(item: ItemDef) -> bool:
+	var candidates := Content.tradable_items().filter(func(item: ItemDef) -> bool:
 		return item.base_price <= LUCKY_FIND_MAX_PRICE and item.slots <= free)
 	if candidates.is_empty():
 		return {}

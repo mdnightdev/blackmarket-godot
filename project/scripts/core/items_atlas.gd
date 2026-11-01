@@ -132,6 +132,10 @@ const ITEM_COORDINATES := {
 	&"nav_bag": Vector2i(2, 10),
 	&"nav_jobs": Vector2i(3, 10),
 	&"nav_menu": Vector2i(4, 10),
+	&"lie_low": Vector2i(5, 10),
+	&"family_azure_dragon": Vector2i(6, 10),
+	&"family_red_lotus": Vector2i(7, 10),
+	&"family_white_tiger": Vector2i(8, 10),
 }
 
 static var _atlas_texture: Texture2D

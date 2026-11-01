@@ -2,7 +2,9 @@ class_name Fixer
 
 ## Rook's clean-up service: pay to make heat go away, once per phase.
 
-const CLEAN_UP_ICON := preload("res://assets/items/clean_up.jpg")
+static var CLEAN_UP_ICON: Texture2D:
+	get:
+		return ItemsAtlas.get_icon(&"fake_cash")
 const CLEAN_UP_HEAT := 25
 const CLEAN_UP_BASE_COST := 400
 const CLEAN_UP_COST_PER_HEAT := 20

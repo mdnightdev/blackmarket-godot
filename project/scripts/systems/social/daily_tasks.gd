@@ -1,13 +1,13 @@
 class_name DailyTasks
 
-## Three small goals dealt each morning, each paying cash and street cred once.
+## Ten goals dealt each morning, each paying cash and street cred once.
 ## A task is stored as { id, kind, target, district, progress, done }. district is empty for kinds that do not name one.
 ##
 ## Call order for a day: deal() once the new day has started, the record_* hooks as things happen, and
 ## close_day() while run.day is still the finished day, which means before Calendar.advance_phase
 ## (or Travel.travel) moves the run out of the night phase.
 
-const COUNT := 3
+const COUNT := 10
 const COOL_HEAT := 30
 const REWARD_PER_DAY := 150
 const MIN_REWARD := 150
@@ -184,8 +184,10 @@ static func _advance(run: RunState, kind: StringName, amount: int, district_id: 
 		task.progress = mini(int(task.target), int(task.progress) + amount)
 		if int(task.progress) >= int(task.target):
 			task.done = true
-			StreetCred.add(run, StreetCred.TASK_DONE)
+			var pack := StreetCred.add(run, StreetCred.TASK_DONE)
 			run.cash += reward(run)
+			if not pack.is_empty():
+				task["rank_pack"] = pack
 			completed.append(task)
 	return completed
 

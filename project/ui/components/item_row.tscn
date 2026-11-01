@@ -74,7 +74,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
+theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 horizontal_alignment = 2
 
 [node name="DetailLabel" type="Label" parent="Margin/Row/Numbers"]

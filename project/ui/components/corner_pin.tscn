@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://ui/components/corner_pin.gd" id="1_pin"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_marker"]
-bg_color = Color(0.7216, 0.2314, 0.2588, 1)
+bg_color = Color(0.8314, 0.6863, 0.2157, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -17,7 +17,7 @@ shadow_color = Color(0, 0, 0, 0.6)
 shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_face"]
-bg_color = Color(0.0392, 0.0392, 0.0431, 1)
+bg_color = Color(0.0314, 0.0353, 0.0471, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2

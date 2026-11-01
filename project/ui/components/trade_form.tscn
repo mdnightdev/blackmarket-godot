@@ -5,18 +5,18 @@
 [ext_resource type="Texture2D" path="res://assets/icons/hud/chevron-up.svg" id="3_close"]
 
 [node name="TradeForm" type="VBoxContainer"]
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 script = ExtResource("1_form")
 
 [node name="Header" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 13
+theme_override_constants/separation = 10
 
 [node name="IconFrame" type="PanelContainer" parent="Header"]
 unique_name_in_owner = true
 clip_children = 1
-custom_minimum_size = Vector2(132, 132)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 size_flags_vertical = 0
 mouse_filter = 2
@@ -31,32 +31,33 @@ stretch_mode = 6
 [node name="Text" type="VBoxContainer" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 2
 
 [node name="NameLabel" type="Label" parent="Header/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HeaderLabel"
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 18
 autowrap_mode = 3
 
 [node name="CaptionLabel" type="Label" parent="Header/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
+theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
 
 [node name="DescriptionLabel" type="Label" parent="Header/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
 
 [node name="CloseButton" type="Button" parent="Header"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(44, 44)
+custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 size_flags_vertical = 0
 theme_type_variation = &"GhostButton"
@@ -67,79 +68,86 @@ script = ExtResource("2_button")
 
 [node name="Stats" type="HBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="PriceBox" type="VBoxContainer" parent="Stats"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
 [node name="PriceCaption" type="Label" parent="Stats/PriceBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
+theme_override_font_sizes/font_size = 11
 text = "PRICE"
 
 [node name="PriceValue" type="Label" parent="Stats/PriceBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
-theme_override_colors/font_color = Color(0.6235, 0.7216, 0.7843, 1)
+theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
+theme_override_font_sizes/font_size = 16
 
 [node name="HeldBox" type="VBoxContainer" parent="Stats"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
 [node name="Caption" type="Label" parent="Stats/HeldBox"]
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
+theme_override_font_sizes/font_size = 11
 text = "YOU HAVE"
 
 [node name="HeldValue" type="Label" parent="Stats/HeldBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
+theme_override_font_sizes/font_size = 16
 
 [node name="PaidBox" type="VBoxContainer" parent="Stats"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
 [node name="Caption" type="Label" parent="Stats/PaidBox"]
 layout_mode = 2
 theme_type_variation = &"HudCaptionLabel"
+theme_override_font_sizes/font_size = 11
 text = "YOU PAID"
 
 [node name="PaidValue" type="Label" parent="Stats/PaidBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
+theme_override_font_sizes/font_size = 16
 
 [node name="IntelLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 
 [node name="QuantityBox" type="VBoxContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 6
 
 [node name="Stepper" type="HBoxContainer" parent="QuantityBox"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="MinusButton" type="Button" parent="QuantityBox/Stepper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 48)
+custom_minimum_size = Vector2(44, 38)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 20
 text = "-"
 script = ExtResource("2_button")
 
@@ -148,29 +156,31 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"StatValueLabel"
+theme_override_font_sizes/font_size = 18
 text = "1"
 horizontal_alignment = 1
 
 [node name="PlusButton" type="Button" parent="QuantityBox/Stepper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 48)
+custom_minimum_size = Vector2(44, 38)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 20
 text = "+"
 script = ExtResource("2_button")
 
 [node name="MaxButton" type="Button" parent="QuantityBox/Stepper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 48)
+custom_minimum_size = Vector2(56, 38)
 layout_mode = 2
 theme_type_variation = &"SmallButton"
+theme_override_font_sizes/font_size = 14
 text = "Max"
 script = ExtResource("2_button")
 
 [node name="QuantitySlider" type="HSlider" parent="QuantityBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 min_value = 1.0
 value = 1.0
@@ -179,19 +189,20 @@ value = 1.0
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 
 [node name="Actions" type="HBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 
 [node name="ConfirmButton" type="Button" parent="Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
+theme_override_font_sizes/font_size = 16
 text = "Buy"
 text_overrun_behavior = 3
 script = ExtResource("2_button")

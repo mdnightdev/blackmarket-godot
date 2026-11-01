@@ -122,11 +122,22 @@ slots = [
     ('shell_company', 'shell_company.jpg'),
     ('bearer_bonds', 'bearer_bonds.jpg'),
     ('sealed_crate', 'sealed_crate.jpg'),
-    ('safehouse_lockbox', 'safehouse_lockbox.jpg')
+    ('safehouse_lockbox', 'safehouse_lockbox.jpg'),
+
+    # Row 10: Navigation & Syndicate Emblems (10)
+    ('nav_turf', 'nav_turf.png'),
+    ('nav_market', 'nav_market.png'),
+    ('nav_bag', 'nav_bag.png'),
+    ('nav_jobs', 'nav_jobs.png'),
+    ('nav_menu', 'nav_menu.png'),
+    ('lie_low', 'lie_low.jpg'),
+    ('family_azure_dragon', 'family_azure_dragon.jpg'),
+    ('family_red_lotus', 'family_red_lotus.jpg'),
+    ('family_white_tiger', 'family_white_tiger.jpg')
 ]
 
 COLS = 10
-ROWS = 10
+ROWS = 11
 
 # 1. Standard Atlas (128x128 tiles -> 1280x1280 px)
 TILE = 128
