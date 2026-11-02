@@ -3,9 +3,21 @@ extends BottomSheet
 
 const JOB_ROW := preload("res://ui/components/job_row.tscn")
 const READY_HINT := "IN BAG"
-const TASK_ICON: Texture2D = preload("res://assets/icons/hud/list-checks.svg")
 const LOCK_ICON: Texture2D = preload("res://assets/icons/hud/lock.svg")
-const HEADING_INDENT := 24
+const ICON_SELL: Texture2D = preload("res://assets/icons/hud/banknote.svg")
+const ICON_TRUCK: Texture2D = preload("res://assets/icons/hud/truck.svg")
+const ICON_FLAME: Texture2D = preload("res://assets/icons/hud/flame.svg")
+const ICON_DICES: Texture2D = preload("res://assets/icons/hud/dices.svg")
+const ICON_MAP: Texture2D = preload("res://assets/icons/hud/map.svg")
+const ICON_SWORDS: Texture2D = preload("res://assets/icons/hud/swords.svg")
+const ICON_RADAR: Texture2D = preload("res://assets/icons/hud/radar.svg")
+const ICON_SHIELD: Texture2D = preload("res://assets/icons/hud/shield.svg")
+const ICON_COINS: Texture2D = preload("res://assets/icons/hud/hand-coins.svg")
+const ICON_ZAP: Texture2D = preload("res://assets/icons/hud/zap.svg")
+const ICON_BRIEFCASE: Texture2D = preload("res://assets/icons/hud/briefcase-business.svg")
+const ICON_PACKAGE: Texture2D = preload("res://assets/icons/hud/package.svg")
+
+const HEADING_INDENT := 16
 const CONTINUE: StringName = &"continue"
 
 enum Tab { ACTIVE, COMPLETED, FAILED }
@@ -16,7 +28,7 @@ enum Tab { ACTIVE, COMPLETED, FAILED }
 @onready var _active_tab: Button = %ActiveTab
 @onready var _completed_tab: Button = %CompletedTab
 @onready var _failed_tab: Button = %FailedTab
-@onready var _do_not_disturb_toggle: CheckButton = %DoNotDisturbToggle
+@onready var _do_not_disturb_toggle: Button = %DoNotDisturbToggle
 
 var _pending_action := Callable()
 var _tab := Tab.ACTIVE
@@ -34,16 +46,23 @@ func _ready() -> void:
 	_failed_tab.pressed.connect(_select_tab.bind(Tab.FAILED))
 	_do_not_disturb_toggle.toggled.connect(func(enabled: bool) -> void:
 		Settings.do_not_disturb = enabled
+		_update_dnd_button(enabled)
 		Settings.save())
 
 
 func open_jobs() -> void:
-	SafeArea.apply_top_margin(_margin)
+	SafeArea.apply_top_margin(_margin, 64)
 	_tab = Tab.ACTIVE
 	_active_tab.button_pressed = true
 	_do_not_disturb_toggle.set_pressed_no_signal(Settings.do_not_disturb)
+	_update_dnd_button(Settings.do_not_disturb)
 	_rebuild()
 	open_sheet()
+
+
+func _update_dnd_button(enabled: bool) -> void:
+	_do_not_disturb_toggle.text = "SILENT: ON" if enabled else "SILENT: OFF"
+	_do_not_disturb_toggle.add_theme_color_override("font_color", Palette.TEXT if enabled else Palette.TEXT_MUTED)
 
 
 func _select_tab(tab: Tab) -> void:
@@ -51,7 +70,6 @@ func _select_tab(tab: Tab) -> void:
 	_rebuild()
 
 
-## Back closes an open confirmation before the page itself.
 func close_modal() -> bool:
 	if not _confirm.visible:
 		return false
@@ -67,6 +85,7 @@ func _on_run_changed() -> void:
 func _rebuild() -> void:
 	var run := GameState.run
 	Utils.clear_container(_list)
+	_update_tab_labels(run)
 	match _tab:
 		Tab.COMPLETED:
 			_add_history(run, false)
@@ -78,6 +97,25 @@ func _rebuild() -> void:
 			_add_active(run)
 			_add_owed(run)
 			_add_heists(run)
+	_add_bottom_spacer()
+
+
+func _update_tab_labels(run: RunState) -> void:
+	if run == null:
+		return
+	var active_tasks := run.daily_tasks.filter(func(t: Dictionary) -> bool: return not bool(t.get("done", false))).size()
+	var active_count := active_tasks + run.orders.size() + run.favours.size() + run.errands.size() \
+		+ run.customer_orders.size() + run.job_pings.size() + run.errand_offers.size() + run.customer_offers.size()
+	_active_tab.text = "ACTIVE (%d)" % active_count if active_count > 0 else "ACTIVE"
+	_completed_tab.text = "ARCHIVE"
+	_failed_tab.text = "FAILED"
+
+
+func _add_bottom_spacer() -> void:
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 48)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_list.add_child(spacer)
 
 
 func _add_history(run: RunState, failed: bool) -> void:
@@ -91,23 +129,53 @@ func _add_history(run: RunState, failed: bool) -> void:
 		if not place.is_empty():
 			caption = "%s. %s" % [place, caption]
 		var hint := "FAILED" if failed else "DONE"
-		_add_row(LOCK_ICON if failed else TASK_ICON, str(entry.title), "", caption, hint, Palette.RISK_HIGH if failed else Palette.RISK_LOW)
+		var slot := &"SlotCommon" if failed else &"SlotRare"
+		_add_row(LOCK_ICON if failed else ICON_PACKAGE, str(entry.title), "", caption, hint, Palette.RISK_HIGH if failed else Palette.RISK_LOW, slot)
+
+
+func _task_icon(kind: StringName) -> Texture2D:
+	match kind:
+		DailyTasks.SELL_VALUE:
+			return ICON_SELL
+		DailyTasks.DELIVER_JOB:
+			return ICON_TRUCK
+		DailyTasks.END_DAY_COOL:
+			return ICON_FLAME
+		DailyTasks.CASINO_WIN:
+			return ICON_DICES
+		DailyTasks.VISIT:
+			return ICON_MAP
+		DailyTasks.TAKE_CORNER:
+			return ICON_SWORDS
+		DailyTasks.SCOUT_CORNER:
+			return ICON_RADAR
+		DailyTasks.POST_GARRISON:
+			return ICON_SHIELD
+		DailyTasks.PAY_LOAN:
+			return ICON_COINS
+		DailyTasks.USE_CONSUMABLE:
+			return ICON_ZAP
+		_:
+			return ICON_BRIEFCASE
 
 
 func _add_tasks(run: RunState) -> void:
 	if run.daily_tasks.is_empty():
 		return
-	_add_heading("TODAY")
+	_add_heading("DAILY DIRECTIVES")
 	for task in run.daily_tasks:
-		var done := bool(task.done)
-		_add_row(TASK_ICON, DailyTasks.describe(task), Format.money(DailyTasks.reward(run)), DailyTasks.progress_text(task), "DONE" if done else "+%d CRED" % StreetCred.TASK_DONE)
+		var done := bool(task.get("done", false))
+		var icon := _task_icon(StringName(task.get("kind", "")))
+		var hint := "DONE" if done else "+%d CRED" % StreetCred.TASK_DONE
+		var hint_color := Palette.PRICE if done else Palette.TEXT_MUTED
+		var slot := &"SlotLegendary" if done else &"SlotRare"
+		_add_row(icon, DailyTasks.describe(task), Format.money(DailyTasks.reward(run)), DailyTasks.progress_text(task), hint, hint_color, slot)
 
 
-## Unanswered phone offers. Tapping one opens the same prompt as the banner.
 func _add_offers(run: RunState) -> void:
 	if run.errand_offers.is_empty() and run.customer_offers.is_empty() and run.job_pings.is_empty():
 		return
-	_add_heading("OFFERS")
+	_add_heading("RUSH OFFERS", "TAP TO ACCEPT")
 	for ping in run.job_pings:
 		var caller := JobPings.sender(ping)
 		if caller == null:
@@ -133,7 +201,7 @@ func _add_offers(run: RunState) -> void:
 
 func _add_offer_row(icon: Texture2D, title: String, pay: String, caption: String, phases_left: int) -> JobRow:
 	var hint := "LAST PHASE" if phases_left <= 1 else "%d PHASES LEFT" % phases_left
-	var row := _add_row(icon, title, pay, caption, hint, Palette.RISK_HIGH if phases_left <= 1 else Palette.TEXT_CREAM)
+	var row := _add_row(icon, title, pay, caption, hint, Palette.RISK_HIGH if phases_left <= 1 else Palette.TEXT_CREAM, &"SlotEpic")
 	row.set_tappable(true)
 	return row
 
@@ -154,7 +222,7 @@ func _open_customer_offer(offer_id: String) -> void:
 
 
 func _add_active(run: RunState) -> void:
-	_add_heading("ACTIVE")
+	_add_heading("ACTIVE CONTRACTS", "IN PROGRESS")
 	var count := _list.get_child_count()
 	for order in run.orders:
 		var item := Content.item(StringName(order.item))
@@ -164,13 +232,14 @@ func _add_active(run: RunState) -> void:
 		var district := Content.district(dealer.district_id)
 		var place := " in %s" % district.display_name if district != null else ""
 		var caption := "Buy them, then deliver to %s%s by %s" % [dealer.display_name, place, Calendar.describe(int(order.due)).to_lower()]
-		var row := _add_row(item.icon, "%d %s" % [int(order.quantity), item.display_name], Format.money(Orders.total(order)), caption, "")
+		var ready := Orders.can_deliver(run, order)
+		var slot := &"SlotLegendary" if ready else &"SlotRare"
+		var row := _add_row(item.icon, "%d %s" % [int(order.quantity), item.display_name], Format.money(Orders.total(order)), caption, "", Color.TRANSPARENT, slot)
 		if Orders.can_meet(run, order):
 			row.set_hint("MEET HERE", Palette.TEXT_CREAM)
 			row.set_tappable(true)
 			row.pressed.connect(_meet_dealer.bind(order))
 			continue
-		var ready := Orders.can_deliver(run, order)
 		if _offer_runner(run, row, order, item, dealer.display_name, ready, Orders.total(order)) or not ready:
 			continue
 		if district != null and district.id != run.district_id:
@@ -187,8 +256,10 @@ func _add_active(run: RunState) -> void:
 		if item == null or lieutenant == null:
 			continue
 		var caption := "Buy them, then hand them to %s by %s" % [lieutenant.display_name, Calendar.describe(int(favour.due)).to_lower()]
-		var row := _add_row(item.icon, "%d %s" % [int(favour.quantity), item.display_name], Format.money(Favours.total(favour)), caption, "")
-		_offer_runner(run, row, favour, item, lieutenant.display_name, Favours.can_deliver(run, favour), Favours.total(favour))
+		var ready := Favours.can_deliver(run, favour)
+		var slot := &"SlotLegendary" if ready else &"SlotRare"
+		var row := _add_row(item.icon, "%d %s" % [int(favour.quantity), item.display_name], Format.money(Favours.total(favour)), caption, "", Color.TRANSPARENT, slot)
+		_offer_runner(run, row, favour, item, lieutenant.display_name, ready, Favours.total(favour))
 
 	if Smuggling.is_carrying(run):
 		_add_crate(run)
@@ -200,7 +271,6 @@ func _add_active(run: RunState) -> void:
 		_add_note("No jobs taken. Customers order by phone, bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
 
 
-## Rows the runner can take become tappable and return true. Otherwise the hint shows how much of the job is in the bag.
 func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, client: String, ready: bool, pay: int) -> bool:
 	var quantity := int(job.quantity)
 	var held := Inventory.count(run, item.id)
@@ -249,10 +319,10 @@ func _meet_dealer(order: Dictionary) -> void:
 func _add_owed(run: RunState) -> void:
 	if run.invoices.is_empty() and run.dealer_loans.is_empty():
 		return
-	_add_heading("OWED")
+	_add_heading("OWED & CREDIT", "OUTSTANDING DEBT")
 	for invoice in run.invoices:
 		var due := "Due the morning of day %d. Some buyers never pay" % int(invoice.due_day)
-		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day))
+		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day), Palette.TEXT_CREAM, &"SlotLegendary")
 	for loan in run.dealer_loans:
 		var dealer := Content.dealer(StringName(str(loan.dealer)))
 		var name := dealer.display_name if dealer != null else str(loan.dealer)
@@ -260,12 +330,11 @@ func _add_owed(run: RunState) -> void:
 		var caption := "Due day %d (lent %s). Shark collects on default." % [due_day, Format.money(int(loan.amount))]
 		var hint := "DUE TODAY" if run.day >= due_day else "DAY %d" % due_day
 		var hint_color := Palette.RISK_HIGH if run.day >= due_day else Palette.TEXT_CREAM
-		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Loan to %s" % name, Format.money(int(loan.repayment)), caption, hint, hint_color)
+		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Loan to %s" % name, Format.money(int(loan.repayment)), caption, hint, hint_color, &"SlotLegendary")
 
 
-## Tapping the crate buys recon for this phase when the player has no eyes on the road yet.
 func _add_crate(run: RunState) -> void:
-	var row := _add_row(Smuggling.CRATE_ICON, "Voronin's crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe_route(run, run.crate), "")
+	var row := _add_row(Smuggling.CRATE_ICON, "Voronin's crate", Format.money(Smuggling.payout(run, run.crate)), Smuggling.describe_route(run, run.crate), "", Color.TRANSPARENT, &"SlotEpic")
 	if Smuggling.can_deliver(run):
 		row.set_hint("DELIVER HERE", Palette.TEXT_CREAM)
 	elif Campaign.is_act_two(run) and Crew.driver_ready(run):
@@ -301,7 +370,7 @@ func _add_errands(run: RunState) -> void:
 		var caption := "For %s by %s" % [sender.display_name, Calendar.describe(int(errand.due_stamp)).to_lower()]
 		var place := Content.district(Errands.target_district(errand))
 		var hint := "GO TO %s" % place.display_name.to_upper() if place != null else ""
-		var row := _add_row(sender.portrait, Errands.describe(errand), Errands.pay_label(errand), caption, hint)
+		var row := _add_row(sender.portrait, Errands.describe(errand), Errands.pay_label(errand), caption, hint, Color.TRANSPARENT, &"SlotRare")
 		if Campaign.is_act_two(run):
 			var kind := str(errand.get("kind", ""))
 			if kind == Errands.COLLECTION and Crew.muscle_ready(run):
@@ -326,7 +395,6 @@ func _add_errands(run: RunState) -> void:
 				))
 
 
-## Short of goods the row opens where to buy them. With the goods it heads to the customer or hands over here.
 func _add_customer_orders(run: RunState) -> void:
 	for order in run.customer_orders:
 		var place := Customers.district_name(order)
@@ -334,7 +402,8 @@ func _add_customer_orders(run: RunState) -> void:
 		var caption := "Hand over in %s by %s" % [place, Calendar.describe(int(order.due_stamp)).to_lower()]
 		if not stocked:
 			caption += ". Tap to see where to buy"
-		var row := _add_row(CustomerTalk.PORTRAIT, Customers.job_title(order), Format.money(Customers.total(order)), caption, "")
+		var slot := &"SlotLegendary" if stocked else &"SlotRare"
+		var row := _add_row(CustomerTalk.PORTRAIT, Customers.job_title(order), Format.money(Customers.total(order)), caption, "", Color.TRANSPARENT, slot)
 		row.set_tappable(true)
 		if not stocked:
 			row.set_hint("HAVE %d/%d" % [Inventory.count(run, StringName(str(order.item))), int(order.quantity)])
@@ -390,9 +459,9 @@ func _send_driver() -> void:
 
 
 func _add_heists(run: RunState) -> void:
-	_add_heading("HEISTS")
+	_add_heading("SYNDICATE HEISTS", "HIGH-STAKES")
 	if not Campaign.is_act_two(run):
-		_add_row(LOCK_ICON, "Heists", "", "Take Old Market from Vex to unlock", "")
+		_add_row(LOCK_ICON, "Syndicate Operations", "", "Take Old Market from Vex to unlock", "LOCKED", Palette.TEXT_MUTED, &"SlotCommon")
 		return
 	for heist in Content.heists():
 		var district := Content.district(heist.district_id)
@@ -400,10 +469,12 @@ func _add_heists(run: RunState) -> void:
 		var result := Heists.check(run, heist)
 		var hint := ""
 		var hint_color := Palette.TEXT_MUTED
+		var slot := &"SlotCommon"
 		match result:
 			Heists.Result.OK:
-				hint = "PULL IT, %s" % Odds.reading(Heists.success_chance(run, heist)).to_upper()
-				hint_color = Palette.TEXT_CREAM
+				hint = "PULL IT • %s" % Odds.reading(Heists.success_chance(run, heist)).to_upper()
+				hint_color = Palette.PRICE
+				slot = &"SlotLegendary"
 			Heists.Result.RANK_TOO_LOW:
 				hint = "NEEDS %s" % StreetCred.rank_name(heist.min_rank).to_upper()
 			Heists.Result.MISSING_CREW:
@@ -413,7 +484,7 @@ func _add_heists(run: RunState) -> void:
 				hint = "READY IN %d %s" % [days, "DAY" if days == 1 else "DAYS"]
 			Heists.Result.WRONG_DISTRICT:
 				hint = "GO TO %s" % place.to_upper()
-		var row := _add_row(heist.icon, heist.display_name, Format.money(Heists.payout(run, heist)), "%s. %s" % [place, heist.description], hint, hint_color)
+		var row := _add_row(heist.icon, heist.display_name, Format.money(Heists.payout(run, heist)), "%s. %s" % [place, heist.description], hint, hint_color, slot)
 		if result == Heists.Result.OK:
 			row.set_tappable(true)
 			row.pressed.connect(_ask_heist.bind(heist))
@@ -468,14 +539,39 @@ func _role_names(role_ids: Array[StringName]) -> String:
 	return ", ".join(names)
 
 
-func _add_heading(text: String) -> void:
+func _add_heading(text: String, subtitle: String = "") -> void:
+	if _list.get_child_count() > 0:
+		var gap := Control.new()
+		gap.custom_minimum_size = Vector2(0, 16)
+		gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_list.add_child(gap)
+
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", HEADING_INDENT)
 	margin.add_theme_constant_override("margin_right", HEADING_INDENT)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 8)
+	header_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	var label := Label.new()
-	label.theme_type_variation = &"ListHeading"
+	label.theme_type_variation = &"BannerLabel"
 	label.text = text
-	margin.add_child(label)
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", Palette.TEXT)
+	header_row.add_child(label)
+
+	if not subtitle.is_empty():
+		var sub := Label.new()
+		sub.theme_type_variation = &"PlaceLabel"
+		sub.text = "• " + subtitle.to_upper()
+		sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		header_row.add_child(sub)
+
+	margin.add_child(header_row)
 	_list.add_child(margin)
 
 
@@ -493,8 +589,8 @@ func _add_note(text: String) -> void:
 	_list.add_child(margin)
 
 
-func _add_row(icon: Texture2D, title: String, pay: String, caption: String, hint: String, hint_color := Color.TRANSPARENT) -> JobRow:
+func _add_row(icon: Texture2D, title: String, pay: String, caption: String, hint: String, hint_color := Color.TRANSPARENT, slot_variation: StringName = &"SlotRare", icon_tint := Color.WHITE) -> JobRow:
 	var row: JobRow = JOB_ROW.instantiate()
 	_list.add_child(row)
-	row.show_job(icon, title, pay, caption, hint, hint_color)
+	row.show_job(icon, title, pay, caption, hint, hint_color, slot_variation, icon_tint)
 	return row

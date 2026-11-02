@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/end/end_screen.gd" id="1_screen"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/title_city.jpg" id="2_background"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/title.jpg" id="2_background"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="3_button"]
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="4_vignette"]
 

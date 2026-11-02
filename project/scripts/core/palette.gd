@@ -3,35 +3,46 @@ class_name Palette
 ## Single source of truth for the entire app palette.
 ## Editing any constant below automatically updates Theme (theme.tres), all screens, sheets, and HUD components on boot.
 
-const INK := Color("08090c")
-const PANEL := Color("0f1217")
-const PANEL_LIFT := Color("151921")
-const SURFACE_ACTIVE := Color("1d232f")
-const LINE := Color("222938")
-const LINE_MUTED := Color("323b4e")
-const TEXT := Color("e2e6ee")
-const TEXT_MUTED := Color("7e899b")
-const TEXT_CREAM := Color("f0e6d2")
+const INK := Color("0b0c0d")
+const PANEL := Color("141618")
+const PANEL_LIFT := Color("1b1e21")
+const SURFACE_ACTIVE := Color("25292d")
+const LINE := Color("2b2f33")
+const LINE_MUTED := Color("3a4045")
+const TEXT := Color("e2e0dc")
+const TEXT_MUTED := Color("85878a")
+const TEXT_CREAM := Color("f0efeb")
 
-## Primary Accent: Syndicate Gold
-const GOLD := Color("d4af37")
-const GOLD_TITLE := Color("ebc768")
-const GOLD_BRIGHT := Color("f5d88e")
-const GOLD_BORDER := Color("b8932a")
+## Item / equipment rarity accents only. Keep these out of global UI chrome.
+## Primary accent replacement: cold steel / gunmetal.
+## These values replace the former warm-metal accent throughout the UI.
+const STEEL := Color("aeb5be")
+const STEEL_BRIGHT := Color("d0d5da")
+const GUNMETAL := Color("69737d")
+const STEEL_BORDER := Color("414950")
 
-## Legacy alias for codebase compatibility
-const PEACH := GOLD
-const PEACH_TITLE := GOLD_TITLE
-const PEACH_BRIGHT := GOLD_BRIGHT
-const PEACH_BORDER := GOLD_BORDER
+## Item / equipment rarity accents only. Keep these out of global UI chrome.
+const GREEN := Color("58c58a")
+const BLUE := Color("64aeeB")
+const PURPLE := Color("bd83e8")
+const FIRE := Color("f0784d")
 
-## Rarity Tones (Strictly for item slot rarity indicators, never general UI)
-const STEEL := Color("64748b")
-const CYAN := Color("38bdf8")
-const PURPLE := Color("a855f7")
+## Deprecated compatibility names. Kept so existing Palette.GOLD/PEACH
+## references in other scripts do not break; every alias now resolves to steel.
+const GOLD := STEEL
+const GOLD_TITLE := STEEL_BRIGHT
+const GOLD_BRIGHT := STEEL_BRIGHT
+const GOLD_BORDER := STEEL_BORDER
+const PEACH := STEEL
+const PEACH_TITLE := STEEL_BRIGHT
+const PEACH_BRIGHT := STEEL_BRIGHT
+const PEACH_BORDER := STEEL_BORDER
+
+## Legacy rarity alias retained for existing code.
+const CYAN := BLUE
 
 ## Economy & Status
-const PRICE := Color("d4af37")
+const PRICE := STEEL
 const RISK_LOW := Color("4ade80")
 const RISK_HIGH := Color("ef4444")
 
@@ -48,34 +59,34 @@ static func sync_theme() -> void:
 	_set_flat(theme, &"Button", &"pressed", SURFACE_ACTIVE, TEXT_MUTED)
 	_set_flat(theme, &"Button", &"disabled", INK, LINE)
 
-	_set_flat(theme, &"PrimaryButton", &"normal", PEACH, PEACH_TITLE)
-	_set_flat(theme, &"PrimaryButton", &"pressed", PEACH.darkened(0.2), PEACH_BORDER)
+	_set_flat(theme, &"PrimaryButton", &"normal", STEEL, STEEL_BORDER)
+	_set_flat(theme, &"PrimaryButton", &"pressed", GUNMETAL, STEEL_BRIGHT)
 
 	_set_flat(theme, &"DangerButton", &"normal", RISK_HIGH.darkened(0.32), RISK_HIGH)
 	_set_flat(theme, &"DangerButton", &"pressed", RISK_HIGH.darkened(0.46), RISK_HIGH)
 
-	_set_flat(theme, &"SecondaryButton", &"normal", PANEL, PEACH_BORDER)
-	_set_flat(theme, &"SecondaryButton", &"pressed", Color(PEACH, 0.22), PEACH_BORDER)
+	_set_flat(theme, &"SecondaryButton", &"normal", PANEL, LINE_MUTED)
+	_set_flat(theme, &"SecondaryButton", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
 
-	_set_flat(theme, &"GhostButton", &"pressed", Color(TEXT_CREAM, 0.10), Color.TRANSPARENT)
+	_set_flat(theme, &"GhostButton", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
 	_set_flat(theme, &"SmallButton", &"normal", PANEL_LIFT, LINE_MUTED)
 	_set_flat(theme, &"SmallButton", &"pressed", SURFACE_ACTIVE, TEXT_CREAM)
 
 	_set_flat(theme, &"TabButton", &"normal", PANEL, Color.TRANSPARENT)
-	_set_flat(theme, &"TabButton", &"pressed", SURFACE_ACTIVE, PEACH_BRIGHT)
+	_set_flat(theme, &"TabButton", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
 
 	_set_flat(theme, &"LineTab", &"normal", Color.TRANSPARENT, LINE)
-	_set_flat(theme, &"LineTab", &"pressed", Color.TRANSPARENT, PEACH_BRIGHT)
+	_set_flat(theme, &"LineTab", &"pressed", Color.TRANSPARENT, TEXT)
 
 	_set_flat(theme, &"ListRow", &"normal", Color.TRANSPARENT, LINE)
 	_set_flat(theme, &"ListRow", &"pressed", SURFACE_ACTIVE, LINE)
 
 	_set_flat(theme, &"ItemCard", &"normal", PANEL_LIFT, LINE)
-	_set_flat(theme, &"ItemCard", &"pressed", SURFACE_ACTIVE, PEACH_BORDER)
+	_set_flat(theme, &"ItemCard", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
 
 	_set_flat(theme, &"VenueButton", &"normal", PANEL_LIFT, LINE_MUTED)
-	_set_flat(theme, &"VenueButton", &"pressed", SURFACE_ACTIVE, PEACH_BORDER)
+	_set_flat(theme, &"VenueButton", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
 
 	_set_flat(theme, &"Card", &"panel", PANEL, LINE)
 	_set_flat(theme, &"HudCard", &"panel", PANEL, LINE)
@@ -88,10 +99,10 @@ static func sync_theme() -> void:
 	_set_flat(theme, &"PillLabel", &"normal", SURFACE_ACTIVE, Color.TRANSPARENT)
 
 	_set_flat(theme, &"ThinBar", &"background", LINE, Color.TRANSPARENT)
-	_set_flat(theme, &"ThinBar", &"fill", GOLD, Color.TRANSPARENT)
+	_set_flat(theme, &"ThinBar", &"fill", STEEL, Color.TRANSPARENT)
 	_set_flat(theme, &"HSlider", &"slider", LINE_MUTED, Color.TRANSPARENT)
-	_set_flat(theme, &"HSlider", &"grabber_area", GOLD, Color.TRANSPARENT)
-	_set_flat(theme, &"HSlider", &"grabber_area_highlight", GOLD_BRIGHT, Color.TRANSPARENT)
+	_set_flat(theme, &"HSlider", &"grabber_area", STEEL, Color.TRANSPARENT)
+	_set_flat(theme, &"HSlider", &"grabber_area_highlight", STEEL_BRIGHT, Color.TRANSPARENT)
 
 	var sep := theme.get_stylebox(&"separator", &"HSeparator") as StyleBoxLine
 	if sep != null:
@@ -176,22 +187,20 @@ static func on_node_added(node: Node) -> void:
 			var fill_sb := bar.get_theme_stylebox(&"fill") as StyleBoxFlat
 			if fill_sb != null:
 				fill_sb.set_block_signals(true)
-				fill_sb.bg_color = PEACH
+				fill_sb.bg_color = STEEL
 				fill_sb.set_block_signals(false)
 	elif node is ColorRect:
 		var rect := node as ColorRect
-		if rect.name == &"Backdrop":
+		if rect.name == &"Backdrop" or rect.name == &"Dim":
 			rect.color = INK
-		elif rect.name == &"Dim":
-			rect.color = Color(INK, 0.72)
 		elif rect.name.ends_with("Divider"):
 			rect.color = LINE_MUTED
 	elif node is TextureRect:
 		var tex := node as TextureRect
 		if tex.name == &"Icon" and tex.get_parent() != null and tex.get_parent().name == &"Cash":
-			tex.modulate = GOLD
+			tex.modulate = STEEL
 		elif tex.name == &"CleanIcon":
-			tex.modulate = GOLD
+			tex.modulate = STEEL
 	elif node is Label:
 		var lbl := node as Label
 		if lbl.name == &"CleanValue" or lbl.name == &"PriceLabel":

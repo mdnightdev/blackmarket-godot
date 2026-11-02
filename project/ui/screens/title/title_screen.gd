@@ -11,7 +11,6 @@ var _music: AudioStream
 @onready var _background: TextureRect = %Background
 @onready var _neon_glow: TextureRect = %NeonGlow
 @onready var _logo: Control = %Logo
-@onready var _version_label: Label = %VersionLabel
 @onready var _exit_dialog: ConfirmDialog = %ExitDialog
 
 @onready var _loading_section: MarginContainer = %LoadingSection
@@ -21,7 +20,6 @@ var _music: AudioStream
 
 
 func _ready() -> void:
-	_version_label.text = "v%s" % ProjectSettings.get_setting("application/config/version", "")
 	_exit_dialog.confirmed.connect(get_tree().quit)
 	resized.connect(_center_background_pivot)
 	_center_background_pivot()

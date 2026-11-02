@@ -8,7 +8,6 @@ extends PanelContainer
 signal item_selected(item: ItemDef)
 
 const ICON_SIZE := 96
-const GOLD := Color(0.8314, 0.6863, 0.2157, 1)
 
 var _item: ItemDef
 var _owned := false
@@ -57,7 +56,7 @@ func display(item: ItemDef, owned: bool, affordable: bool, caption: String) -> v
 	box.add_child(spacer)
 
 	var price_text := "OWNED" if owned else Format.money(item.base_price)
-	box.add_child(_label(price_text, &"Label", 18, GOLD if (owned or affordable) else Palette.TEXT_MUTED))
+	box.add_child(_label(price_text, &"Label", 18, Palette.PRICE if (owned or affordable) else Palette.TEXT_MUTED))
 	if not owned:
 		box.add_child(_label("TAP TO BUY" if affordable else "NOT ENOUGH CASH", &"HudCaptionLabel", 12, Palette.TEXT_MUTED))
 

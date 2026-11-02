@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://ui/screens/title/title_screen.gd" id="1_screen"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/title_city.jpg" id="2_background"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/title.jpg" id="2_background"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="3_button"]
 [ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="4_confirm"]
 [ext_resource type="PackedScene" path="res://ui/effects/rain.tscn" id="5_rain"]
@@ -104,11 +104,6 @@ size_flags_horizontal = 4
 mouse_filter = 2
 color = Color(0.7216, 0.2314, 0.2588, 0.7)
 
-[node name="Tagline" type="Label" parent="Logo"]
-layout_mode = 2
-theme_type_variation = &"CaptionLabel"
-text = "Goods. Secrets. Freedom."
-horizontal_alignment = 1
 
 [node name="LoadingSection" type="MarginContainer" parent="."]
 unique_name_in_owner = true
@@ -153,21 +148,6 @@ custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 show_percentage = false
 
-[node name="VersionLabel" type="Label" parent="."]
-unique_name_in_owner = true
-modulate = Color(1, 1, 1, 0.6)
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -168.0
-offset_bottom = -144.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_type_variation = &"CaptionLabel"
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="ExitDialog" parent="." instance=ExtResource("4_confirm")]
 unique_name_in_owner = true
