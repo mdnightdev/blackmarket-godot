@@ -24,7 +24,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0314, 0.0353, 0.0471, 1)
+color = Color(0.0431, 0.0471, 0.0510, 1)
 
 [node name="Background" type="TextureRect" parent="."]
 self_modulate = Color(0.3, 0.3, 0.36, 1)
@@ -99,7 +99,6 @@ autowrap_mode = 3
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8706, 0.8392, 0.8078, 1)
 theme_override_font_sizes/font_size = 23
 horizontal_alignment = 1
 autowrap_mode = 3

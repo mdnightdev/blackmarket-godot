@@ -19,6 +19,8 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_job_icon"]
+
 [node name="JobRow" type="PanelContainer"]
 custom_minimum_size = Vector2(0, 68)
 mouse_filter = 1
@@ -31,15 +33,15 @@ theme_override_constants/separation = 12
 
 [node name="IconFrame" type="PanelContainer" parent="Row"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 56)
+custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-theme_type_variation = &"SlotRare"
+theme_override_styles/panel = SubResource("StyleBoxEmpty_job_icon")
 
 [node name="Icon" type="TextureRect" parent="Row/IconFrame"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(36, 36)
+custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4

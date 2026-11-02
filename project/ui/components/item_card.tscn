@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://ui/components/item_card.gd" id="1_card"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_card_icon"]
 
 [node name="ItemCard" type="Button"]
 custom_minimum_size = Vector2(144, 144)
@@ -29,13 +31,12 @@ alignment = 1
 
 [node name="IconFrame" type="PanelContainer" parent="Margin/Layout"]
 unique_name_in_owner = true
-clip_children = 1
 custom_minimum_size = Vector2(84, 84)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 mouse_filter = 2
-theme_type_variation = &"IconFrame"
+theme_override_styles/panel = SubResource("StyleBoxEmpty_card_icon")
 
 [node name="Icon" type="TextureRect" parent="Margin/Layout/IconFrame"]
 unique_name_in_owner = true
@@ -62,7 +63,6 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
-theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 

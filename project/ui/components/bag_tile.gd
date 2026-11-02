@@ -10,7 +10,6 @@ var description := ""
 
 @onready var _icon: TextureRect = %Icon
 @onready var _count_label: Label = %CountLabel
-@onready var _frame: Panel = %Frame
 
 
 func _ready() -> void:
@@ -30,8 +29,19 @@ func show_entry(entry_icon: Texture2D, count_text: String, entry_title: String, 
 
 
 func set_selected(selected: bool) -> void:
-	var style: StyleBoxFlat = _frame.get_theme_stylebox("panel").duplicate()
-	style.border_color = Palette.TEXT_CREAM if selected else Palette.LINE_MUTED
-	style.set_border_width_all(3 if selected else 1)
-	_frame.add_theme_stylebox_override("panel", style)
-
+	var base := get_theme_stylebox(&"normal")
+	if not (base is StyleBoxFlat):
+		return
+	var style: StyleBoxFlat = base.duplicate()
+	if selected:
+		style.border_color = Palette.STEEL_BRIGHT
+		style.set_border_width_all(2)
+		style.bg_color = Palette.SURFACE_ACTIVE
+	else:
+		style.border_color = Color.TRANSPARENT
+		style.set_border_width_all(0)
+		style.bg_color = Palette.PANEL_LIFT
+	add_theme_stylebox_override(&"normal", style)
+	add_theme_stylebox_override(&"hover", style)
+	add_theme_stylebox_override(&"pressed", style)
+	add_theme_stylebox_override(&"focus", style)

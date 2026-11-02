@@ -54,48 +54,52 @@ static func sync_theme() -> void:
 		return
 	theme.set_block_signals(true)
 
-	_set_flat(theme, &"Button", &"normal", PANEL, LINE_MUTED)
-	_set_flat(theme, &"Button", &"hover", PANEL_LIFT, LINE_MUTED)
-	_set_flat(theme, &"Button", &"pressed", SURFACE_ACTIVE, TEXT_MUTED)
-	_set_flat(theme, &"Button", &"disabled", INK, LINE)
+	_set_flat(theme, &"Button", &"normal", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"Button", &"hover", PANEL_LIFT, Color.TRANSPARENT)
+	_set_flat(theme, &"Button", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
+	_set_flat(theme, &"Button", &"disabled", INK, Color.TRANSPARENT)
 
-	_set_flat(theme, &"PrimaryButton", &"normal", STEEL, STEEL_BORDER)
+	_set_flat(theme, &"PrimaryButton", &"normal", STEEL, Color.TRANSPARENT)
 	_set_flat(theme, &"PrimaryButton", &"pressed", GUNMETAL, STEEL_BRIGHT)
 
-	_set_flat(theme, &"DangerButton", &"normal", RISK_HIGH.darkened(0.32), RISK_HIGH)
-	_set_flat(theme, &"DangerButton", &"pressed", RISK_HIGH.darkened(0.46), RISK_HIGH)
+	_set_flat(theme, &"DangerButton", &"normal", RISK_HIGH.darkened(0.32), Color.TRANSPARENT)
+	_set_flat(theme, &"DangerButton", &"pressed", RISK_HIGH.darkened(0.46), Color.TRANSPARENT)
 
-	_set_flat(theme, &"SecondaryButton", &"normal", PANEL, LINE_MUTED)
-	_set_flat(theme, &"SecondaryButton", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
+	_set_flat(theme, &"SecondaryButton", &"normal", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"SecondaryButton", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
 	_set_flat(theme, &"GhostButton", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
-	_set_flat(theme, &"SmallButton", &"normal", PANEL_LIFT, LINE_MUTED)
-	_set_flat(theme, &"SmallButton", &"pressed", SURFACE_ACTIVE, TEXT_CREAM)
+	_set_flat(theme, &"SmallButton", &"normal", PANEL_LIFT, Color.TRANSPARENT)
+	_set_flat(theme, &"SmallButton", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
 	_set_flat(theme, &"TabButton", &"normal", PANEL, Color.TRANSPARENT)
-	_set_flat(theme, &"TabButton", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
+	_set_flat(theme, &"TabButton", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
-	_set_flat(theme, &"LineTab", &"normal", Color.TRANSPARENT, LINE)
+	_set_flat(theme, &"LineTab", &"normal", Color.TRANSPARENT, Color.TRANSPARENT)
 	_set_flat(theme, &"LineTab", &"pressed", Color.TRANSPARENT, TEXT)
 
-	_set_flat(theme, &"ListRow", &"normal", Color.TRANSPARENT, LINE)
-	_set_flat(theme, &"ListRow", &"pressed", SURFACE_ACTIVE, LINE)
+	_set_flat(theme, &"ListRow", &"normal", Color.TRANSPARENT, Color.TRANSPARENT)
+	_set_flat(theme, &"ListRow", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
-	_set_flat(theme, &"ItemCard", &"normal", PANEL_LIFT, LINE)
-	_set_flat(theme, &"ItemCard", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
+	_set_flat(theme, &"ItemCard", &"normal", PANEL_LIFT, Color.TRANSPARENT)
+	_set_flat(theme, &"ItemCard", &"hover", PANEL_LIFT, Color.TRANSPARENT)
+	_set_flat(theme, &"ItemCard", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
+	_set_flat(theme, &"ItemCardSelected", &"normal", SURFACE_ACTIVE, STEEL_BRIGHT)
+	_set_flat(theme, &"ItemCardSelected", &"hover", SURFACE_ACTIVE, STEEL_BRIGHT)
+	_set_flat(theme, &"ItemCardSelected", &"pressed", SURFACE_ACTIVE, STEEL_BRIGHT)
 
-	_set_flat(theme, &"VenueButton", &"normal", PANEL_LIFT, LINE_MUTED)
-	_set_flat(theme, &"VenueButton", &"pressed", SURFACE_ACTIVE, LINE_MUTED)
+	_set_flat(theme, &"VenueButton", &"normal", PANEL_LIFT, Color.TRANSPARENT)
+	_set_flat(theme, &"VenueButton", &"pressed", SURFACE_ACTIVE, Color.TRANSPARENT)
 
-	_set_flat(theme, &"Card", &"panel", PANEL, LINE)
-	_set_flat(theme, &"HudCard", &"panel", PANEL, LINE)
-	_set_flat(theme, &"HudStrip", &"panel", INK, LINE_MUTED)
-	_set_flat(theme, &"Sheet", &"panel", PANEL, LINE_MUTED)
-	_set_flat(theme, &"VenuePanel", &"panel", PANEL, LINE)
-	_set_flat(theme, &"TradePanel", &"panel", PANEL, LINE_MUTED)
-	_set_flat(theme, &"SpeechBubble", &"panel", PANEL_LIFT, LINE_MUTED)
-	_set_flat(theme, &"IconFrame", &"panel", PANEL, LINE_MUTED)
+	_set_flat(theme, &"Card", &"panel", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"HudCard", &"panel", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"HudStrip", &"panel", INK, Color.TRANSPARENT)
+	_set_flat(theme, &"Sheet", &"panel", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"VenuePanel", &"panel", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"TradePanel", &"panel", PANEL, Color.TRANSPARENT)
+	_set_flat(theme, &"SpeechBubble", &"panel", PANEL_LIFT, Color.TRANSPARENT)
+	theme.set_stylebox(&"panel", &"IconFrame", StyleBoxEmpty.new())
 	_set_flat(theme, &"PillLabel", &"normal", SURFACE_ACTIVE, Color.TRANSPARENT)
 
 	_set_flat(theme, &"ThinBar", &"background", LINE, Color.TRANSPARENT)
@@ -150,7 +154,12 @@ static func _set_flat(theme: Theme, type_name: StringName, style_name: StringNam
 		return
 	sb.set_block_signals(true)
 	sb.bg_color = bg
-	if border != Color.TRANSPARENT:
+	sb.shadow_size = 0
+	if border == Color.TRANSPARENT:
+		sb.set_border_width_all(0)
+		sb.border_color = Color.TRANSPARENT
+	else:
+		sb.set_border_width_all(1)
 		sb.border_color = border
 	sb.set_block_signals(false)
 
@@ -162,18 +171,16 @@ static func on_node_added(node: Node) -> void:
 			var sb := ctrl.get_theme_stylebox(&"panel") as StyleBoxFlat
 			if sb != null:
 				sb.set_block_signals(true)
+				sb.shadow_size = 0
 				if ctrl.name == &"Sheet":
 					sb.bg_color = INK if is_equal_approx(ctrl.anchor_top, 0.0) else PANEL
-					if sb.border_width_top > 0:
-						sb.border_color = LINE_MUTED
+					sb.set_border_width_all(0)
 				elif ctrl is NavBar or ctrl.name == &"NavBar":
 					sb.bg_color = INK
-					sb.border_color = LINE_MUTED
+					sb.set_border_width_all(0)
 				elif ctrl.name == &"Detail":
 					sb.bg_color = PANEL
-					sb.border_color = LINE
-				elif ctrl is JobRow or ctrl.name == &"JobRow":
-					sb.border_color = LINE
+					sb.set_border_width_all(0)
 				sb.set_block_signals(false)
 	elif node is ProgressBar:
 		var bar := node as ProgressBar

@@ -72,7 +72,7 @@ func _add_clean_up_row() -> void:
 	elif run.cash < Fixer.clean_up_cost(run):
 		detail = "NOT ENOUGH CASH"
 	var caption := "Drops your heat by up to %d. Once per phase." % Fixer.CLEAN_UP_HEAT
-	var row := _add_row(_add_slot(&"SlotEpic"))
+	var row := _add_row()
 	row.show_entry(Fixer.CLEAN_UP_ICON, "Make the heat go away", Format.money(Fixer.clean_up_cost(run)), caption, detail, Palette.TEXT_CREAM if Fixer.can_clean_up(run) else Palette.TEXT_MUTED)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_clean_up())
 
@@ -81,7 +81,7 @@ func _add_weapons_row() -> void:
 	var run := GameState.run
 	var caption := "Blades and handguns, any amount. He buys back at half." if Armory.room(run) == Armory.Room.FRONT else "The back room is open to you."
 	var owned := Armory.total(run)
-	var row := _add_row(_add_slot(&"SlotEpic"))
+	var row := _add_row()
 	row.show_entry(_weapons_icon, "Ask about weapons", "%s owned" % Format.count(owned) if owned > 0 else "", caption, "TAP TO TALK", Palette.TEXT_CREAM)
 	row.item_selected.connect(func(_item: ItemDef) -> void: WeaponsTalk.open(_host))
 
@@ -90,7 +90,7 @@ func _add_respec_row() -> void:
 	var run := GameState.run
 	var can_pay := Skills.check_respec(run) == Skills.Result.OK
 	var caption := "Refunds all %d skill points so you can spend them again." % Skills.points_spent(run)
-	var row := _add_row(_add_slot(&"SlotEpic"))
+	var row := _add_row()
 	row.show_entry(RESPEC_ICON, "Forget your skills", Format.money(Skills.respec_cost(run)), caption, "TAP TO TALK" if can_pay else "NOT ENOUGH CASH", Palette.TEXT_CREAM if can_pay else Palette.TEXT_MUTED)
 	row.item_selected.connect(func(_item: ItemDef) -> void: _talk_about_respec())
 

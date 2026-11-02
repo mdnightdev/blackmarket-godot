@@ -133,6 +133,14 @@ func _select_tile(selected: BagTile) -> void:
 	_detail_title.text = selected.title
 	_detail_meta.text = selected.meta
 	_detail_text.text = selected.description
+
+	var item: ItemDef = _goods_by_title.get(selected.title)
+	if item != null:
+		var risk_color := Palette.RISK_LOW if item.risk < 25 else (Palette.RISK_HIGH if item.risk > 45 else Palette.TEXT_MUTED)
+		_detail_meta.add_theme_color_override(&"font_color", risk_color)
+	else:
+		_detail_meta.add_theme_color_override(&"font_color", Palette.TEXT_MUTED)
+
 	_show_sell_button(_goods_by_title.get(selected.title))
 
 

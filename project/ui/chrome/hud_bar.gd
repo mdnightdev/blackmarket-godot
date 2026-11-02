@@ -117,5 +117,7 @@ func _heat_color(heat: int, frenzy := false) -> Color:
 	if frenzy or heat >= HEAT_HIGH:
 		return Palette.RISK_HIGH
 	if heat >= HEAT_MEDIUM:
-		return Palette.PEACH_BRIGHT
-	return Palette.RISK_LOW
+		return Palette.FIRE
+	if heat > 0:
+		return Palette.FIRE
+	return Palette.TEXT_MUTED

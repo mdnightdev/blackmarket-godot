@@ -21,7 +21,6 @@ const FAMILY_LINES := {
 }
 const HANDSHAKE_MIN_TOTAL := 1000
 
-@onready var _background: TextureRect = %Background
 @onready var _margin: MarginContainer = %Margin
 @onready var _header: Control = %Header
 @onready var _portrait: TalkingPortrait = %Portrait
@@ -30,7 +29,6 @@ const HANDSHAKE_MIN_TOTAL := 1000
 @onready var _speech: Typewriter = %Speech
 @onready var _news_line: NewsLine = %NewsLine
 @onready var _mood_label: Label = %MoodLabel
-@onready var _district_pill: Label = %DistrictPill
 @onready var _bag_bar: ProgressBar = %BagBar
 @onready var _order_list: VBoxContainer = %OrderList
 @onready var _buy_tab: Button = %BuyTab
@@ -60,9 +58,7 @@ func _ready() -> void:
 
 	SafeArea.apply_top_margin(_margin, 64)
 	SafeArea.apply_bottom_margin(_margin, SafeArea.NAV_HEIGHT + 12)
-	_background.texture = district.background
 	_dealer_label.text = _dealer.display_name
-	_district_pill.text = district.display_name
 	_portrait.show_speaker(_dealer)
 	_speech.finished.connect(_portrait.set_talking.bind(false))
 
@@ -321,10 +317,16 @@ func _lay_out(cards: Array[Dictionary]) -> void:
 
 	for start in range(0, cards.size(), CARDS_PER_ROW):
 		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_theme_constant_override("separation", CARD_SPACING)
 		_list.add_child(row)
 		for entry in cards.slice(start, start + CARDS_PER_ROW):
 			var card: ItemCard = ITEM_CARD.instantiate()
+			card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			card.custom_minimum_size.x = 0
+			card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			card.custom_minimum_size.x = 0
 			row.add_child(card)
 			card.display(entry.item, entry.price, entry.caption, entry.detail, entry.color)
 			card.show_trend(entry.trend, entry.color)
@@ -357,7 +359,7 @@ func _risk_color(item: ItemDef) -> Color:
 func _change_color(change: float) -> Color:
 	if absf(change) < STEADY_CHANGE:
 		return Palette.TEXT_MUTED
-	return Palette.TEXT_CREAM if change > 0.0 else Palette.PRICE
+	return Palette.RISK_HIGH if change > 0.0 else Palette.RISK_LOW
 
 
 func _on_item_selected(item: ItemDef) -> void:

@@ -30,7 +30,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0314, 0.0353, 0.0471, 0.85)
+color = Color(0.0431, 0.0471, 0.0510, 0.85)
 
 [node name="Column" type="VBoxContainer" parent="."]
 layout_mode = 1

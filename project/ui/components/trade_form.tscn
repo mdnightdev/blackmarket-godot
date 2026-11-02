@@ -4,6 +4,8 @@
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="2_button"]
 [ext_resource type="Texture2D" path="res://assets/icons/hud/chevron-up.svg" id="3_close"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_trade_icon"]
+
 [node name="TradeForm" type="VBoxContainer"]
 theme_override_constants/separation = 8
 script = ExtResource("1_form")
@@ -15,12 +17,11 @@ theme_override_constants/separation = 10
 
 [node name="IconFrame" type="PanelContainer" parent="Header"]
 unique_name_in_owner = true
-clip_children = 1
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 size_flags_vertical = 0
 mouse_filter = 2
-theme_type_variation = &"IconFrame"
+theme_override_styles/panel = SubResource("StyleBoxEmpty_trade_icon")
 
 [node name="Icon" type="TextureRect" parent="Header/IconFrame"]
 unique_name_in_owner = true
@@ -87,7 +88,6 @@ text = "PRICE"
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
-theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 theme_override_font_sizes/font_size = 16
 
 [node name="HeldBox" type="VBoxContainer" parent="Stats"]

@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://ui/components/turf_scene.gd" id="5_headquarters"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
-bg_color = Color(0.0314, 0.0353, 0.0471, 1)
+bg_color = Color(0.0431, 0.0471, 0.0510, 1)
 
 [node name="TurfSheet" type="Control"]
 layout_mode = 3
@@ -24,7 +24,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0314, 0.0353, 0.0471, 0.6)
+color = Color(0.0431, 0.0471, 0.0510, 0.6)
 
 [node name="Sheet" type="PanelContainer" parent="."]
 unique_name_in_owner = true

@@ -18,20 +18,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_screen")
 
-[node name="Background" type="TextureRect" parent="."]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-expand_mode = 1
-stretch_mode = 6
-
-[node name="Vignette" parent="." instance=ExtResource("2_vignette")]
-layout_mode = 1
-
 [node name="Margin" type="MarginContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -85,21 +71,10 @@ theme_override_constants/separation = 3
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Section" type="Label" parent="Margin/Layout/Content/Header/Text/TopRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"PlaceLabel"
-text = "MARKET"
-
 [node name="Pills" type="HBoxContainer" parent="Margin/Layout/Content/Header/Text/TopRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
-
-[node name="DistrictPill" type="Label" parent="Margin/Layout/Content/Header/Text/TopRow/Pills"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"PillLabel"
 
 [node name="MoodLabel" type="Label" parent="Margin/Layout/Content/Header/Text/TopRow/Pills"]
 unique_name_in_owner = true

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://ui/components/item_row.gd" id="1_row"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_icon_frame"]
 
 [node name="ItemRow" type="Button"]
 custom_minimum_size = Vector2(0, 64)
@@ -28,12 +30,11 @@ theme_override_constants/separation = 10
 
 [node name="IconFrame" type="PanelContainer" parent="Margin/Row"]
 unique_name_in_owner = true
-clip_children = 1
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-theme_type_variation = &"IconFrame"
+theme_override_styles/panel = SubResource("StyleBoxEmpty_icon_frame")
 
 [node name="Icon" type="TextureRect" parent="Margin/Row/IconFrame"]
 unique_name_in_owner = true
@@ -74,7 +75,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HudValueLabel"
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 horizontal_alignment = 2
 
 [node name="DetailLabel" type="Label" parent="Margin/Row/Numbers"]

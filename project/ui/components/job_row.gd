@@ -38,9 +38,6 @@ func show_job(icon: Texture2D, title: String, pay: String, caption: String, hint
 
 func set_slot(variation: StringName) -> void:
 	_pending_slot = variation
-	var frame: PanelContainer = %IconFrame if has_node("%IconFrame") else _icon_frame
-	if frame != null and variation != &"":
-		frame.theme_type_variation = variation
 
 
 func set_hint(hint: String, hint_color := Color.TRANSPARENT) -> void:
