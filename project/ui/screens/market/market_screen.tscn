@@ -40,31 +40,27 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 16
+theme_override_constants/margin_left = 0
 theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
+theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 16
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Panel" type="PanelContainer" parent="Margin/Layout"]
+[node name="Content" type="VBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_type_variation = &"VenuePanel"
-
-[node name="Content" type="VBoxContainer" parent="Margin/Layout/Panel"]
-layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Header" type="HBoxContainer" parent="Margin/Layout/Panel/Content"]
+[node name="Header" type="HBoxContainer" parent="Margin/Layout/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="PortraitFrame" type="PanelContainer" parent="Margin/Layout/Panel/Content/Header"]
+[node name="PortraitFrame" type="PanelContainer" parent="Margin/Layout/Content/Header"]
 clip_children = 1
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -72,52 +68,52 @@ size_flags_vertical = 0
 mouse_filter = 2
 theme_type_variation = &"IconFrame"
 
-[node name="Portrait" type="Control" parent="Margin/Layout/Panel/Content/Header/PortraitFrame"]
+[node name="Portrait" type="Control" parent="Margin/Layout/Content/Header/PortraitFrame"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("8_portrait")
 cover = true
 
-[node name="Text" type="VBoxContainer" parent="Margin/Layout/Panel/Content/Header"]
+[node name="Text" type="VBoxContainer" parent="Margin/Layout/Content/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 3
 
-[node name="TopRow" type="HBoxContainer" parent="Margin/Layout/Panel/Content/Header/Text"]
+[node name="TopRow" type="HBoxContainer" parent="Margin/Layout/Content/Header/Text"]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Section" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/TopRow"]
+[node name="Section" type="Label" parent="Margin/Layout/Content/Header/Text/TopRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PlaceLabel"
 text = "MARKET"
 
-[node name="Pills" type="HBoxContainer" parent="Margin/Layout/Panel/Content/Header/Text/TopRow"]
+[node name="Pills" type="HBoxContainer" parent="Margin/Layout/Content/Header/Text/TopRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="DistrictPill" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/TopRow/Pills"]
+[node name="DistrictPill" type="Label" parent="Margin/Layout/Content/Header/Text/TopRow/Pills"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PillLabel"
 
-[node name="MoodLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/TopRow/Pills"]
+[node name="MoodLabel" type="Label" parent="Margin/Layout/Content/Header/Text/TopRow/Pills"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PillLabel"
 text = "WARY"
 
-[node name="DealerLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text"]
+[node name="DealerLabel" type="Label" parent="Margin/Layout/Content/Header/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"NameLabel"
 theme_override_font_sizes/font_size = 17
 
-[node name="FamilyLabel" type="Label" parent="Margin/Layout/Panel/Content/Header/Text"]
+[node name="FamilyLabel" type="Label" parent="Margin/Layout/Content/Header/Text"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -125,12 +121,12 @@ theme_type_variation = &"MutedLabel"
 theme_override_font_sizes/font_size = 12
 autowrap_mode = 3
 
-[node name="SpeechBubble" type="PanelContainer" parent="Margin/Layout/Panel/Content/Header/Text"]
+[node name="SpeechBubble" type="PanelContainer" parent="Margin/Layout/Content/Header/Text"]
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"SpeechBubble"
 
-[node name="Speech" type="Label" parent="Margin/Layout/Panel/Content/Header/Text/SpeechBubble"]
+[node name="Speech" type="Label" parent="Margin/Layout/Content/Header/Text/SpeechBubble"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
@@ -138,26 +134,25 @@ theme_override_font_sizes/font_size = 13
 autowrap_mode = 3
 script = ExtResource("9_typewriter")
 
-[node name="NewsLine" type="Label" parent="Margin/Layout/Panel/Content"]
+[node name="NewsLine" type="Label" parent="Margin/Layout/Content"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
-theme_override_colors/font_color = Color(0.8314, 0.6863, 0.2157, 1)
 autowrap_mode = 3
 script = ExtResource("7_news_line")
 
-[node name="OrderList" type="VBoxContainer" parent="Margin/Layout/Panel/Content"]
+[node name="OrderList" type="VBoxContainer" parent="Margin/Layout/Content"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Tabs" type="HBoxContainer" parent="Margin/Layout/Panel/Content"]
+[node name="Tabs" type="HBoxContainer" parent="Margin/Layout/Content"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="BuyTab" type="Button" parent="Margin/Layout/Panel/Content/Tabs"]
+[node name="BuyTab" type="Button" parent="Margin/Layout/Content/Tabs"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
@@ -167,7 +162,7 @@ toggle_mode = true
 text = "BUY CONTRABAND"
 script = ExtResource("4_button")
 
-[node name="SellTab" type="Button" parent="Margin/Layout/Panel/Content/Tabs"]
+[node name="SellTab" type="Button" parent="Margin/Layout/Content/Tabs"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
@@ -177,7 +172,7 @@ toggle_mode = true
 text = "SELL FROM BAG"
 script = ExtResource("4_button")
 
-[node name="NoticeLabel" type="Label" parent="Margin/Layout/Panel/Content"]
+[node name="NoticeLabel" type="Label" parent="Margin/Layout/Content"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -185,26 +180,26 @@ theme_type_variation = &"MutedLabel"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="TradePanel" type="PanelContainer" parent="Margin/Layout/Panel/Content"]
+[node name="TradePanel" type="PanelContainer" parent="Margin/Layout/Content"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 mouse_filter = 1
 theme_type_variation = &"TradePanel"
 
-[node name="TradeForm" parent="Margin/Layout/Panel/Content/TradePanel" instance=ExtResource("5_trade_form")]
+[node name="TradeForm" parent="Margin/Layout/Content/TradePanel" instance=ExtResource("5_trade_form")]
 unique_name_in_owner = true
 layout_mode = 2
 compact = false
 
-[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Panel/Content"]
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 scroll_deadzone = 12
 
-[node name="List" type="VBoxContainer" parent="Margin/Layout/Panel/Content/Scroll"]
+[node name="List" type="VBoxContainer" parent="Margin/Layout/Content/Scroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
