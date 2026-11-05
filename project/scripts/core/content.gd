@@ -57,9 +57,9 @@ func load_step(step_idx: int) -> String:
 		1:
 			_items = _load_items()
 			_dealers = Catalog.index_by_id(Catalog.load_folder(DEALERS_FOLDER))
-			for dealer: DealerDef in _dealers.values():
-				if dealer.is_resident():
-					_residents_by_district[dealer.district_id] = dealer
+			for d: DealerDef in _dealers.values():
+				if d.is_resident():
+					_residents_by_district[d.district_id] = d
 			return "Indexing Contraband & Markets..."
 		2:
 			_characters = Catalog.index_by_id(Catalog.load_folder(CHARACTERS_FOLDER))
@@ -283,20 +283,20 @@ func _load_items() -> Dictionary:
 	var data: Dictionary = json.data
 	for id_str in data:
 		var d: Dictionary = data[id_str]
-		var item := ItemDef.new()
-		item.id = StringName(d.get("id", id_str))
-		item.display_name = d.get("display_name", "")
-		item.kind = d.get("kind", 0) as ItemDef.Kind
-		item.category = StringName(d.get("category", "goods"))
-		item.base_price = int(d.get("base_price", 100))
-		item.risk = int(d.get("risk", 10))
-		item.slots = int(d.get("slots", 1))
-		item.tier = int(d.get("tier", 1))
-		item.min_rank = int(d.get("min_rank", 0))
-		item.description = d.get("description", "")
-		item.capacity_bonus = int(d.get("capacity_bonus", 0))
-		item.fare_discount = float(d.get("fare_discount", 0.0))
-		item.effect = StringName(d.get("effect", ""))
-		loaded[item.id] = item
+		var loaded_item := ItemDef.new()
+		loaded_item.id = StringName(d.get("id", id_str))
+		loaded_item.display_name = d.get("display_name", "")
+		loaded_item.kind = d.get("kind", 0) as ItemDef.Kind
+		loaded_item.category = StringName(d.get("category", "goods"))
+		loaded_item.base_price = int(d.get("base_price", 100))
+		loaded_item.risk = int(d.get("risk", 10))
+		loaded_item.slots = int(d.get("slots", 1))
+		loaded_item.tier = int(d.get("tier", 1))
+		loaded_item.min_rank = int(d.get("min_rank", 0))
+		loaded_item.description = d.get("description", "")
+		loaded_item.capacity_bonus = int(d.get("capacity_bonus", 0))
+		loaded_item.fare_discount = float(d.get("fare_discount", 0.0))
+		loaded_item.effect = StringName(d.get("effect", ""))
+		loaded[loaded_item.id] = loaded_item
 
 	return loaded

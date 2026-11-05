@@ -4,7 +4,6 @@
 [ext_resource type="Texture2D" path="res://assets/backgrounds/title.jpg" id="2_background"]
 [ext_resource type="Script" path="res://ui/components/game_button.gd" id="3_button"]
 [ext_resource type="PackedScene" path="res://ui/components/confirm_dialog.tscn" id="4_confirm"]
-[ext_resource type="PackedScene" path="res://ui/effects/rain.tscn" id="5_rain"]
 [ext_resource type="PackedScene" path="res://ui/components/vignette.tscn" id="6_vignette"]
 
 [sub_resource type="Gradient" id="Gradient_glow"]
@@ -74,7 +73,6 @@ mouse_filter = 2
 texture = SubResource("GradientTexture2D_glow")
 expand_mode = 1
 
-[node name="Rain" parent="." instance=ExtResource("5_rain")]
 
 [node name="Vignette" parent="." instance=ExtResource("6_vignette")]
 layout_mode = 1

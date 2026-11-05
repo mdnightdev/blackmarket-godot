@@ -161,9 +161,10 @@ static func defend(run: RunState, encounter: Dictionary, deployment: Dictionary,
 	var theirs := sent_against * Rivals.power_per_man(run, gang)
 	var won := (sent > 0 or posted > 0) and mine >= theirs
 	var hit_share := War.WIN_HIT_SHARE * minf(1.0, theirs / maxf(mine, 1.0)) if won else War.LOSS_HIT_SHARE
-	var fate_offset := Odds.bell_from_roll(fate, -0.5 * War.FATE_SWING, 0.0, 0.5 * War.FATE_SWING)
-	var death_share := (War.WIN_DEATH_SHARE if won else War.LOSS_DEATH_SHARE) + fate_offset
-	var losses := Army.casualties(deployment, hit_share, death_share)
+	var _unused_fate := fate
+	# BATTLE.md Section 9B: Defending garrisons suffer 0% outright battlefield death; 100% of casualties become Wounded
+	# and only die if hospital capacity overflows.
+	var losses := Army.defender_casualties(deployment, hit_share)
 	Hospital.admit(run, losses)
 	var raiders_lost := roundi(sent_against * (RAIDERS_LOST_ON_WIN if won else War.DEFENDERS_BLED))
 	var left_at_source := War.defenders(run, from) - (raiders_lost if won else sent_against)

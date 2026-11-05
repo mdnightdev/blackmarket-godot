@@ -134,7 +134,7 @@ func _on_trade_completed(message: String, cash_delta: int) -> void:
 
 
 func _dealer_is_here() -> bool:
-	var run := GameState.run
+	var run: RunState = GameState.run
 	return Roster.dealer_location(run, _dealer, Calendar.stamp(run)) == run.district_id
 
 
@@ -159,7 +159,7 @@ func _on_back_pressed() -> void:
 
 
 func _refresh() -> void:
-	var run := GameState.run
+	var run: RunState = GameState.run
 	_mood_label.visible = false
 	_news_line.show_for(run.district_id)
 	_bag_button.text = Inventory.bag_text(run)
@@ -209,7 +209,7 @@ func _show_notice(text: String) -> void:
 
 
 func _fill_order_list() -> void:
-	var run := GameState.run
+	var run: RunState = GameState.run
 	for order in Orders.for_dealer(run, _dealer):
 		var item := Content.item(StringName(order.item))
 		if item == null:
@@ -242,7 +242,7 @@ func _deliver(order: Dictionary) -> void:
 
 
 func _buy_cards() -> Array[Dictionary]:
-	var run := GameState.run
+	var run: RunState = GameState.run
 	var cards: Array[Dictionary] = []
 	for item in Content.tradable_items():
 		if not _dealer.sells(item):
@@ -262,7 +262,7 @@ func _buy_cards() -> Array[Dictionary]:
 
 
 func _sell_cards() -> Array[Dictionary]:
-	var run := GameState.run
+	var run: RunState = GameState.run
 	var cards: Array[Dictionary] = []
 	for item in Content.tradable_items():
 		var held := Inventory.count(run, item.id)

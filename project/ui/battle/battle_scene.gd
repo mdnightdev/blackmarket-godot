@@ -83,8 +83,8 @@ func _add_shake(amount: float) -> void:
 	_shake_pixels = clampf(_shake_pixels + amount, 0.0, 16.0)
 
 
-func play(player_side: BattleSide, enemy_side: BattleSide, result_line: String, seed := 0) -> void:
-	_rng.seed = seed
+func play(player_side: BattleSide, enemy_side: BattleSide, result_line: String, battle_seed := 0) -> void:
+	_rng.seed = battle_seed
 	_enemy_morale = 1.0
 	_enemy_rout_threshold = Odds.bell(_rng, 0.22, 0.34, 0.46)
 	_enemy_routed = false
@@ -124,7 +124,7 @@ func play(player_side: BattleSide, enemy_side: BattleSide, result_line: String, 
 		await _wait(ACTION_GAP)
 		elapsed += ACTION_GAP
 
-	await _finish(result_line)
+	_finish(result_line)
 
 
 func _fighter_count(head_count: int, largest: int) -> int:

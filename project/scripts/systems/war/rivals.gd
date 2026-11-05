@@ -91,6 +91,39 @@ static func max_garrison(corner: CornerDef) -> int:
 	return ceili(corner.defenders * GARRISON_CAP)
 
 
+## High-tier syndicate fortification caps (100k, 250k, 500k) for symmetric late-game warfare (BATTLE.md Section 8).
+static func syndicate_fortified_cap(gang: GangDef, corner: CornerDef) -> int:
+	if gang == null or corner == null:
+		return 100000
+	if corner.stronghold and gang.gear >= Armory.Grade.MILITARY:
+		return 500000
+	if corner.stronghold or gang.gear >= Armory.Grade.RIFLE:
+		return 250000
+	return 100000
+
+
+## Returns the 3-tier unit composition { Tier.LUNATICS, Tier.GUARDS, Tier.BLACK_HAND } of a rival corner garrison.
+static func syndicate_tier_composition(run: RunState, gang: GangDef, corner: CornerDef) -> Dictionary:
+	var total := War.defenders(run, corner) if corner != null else 0
+	if total <= 0 or gang == null:
+		return { Army.Tier.LUNATICS: maxi(0, total), Army.Tier.GUARDS: 0, Army.Tier.BLACK_HAND: 0 }
+	var current_gear := gear(run, gang)
+	if current_gear >= Armory.Grade.MILITARY:
+		var t3 := roundi(total * (0.45 if corner.stronghold else 0.25))
+		var t2 := roundi(total * 0.40)
+		var t1 := maxi(0, total - t3 - t2)
+		return { Army.Tier.LUNATICS: t1, Army.Tier.GUARDS: t2, Army.Tier.BLACK_HAND: t3 }
+	if current_gear >= Armory.Grade.RIFLE:
+		var t3_rifle := roundi(total * (0.20 if corner.stronghold else 0.05))
+		var t2_rifle := roundi(total * 0.50)
+		var t1_rifle := maxi(0, total - t3_rifle - t2_rifle)
+		return { Army.Tier.LUNATICS: t1_rifle, Army.Tier.GUARDS: t2_rifle, Army.Tier.BLACK_HAND: t3_rifle }
+	if current_gear >= Armory.Grade.HANDGUN:
+		var t2_hg := roundi(total * 0.30)
+		return { Army.Tier.LUNATICS: maxi(0, total - t2_hg), Army.Tier.GUARDS: t2_hg, Army.Tier.BLACK_HAND: 0 }
+	return { Army.Tier.LUNATICS: total, Army.Tier.GUARDS: 0, Army.Tier.BLACK_HAND: 0 }
+
+
 ## The next grade the gang saves for, or Grade.NONE once it carries the best.
 static func next_gear(run: RunState, gang: GangDef) -> Armory.Grade:
 	var current := gear(run, gang)

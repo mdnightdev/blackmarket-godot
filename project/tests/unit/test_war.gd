@@ -253,3 +253,91 @@ func test_retreating_survivors_reinforce_other_district_corners_in_act_two() -> 
 	var after := War.defenders(_run, rollup) + War.defenders(_run, scrap) + War.defenders(_run, lockup)
 	assert_gt(after, before, "survivors fall back to nearby gang corners")
 
+
+func test_five_simultaneous_march_lines_and_gate_decisions() -> void:
+	_run.street_cred = int(StreetCred.RANKS[StreetCred.max_rank() - 1].cred)
+	_enlist(Army.Tier.LUNATICS, 1000)
+	for i in War.MAX_MARCH_LINES:
+		var m := War.dispatch_march(_run, STEPS, { Army.Tier.LUNATICS: 50 }, &"", float(i) * 3.0)
+		assert_false(m.is_empty())
+	assert_eq(War.active_march_count(_run), War.MAX_MARCH_LINES)
+	assert_false(War.can_dispatch_march(_run), "max 5 simultaneous march lines")
+	assert_eq(War.total_marching(_run), 250)
+	assert_eq(Army.reserve(_run), 750, "marching troops are deducted from home reserve")
+	var first_id: Variant = _run.active_marches[0].id
+	var arrived := War.tick_marches(_run, 35.0)
+	assert_gt(arrived.size(), 0)
+	assert_eq(str(_run.active_marches[0].status), "at_gate")
+	var aborted := War.resolve_gate_decision(_run, first_id, War.GateDecision.PULL_BACK)
+	assert_true(bool(aborted.aborted))
+	var second_id: Variant = _run.active_marches[0].id
+	var staggered := War.resolve_gate_decision(_run, second_id, War.GateDecision.STAGGER)
+	assert_true(bool(staggered.staggered))
+	assert_eq(str(_run.active_marches[0].status), "holding")
+
+
+func test_commander_clearances_and_rabbit_black_hand_lockout() -> void:
+	Story.mark(_run, War.UNIT_HIRED)
+	_enlist(Army.Tier.BLACK_HAND, 50)
+	_enlist(Army.Tier.GUARDS, 100)
+	_enlist(Army.Tier.LUNATICS, 200)
+	assert_true(War.commander_allows_tier(War.RABBIT, Army.Tier.BLACK_HAND))
+	assert_true(War.commander_allows_tier(War.VEX_COMMANDER, Army.Tier.GUARDS))
+	assert_false(War.commander_allows_tier(War.VEX_COMMANDER, Army.Tier.BLACK_HAND))
+	assert_false(War.commander_allows_tier(War.SHARK_COMMANDER, Army.Tier.GUARDS))
+	assert_false(War.commander_allows_tier(War.OLD_GAO_COMMANDER, Army.Tier.GUARDS))
+	var filtered_vex := War.filter_deployment_for_commander(_run, {
+		Army.Tier.BLACK_HAND: 50,
+		Army.Tier.GUARDS: 100,
+		Army.Tier.LUNATICS: 200,
+	}, War.VEX_COMMANDER)
+	assert_false(filtered_vex.has(Army.Tier.BLACK_HAND))
+	assert_eq(int(filtered_vex.get(Army.Tier.GUARDS, 0)), 100)
+	assert_true(War.can_deploy_black_hand_offensively(_run))
+	War.capture_commander(_run, War.RABBIT, War.VEX_GANG, 0.2)
+	assert_false(War.can_deploy_black_hand_offensively(_run), "capturing Rabbit locks out T3 Black Hand offensive marches")
+
+
+func test_decisive_combat_resolution_has_no_draws_and_defender_holds_ties() -> void:
+	var tie := War.resolve_decisive_clash(1000.0, 1000.0)
+	assert_false(bool(tie.won), "defender holds on exact dead heat via -1 tie-breaker")
+	assert_lt(float(tie.margin), 0.0)
+	var win := War.resolve_decisive_clash(1005.0, 1000.0)
+	assert_true(bool(win.won))
+
+
+func test_commander_capture_ransom_bounty_and_clinic_revival() -> void:
+	_run.cash = 500000
+	var cap := War.capture_commander(_run, War.VEX_COMMANDER, &"jackal", 0.2)
+	assert_eq(str(cap.stance), "ransom")
+	var base_ransom := int(cap.ransom)
+	var hiked := War.escalate_ransom(_run, War.VEX_COMMANDER)
+	assert_gt(hiked, base_ransom)
+	var bounty_hike := War.post_jailbreak_bounty(_run, War.VEX_COMMANDER, 35000, 0.60)
+	assert_eq(str(bounty_hike.outcome), "demanded_hike")
+	var bounty_rescue := War.post_jailbreak_bounty(_run, War.VEX_COMMANDER, 35000, 0.10)
+	assert_eq(str(bounty_rescue.outcome), "rescued")
+	assert_true(War.is_commander_available(_run, War.VEX_COMMANDER))
+	War.capture_commander(_run, War.SHARK_COMMANDER, &"jackal", 0.9)
+	var executed := War.tick_captured_commanders(_run, War.EXECUTION_TIMER_SECONDS + 1.0)
+	assert_true(executed.has(String(War.SHARK_COMMANDER)))
+	assert_false(War.is_commander_available(_run, War.SHARK_COMMANDER))
+	assert_true(War.revive_executed_commander(_run, War.SHARK_COMMANDER))
+	assert_true(War.is_commander_available(_run, War.SHARK_COMMANDER))
+
+
+func test_garrison_overage_warnings_and_zero_phantom_lookouts() -> void:
+	_enlist(Army.Tier.LUNATICS, 100)
+	var steps := Corners.find(STEPS)
+	Corners.take(_run, STEPS)
+	assert_eq(Corners.garrison_power(_run, steps), 0.0, "zero phantom lookouts when unmanned")
+	var over_reserve := Corners.validate_garrison_dispatch(_run, STEPS, 250)
+	assert_false(bool(over_reserve.ok))
+	assert_eq(int(over_reserve.clamped), 100)
+	assert_true(str(over_reserve.warning).contains("Insufficient free reserve"))
+	_enlist(Army.Tier.LUNATICS, 100000)
+	var over_cap := Corners.validate_garrison_dispatch(_run, STEPS, 75000)
+	assert_false(bool(over_cap.ok))
+	assert_eq(int(over_cap.clamped), Corners.CORNER_GARRISON_CAP)
+	assert_true(str(over_cap.warning).contains("Cannot exceed corner capacity"))
+

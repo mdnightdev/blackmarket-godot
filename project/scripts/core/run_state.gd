@@ -191,6 +191,13 @@ var hospital_level: int = 0
 var corner_defenders: Dictionary = {}
 ## Corner id to the player's men posted to hold it. See Corners.
 var player_garrisons: Dictionary = {}
+## Active march columns in transit or waiting at target gate (max 5 simultaneous lines, BATTLE.md Section 3).
+var active_marches: Array[Dictionary] = []
+## Commander id to capture/ransom/execution state (BATTLE.md Section 11).
+var captured_commanders: Dictionary = {}
+## Timed war event window state (BATTLE.md Section 2).
+var war_window_open: bool = true
+var war_window_seconds: float = 0.0
 ## Gang id to its war chest, weapons and last strike. See Rivals.
 var rivals: Dictionary = {}
 ## Corner id to the latest scouting report. See Scouting.
@@ -320,6 +327,10 @@ func to_dict() -> Dictionary:
 		"hospital_size": hospital_level,
 		"corner_defenders": corner_defenders,
 		"player_garrisons": player_garrisons,
+		"active_marches": active_marches,
+		"captured_commanders": captured_commanders,
+		"war_window_open": war_window_open,
+		"war_window_seconds": war_window_seconds,
 		"rivals": _string_keys(rivals),
 		"scouted": scouted,
 		"journal": journal,
@@ -429,9 +440,9 @@ static func from_dict(data: Dictionary) -> RunState:
 	if saved_favours is Array:
 		for favour: Variant in saved_favours:
 			if favour is Dictionary:
-				var clean := Favours.sanitize(favour)
-				if not clean.is_empty() and Favours.active_for(state, StringName(clean.family)).is_empty():
-					state.favours.append(clean)
+				var sanitized_favour := Favours.sanitize(favour)
+				if not sanitized_favour.is_empty() and Favours.active_for(state, StringName(sanitized_favour.family)).is_empty():
+					state.favours.append(sanitized_favour)
 	var saved_taken_favours: Variant = data.get("taken_favours", [])
 	if saved_taken_favours is Array:
 		for id: Variant in saved_taken_favours:
@@ -447,9 +458,9 @@ static func from_dict(data: Dictionary) -> RunState:
 	if state.career and state.debt <= 0 and not state.shark_bought and state.shark_sale_day == 0:
 		state.shark_sale_day = 1
 	for loan in _dictionaries(data.get("dealer_loans")):
-		var clean := Lending.sanitize(loan)
-		if not clean.is_empty() and not Lending.has_loan(state, StringName(clean.dealer)):
-			state.dealer_loans.append(clean)
+		var sanitized_loan := Lending.sanitize(loan)
+		if not sanitized_loan.is_empty() and not Lending.has_loan(state, StringName(sanitized_loan.dealer)):
+			state.dealer_loans.append(sanitized_loan)
 	state.dealer_lockdowns = _positive_counts(data.get("dealer_lockdowns"))
 	state.dealer_loan_blacklist = _positive_counts(data.get("dealer_loan_blacklist"))
 	state.street_cred = clampi(int(data.get("street_cred", 0)), 0, StreetCred.MAX)
@@ -463,15 +474,15 @@ static func from_dict(data: Dictionary) -> RunState:
 			state.lessons_queued.append(lesson)
 	state.skills = _positive_counts(data.get("skills"))
 	for member in _dictionaries(data.get("crew")):
-		var clean := Crew.sanitize(member)
-		if clean.is_empty():
+		var sanitized_member := Crew.sanitize(member)
+		if sanitized_member.is_empty():
 			continue
-		var role_id := StringName(str(clean.get("role", "")))
+		var role_id := StringName(str(sanitized_member.get("role", "")))
 		if Content.crew_role(role_id) == null:
 			continue
-		var has_room := Crew.is_free(clean) or Crew.hired_count(state) < Crew.cap(state)
+		var has_room := Crew.is_free(sanitized_member) or Crew.hired_count(state) < Crew.cap(state)
 		if has_room and not Crew.has(state, role_id):
-			state.crew.append(clean)
+			state.crew.append(sanitized_member)
 	state.crew_report = _positive_counts(data.get("crew_report"))
 	state.runner_stamp = int(data.get("runner_stamp", -1))
 	state.muscle_stamp = int(data.get("muscle_stamp", -1))
@@ -558,6 +569,10 @@ static func from_dict(data: Dictionary) -> RunState:
 	state.hospital_level = clampi(int(data.get("hospital_size", 0)), 0, Hospital.LEVELS.size() - 1)
 	state.corner_defenders = War.sanitize_defenders(data.get("corner_defenders"))
 	state.player_garrisons = Corners.sanitize_garrisons(state, data.get("player_garrisons"))
+	state.active_marches = War.sanitize_marches(data.get("active_marches"))
+	state.captured_commanders = War.sanitize_captured(data.get("captured_commanders"))
+	state.war_window_open = bool(data.get("war_window_open", true))
+	state.war_window_seconds = maxf(0.0, float(data.get("war_window_seconds", 0.0)))
 	Corners.sync(state)
 	state.rivals = Rivals.sanitize(data.get("rivals"))
 	var last_ambush_day := maxi(0, int(data.get("last_ambush_day", 0)))

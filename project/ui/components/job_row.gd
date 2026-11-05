@@ -3,7 +3,6 @@ extends PanelContainer
 
 signal pressed
 
-@onready var _icon_frame: PanelContainer = %IconFrame
 @onready var _icon: TextureRect = %Icon
 @onready var _title_label: Label = %TitleLabel
 @onready var _caption_label: Label = %CaptionLabel

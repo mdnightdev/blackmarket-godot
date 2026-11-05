@@ -89,7 +89,7 @@ static func _grant_rank_pack(run: RunState, new_rank: int) -> Dictionary:
 			Inventory.add_units(run, &"ammo_9mm", 5)
 			return { "rank": new_rank, "title": "Hustler", "reward": "$25,000, 25x recruits, 5x 9mm Ammo" }
 		5: # Earner: $50k clean, 50x Guards, burner_phones
-			run.clean_bank_cash += 50000
+			run.clean += 50000
 			Army.add(run, Army.Tier.GUARDS, Army.State.ACTIVE, 50)
 			Inventory.add_units(run, &"burner_phones", 1)
 			return { "rank": new_rank, "title": "Earner", "reward": "$50,000 clean, 50x Guards, Burner Phone" }
@@ -99,12 +99,12 @@ static func _grant_rank_pack(run: RunState, new_rank: int) -> Dictionary:
 			Inventory.add_units(run, &"clone_plates", 2)
 			return { "rank": new_rank, "title": "Connected", "reward": "$100,000, Zero-Day Drive, 2x Clone Plates" }
 		7: # Shot Caller: $150k clean, 100x Guards, 5x combat_stims
-			run.clean_bank_cash += 150000
+			run.clean += 150000
 			Army.add(run, Army.Tier.GUARDS, Army.State.ACTIVE, 100)
 			Inventory.add_units(run, &"combat_stims", 5)
 			return { "rank": new_rank, "title": "Shot Caller", "reward": "$150,000 clean, 100x Guards, 5x Combat Stims" }
 		8: # Underboss: $300k clean, 25x Black Hand, network_tap
-			run.clean_bank_cash += 300000
+			run.clean += 300000
 			Army.add(run, Army.Tier.BLACK_HAND, Army.State.ACTIVE, 25)
 			Inventory.add_units(run, &"network_tap", 1)
 			return { "rank": new_rank, "title": "Underboss", "reward": "$300,000 clean, 25x Black Hand, Network Tap" }

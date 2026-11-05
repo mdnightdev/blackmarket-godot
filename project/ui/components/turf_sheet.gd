@@ -513,7 +513,7 @@ func _add_laundering(run: RunState) -> void:
 	_add_note("Clean dirty street cash through financial paper. Buy documents on the market or stash them in the safehouse.")
 	for inst in Money.all_instruments():
 		var id: StringName = inst.id
-		var name: String = inst.name
+		var inst_name: String = inst.name
 		var cap: int = inst.cap
 		var fee: float = inst.fee
 		var days: int = inst.days
@@ -532,10 +532,10 @@ func _add_laundering(run: RunState) -> void:
 			var row_detail := "CLEAN CASH" if can_clean else ("NO CASH" if run.cash <= 0 else "CHANNEL FULL")
 			var row_color := Palette.TEXT_CREAM if can_clean else Palette.TEXT_MUTED
 			var action := _clean_cash_dialog.bind(id) if can_clean else Callable()
-			_add_row(icon, name, "%d%% fee" % roundi(fee * 100.0), caption, row_detail, row_color, action)
+			_add_row(icon, inst_name, "%d%% fee" % roundi(fee * 100.0), caption, row_detail, row_color, action)
 		else:
-			var caption := "Requires %s in bag or safehouse. Buy on the market." % name
-			_add_row(icon, name, LOCKED, caption, "LOCKED", Palette.TEXT_MUTED)
+			var caption := "Requires %s in bag or safehouse. Buy on the market." % inst_name
+			_add_row(icon, inst_name, LOCKED, caption, "LOCKED", Palette.TEXT_MUTED)
 
 
 func _withdraw_dialog(run: RunState) -> void:
@@ -578,10 +578,10 @@ func _clean_cash_dialog(instrument_id: StringName) -> void:
 		return
 	var fee: float = float(inst.get("fee", 0.15))
 	var days: int = int(inst.get("days", 3))
-	var name: String = str(inst.get("name", "Channel"))
+	var channel_name: String = str(inst.get("name", "Channel"))
 
 	var line := "Route dirty cash into %s. Fee: %d%%, clearing in %d %s.\nAvailable dirty cash: %s (Channel free cap: %s)" % [
-		name,
+		channel_name,
 		roundi(fee * 100.0),
 		days,
 		"day" if days == 1 else "days",

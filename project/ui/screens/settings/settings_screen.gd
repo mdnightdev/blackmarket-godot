@@ -69,7 +69,7 @@ func _leave() -> void:
 func _on_new_game_pressed() -> void:
 	if GameState.has_saved_run():
 		_pending_action = "new_game"
-		_confirm_dialog.open("Start Over?", "Your current progress will be lost and you will return to character selection.", "Start Over", true)
+		_confirm_dialog.open("Start Over?", "Your current progress will be lost.", "Start Over", true)
 	else:
 		GameState.delete_run()
 		SceneRouter.go_to(SceneRouter.CHARACTER_SELECT)

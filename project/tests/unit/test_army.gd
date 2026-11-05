@@ -145,3 +145,43 @@ func test_men_are_priced_per_thousand() -> void:
 func test_sanitize_drops_unknown_tiers_and_states() -> void:
 	var clean := Army.sanitize({ "0": { "0": 5, "9": 3 }, "7": { "0": 1 }, "1": { "1": -2 } })
 	assert_eq(clean, { Army.Tier.LUNATICS: { Army.State.ACTIVE: 5 } })
+
+
+func test_3factor_unit_stats_and_damage_mitigation_formula() -> void:
+	var t1 := Army.unit_stats(Army.Tier.LUNATICS)
+	var t2 := Army.unit_stats(Army.Tier.GUARDS)
+	var t3 := Army.unit_stats(Army.Tier.BLACK_HAND)
+	assert_lt(float(t1.defense), float(t2.defense))
+	assert_lt(float(t2.defense), float(t3.defense))
+	assert_lt(float(t1.hp), float(t2.hp))
+	assert_lt(float(t2.hp), float(t3.hp))
+	var dr := Army.damage_reduction(100.0, 100.0)
+	assert_almost_eq(dr, 0.5, 0.001)
+	var net := Army.net_damage_taken(1000.0, 100.0, 100.0)
+	assert_almost_eq(net, 500.0, 0.001)
+	var total_cas := Army.total_casualties_from_damage(500.0, 50.0)
+	assert_eq(total_cas, 10)
+
+
+func test_attacker_60_40_vs_defender_100_0_casualty_splits() -> void:
+	var sent := { Army.Tier.GUARDS: 100 }
+	var atk_losses := Army.split_casualties_by_role(sent, 50, false)
+	assert_eq(int(atk_losses[Army.Tier.GUARDS].wounded), 30, "60% wounded on offensive march")
+	assert_eq(int(atk_losses[Army.Tier.GUARDS].dead), 20, "40% dead on offensive march")
+	var def_losses := Army.split_casualties_by_role(sent, 50, true)
+	assert_eq(int(def_losses[Army.Tier.GUARDS].wounded), 50, "100% wounded on home/garrison defense")
+	assert_eq(int(def_losses[Army.Tier.GUARDS].dead), 0, "0% outright battlefield death on defense")
+
+
+func test_march_capacity_progression_and_enforcer_bonus() -> void:
+	_run.street_cred = 0
+	var rank1_cap := Army.march_capacity(_run)
+	assert_gt(rank1_cap, 0)
+	assert_lt(rank1_cap, Army.PRE_KINGPIN_MAX_DISPATCH)
+	_run.street_cred = int(StreetCred.RANKS[StreetCred.max_rank() - 1].cred)
+	assert_eq(StreetCred.rank(_run), StreetCred.max_rank())
+	assert_eq(Army.march_capacity(_run), Army.KINGPIN_BASE_DISPATCH)
+	for skill_id in Skills.ids():
+		_run.skills[skill_id] = Skills.MAX_RANK
+	assert_eq(Army.march_capacity(_run), Army.MAX_BASE_DISPATCH_CAP)
+	assert_eq(Army.march_capacity(_run, War.RABBIT), Army.MAX_BASE_DISPATCH_CAP + Army.ENFORCER_CAPACITY_BONUS)

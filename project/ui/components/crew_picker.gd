@@ -25,6 +25,7 @@ var _on_cancel := Callable()
 var _wanted := {}
 var _sliders := {}
 var _count_labels := {}
+var _warning_text := ""
 var _tween: Tween
 
 
@@ -111,11 +112,22 @@ func _add_row(run: RunState, tier: Army.Tier) -> void:
 
 
 func _on_slider_moved(amount: float, tier: Army.Tier) -> void:
+	var run := GameState.run
 	var others := Army.deployed_count(_wanted) - int(_wanted.get(tier, 0))
-	var cap := mini(Army.deploy_cap(GameState.run), Army.reserve(GameState.run))
-	var allowed := maxi(0, mini(int(amount), cap - others))
+	var deploy_limit := Army.deploy_cap(run)
+	var free_reserve := Army.reserve(run)
+	var cap := mini(deploy_limit, free_reserve)
+	var desired := int(amount)
+	var allowed := maxi(0, mini(desired, cap - others))
+	if desired > cap - others:
+		if others + desired > free_reserve:
+			_warning_text = "Insufficient free reserve troops."
+		else:
+			_warning_text = "Cannot exceed dispatch capacity of %s." % Format.count(deploy_limit)
+	else:
+		_warning_text = ""
 	_wanted[tier] = allowed
-	if allowed != int(amount):
+	if allowed != desired:
 		(_sliders[tier] as HSlider).set_value_no_signal(allowed)
 	_refresh()
 
@@ -128,7 +140,13 @@ func _refresh() -> void:
 	var total := Army.deployed_count(deployment)
 	var summary := "%d of at most %d in one fight." % [total, Army.deploy_cap(run)]
 	var weapons := WarTalk.weapons_text(run, deployment)
-	_summary_label.text = "%s %s" % [summary, weapons] if not weapons.is_empty() else summary
+	var base_text := "%s %s" % [summary, weapons] if not weapons.is_empty() else summary
+	if not _warning_text.is_empty():
+		_summary_label.text = "%s\n%s" % [_warning_text, base_text]
+		_summary_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
+	else:
+		_summary_label.text = base_text
+		_summary_label.remove_theme_color_override("font_color")
 	_send_button.text = _send_format % total if total > 0 else "Nobody picked"
 	_send_button.disabled = total <= 0
 

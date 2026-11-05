@@ -21,9 +21,9 @@ func _init() -> void:
 
 
 ## One color on both edges instead of the red and blue swap.
-func tint(color: Color) -> void:
-	(material as ShaderMaterial).set_shader_parameter("red", color)
-	(material as ShaderMaterial).set_shader_parameter("blue", color)
+func tint(light_color: Color) -> void:
+	(material as ShaderMaterial).set_shader_parameter("red", light_color)
+	(material as ShaderMaterial).set_shader_parameter("blue", light_color)
 
 
 func switch_on(intensity: float) -> void:

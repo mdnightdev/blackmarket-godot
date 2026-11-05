@@ -127,7 +127,7 @@ static func _prepare_shift(run: RunState, event: EventDef, rng: RandomNumberGene
 			if dealer != null:
 				categories = _carried_categories(run, dealer)
 	if not event.category.is_empty():
-		categories = categories.filter(func(category: StringName) -> bool: return category == event.category)
+		categories = categories.filter(func(cat: StringName) -> bool: return cat == event.category)
 	if dealer == null or categories.is_empty():
 		return {}
 
@@ -173,8 +173,8 @@ static func fight_bonus(run: RunState) -> float:
 
 static func _prepare_find(run: RunState, event: EventDef, rng: RandomNumberGenerator) -> Dictionary:
 	var free := Inventory.free_space(run)
-	var candidates := Content.tradable_items().filter(func(item: ItemDef) -> bool:
-		return item.base_price <= LUCKY_FIND_MAX_PRICE and item.slots <= free)
+	var candidates := Content.tradable_items().filter(func(cand: ItemDef) -> bool:
+		return cand.base_price <= LUCKY_FIND_MAX_PRICE and cand.slots <= free)
 	if candidates.is_empty():
 		return {}
 	var item: ItemDef = candidates[rng.randi_range(0, candidates.size() - 1)]

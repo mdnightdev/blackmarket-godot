@@ -53,6 +53,7 @@ var _toast_tween: Tween
 var _tilt_offset := 0.0
 var _tint_tween: Tween
 var _shows_corner_map := false
+var _has_accelerometer := false
 
 func _show_toast(message: String) -> void:
 	_toast.text = message
@@ -98,6 +99,7 @@ func _ready() -> void:
 	GameState.day_started.connect(_on_day_started)
 	resized.connect(_center_background_pivot)
 	_center_background_pivot()
+	_has_accelerometer = bool(ProjectSettings.get_setting("input_devices/sensors/enable_accelerometer", false))
 
 	GameState.clock_active = true
 	if not _shows_corner_map:
@@ -113,7 +115,7 @@ func _exit_tree() -> void:
 
 ## The corner map stays still so its pins stay on their corners.
 func _process(delta: float) -> void:
-	if _shows_corner_map:
+	if _shows_corner_map or not _has_accelerometer:
 		return
 	var target := clampf(-Input.get_accelerometer().x / 9.8, -1.0, 1.0) * TILT_PIXELS
 	_tilt_offset = lerpf(_tilt_offset, target, minf(1.0, delta * TILT_SMOOTHING))

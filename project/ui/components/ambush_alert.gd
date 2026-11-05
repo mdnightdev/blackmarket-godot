@@ -105,11 +105,11 @@ func _choices(rabbit: SpeakerDef) -> Control:
 	list.custom_minimum_size.x = CHOICE_WIDTH
 	list.size_flags_horizontal = Control.SIZE_SHRINK_END
 	list.add_theme_constant_override("separation", 6)
-	var ready := Army.active(GameState.run) > 0
+	var has_ready_men := Army.active(GameState.run) > 0
 	_add_choice(list, RivalStrike.DELEGATE, "Leave it to %s" % rabbit.display_name, &"PrimaryButton", "A veteran's odds. He sends everyone.", true)
-	var mobilise := "Mobilise the crew" if ready else "No men ready"
-	var caption := "You pick who goes." if ready else "Everyone is wounded or gone."
-	_add_choice(list, RivalStrike.MOBILISE, mobilise, &"SecondaryButton", caption, ready)
+	var mobilise := "Mobilise the crew" if has_ready_men else "No men ready"
+	var caption := "You pick who goes." if has_ready_men else "Everyone is wounded or gone."
+	_add_choice(list, RivalStrike.MOBILISE, mobilise, &"SecondaryButton", caption, has_ready_men)
 	return list
 
 

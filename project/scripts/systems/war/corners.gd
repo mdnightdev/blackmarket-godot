@@ -100,11 +100,52 @@ static func lose(run: RunState, corner_id: StringName) -> void:
 	run.player_garrisons.erase(String(corner_id))
 
 
-## Men from the player's army posted on a held corner. Unposted corners have 0 posted men (held by DEFAULT_LOOKOUTS).
+## Men from the player's army posted on a held corner. Unmanned corners have 0 posted men and 0 defense power (BATTLE.md Section 12B).
 static func garrison(run: RunState, corner_id: StringName) -> int:
 	if not holds(run, corner_id):
 		return 0
 	return maxi(0, int(run.player_garrisons.get(String(corner_id), 0)))
+
+
+static func corner_capacity(_run: RunState = null, _corner: CornerDef = null) -> int:
+	return CORNER_GARRISON_CAP
+
+
+## Validates a proposed garrison allocation against corner capacity and free reserve (BATTLE.md Section 12B).
+## Returns { "ok": bool, "clamped": int, "room": int, "reserve": int, "warning": String }.
+static func validate_garrison_dispatch(run: RunState, corner_id: StringName, desired_total: int) -> Dictionary:
+	var corner := find(corner_id)
+	if corner == null or not holds(run, corner_id):
+		return { "ok": false, "clamped": 0, "room": 0, "reserve": 0, "warning": "Corner not held" }
+	var current := garrison(run, corner_id)
+	var available_reserve := Army.reserve(run)
+	var cap := corner_capacity(run, corner)
+	var available_room := maxi(0, cap - current)
+	var max_allowed := mini(current + available_reserve, cap)
+	var clamped := clampi(desired_total, 0, max_allowed)
+	if desired_total > cap:
+		return {
+			"ok": false,
+			"clamped": clamped,
+			"room": available_room,
+			"reserve": available_reserve,
+			"warning": "Cannot exceed corner capacity of %s" % Format.count(cap),
+		}
+	if desired_total - current > available_reserve:
+		return {
+			"ok": false,
+			"clamped": clamped,
+			"room": available_room,
+			"reserve": available_reserve,
+			"warning": "Insufficient free reserve troops",
+		}
+	return {
+		"ok": true,
+		"clamped": clamped,
+		"room": available_room,
+		"reserve": available_reserve,
+		"warning": "",
+	}
 
 
 static func total_garrisoned(run: RunState) -> int:
@@ -121,7 +162,8 @@ static func post_garrison(run: RunState, corner_id: StringName, men: int) -> boo
 		return false
 	var current := garrison(run, corner_id)
 	var available := Army.reserve(run) + current
-	var clamped := clampi(men, 0, mini(available, CORNER_GARRISON_CAP))
+	var cap := corner_capacity(run, corner)
+	var clamped := clampi(men, 0, mini(available, cap))
 	if clamped > 0:
 		run.player_garrisons[String(corner_id)] = clamped
 		if clamped > current:
@@ -131,7 +173,33 @@ static func post_garrison(run: RunState, corner_id: StringName, men: int) -> boo
 	return true
 
 
+## Recalls a stationed garrison with physical transit delay back to reserve (BATTLE.md Section 12A).
+## Troops in transit cannot defend the corner or join new marches until their return march completes.
+static func recall_garrison_with_transit(run: RunState, corner_id: StringName, transit_seconds: float = 15.0) -> bool:
+	var posted := garrison(run, corner_id)
+	if posted <= 0:
+		return false
+	var deploy := Army.garrison_deployment(run, posted)
+	run.player_garrisons.erase(String(corner_id))
+	if transit_seconds > 0.0:
+		run.active_marches.append({
+			"id": "recall_%s_%d" % [String(corner_id), run.day],
+			"origin": String(district_of(corner_id)),
+			"target_corner": String(corner_id),
+			"deployment": deploy,
+			"commander": "",
+			"state": "returning",
+			"status": "returning",
+			"eta_seconds": transit_seconds,
+			"total_transit_seconds": transit_seconds,
+			"reinforcements_added": 0,
+			"morale": 1.0,
+		})
+	return true
+
+
 ## Defensive combat power of a held corner: posted men with home/stronghold cover multiplier.
+## Unmanned corners have 0 defense power (zero phantom lookouts, BATTLE.md Section 12B).
 static func garrison_power(run: RunState, corner: CornerDef) -> float:
 	if corner == null or not holds(run, corner.id):
 		return 0.0

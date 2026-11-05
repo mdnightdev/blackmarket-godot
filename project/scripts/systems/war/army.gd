@@ -30,6 +30,27 @@ const LETHALITY := {
 	Tier.GUARDS: 0.75,
 	Tier.BLACK_HAND: 0.5,
 }
+## 3-Factor Unit Stat System (BATTLE.md Section 6): Strength (Attack), HP (Health Pool), Defense (Damage Mitigation).
+const UNIT_STATS := {
+	Tier.LUNATICS: { "strength": 10.0, "hp": 25.0, "defense": 10.0, "clinic_cost": 500 },
+	Tier.GUARDS: { "strength": 30.0, "hp": 70.0, "defense": 35.0, "clinic_cost": 2000 },
+	Tier.BLACK_HAND: { "strength": 100.0, "hp": 200.0, "defense": 90.0, "clinic_cost": 15000 },
+}
+const ARMOR_CONSTANT := 100.0
+## Attacker vs Defender Casualty Attrition Splits (BATTLE.md Section 9).
+const ATTACKER_WOUNDED_SHARE := 0.60
+const ATTACKER_DEAD_SHARE := 0.40
+const DEFENDER_WOUNDED_SHARE := 1.00
+const DEFENDER_DEAD_SHARE := 0.00
+## Dispatch Capacity Progression & Enforcer Addition (BATTLE.md Section 3).
+const BASE_CRED_CAP_MAX := 80000
+const PRE_KINGPIN_MAX_DISPATCH := BASE_CRED_CAP_MAX
+const KINGPIN_BASE_CAP := 200000
+const KINGPIN_BASE_DISPATCH := KINGPIN_BASE_CAP
+const MAX_SKILL_CAP_BONUS := 50000
+const MAX_BASE_DISPATCH_CAP := 250000
+const ENFORCER_CAPACITY_BONUS := 5000
+const MEATSHIELD_ORDER: Array[Tier] = [Tier.LUNATICS, Tier.GUARDS, Tier.BLACK_HAND]
 const DEPLOY_ORDER: Array[Tier] = [Tier.BLACK_HAND, Tier.GUARDS, Tier.LUNATICS]
 ## Weapons go to the Guards first, then the Lunatics.
 const ARMED_ORDER: Array[Tier] = [Tier.GUARDS, Tier.LUNATICS]
@@ -104,6 +125,103 @@ static func deploy_cap(run: RunState) -> int:
 	return int(expansion(run).deploy)
 
 
+## Base march capacity scaling with Street Cred & Rank up to 80,000, reaching 200,000 at Kingpin rank,
+## plus up to +50,000 from skill progression (max 250,000 base), and +5,000 when an Enforcer is attached (BATTLE.md Section 3).
+static func march_capacity(run: RunState, commander_id: StringName = &"") -> int:
+	var rank := StreetCred.rank(run)
+	var base := int(expansion(run).deploy)
+	if rank >= StreetCred.max_rank():
+		base = maxi(base, KINGPIN_BASE_CAP)
+	elif rank > 1:
+		var cred_scaled := roundi(lerpf(1000.0, float(BASE_CRED_CAP_MAX), float(rank - 1) / float(StreetCred.max_rank() - 2)))
+		base = maxi(base, mini(BASE_CRED_CAP_MAX, cred_scaled))
+	var skill_bonus := skill_dispatch_bonus(run)
+	var total_base := mini(MAX_BASE_DISPATCH_CAP, base + skill_bonus)
+	var enforcer_bonus := ENFORCER_CAPACITY_BONUS if not commander_id.is_empty() else 0
+	return total_base + enforcer_bonus
+
+
+## Skill tree progression grants up to +50,000 additional march dispatch capacity (BATTLE.md Section 3).
+static func skill_dispatch_bonus(run: RunState) -> int:
+	var muscle_rank := Skills.rank_of(run, &"muscle")
+	var total_ranks := Skills.points_spent(run)
+	var bonus := muscle_rank * 10000 + total_ranks * 2000
+	return clampi(bonus, 0, MAX_SKILL_CAP_BONUS)
+
+
+## 3-Factor Unit Stats (BATTLE.md Section 6).
+static func unit_stats(tier: Tier) -> Dictionary:
+	return UNIT_STATS[tier]
+
+
+static func unit_strength(tier: Tier) -> float:
+	return float(UNIT_STATS[tier].strength)
+
+
+static func unit_hp(tier: Tier) -> float:
+	return float(UNIT_STATS[tier].hp)
+
+
+static func unit_defense(tier: Tier) -> float:
+	return float(UNIT_STATS[tier].defense)
+
+
+## 1. Damage Reduction = Defense / (Defense + ArmorConstant) (BATTLE.md Section 6).
+static func damage_reduction(defense: float, armor_constant: float = ARMOR_CONSTANT) -> float:
+	var denom := defense + armor_constant
+	return clampf(defense / denom, 0.0, 0.95) if denom > 0.0 else 0.0
+
+
+## 2. Net Damage Taken = Incoming Enemy Strength * (1 - Damage Reduction) (BATTLE.md Section 6).
+static func net_damage_taken(incoming_enemy_strength: float, defense: float, armor_constant: float = ARMOR_CONSTANT) -> float:
+	return maxf(0.0, incoming_enemy_strength * (1.0 - damage_reduction(defense, armor_constant)))
+
+
+## 3. Total Casualties = Net Damage Taken / Average Unit HP (BATTLE.md Section 6).
+static func total_casualties_from_damage(net_damage: float, average_unit_hp: float) -> int:
+	if average_unit_hp <= 0.0 or net_damage <= 0.0:
+		return 0
+	return maxi(0, roundi(net_damage / average_unit_hp))
+
+
+static func average_defense(units: Dictionary) -> float:
+	var count_sum := deployed_count(units)
+	if count_sum <= 0:
+		return 0.0
+	var def_sum := 0.0
+	for tier: int in units:
+		def_sum += int(units[tier]) * unit_defense(tier as Tier)
+	return def_sum / float(count_sum)
+
+
+static func average_hp(units: Dictionary) -> float:
+	var count_sum := deployed_count(units)
+	if count_sum <= 0:
+		return 1.0
+	var hp_sum := 0.0
+	for tier: int in units:
+		hp_sum += int(units[tier]) * unit_hp(tier as Tier)
+	return hp_sum / float(count_sum)
+
+
+static func combat_strength(run: RunState, deployment: Dictionary) -> float:
+	var sum := 0.0
+	var carried := issue(run, deployment)
+	for tier: int in deployment:
+		var count_tier := int(deployment[tier])
+		if count_tier <= 0:
+			continue
+		var base_str := unit_strength(tier as Tier)
+		if tier == Tier.BLACK_HAND:
+			sum += count_tier * base_str
+		elif carried.has(tier):
+			for grade: int in carried[tier]:
+				sum += int(carried[tier][grade]) * (base_str + Armory.power_of(grade) * float(SKILL[tier]))
+		else:
+			sum += count_tier * base_str
+	return sum
+
+
 ## The price of the next training expansion, -1 at the top.
 static func expansion_price(run: RunState) -> int:
 	return int(EXPANSIONS[run.army_level + 1].price) if run.army_level + 1 < EXPANSIONS.size() else -1
@@ -134,9 +252,10 @@ static func black_hand_open(run: RunState) -> bool:
 	return Campaign.is_act_two(run)
 
 
-## Active men not posted as corner garrisons. Posted men hold their corners and cannot go on attacks.
+## Active men not posted as corner garrisons or out on a march.
+## Strict physical troop accounting: stationed and marching soldiers are deducted from reserve (BATTLE.md Section 4 & 12A).
 static func reserve(run: RunState) -> int:
-	return maxi(0, active(run) - Corners.total_garrisoned(run))
+	return maxi(0, active(run) - Corners.total_garrisoned(run) - War.total_marching(run))
 
 
 ## Tier composition of men posted to a corner garrison (Guards and Lunatics first).
@@ -234,6 +353,45 @@ static func casualties(deployment: Dictionary, hit_share: float, death_share: fl
 		var hit := mini(int(deployment[tier]), roundi(int(deployment[tier]) * hit_share * float(EXPOSURE[tier])))
 		var dead := mini(hit, roundi(hit * clampf(death_share * float(LETHALITY[tier]), 0.0, 1.0)))
 		losses[tier] = { "dead": dead, "wounded": hit - dead }
+	return losses
+
+
+## Resolves casualties using the 3-Factor Mitigation Formula and Attacker (60% Wounded / 40% Dead)
+## vs Defender (100% Wounded / 0% Dead) attrition rules (BATTLE.md Section 6 & Section 9).
+static func casualties_3factor(deployment: Dictionary, incoming_enemy_strength: float, is_defender: bool = false) -> Dictionary:
+	var def := average_defense(deployment)
+	var hp := average_hp(deployment)
+	var net_dmg := net_damage_taken(incoming_enemy_strength, def, ARMOR_CONSTANT)
+	var total_hit := mini(deployed_count(deployment), total_casualties_from_damage(net_dmg, hp))
+	return split_casualties_by_role(deployment, total_hit, is_defender)
+
+
+## Distributes total casualties front-to-back (T1 Lunatics meat-shield first, then T2 Guards, then T3 Black Hand)
+## and applies Attacker (60% Wounded, 40% Dead) vs Defender (100% Wounded, 0% Dead) splits (BATTLE.md Section 9).
+static func split_casualties_by_role(deployment: Dictionary, total_casualties: int, is_defender: bool = false) -> Dictionary:
+	var losses := {}
+	var remaining := clampi(total_casualties, 0, deployed_count(deployment))
+	for tier in MEATSHIELD_ORDER:
+		if not deployment.has(tier):
+			continue
+		var count_tier := int(deployment[tier])
+		var hit := mini(count_tier, remaining)
+		remaining -= hit
+		if is_defender:
+			losses[tier] = { "dead": 0, "wounded": hit }
+		else:
+			var wounded_cnt := roundi(float(hit) * ATTACKER_WOUNDED_SHARE)
+			var dead_cnt := hit - wounded_cnt
+			losses[tier] = { "dead": dead_cnt, "wounded": wounded_cnt }
+	return losses
+
+
+## Defender home medical advantage: 0% outright battlefield death, 100% of casualties become Wounded (BATTLE.md Section 9B).
+static func defender_casualties(deployment: Dictionary, hit_share: float) -> Dictionary:
+	var losses := {}
+	for tier: int in deployment:
+		var hit := mini(int(deployment[tier]), roundi(int(deployment[tier]) * hit_share * float(EXPOSURE[tier])))
+		losses[tier] = { "dead": 0, "wounded": hit }
 	return losses
 
 

@@ -206,15 +206,16 @@ func _attack() -> void:
 	var run := GameState.run
 	if Corners.holds(run, corner.id):
 		var current := Corners.garrison(run, corner.id)
-		var available_room := Corners.CORNER_GARRISON_CAP - current
-		var reserve := Army.reserve(run)
+		var validation := Corners.validate_garrison_dispatch(run, corner.id, current + 1)
+		var available_room := int(validation.room)
+		var reserve := int(validation.reserve)
 		if available_room <= 0:
-			_reading_label.text = "CORNER FULL (%s MAX)" % Format.count(Corners.CORNER_GARRISON_CAP)
+			_reading_label.text = str(validation.warning).to_upper()
 			_reading_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
 			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
 			return
 		if reserve <= 0:
-			_reading_label.text = "NO RESERVE CREW AVAILABLE"
+			_reading_label.text = str(validation.warning).to_upper()
 			_reading_label.add_theme_color_override("font_color", Palette.RISK_HIGH)
 			AudioService.play_sfx(Sfx.HAGGLE_FAIL)
 			return
@@ -222,9 +223,8 @@ func _attack() -> void:
 		var msg := "Pick reserve men to station on %s (Room: %s, Reserve: %s)." % [corner.display_name, Format.count(available_room), Format.count(reserve)]
 		GameOverlay.pick_crew(corner.display_name, msg, "Post %d", "Cancel", func(picked_deploy: Dictionary) -> void:
 			var add_count := Army.deployed_count(picked_deploy)
-			if add_count > available_room:
-				add_count = available_room
-			Corners.post_garrison(run, corner.id, current + add_count)
+			var check := Corners.validate_garrison_dispatch(run, corner.id, current + add_count)
+			Corners.post_garrison(run, corner.id, int(check.clamped))
 			GameState.save_run()
 			GameState.run_changed.emit(), Callable())
 		return

@@ -46,6 +46,10 @@ func _process(delta: float) -> void:
 	if run == null or not clock_active:
 		return
 	Heat.tick_frenzy(run, delta)
+	var arrived := War.tick_marches(run, delta)
+	var executed := War.tick_captured_commanders(run, delta)
+	if not arrived.is_empty() or not executed.is_empty():
+		run_changed.emit()
 	if Police.release_if_served(run):
 		_commit(false)
 	if Encounters.has_pending(run) or Campaign.is_over(run):

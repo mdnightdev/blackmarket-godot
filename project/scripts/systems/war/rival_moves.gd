@@ -10,6 +10,7 @@ enum Move {
 	RAID_FRONT,
 	BUY_COP,
 	BAIT_TRAP,
+	RAID_HQ,
 }
 
 const COP_BRIBE_COST := 25000
@@ -54,8 +55,8 @@ static func candidates(run: RunState, gang: GangDef) -> Array[Dictionary]:
 				continue
 			var sent := RivalStrike.raiders(run, from)
 			var raider_power := sent * Rivals.power_per_man(run, gang)
-			var garrison_pow := maxf(Corners.garrison_power(run, corner), 50.0)
-			if raider_power >= garrison_pow * 1.25:
+			var garrison_pow := Corners.garrison_power(run, corner)
+			if garrison_pow <= 0.0 or raider_power >= garrison_pow * 1.25:
 				var value_ratio := float(corner.daily_cut()) / maxf(garrison_pow, 100.0)
 				var retake_score := clampf(value_ratio * (1.0 + gang_anger * 0.4) * anger_weight, 0.5, 4.0)
 				if retake_score > best_retake:
@@ -63,6 +64,10 @@ static func candidates(run: RunState, gang: GangDef) -> Array[Dictionary]:
 					best_corner = corner
 		if best_corner != null:
 			list.append({ "move": Move.RETAKE_CORNER, "score": best_retake, "target": best_corner.id })
+
+	if is_hq_vulnerable(run):
+		var hq_score := clampf((1.8 + gang_anger * 0.25) * (anger_weight + cunning_weight) * 0.5, 1.0, 4.5)
+		list.append({ "move": Move.RAID_HQ, "score": hq_score, "target": Corners.HOME })
 
 	if _has_delivery_in_turf(run, gang):
 		var hit_score := 1.45 * greed_weight
@@ -159,7 +164,52 @@ static func execute_move(run: RunState, gang: GangDef, picked: Dictionary, rng: 
 				var per_corner := maxi(1, floori(float(pool) / held.size()))
 				for c in held:
 					run.corner_defenders[String(c.id)] = mini(Rivals.max_garrison(c), War.defenders(run, c) + per_corner)
+		Move.RAID_HQ:
+			if is_hq_vulnerable(run):
+				return execute_hq_raid(run, gang)
 	return {}
+
+
+## True when the player's Headquarters / home reserve is left undefended while marching (BATTLE.md Section 4).
+static func is_hq_vulnerable(run: RunState) -> bool:
+	if run == null:
+		return false
+	if Army.reserve(run) > 0:
+		return false
+	var home_garrison := 0
+	for c in Corners.of(Corners.HOME):
+		if Corners.holds(run, c.id):
+			home_garrison += Corners.garrison(run, c.id)
+	return home_garrison <= 0 and (War.total_marching(run) > 0 or Corners.total_garrisoned(run) > 0)
+
+
+## Counter-raids an undefended player HQ: burns front businesses, destroys armory weapons, and loots cash reserves.
+static func execute_hq_raid(run: RunState, gang: GangDef) -> Dictionary:
+	var looted_cash := roundi(run.cash * 0.20)
+	run.cash = maxi(0, run.cash - looted_cash)
+	var destroyed_weapons := 0
+	for grade: int in [Armory.Grade.MILITARY, Armory.Grade.RIFLE, Armory.Grade.HANDGUN, Armory.Grade.BLADE]:
+		var stock := Armory.count(run, grade as Armory.Grade)
+		if stock > 0:
+			var lost := maxi(1, roundi(stock * 0.25))
+			Armory.lose(run, grade as Armory.Grade, lost)
+			destroyed_weapons += lost
+	var burned_fronts := 0
+	for entry in run.businesses:
+		if Businesses.is_open(run, entry):
+			entry["closed_until"] = maxi(int(entry.get("closed_until", 0)), run.day + 2)
+			burned_fronts += 1
+			break
+	var crew_label := gang.crew_name if gang != null else "Rival raiders"
+	return {
+		"line": "%s counter-raided your undefended HQ! Looted %s, smashed %d weapons, and torched %d front." % [
+			crew_label, Format.money(looted_cash), destroyed_weapons, burned_fronts
+		],
+		"hint": "Keep troops in your Home Reserve or garrison your HQ before launching full-scale marches.",
+		"looted_cash": looted_cash,
+		"destroyed_weapons": destroyed_weapons,
+		"burned_fronts": burned_fronts,
+	}
 
 
 ## Runs one stochastic move per active gang in Act 2 and returns any morning notices.

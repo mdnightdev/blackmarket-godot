@@ -49,7 +49,7 @@ const COLOR_SELECTED_FILL := Color(0.85, 0.66, 0.32, 0.28)
 const COLOR_SELECTED_OUTLINE := Color(0.96, 0.82, 0.48, 1.0)
 const COLOR_CURRENT_RING := Color(0.42, 0.88, 0.62, 0.95)
 
-# All 34 Pan-Asian Underworld Sectors:
+# All 34  Underworld Sectors:
 # - 10 Open / Playable Sectors spread across BOTH sides of the Sumida/Arakawa/Edo rivers & around Tokyo Bay
 # - 24 Locked Expansion Sectors (including central buffer wards so labels never crowd)
 # - 6 Major Family Strongholds (3 playable + 3 locked)
@@ -214,7 +214,8 @@ func _load_tokyo_data() -> void:
 				w_ring.append(np * CANVAS_SIZE)
 			if n_ring.size() >= 3:
 				norm_rings.append(n_ring)
-				world_rings.append(w_ring)
+				for clean_sub: PackedVector2Array in _clean_polygon(w_ring):
+					world_rings.append(clean_sub)
 				if n_ring.size() > best_len:
 					best_len = n_ring.size()
 					best_ring = n_ring
@@ -235,13 +236,52 @@ func _load_tokyo_data() -> void:
 				sum += p
 			_ward_centers[ward_name] = sum / float(best_ring.size())
 
-	_islands_world = _parse_world_polylines(data.get("islands", []))
+	_islands_world = _parse_world_polygons(data.get("islands", []))
 	var raw_rivers: Variant = data.get("rivers", [])
 	if raw_rivers is Array:
 		_rivers_world = _parse_world_polylines(raw_rivers)
 	_primary_world = _parse_world_polylines(data.get("primary", []))
 	_trunks_world = _parse_world_polylines(data.get("trunks", []))
 	_motorways_world = _parse_world_polylines(data.get("motorways", []))
+
+
+static func _clean_polygon(raw_poly: PackedVector2Array) -> Array[PackedVector2Array]:
+	var pts := PackedVector2Array()
+	for p: Vector2 in raw_poly:
+		if pts.is_empty() or not pts[-1].is_equal_approx(p):
+			pts.append(p)
+	if pts.size() > 3 and pts[0].is_equal_approx(pts[-1]):
+		pts.remove_at(pts.size() - 1)
+	if pts.size() < 3:
+		return []
+	var ind := Geometry2D.triangulate_polygon(pts)
+	if not ind.is_empty():
+		return [pts]
+	var merged := Geometry2D.merge_polygons(pts, PackedVector2Array())
+	var valid: Array[PackedVector2Array] = []
+	for sub: PackedVector2Array in merged:
+		if sub.size() >= 3 and not Geometry2D.triangulate_polygon(sub).is_empty():
+			valid.append(sub)
+	if not valid.is_empty():
+		return valid
+	var convex := Geometry2D.decompose_polygon_in_convex(pts)
+	if not convex.is_empty():
+		return convex
+	var hull := Geometry2D.convex_hull(pts)
+	if hull.size() >= 3 and not Geometry2D.triangulate_polygon(hull).is_empty():
+		return [hull]
+	return []
+
+
+func _parse_world_polygons(raw_list: Array) -> Array[PackedVector2Array]:
+	var result: Array[PackedVector2Array] = []
+	for chain: Array in raw_list:
+		var arr := PackedVector2Array()
+		for pt: Array in chain:
+			arr.append(_norm_pt(pt) * CANVAS_SIZE)
+		for cleaned: PackedVector2Array in _clean_polygon(arr):
+			result.append(cleaned)
+	return result
 
 
 func _parse_world_polylines(raw_list: Array) -> Array[PackedVector2Array]:
@@ -268,7 +308,8 @@ func _draw_static_world() -> void:
 		var fill_col: Color = SLATE_TONES[tone_idx]
 		var rings: Array = _wards_world[ward_name]
 		for ring: PackedVector2Array in rings:
-			_static_layer.draw_colored_polygon(ring, fill_col)
+			if ring.size() >= 3 and not Geometry2D.triangulate_polygon(ring).is_empty():
+				_static_layer.draw_colored_polygon(ring, fill_col)
 
 	# 3. Ward Boundary Seams on Land (Drawn BEFORE Tokyo Bay Ocean so the Bay masks out sea seams in 0 ms!)
 	for ward_name: String in _wards_world:
@@ -292,7 +333,7 @@ func _draw_static_world() -> void:
 
 	# 5. Reclaimed Harbor Islands (Sits on top of Tokyo Bay)
 	for isl: PackedVector2Array in _islands_world:
-		if isl.size() >= 3:
+		if isl.size() >= 3 and not Geometry2D.triangulate_polygon(isl).is_empty():
 			_static_layer.draw_colored_polygon(isl, COLOR_ISLAND_LAND)
 			var isl_rim := isl.duplicate()
 			isl_rim.append(isl[0])
@@ -323,7 +364,8 @@ func _draw_dynamic_world() -> void:
 	if not _selected_ward.is_empty() and _wards_world.has(_selected_ward):
 		var rings: Array = _wards_world[_selected_ward]
 		for ring: PackedVector2Array in rings:
-			_dynamic_layer.draw_colored_polygon(ring, COLOR_SELECTED_FILL)
+			if ring.size() >= 3 and not Geometry2D.triangulate_polygon(ring).is_empty():
+				_dynamic_layer.draw_colored_polygon(ring, COLOR_SELECTED_FILL)
 			var closed := ring.duplicate()
 			closed.append(ring[0])
 			_dynamic_layer.draw_polyline(closed, COLOR_SELECTED_OUTLINE, 7.0)
@@ -693,8 +735,8 @@ func _on_tap(point: Vector2) -> void:
 			_district_sheet.show_district(district, Travel.check(GameState.run, district))
 			return
 
-	var tagline := (family_name + " — Uncharted Syndicate Stronghold") if not family_name.is_empty() \
-		else "Restricted Pan-Asian Underworld Sector"
+	var tagline := (family_name + "Uncharted Syndicate Stronghold") if not family_name.is_empty() \
+		else "Restricted Underworld Sector"
 	_district_sheet.show_locked_sector(pan_name, tagline)
 
 

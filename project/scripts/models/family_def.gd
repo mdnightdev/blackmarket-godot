@@ -20,4 +20,4 @@ extends Resource
 
 ## Characters, pinyin and English, for example "青龙会 Qīnglóng Huì · Azure Dragon Society".
 func full_name() -> String:
-	return "%s %s · %s" % [chinese_name, pinyin, english_name]
+	return "%s" % [chinese_name]

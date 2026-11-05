@@ -3,12 +3,37 @@ class_name SafeArea
 const HUD_HEIGHT := 56
 const HUD_GAP := 8
 const NAV_HEIGHT := 90
+const ANDROID_MIN_TOP_INSET := 36.0
 
 
-## Android already places the game window below the system camera cutout bar,
-## so no extra internal top inset is added above the persistent HUD bar.
-static func top_inset(_viewport: Viewport) -> float:
-	return 0.0
+## Height of the status bar / camera cutout at the top of the screen, in viewport units.
+static func top_inset(viewport: Viewport) -> float:
+	var window_height := DisplayServer.window_get_size().y
+	if window_height <= 0 or viewport == null:
+		return ANDROID_MIN_TOP_INSET if OS.get_name() == "Android" else 0.0
+	var safe := DisplayServer.get_display_safe_area()
+	var top_pixels := float(safe.position.y)
+	var inset := 0.0
+	if top_pixels > 0.0:
+		inset = top_pixels * viewport.get_visible_rect().size.y / float(window_height)
+	if OS.get_name() == "Android":
+		inset = maxf(inset, ANDROID_MIN_TOP_INSET)
+	return inset
+
+
+## Applies top safe-area padding inside the persistent top HUD bar PanelContainer so its solid INK
+## background fills behind the camera cutout while pushing the HUD row down into the safe zone.
+static func apply_top_bar_margin(target: PanelContainer, base_margin: int = 8) -> void:
+	if target == null:
+		return
+	var inset := int(top_inset(target.get_viewport()))
+	target.custom_minimum_size.y = HUD_HEIGHT + inset
+	var style := target.get_theme_stylebox("panel")
+	if style is StyleBoxFlat:
+		var dup := style.duplicate() as StyleBoxFlat
+		dup.bg_color = Palette.INK
+		dup.content_margin_top = base_margin + inset
+		target.add_theme_stylebox_override("panel", dup)
 
 
 ## Top margin required for screen content so it sits below the top notch and persistent HUD bar.

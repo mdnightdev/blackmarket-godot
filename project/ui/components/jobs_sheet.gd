@@ -232,15 +232,15 @@ func _add_active(run: RunState) -> void:
 		var district := Content.district(dealer.district_id)
 		var place := " in %s" % district.display_name if district != null else ""
 		var caption := "Buy them, then deliver to %s%s by %s" % [dealer.display_name, place, Calendar.describe(int(order.due)).to_lower()]
-		var ready := Orders.can_deliver(run, order)
-		var slot := &"SlotLegendary" if ready else &"SlotRare"
+		var is_ready := Orders.can_deliver(run, order)
+		var slot := &"SlotLegendary" if is_ready else &"SlotRare"
 		var row := _add_row(item.icon, "%d %s" % [int(order.quantity), item.display_name], Format.money(Orders.total(order)), caption, "", Color.TRANSPARENT, slot)
 		if Orders.can_meet(run, order):
 			row.set_hint("MEET HERE", Palette.TEXT_CREAM)
 			row.set_tappable(true)
 			row.pressed.connect(_meet_dealer.bind(order))
 			continue
-		if _offer_runner(run, row, order, item, dealer.display_name, ready, Orders.total(order)) or not ready:
+		if _offer_runner(run, row, order, item, dealer.display_name, is_ready, Orders.total(order)) or not is_ready:
 			continue
 		if district != null and district.id != run.district_id:
 			var spot := Content.district(Meetings.spot(order))
@@ -256,10 +256,10 @@ func _add_active(run: RunState) -> void:
 		if item == null or lieutenant == null:
 			continue
 		var caption := "Buy them, then hand them to %s by %s" % [lieutenant.display_name, Calendar.describe(int(favour.due)).to_lower()]
-		var ready := Favours.can_deliver(run, favour)
-		var slot := &"SlotLegendary" if ready else &"SlotRare"
+		var is_ready := Favours.can_deliver(run, favour)
+		var slot := &"SlotLegendary" if is_ready else &"SlotRare"
 		var row := _add_row(item.icon, "%d %s" % [int(favour.quantity), item.display_name], Format.money(Favours.total(favour)), caption, "", Color.TRANSPARENT, slot)
-		_offer_runner(run, row, favour, item, lieutenant.display_name, ready, Favours.total(favour))
+		_offer_runner(run, row, favour, item, lieutenant.display_name, is_ready, Favours.total(favour))
 
 	if Smuggling.is_carrying(run):
 		_add_crate(run)
@@ -271,10 +271,10 @@ func _add_active(run: RunState) -> void:
 		_add_note("No jobs taken. Customers order by phone, bars post delivery orders, Pier 9 has crates, and the families hand out favours.")
 
 
-func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, client: String, ready: bool, pay: int) -> bool:
+func _offer_runner(run: RunState, row: JobRow, job: Dictionary, item: ItemDef, client: String, can_deliver: bool, pay: int) -> bool:
 	var quantity := int(job.quantity)
 	var held := Inventory.count(run, item.id)
-	if not ready:
+	if not can_deliver:
 		row.set_hint("HAVE %d/%d" % [held, quantity])
 		return false
 	var runner := Crew.runner(run)
@@ -325,12 +325,12 @@ func _add_owed(run: RunState) -> void:
 		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Owed by %s" % invoice.client, Format.money(int(invoice.amount)), due, "DAY %d" % int(invoice.due_day), Palette.TEXT_CREAM, &"SlotLegendary")
 	for loan in run.dealer_loans:
 		var dealer := Content.dealer(StringName(str(loan.dealer)))
-		var name := dealer.display_name if dealer != null else str(loan.dealer)
+		var dealer_name := dealer.display_name if dealer != null else str(loan.dealer)
 		var due_day := int(loan.due_day)
 		var caption := "Due day %d (lent %s). Shark collects on default." % [due_day, Format.money(int(loan.amount))]
 		var hint := "DUE TODAY" if run.day >= due_day else "DAY %d" % due_day
 		var hint_color := Palette.RISK_HIGH if run.day >= due_day else Palette.TEXT_CREAM
-		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Loan to %s" % name, Format.money(int(loan.repayment)), caption, hint, hint_color, &"SlotLegendary")
+		_add_row(ItemsAtlas.get_icon(&"nav_jobs"), "Loan to %s" % dealer_name, Format.money(int(loan.repayment)), caption, hint, hint_color, &"SlotLegendary")
 
 
 func _add_crate(run: RunState) -> void:

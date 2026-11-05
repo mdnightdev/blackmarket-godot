@@ -32,7 +32,13 @@ func _ready() -> void:
 	_debt_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	_debt_box.gui_input.connect(_on_debt_input)
 	visibility_changed.connect(_on_visibility_changed)
+	_apply_safe_area()
+	get_tree().root.size_changed.connect(_apply_safe_area)
 	_sync()
+
+
+func _apply_safe_area() -> void:
+	SafeArea.apply_top_bar_margin(self, 8)
 
 
 func _on_visibility_changed() -> void:

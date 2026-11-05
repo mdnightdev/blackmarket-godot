@@ -483,10 +483,11 @@ func _update_hud_visibility(scene_path: String = "") -> void:
 func _update_hud_safe_margins() -> void:
 	if _hud_margin == null:
 		return
-	var inset := int(SafeArea.top_inset(get_viewport()))
-	_hud_margin.add_theme_constant_override("margin_top", inset)
+	_hud_margin.add_theme_constant_override("margin_top", 0)
 	_hud_margin.add_theme_constant_override("margin_left", 0)
 	_hud_margin.add_theme_constant_override("margin_right", 0)
+	if _hud_bar != null:
+		SafeArea.apply_top_bar_margin(_hud_bar, 8)
 
 
 func _is_open_offer(run: RunState, offer_id: String) -> bool:

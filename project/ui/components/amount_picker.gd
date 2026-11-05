@@ -20,6 +20,7 @@ const STEP := 100
 @onready var _plus_button: Button = %PlusButton
 @onready var _max_button: Button = %MaxButton
 @onready var _option_check: CheckButton = %OptionCheck
+@warning_ignore("unused_private_class_variable")
 @onready var _summary_label: Label = %SummaryLabel
 @onready var _cancel_button: Button = %CancelButton
 @onready var _confirm_button: Button = %ConfirmButton
